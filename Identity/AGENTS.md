@@ -1,0 +1,66 @@
+# Project Rules
+
+This file defines the default working rules for Codex and any subagents in this repository.
+
+## Scope
+
+These instructions apply to the entire repository under this folder unless a more deeply nested `AGENTS.md` overrides them.
+
+## Read First
+
+Before performing any task:
+
+1. Read this `AGENTS.md` fully.
+2. Check for any more specific `AGENTS.md` files in the target folder before editing files there.
+3. If requirements are unclear, ask concise clarification questions before making major changes.
+
+## Workspace Layout
+
+- Main project work happens under `src/`.
+- Codex project configuration and custom agents live under `.codex/`.
+- OpenSpec workspace lives under `openspec/`.
+- Beads data lives under `.beads/`.
+
+## Beads
+
+- This repository uses Beads for task tracking in stealth mode.
+- In Codex, run Beads commands via `.codex/scripts/bd.ps1` so the workspace-local Beads and Dolt environment is set correctly.
+- Prefer Beads over markdown TODO lists for tracking work.
+- Start with `.codex/scripts/bd.ps1 ready` or `.codex/scripts/bd.ps1 prime` when you need task context.
+
+## Working Style
+
+- Keep changes minimal, focused, and easy to review.
+- Do not modify unrelated files.
+- Preserve existing project patterns unless the task explicitly requires changing them.
+- Prefer clear, maintainable solutions over clever or overly abstract ones.
+
+## Specs And Planning
+
+- If the task is a new feature, significant behavior change, or ambiguous requirement, check whether an OpenSpec change should be created first.
+- If the user wants requirements or specs, involve the Business Analyst and Solution Architect agents before implementation when appropriate.
+- Do not jump into implementation when the task clearly needs specification or design work first.
+
+## Team Agents
+
+Use project agents when their specialty matches the task:
+
+- `Hoang Thi Huong Lan`: requirements analysis and specifications
+- `Hang Le Quan`: solution architecture and system design
+- `Tran Hoang Quan`: .NET backend implementation
+- `Nguyen Bao Duy`: .NET backend implementation
+- `Le Viet Hieu`: React and frontend implementation
+- `Kulpreet Alagh`: UI/UX and responsive design
+- `Ho Thanh Toan`: test cases and Playwright automation
+
+## Validation
+
+- For code changes, run relevant build, test, or verification commands when possible.
+- Report what was verified and what could not be verified.
+- If there are project-specific checks mentioned in a more specific `AGENTS.md`, run them.
+
+## Safety
+
+- Never use destructive git commands unless the user explicitly asks for them.
+- Do not overwrite user changes outside the requested scope.
+- Pause and ask if unexpected changes create a conflict with the requested work.
