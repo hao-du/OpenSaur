@@ -27,6 +27,8 @@ Before performing any task:
 - In Codex, run Beads commands via `.codex/scripts/bd.ps1` so the workspace-local Beads and Dolt environment is set correctly.
 - Prefer Beads over markdown TODO lists for tracking work.
 - Start with `.codex/scripts/bd.ps1 ready` or `.codex/scripts/bd.ps1 prime` when you need task context.
+- After the user approves moving to the next phase, automatically run any needed Beads commands via `.codex/scripts/bd.ps1` instead of relying on the user to remember them.
+- Handle Beads phase-transition commands proactively, and report which commands were run.
 
 ## Working Style
 
@@ -40,6 +42,11 @@ Before performing any task:
 - If the task is a new feature, significant behavior change, or ambiguous requirement, check whether an OpenSpec change should be created first.
 - If the user wants requirements or specs, involve the Business Analyst and Solution Architect agents before implementation when appropriate.
 - Do not jump into implementation when the task clearly needs specification or design work first.
+
+## Review Gates
+
+- At the end of each phase, stop and let the user review the work before moving to the next phase.
+- Do not automatically move between phases such as specification, planning, implementation, validation, or cleanup without explicit user approval.
 
 ## Team Agents
 
@@ -62,5 +69,6 @@ Use project agents when their specialty matches the task:
 ## Safety
 
 - Never use destructive git commands unless the user explicitly asks for them.
+- Do not create git commits automatically. Only commit when the user explicitly asks.
 - Do not overwrite user changes outside the requested scope.
 - Pause and ask if unexpected changes create a conflict with the requested work.
