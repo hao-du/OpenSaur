@@ -66,7 +66,7 @@ Alternatives considered:
 
 ### 4. Use vertical slices with action-style minimal API endpoints
 
-Backend use cases will be organized by feature slice, with each slice owning its endpoint mapping, request/response models, validation, and data access. Routes will be action-oriented where the route is a domain/account helper, such as `/api/user/get`, `/api/user/create`, `/api/role/edit`, `/api/auth/login`, `/api/auth/logout`, `/api/auth/change-password`, and `/api/auth/me`. These custom endpoints will accept JSON bodies and return API responses only. OIDC protocol endpoints like `/connect/authorize` and `/connect/token` remain standard redirect/token endpoints.
+Backend use cases will be organized by feature slice, with each slice owning its endpoint mapping, request/response models, validation, and data access. Routes will be action-oriented where the route is a domain/account helper, such as `/api/user/get`, `/api/user/create`, `/api/user/change-workspace`, `/api/role/edit`, `/api/auth/login`, `/api/auth/logout`, `/api/auth/change-password`, and `/api/auth/me`. These custom endpoints will accept JSON bodies and return API responses only. User create/edit contracts will not accept workspace reassignment directly; workspace moves go through the dedicated super-administrator-only change-workspace action. Self-service password change remains in the auth/account helpers, while administrator password reset stays in the user-management slice. For non-super administrators, user lookups/edits are scoped in the query path to the caller's current workspace, while `SuperAdministrator` bypasses that scope. OIDC protocol endpoints like `/connect/authorize` and `/connect/token` remain standard redirect/token endpoints.
 
 Alternatives considered:
 

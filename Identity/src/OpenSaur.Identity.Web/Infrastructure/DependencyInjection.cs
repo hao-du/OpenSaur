@@ -3,12 +3,14 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using OpenIddict.Abstractions;
 using OpenIddict.Validation.AspNetCore;
 using OpenSaur.Identity.Web.Features.Auth;
 using OpenSaur.Identity.Web.Features.Auth.Oidc;
+using OpenSaur.Identity.Web.Features.Users;
 using OpenSaur.Identity.Web.Infrastructure.Authorization;
 using OpenSaur.Identity.Web.Domain.Identity;
 using OpenSaur.Identity.Web.Infrastructure.Persistence;
@@ -126,6 +128,8 @@ public static class DependencyInjection
         });
         services.AddScoped<ICurrentUserAccessor, HttpContextCurrentUserAccessor>();
         services.AddScoped<PermissionAuthorizationService>();
+        services.AddScoped<UserAuthorizationService>();
+        services.AddScoped<IAuthorizationHandler, PermissionAuthorizationHandler>();
         services.AddOpenIddict()
             .AddCore(options =>
             {
@@ -218,6 +222,7 @@ public static class DependencyInjection
     {
         app.MapOidcEndpoints();
         app.MapAuthEndpoints();
+        app.MapUserEndpoints();
 
         return app;
     }

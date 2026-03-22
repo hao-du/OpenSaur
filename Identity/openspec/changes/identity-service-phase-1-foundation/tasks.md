@@ -17,11 +17,11 @@
 - [x] 3.2 Align first-party protected account endpoints with OpenIddict-issued bearer tokens and the bootstrap password-change requirement.
 - [x] 3.3 Configure OpenIddict authorization code flow with rotating refresh tokens for registered third-party clients.
 - [x] 3.4 Implement current-user/session bootstrap behavior and shared hosted login session reuse across clients.
-- [ ] 3.5 Enforce workspace-aware role checks and permission-based authorization across protected endpoints.
+- [x] 3.5 Enforce workspace-aware role checks and permission-based authorization across protected endpoints.
 
 ## 4. Identity Management APIs
 
-- [ ] 4.1 Implement action-style user endpoints for get, get-by-id, create, edit, and password change with soft delete through `IsActive`.
+- [x] 4.1 Implement action-style user endpoints for get, get-by-id, create, edit, and password change with soft delete through `IsActive`.
 - [ ] 4.2 Implement action-style role endpoints for get, get-by-id, create, and edit.
 - [ ] 4.3 Implement action-style permission endpoints for permission lookup and role-permission assignment support.
 - [ ] 4.4 Implement action-style user-role endpoints for get, create, and edit using app-owned user-role records.

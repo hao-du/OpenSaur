@@ -19,6 +19,10 @@ The system SHALL provide JSON-based authentication endpoints inside `OpenSaur.Id
 - **WHEN** an authenticated user completes the logout API call
 - **THEN** the system clears the identity server session cookie and future authorization requests require a new login unless another policy-issued session exists
 
+#### Scenario: Anonymous API logout is rejected
+- **WHEN** a caller without a valid API bearer token invokes the logout API
+- **THEN** the system rejects the request instead of clearing the hosted session
+
 ### Requirement: First-party web SHALL use the same OpenIddict authorization code flow as other clients
 The system SHALL support the first-party web client as an OpenIddict client that uses the authorization code flow to obtain JWT access tokens and rotating refresh tokens, instead of a separate custom login/refresh/logout API.
 
@@ -69,6 +73,10 @@ The system SHALL expose non-protocol account-management helper endpoints using e
 #### Scenario: Action-style account routes are available
 - **WHEN** a first-party client integrates with the backend account helpers
 - **THEN** the explicit account routes include `/api/auth/login`, `/api/auth/logout`, `/api/auth/change-password`, and `/api/auth/me`, while `/connect/authorize` and `/connect/token` handle shared authentication/token flow
+
+#### Scenario: Self-service password change stays separate from admin reset
+- **WHEN** a signed-in user changes their own password through the account helper APIs
+- **THEN** the system uses `/api/auth/change-password` for self-service password rotation, while administrator-initiated password resets remain part of the user-management API surface
 
 #### Scenario: Authorization requests redirect to the FE login route
 - **WHEN** an anonymous browser starts an authorization request at `/connect/authorize`

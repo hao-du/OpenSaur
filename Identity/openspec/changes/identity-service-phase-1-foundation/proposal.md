@@ -6,6 +6,7 @@
 
 - Add a PostgreSQL-backed identity foundation using EF Core, ASP.NET Core Identity, and OpenIddict in `src/OpenSaur.Identity.Web`.
 - Add action-style minimal API endpoints for authentication, users, roles, permissions, user-role assignments, and supporting reads.
+- Keep user create/edit workspace-agnostic and expose explicit workspace reassignment through a dedicated super-administrator-only action endpoint.
 - Add app-owned audited entities and tables for workspaces, permissions, role-permissions, user-role assignments, and outbox messages.
 - Add a permission catalog model that uses stable `CodeId` integers, display-friendly names, descriptions, and hierarchical implication rules.
 - Add JSON-based login/logout backend APIs that support both first-party and third-party OpenIddict authorization code flow with rotating refresh tokens and shared auth-server session reuse, while deferring the actual login page UI to the FE phase.

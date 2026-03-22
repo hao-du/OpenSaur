@@ -65,12 +65,13 @@ public sealed class ApiAuthAccountEndpointsTests : IClassFixture<OpenSaurWebAppl
     }
 
     [Fact]
-    public async Task PostLogout_WhenHostedSessionExists_ClearsSessionAndReturnsNoContent()
+    public async Task PostLogout_WhenHostedSessionExistsAndApiCallerIsAuthorized_ClearsSessionAndReturnsNoContent()
     {
         var credentials = TestFakers.CreateUserCredentials();
         await _factory.SeedUserAsync(credentials.UserName, credentials.Password, [SystemRoles.User]);
         using var client = CreateClient();
-        await client.PostAsJsonAsync("/api/auth/login", new LoginRequest(credentials.UserName, credentials.Password));
+        var accessToken = await GetAccessTokenAsync(client, credentials.UserName, credentials.Password);
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
         var response = await client.PostAsync("/api/auth/logout", content: null);
 
@@ -79,6 +80,19 @@ public sealed class ApiAuthAccountEndpointsTests : IClassFixture<OpenSaurWebAppl
             response.Headers.GetValues("Set-Cookie"),
             value => value.StartsWith("opensaur.identity.session=", StringComparison.Ordinal)
                      && value.Contains("expires=", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public async Task PostLogout_WhenApiCallerIsAnonymous_ReturnsUnauthorized()
+    {
+        var credentials = TestFakers.CreateUserCredentials();
+        await _factory.SeedUserAsync(credentials.UserName, credentials.Password, [SystemRoles.User]);
+        using var client = CreateClient();
+        await client.PostAsJsonAsync("/api/auth/login", new LoginRequest(credentials.UserName, credentials.Password));
+
+        var response = await client.PostAsync("/api/auth/logout", content: null);
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 
     [Fact]

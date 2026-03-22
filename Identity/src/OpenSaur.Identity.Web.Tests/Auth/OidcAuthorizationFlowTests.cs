@@ -246,7 +246,8 @@ public sealed class OidcAuthorizationFlowTests : IClassFixture<OpenSaurWebApplic
         await _factory.SeedUserAsync(credentials.UserName, credentials.Password, [SystemRoles.User]);
         using var client = CreateClient();
 
-        await CompleteApiLoginAsync(client, clientId, redirectUri, credentials.UserName, credentials.Password);
+        var accessToken = await GetAccessTokenAsync(client, clientId, redirectUri, credentials.UserName, credentials.Password);
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
         var logoutResponse = await client.PostAsync("/api/auth/logout", content: null);
 
@@ -328,6 +329,33 @@ public sealed class OidcAuthorizationFlowTests : IClassFixture<OpenSaurWebApplic
         var callbackQuery = QueryHelpers.ParseQuery(callbackUri.Query);
 
         return callbackQuery["code"].ToString();
+    }
+
+    private static async Task<string> GetAccessTokenAsync(
+        HttpClient client,
+        string clientId,
+        string redirectUri,
+        string userName,
+        string password)
+    {
+        var authorizationCode = await AuthorizeAsync(client, clientId, redirectUri, userName, password);
+
+        var tokenResponse = await client.PostAsync(
+            "/connect/token",
+            new FormUrlEncodedContent(
+            [
+                new KeyValuePair<string, string>("grant_type", "authorization_code"),
+                new KeyValuePair<string, string>("client_id", clientId),
+                new KeyValuePair<string, string>("client_secret", ClientSecret),
+                new KeyValuePair<string, string>("redirect_uri", redirectUri),
+                new KeyValuePair<string, string>("code", authorizationCode)
+            ]));
+
+        Assert.Equal(HttpStatusCode.OK, tokenResponse.StatusCode);
+
+        var tokenPayload = await ReadOidcTokenResponseAsync(tokenResponse);
+
+        return tokenPayload.AccessToken;
     }
 
     private static async Task<OidcTokenResponse> ReadOidcTokenResponseAsync(HttpResponseMessage response)

@@ -8,7 +8,7 @@ The system SHALL store app-owned identity management records with `Id`, `Descrip
 - **THEN** the record includes the standard audit columns and a version 7 GUID identifier
 
 ### Requirement: Users SHALL be managed through explicit action-style APIs
-The system SHALL expose action-style minimal API endpoints for user listing, lookup, creation, editing, and password change, and SHALL store each user in a workspace with JSON user settings metadata.
+The system SHALL expose action-style minimal API endpoints for user listing, lookup, creation, editing, administrator password reset, and explicit workspace reassignment, and SHALL store each user in a workspace with JSON user settings metadata.
 
 #### Scenario: User is created
 - **WHEN** an authorized administrator creates a user through the user create endpoint
@@ -18,9 +18,13 @@ The system SHALL expose action-style minimal API endpoints for user listing, loo
 - **WHEN** an authorized administrator edits a user through the user edit endpoint
 - **THEN** the system updates the requested user fields without requiring a delete endpoint
 
-#### Scenario: User password is changed
-- **WHEN** an authorized administrator or allowed user submits a password change request
-- **THEN** the system updates the password through the dedicated password action endpoint
+#### Scenario: Administrator resets a user password
+- **WHEN** an authorized administrator submits a password reset request for a managed user
+- **THEN** the system updates the target user's password through the dedicated user-management password action endpoint and requires the target user to change it again on next sign-in
+
+#### Scenario: User workspace is reassigned
+- **WHEN** an authorized super administrator submits a change-workspace request for a user and an active target workspace
+- **THEN** the system updates the user's workspace membership through the dedicated workspace action endpoint
 
 ### Requirement: Roles and user-role assignments SHALL be managed explicitly
 The system SHALL expose action-style minimal API endpoints for role management and user-role assignment management using app-owned user-role records that support audit data and activation state.
@@ -40,13 +44,17 @@ The system SHALL place each user in a workspace, create a default `Personal` wor
 - **WHEN** an administrator edits a user in the same workspace
 - **THEN** the system authorizes the operation
 
-#### Scenario: Administrator edits different-workspace user
-- **WHEN** an administrator attempts to edit a user in a different workspace
-- **THEN** the system rejects the operation
+#### Scenario: Administrator cannot load different-workspace user
+- **WHEN** an administrator requests a user outside their own workspace scope
+- **THEN** the system does not expose that user through the scoped user-management query path
 
 #### Scenario: SuperAdministrator edits any-workspace user
 - **WHEN** a super administrator edits a user in any workspace
 - **THEN** the system authorizes the operation
+
+#### Scenario: Administrator cannot reassign users across workspaces
+- **WHEN** an administrator attempts to change a user's workspace membership
+- **THEN** the system rejects the operation
 
 ### Requirement: Deactivation SHALL use edit endpoints instead of delete endpoints
 The system SHALL not expose delete endpoints for app-owned identity management resources and SHALL use `IsActive` updates through edit actions for soft delete behavior.
