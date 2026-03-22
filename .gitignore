@@ -12,6 +12,7 @@
 [Bb]in/
 [Oo]bj/
 [Tt]est[Rr]esults/
+.dotnet/
 
 # Node.js
 node_modules/

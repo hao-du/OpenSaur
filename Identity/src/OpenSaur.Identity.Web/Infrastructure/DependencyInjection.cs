@@ -1,0 +1,243 @@
+using System.Security.Cryptography.X509Certificates;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
+using OpenIddict.Abstractions;
+using OpenIddict.Validation.AspNetCore;
+using OpenSaur.Identity.Web.Features.Auth;
+using OpenSaur.Identity.Web.Infrastructure.Authorization;
+using OpenSaur.Identity.Web.Domain.Identity;
+using OpenSaur.Identity.Web.Infrastructure.Persistence;
+using OpenSaur.Identity.Web.Infrastructure.Security;
+using System.Text;
+
+namespace OpenSaur.Identity.Web.Infrastructure;
+
+public static class DependencyInjection
+{
+    public static IServiceCollection AddOpenSaurInfrastructure(
+        this IServiceCollection services,
+        IConfiguration configuration,
+        IHostEnvironment environment)
+    {
+        var connectionString = configuration.GetConnectionString("IdentityDb")
+            ?? throw new InvalidOperationException("Connection string 'IdentityDb' is required.");
+        var oidcOptions = configuration.GetRequiredSection(OidcOptions.SectionName).Get<OidcOptions>()
+            ?? throw new InvalidOperationException("OIDC configuration is required.");
+        var firstPartyAuthOptions = configuration.GetRequiredSection(FirstPartyAuthOptions.SectionName).Get<FirstPartyAuthOptions>()
+            ?? throw new InvalidOperationException("First-party auth configuration is required.");
+
+        services.AddProblemDetails();
+        services.AddEndpointsApiExplorer();
+        services.AddSwaggerGen(options =>
+        {
+            options.SwaggerDoc(
+                "v1",
+                new OpenApiInfo
+                {
+                    Title = "OpenSaur Identity API",
+                    Version = "v1"
+                });
+
+            options.AddSecurityDefinition(
+                "Bearer",
+                new OpenApiSecurityScheme
+                {
+                    BearerFormat = "JWT",
+                    Description = "Provide the JWT access token for protected API endpoints.",
+                    In = ParameterLocation.Header,
+                    Name = "Authorization",
+                    Scheme = "bearer",
+                    Type = SecuritySchemeType.Http
+                });
+
+            options.AddSecurityRequirement(
+                new OpenApiSecurityRequirement
+                {
+                    [
+                        new OpenApiSecurityScheme
+                        {
+                            Reference = new OpenApiReference
+                            {
+                                Id = "Bearer",
+                                Type = ReferenceType.SecurityScheme
+                            }
+                        }
+                    ] = []
+                });
+        });
+        services.AddDataProtection();
+        services.AddHttpsRedirection(options => options.HttpsPort = 443);
+        services.AddHttpContextAccessor();
+        services.Configure<ForwardedHeadersOptions>(options =>
+        {
+            options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+
+            // This service is expected to run behind a trusted reverse proxy.
+            // Narrow KnownNetworks/KnownProxies in deployment-specific configuration if needed.
+            options.KnownIPNetworks.Clear();
+            options.KnownProxies.Clear();
+        });
+        services.Configure<OidcOptions>(configuration.GetRequiredSection(OidcOptions.SectionName));
+        services.Configure<FirstPartyAuthOptions>(configuration.GetRequiredSection(FirstPartyAuthOptions.SectionName));
+        services.AddDbContext<ApplicationDbContext>(options =>
+        {
+            options.UseNpgsql(connectionString);
+            options.UseOpenIddict<Guid>();
+        });
+        services.AddIdentity<ApplicationUser, ApplicationRole>(options =>
+            {
+                options.User.RequireUniqueEmail = true;
+                options.Password.RequireDigit = true;
+                options.Password.RequireLowercase = true;
+                options.Password.RequireUppercase = true;
+                options.Password.RequiredLength = 8;
+            })
+            .AddEntityFrameworkStores<ApplicationDbContext>()
+            .AddSignInManager()
+            .AddDefaultTokenProviders();
+        services.ConfigureApplicationCookie(options =>
+        {
+            options.Cookie.Name = "opensaur.identity.session";
+            options.SlidingExpiration = true;
+        });
+        services.AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = IdentityConstants.ApplicationScheme;
+                options.DefaultChallengeScheme = IdentityConstants.ApplicationScheme;
+                options.DefaultScheme = IdentityConstants.ApplicationScheme;
+                options.DefaultSignInScheme = IdentityConstants.ApplicationScheme;
+            })
+            .AddJwtBearer(
+                FirstPartyAuthDefaults.AuthenticationScheme,
+                options =>
+                {
+                    options.RequireHttpsMetadata = true;
+                    options.MapInboundClaims = false;
+                    options.TokenValidationParameters = new TokenValidationParameters
+                    {
+                        ClockSkew = TimeSpan.Zero,
+                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(firstPartyAuthOptions.SigningKey)),
+                        NameClaimType = ApplicationClaimTypes.Name,
+                        RoleClaimType = ApplicationClaimTypes.Role,
+                        ValidateAudience = true,
+                        ValidateIssuer = true,
+                        ValidateIssuerSigningKey = true,
+                        ValidateLifetime = true,
+                        ValidAudience = firstPartyAuthOptions.Audience,
+                        ValidIssuer = oidcOptions.Issuer
+                    };
+                });
+        services.AddAuthorization(options =>
+        {
+            options.AddPolicy(
+                AuthorizationPolicies.Api,
+                policy =>
+                {
+                    policy.AddAuthenticationSchemes(
+                        FirstPartyAuthDefaults.AuthenticationScheme,
+                        OpenIddictValidationAspNetCoreDefaults.AuthenticationScheme);
+                    policy.RequireAuthenticatedUser();
+                });
+        });
+        services.AddScoped<FirstPartyJwtTokenService>();
+        services.AddScoped<FirstPartyRefreshTokenService>();
+        services.AddScoped<ICurrentUserAccessor, HttpContextCurrentUserAccessor>();
+        services.AddScoped<PermissionAuthorizationService>();
+        services.AddOpenIddict()
+            .AddCore(options =>
+            {
+                options.UseEntityFrameworkCore()
+                    .UseDbContext<ApplicationDbContext>()
+                    .ReplaceDefaultEntities<Guid>();
+            })
+            .AddServer(options =>
+            {
+                options.SetIssuer(new Uri(oidcOptions.Issuer));
+                options.SetAuthorizationEndpointUris("connect/authorize")
+                    .SetTokenEndpointUris("connect/token")
+                    .SetEndSessionEndpointUris("connect/logout");
+                options.AllowAuthorizationCodeFlow()
+                    .AllowRefreshTokenFlow();
+                options.RegisterScopes(
+                    OpenIddictConstants.Scopes.OpenId,
+                    OpenIddictConstants.Scopes.Profile,
+                    OpenIddictConstants.Scopes.Email,
+                    OpenIddictConstants.Scopes.OfflineAccess,
+                    OpenIddictConstants.Scopes.Roles,
+                    "api");
+                options.SetAccessTokenLifetime(TimeSpan.FromHours(1));
+                options.SetRefreshTokenLifetime(TimeSpan.FromDays(14));
+
+                // Access tokens are validated as plain JWTs by resource servers using
+                // shared signing material. Token encryption is not part of the current model.
+                options.DisableAccessTokenEncryption();
+                ConfigureOidcKeyMaterial(options, oidcOptions, environment);
+                options.UseAspNetCore()
+                    .EnableAuthorizationEndpointPassthrough()
+                    .EnableEndSessionEndpointPassthrough()
+                    .EnableTokenEndpointPassthrough();
+            })
+            .AddValidation(options =>
+            {
+                options.UseLocalServer();
+                options.UseAspNetCore();
+                options.EnableTokenEntryValidation();
+            });
+
+        return services;
+    }
+
+    private static void ConfigureOidcKeyMaterial(
+        Microsoft.Extensions.DependencyInjection.OpenIddictServerBuilder builder,
+        OidcOptions oidcOptions,
+        IHostEnvironment environment)
+    {
+        if (environment.IsDevelopment())
+        {
+            builder.AddEphemeralEncryptionKey()
+                .AddEphemeralSigningKey();
+
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(oidcOptions.SigningCertificatePath)
+            || string.IsNullOrWhiteSpace(oidcOptions.EncryptionCertificatePath))
+        {
+            throw new InvalidOperationException(
+                "OIDC durable signing and encryption certificates are required outside the Development environment.");
+        }
+
+        var signingCertificate = LoadCertificate(
+            oidcOptions.SigningCertificatePath,
+            oidcOptions.SigningCertificatePassword);
+        var encryptionCertificate = LoadCertificate(
+            oidcOptions.EncryptionCertificatePath,
+            oidcOptions.EncryptionCertificatePassword);
+
+        builder.AddSigningCertificate(signingCertificate)
+            .AddEncryptionCertificate(encryptionCertificate);
+    }
+
+    private static X509Certificate2 LoadCertificate(string certificatePath, string? certificatePassword)
+    {
+        if (!File.Exists(certificatePath))
+        {
+            throw new InvalidOperationException($"OIDC certificate file '{certificatePath}' was not found.");
+        }
+
+        return X509CertificateLoader.LoadPkcs12FromFile(
+            certificatePath,
+            certificatePassword,
+            X509KeyStorageFlags.MachineKeySet | X509KeyStorageFlags.EphemeralKeySet);
+    }
+
+    public static IEndpointRouteBuilder MapOpenSaurEndpoints(this IEndpointRouteBuilder app)
+    {
+        app.MapAuthEndpoints();
+
+        return app;
+    }
+}
