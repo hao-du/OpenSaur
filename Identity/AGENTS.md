@@ -70,5 +70,6 @@ Use project agents when their specialty matches the task:
 
 - Never use destructive git commands unless the user explicitly asks for them.
 - Do not create git commits automatically. Only commit when the user explicitly asks.
+- Do not automatically execute database scripts, SQL, or migrations against any database. Present them for user review, and let the user run them manually.
 - Do not overwrite user changes outside the requested scope.
 - Pause and ask if unexpected changes create a conflict with the requested work.
