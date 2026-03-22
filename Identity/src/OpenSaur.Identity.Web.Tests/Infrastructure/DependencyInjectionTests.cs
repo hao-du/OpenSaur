@@ -50,9 +50,7 @@ public sealed class DependencyInjectionTests
                 new Dictionary<string, string?>
                 {
                     ["ConnectionStrings:IdentityDb"] = "Host=localhost;Port=5432;Database=opensaur_identity_tests;Username=test;Password=test",
-                    ["Oidc:Issuer"] = "https://identity.test.opensaur",
-                    ["FirstPartyAuth:Audience"] = "opensaur.firstparty",
-                    ["FirstPartyAuth:SigningKey"] = "test-signing-key-for-opensaur-identity-phase1-123456"
+                    ["Oidc:Issuer"] = "https://identity.test.opensaur"
                 })
             .Build();
     }

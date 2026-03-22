@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
+using OpenIddict.Abstractions;
 using OpenSaur.Identity.Web.Domain.Identity;
 using OpenSaur.Identity.Web.Infrastructure.Persistence;
 using OpenSaur.Identity.Web.Tests.Support;
@@ -18,8 +19,6 @@ public sealed class OpenSaurWebApplicationFactory : WebApplicationFactory<Progra
 {
     public const string Issuer = "https://identity.test.opensaur";
     private const string IdentityDbConnectionString = "Host=localhost;Port=5432;Database=opensaur_identity_tests;Username=test;Password=test";
-    private const string FirstPartyAudience = "opensaur.firstparty";
-    private const string FirstPartySigningKey = "test-signing-key-for-opensaur-identity-phase1-123456";
 
     private readonly SqliteConnection _connection = new("DataSource=:memory:");
     private readonly SemaphoreSlim _databaseInitializationLock = new(1, 1);
@@ -35,8 +34,6 @@ public sealed class OpenSaurWebApplicationFactory : WebApplicationFactory<Progra
         builder.UseEnvironment(Environments.Development);
         builder.UseSetting("ConnectionStrings:IdentityDb", IdentityDbConnectionString);
         builder.UseSetting("Oidc:Issuer", Issuer);
-        builder.UseSetting("FirstPartyAuth:Audience", FirstPartyAudience);
-        builder.UseSetting("FirstPartyAuth:SigningKey", FirstPartySigningKey);
         builder.ConfigureServices(
             services =>
             {
@@ -132,6 +129,52 @@ public sealed class OpenSaurWebApplicationFactory : WebApplicationFactory<Progra
         {
             _databaseInitializationLock.Release();
         }
+    }
+
+    public async Task SeedOidcClientAsync(
+        string clientId,
+        string redirectUri,
+        string? clientSecret = null,
+        string? postLogoutRedirectUri = null)
+    {
+        await EnsureDatabaseCreatedAsync();
+
+        using var scope = Services.CreateScope();
+        var manager = scope.ServiceProvider.GetRequiredService<IOpenIddictApplicationManager>();
+        if (await manager.FindByClientIdAsync(clientId) is not null)
+        {
+            return;
+        }
+
+        var descriptor = new OpenIddictApplicationDescriptor
+        {
+            ClientId = clientId,
+            ClientSecret = clientSecret,
+            ClientType = string.IsNullOrWhiteSpace(clientSecret)
+                ? OpenIddictConstants.ClientTypes.Public
+                : OpenIddictConstants.ClientTypes.Confidential,
+            ConsentType = OpenIddictConstants.ConsentTypes.Implicit,
+            DisplayName = clientId
+        };
+
+        descriptor.Permissions.Add(OpenIddictConstants.Permissions.Endpoints.Authorization);
+        descriptor.Permissions.Add(OpenIddictConstants.Permissions.Endpoints.Token);
+        descriptor.Permissions.Add(OpenIddictConstants.Permissions.GrantTypes.AuthorizationCode);
+        descriptor.Permissions.Add(OpenIddictConstants.Permissions.GrantTypes.RefreshToken);
+        descriptor.Permissions.Add(OpenIddictConstants.Permissions.ResponseTypes.Code);
+        descriptor.Permissions.Add(OpenIddictConstants.Permissions.Scopes.Profile);
+        descriptor.Permissions.Add(OpenIddictConstants.Permissions.Scopes.Email);
+        descriptor.Permissions.Add(OpenIddictConstants.Permissions.Scopes.Roles);
+        descriptor.Permissions.Add(OpenIddictConstants.Permissions.Prefixes.Scope + "api");
+        descriptor.RedirectUris.Add(new Uri(redirectUri));
+
+        if (!string.IsNullOrWhiteSpace(postLogoutRedirectUri))
+        {
+            descriptor.Permissions.Add(OpenIddictConstants.Permissions.Endpoints.EndSession);
+            descriptor.PostLogoutRedirectUris.Add(new Uri(postLogoutRedirectUri));
+        }
+
+        await manager.CreateAsync(descriptor);
     }
 
     private async Task EnsureDatabaseCreatedAsync()

@@ -8,7 +8,7 @@
 - Add action-style minimal API endpoints for authentication, users, roles, permissions, user-role assignments, and supporting reads.
 - Add app-owned audited entities and tables for workspaces, permissions, role-permissions, user-role assignments, and outbox messages.
 - Add a permission catalog model that uses stable `CodeId` integers, display-friendly names, descriptions, and hierarchical implication rules.
-- Add a shared hosted login experience that supports first-party JWT-based browser login and third-party OpenIddict authorization code flow with rotating refresh tokens.
+- Add JSON-based login/logout backend APIs that support both first-party and third-party OpenIddict authorization code flow with rotating refresh tokens and shared auth-server session reuse, while deferring the actual login page UI to the FE phase.
 - Add development-only Swagger/OpenAPI output so the Phase 1 authentication endpoints can be explored and tested locally.
 - Add migration-backed schema creation, deterministic seed data, and idempotent SQL script generation for manual database review/execution.
 - Add a deterministic bootstrap `SystemAdministrator` account that requires a password change on first login for first-time environment access.
@@ -18,7 +18,7 @@
 ## Capabilities
 
 ### New Capabilities
-- `identity-authentication`: Hosted identity server login, first-party JWT login flow, and third-party authorization code flow with client-bound refresh token rotation.
+- `identity-authentication`: JSON-based identity server login/logout plus a shared OpenIddict authorization code flow for first-party and third-party clients with client-bound refresh token rotation.
 - `identity-directory-management`: User, role, user-role, and workspace management APIs with action-style minimal endpoints, audit columns, and soft delete through `IsActive`.
 - `identity-permissions`: Permission catalog, role-permission assignment, and hierarchical permission implication using stable `CodeId` values.
 - `identity-persistence-foundation`: PostgreSQL/EF Core/Identity/OpenIddict schema, migration generation, baseline seed data, and manual DB script workflow.

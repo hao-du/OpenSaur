@@ -13,10 +13,10 @@
 
 ## 3. Authentication And Authorization Flows
 
-- [ ] 3.1 Implement the hosted login/logout experience and eligibility checks for active users and workspaces.
-- [x] 3.2 Implement the first-party JWT access-token flow with protected refresh-token handling, explicit auth helper endpoints, and the bootstrap password-change requirement.
-- [ ] 3.3 Configure OpenIddict authorization code flow with rotating refresh tokens for registered third-party clients.
-- [ ] 3.4 Implement current-user/session bootstrap behavior and shared hosted login session reuse across clients.
+- [x] 3.1 Implement the JSON login/logout backend flow and eligibility checks for active users and workspaces, and defer the actual login page UI to the FE phase.
+- [x] 3.2 Align first-party protected account endpoints with OpenIddict-issued bearer tokens and the bootstrap password-change requirement.
+- [x] 3.3 Configure OpenIddict authorization code flow with rotating refresh tokens for registered third-party clients.
+- [x] 3.4 Implement current-user/session bootstrap behavior and shared hosted login session reuse across clients.
 - [ ] 3.5 Enforce workspace-aware role checks and permission-based authorization across protected endpoints.
 
 ## 4. Identity Management APIs

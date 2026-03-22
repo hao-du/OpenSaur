@@ -42,6 +42,9 @@ public sealed class SwaggerEndpointTests : IClassFixture<OpenSaurWebApplicationF
 
         Assert.True(document.RootElement.TryGetProperty("paths", out var paths));
         Assert.True(paths.TryGetProperty("/api/auth/login", out _));
+        Assert.True(paths.TryGetProperty("/api/auth/logout", out _));
+        Assert.True(paths.TryGetProperty("/api/auth/change-password", out _));
+        Assert.True(paths.TryGetProperty("/api/auth/me", out _));
     }
 
     [Fact]
@@ -63,8 +66,6 @@ public sealed class SwaggerEndpointTests : IClassFixture<OpenSaurWebApplicationF
     {
         private const string CertificatePassword = "OpenSaur-Production-Test-Password1!";
         private const string IdentityDbConnectionString = "Host=localhost;Port=5432;Database=opensaur_identity_tests;Username=test;Password=test";
-        private const string FirstPartyAudience = "opensaur.firstparty";
-        private const string FirstPartySigningKey = "test-signing-key-for-opensaur-identity-phase1-123456";
 
         private readonly SqliteConnection _connection = new("DataSource=:memory:");
         private readonly string _signingCertificatePath;
@@ -86,8 +87,6 @@ public sealed class SwaggerEndpointTests : IClassFixture<OpenSaurWebApplicationF
             builder.UseSetting("Oidc:SigningCertificatePassword", CertificatePassword);
             builder.UseSetting("Oidc:EncryptionCertificatePath", _encryptionCertificatePath);
             builder.UseSetting("Oidc:EncryptionCertificatePassword", CertificatePassword);
-            builder.UseSetting("FirstPartyAuth:Audience", FirstPartyAudience);
-            builder.UseSetting("FirstPartyAuth:SigningKey", FirstPartySigningKey);
             builder.ConfigureServices(
                 services =>
                 {

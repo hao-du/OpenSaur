@@ -1,17 +1,18 @@
 using System.Security.Cryptography.X509Certificates;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using OpenIddict.Abstractions;
 using OpenIddict.Validation.AspNetCore;
 using OpenSaur.Identity.Web.Features.Auth;
+using OpenSaur.Identity.Web.Features.Auth.Oidc;
 using OpenSaur.Identity.Web.Infrastructure.Authorization;
 using OpenSaur.Identity.Web.Domain.Identity;
 using OpenSaur.Identity.Web.Infrastructure.Persistence;
 using OpenSaur.Identity.Web.Infrastructure.Security;
-using System.Text;
 
 namespace OpenSaur.Identity.Web.Infrastructure;
 
@@ -26,8 +27,6 @@ public static class DependencyInjection
             ?? throw new InvalidOperationException("Connection string 'IdentityDb' is required.");
         var oidcOptions = configuration.GetRequiredSection(OidcOptions.SectionName).Get<OidcOptions>()
             ?? throw new InvalidOperationException("OIDC configuration is required.");
-        var firstPartyAuthOptions = configuration.GetRequiredSection(FirstPartyAuthOptions.SectionName).Get<FirstPartyAuthOptions>()
-            ?? throw new InvalidOperationException("First-party auth configuration is required.");
 
         services.AddProblemDetails();
         services.AddEndpointsApiExplorer();
@@ -81,7 +80,6 @@ public static class DependencyInjection
             options.KnownProxies.Clear();
         });
         services.Configure<OidcOptions>(configuration.GetRequiredSection(OidcOptions.SectionName));
-        services.Configure<FirstPartyAuthOptions>(configuration.GetRequiredSection(FirstPartyAuthOptions.SectionName));
         services.AddDbContext<ApplicationDbContext>(options =>
         {
             options.UseNpgsql(connectionString);
@@ -101,6 +99,12 @@ public static class DependencyInjection
         services.ConfigureApplicationCookie(options =>
         {
             options.Cookie.Name = "opensaur.identity.session";
+            options.Cookie.HttpOnly = true;
+            options.Cookie.IsEssential = true;
+            options.Cookie.SameSite = SameSiteMode.Lax;
+            options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+            options.LoginPath = "/login";
+            options.ReturnUrlParameter = "returnUrl";
             options.SlidingExpiration = true;
         });
         services.AddAuthentication(options =>
@@ -109,41 +113,17 @@ public static class DependencyInjection
                 options.DefaultChallengeScheme = IdentityConstants.ApplicationScheme;
                 options.DefaultScheme = IdentityConstants.ApplicationScheme;
                 options.DefaultSignInScheme = IdentityConstants.ApplicationScheme;
-            })
-            .AddJwtBearer(
-                FirstPartyAuthDefaults.AuthenticationScheme,
-                options =>
-                {
-                    options.RequireHttpsMetadata = true;
-                    options.MapInboundClaims = false;
-                    options.TokenValidationParameters = new TokenValidationParameters
-                    {
-                        ClockSkew = TimeSpan.Zero,
-                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(firstPartyAuthOptions.SigningKey)),
-                        NameClaimType = ApplicationClaimTypes.Name,
-                        RoleClaimType = ApplicationClaimTypes.Role,
-                        ValidateAudience = true,
-                        ValidateIssuer = true,
-                        ValidateIssuerSigningKey = true,
-                        ValidateLifetime = true,
-                        ValidAudience = firstPartyAuthOptions.Audience,
-                        ValidIssuer = oidcOptions.Issuer
-                    };
-                });
+            });
         services.AddAuthorization(options =>
         {
             options.AddPolicy(
                 AuthorizationPolicies.Api,
                 policy =>
                 {
-                    policy.AddAuthenticationSchemes(
-                        FirstPartyAuthDefaults.AuthenticationScheme,
-                        OpenIddictValidationAspNetCoreDefaults.AuthenticationScheme);
+                    policy.AddAuthenticationSchemes(OpenIddictValidationAspNetCoreDefaults.AuthenticationScheme);
                     policy.RequireAuthenticatedUser();
                 });
         });
-        services.AddScoped<FirstPartyJwtTokenService>();
-        services.AddScoped<FirstPartyRefreshTokenService>();
         services.AddScoped<ICurrentUserAccessor, HttpContextCurrentUserAccessor>();
         services.AddScoped<PermissionAuthorizationService>();
         services.AddOpenIddict()
@@ -170,6 +150,7 @@ public static class DependencyInjection
                     "api");
                 options.SetAccessTokenLifetime(TimeSpan.FromHours(1));
                 options.SetRefreshTokenLifetime(TimeSpan.FromDays(14));
+                options.SetRefreshTokenReuseLeeway(TimeSpan.Zero);
 
                 // Access tokens are validated as plain JWTs by resource servers using
                 // shared signing material. Token encryption is not part of the current model.
@@ -177,8 +158,7 @@ public static class DependencyInjection
                 ConfigureOidcKeyMaterial(options, oidcOptions, environment);
                 options.UseAspNetCore()
                     .EnableAuthorizationEndpointPassthrough()
-                    .EnableEndSessionEndpointPassthrough()
-                    .EnableTokenEndpointPassthrough();
+                    .EnableEndSessionEndpointPassthrough();
             })
             .AddValidation(options =>
             {
@@ -236,6 +216,7 @@ public static class DependencyInjection
 
     public static IEndpointRouteBuilder MapOpenSaurEndpoints(this IEndpointRouteBuilder app)
     {
+        app.MapOidcEndpoints();
         app.MapAuthEndpoints();
 
         return app;

@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
 using OpenSaur.Identity.Web.Domain.Identity;
 using OpenSaur.Identity.Web.Infrastructure;
@@ -15,21 +16,19 @@ public static class AuthEndpoints
 
         auth.MapPost(
             "/login",
-            async Task<IResult> (
+            async Task<IResult>(
                 LoginRequest request,
                 ApplicationDbContext dbContext,
                 UserManager<ApplicationUser> userManager,
-                FirstPartyJwtTokenService jwtTokenService,
-                FirstPartyRefreshTokenService refreshTokenService,
-                HttpContext httpContext) =>
+                SignInManager<ApplicationUser> signInManager) =>
             {
-                var user = await userManager.FindByNameAsync(request.UserName);
-                if (user is null)
+                if (string.IsNullOrWhiteSpace(request.UserName) || string.IsNullOrWhiteSpace(request.Password))
                 {
                     return Results.Unauthorized();
                 }
 
-                if (!user.IsActive)
+                var user = await userManager.FindByNameAsync(request.UserName);
+                if (user is null || !user.IsActive)
                 {
                     return Results.Unauthorized();
                 }
@@ -46,22 +45,28 @@ public static class AuthEndpoints
                     return Results.Unauthorized();
                 }
 
-                var roles = await userManager.GetRolesAsync(user);
-                var accessToken = jwtTokenService.CreateToken(user, roles);
-                await refreshTokenService.IssueAsync(httpContext, user);
+                await signInManager.SignInAsync(user, isPersistent: false);
 
-                return Results.Ok(ToAuthResponse(user, roles, accessToken));
-            });
+                return Results.NoContent();
+            })
+            .AllowAnonymous();
+
+        auth.MapPost(
+            "/logout",
+            async Task<IResult>(HttpContext httpContext) =>
+            {
+                await httpContext.SignOutAsync(IdentityConstants.ApplicationScheme);
+
+                return Results.NoContent();
+            })
+            .AllowAnonymous();
 
         auth.MapPost(
             "/change-password",
             async Task<IResult>(
                 ChangePasswordRequest request,
                 ClaimsPrincipal principal,
-                UserManager<ApplicationUser> userManager,
-                FirstPartyJwtTokenService jwtTokenService,
-                FirstPartyRefreshTokenService refreshTokenService,
-                HttpContext httpContext) =>
+                UserManager<ApplicationUser> userManager) =>
             {
                 var userId = GetUserId(principal);
                 if (string.IsNullOrWhiteSpace(userId))
@@ -99,81 +104,14 @@ public static class AuthEndpoints
                             updateResult.Errors
                                 .GroupBy(static error => error.Code)
                                 .ToDictionary(
-                                    group => group.Key,
-                                    group => group.Select(static error => error.Description).ToArray()));
+                                group => group.Key,
+                                group => group.Select(static error => error.Description).ToArray()));
                     }
                 }
 
-                var roles = await userManager.GetRolesAsync(user);
-                var accessToken = jwtTokenService.CreateToken(user, roles);
-                await refreshTokenService.IssueAsync(httpContext, user);
-
-                return Results.Ok(ToAuthResponse(user, roles, accessToken));
+                return Results.NoContent();
             })
             .RequireAuthorization(AuthorizationPolicies.Api);
-
-        auth.MapPost(
-            "/refresh",
-            async Task<IResult> (
-                ApplicationDbContext dbContext,
-                UserManager<ApplicationUser> userManager,
-                FirstPartyJwtTokenService jwtTokenService,
-                FirstPartyRefreshTokenService refreshTokenService,
-                HttpContext httpContext) =>
-            {
-                var validationResult = await refreshTokenService.ValidateAsync(httpContext);
-                if (!validationResult.IsValid)
-                {
-                    return Results.Unauthorized();
-                }
-
-                var user = validationResult.User!;
-                if (!user.IsActive)
-                {
-                    await refreshTokenService.ClearAsync(httpContext, user);
-                    return Results.Unauthorized();
-                }
-
-                var workspace = await dbContext.Workspaces.FindAsync(user.WorkspaceId);
-                if (workspace is null || !workspace.IsActive)
-                {
-                    await refreshTokenService.ClearAsync(httpContext, user);
-                    return Results.Unauthorized();
-                }
-
-                var roles = await userManager.GetRolesAsync(user);
-                var accessToken = jwtTokenService.CreateToken(user, roles);
-                await refreshTokenService.IssueAsync(httpContext, user);
-
-                return Results.Ok(ToAuthResponse(user, roles, accessToken));
-            });
-
-        auth.MapPost(
-            "/logout",
-            async Task<IResult> (
-                ClaimsPrincipal principal,
-                UserManager<ApplicationUser> userManager,
-                FirstPartyRefreshTokenService refreshTokenService,
-                HttpContext httpContext) =>
-            {
-                ApplicationUser? user = null;
-                var userId = GetUserId(principal);
-                if (!string.IsNullOrWhiteSpace(userId))
-                {
-                    user = await userManager.FindByIdAsync(userId);
-                }
-
-                if (user is null)
-                {
-                    var validationResult = await refreshTokenService.ValidateAsync(httpContext);
-                    user = validationResult.User;
-                }
-
-                await refreshTokenService.ClearAsync(httpContext, user);
-
-                return Results.Ok();
-            })
-            .AllowAnonymous();
 
         auth.MapGet("/me", (ClaimsPrincipal user) =>
             Results.Ok(new
@@ -186,21 +124,6 @@ public static class AuthEndpoints
             .RequireAuthorization(AuthorizationPolicies.Api);
 
         return app;
-    }
-
-    private static AuthResponse ToAuthResponse(
-        ApplicationUser user,
-        IEnumerable<string> roles,
-        AccessTokenResult accessToken)
-    {
-        return new AuthResponse(
-            accessToken.Token,
-            accessToken.ExpiresAtUtc,
-            new AuthUser(
-                user.Id.ToString(),
-                user.UserName ?? string.Empty,
-                roles.ToArray(),
-                user.RequirePasswordChange));
     }
 
     private static string? GetUserId(ClaimsPrincipal principal)
@@ -217,9 +140,4 @@ public static class AuthEndpoints
 }
 
 public sealed record LoginRequest(string UserName, string Password);
-
 public sealed record ChangePasswordRequest(string CurrentPassword, string NewPassword);
-
-public sealed record AuthResponse(string AccessToken, DateTime ExpiresAtUtc, AuthUser User);
-
-public sealed record AuthUser(string Id, string UserName, string[] Roles, bool RequirePasswordChange);

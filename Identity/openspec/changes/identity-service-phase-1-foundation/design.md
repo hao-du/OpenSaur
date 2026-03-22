@@ -5,7 +5,7 @@
 - PostgreSQL with EF Core migrations and manual SQL script execution only
 - ASP.NET Core Identity for users/roles and OpenIddict for future client integrations
 - JWT-based auth for all parties
-- A shared hosted login screen reused by first-party and third-party flows
+- A shared FE login experience reused by first-party and third-party flows
 - Action-style minimal APIs instead of RESTful controller/state endpoints
 - Soft delete via `IsActive` instead of delete endpoints
 - Audited app-owned tables with `Description`
@@ -19,7 +19,7 @@ The service must stay maintainable, so the implementation should prefer vertical
 
 - Establish a single ASP.NET Core host that acts as both the first-party API backend and the central OpenIddict authorization server.
 - Model users, roles, workspaces, permissions, role-permissions, user-role assignments, and outbox messages with auditable app-owned data structures.
-- Support first-party browser login using JWT access tokens plus a protected refresh-token mechanism.
+- Support first-party browser login using the same OpenIddict authorization code flow and rotating refresh tokens as other clients.
 - Support a deterministic bootstrap administrator account that is forced through a self-service password change on first login.
 - Support future third-party clients using OpenIddict authorization code flow with rotating refresh tokens.
 - Enforce hierarchical permissions and workspace-aware administration.
@@ -43,27 +43,30 @@ Alternatives considered:
 - Custom JWT service without OpenIddict: simpler initially, but creates migration risk for future third-party integrations.
 - Fully custom auth tables: more control, but too much security/maintenance cost for Phase 1.
 
-### 2. Use JWT access tokens for all clients, but keep refresh tokens client-bound and protected
+### 2. Use one OpenIddict token model for all clients
 
-Both first-party and third-party clients will use JWT access tokens. Refresh tokens will be client-bound and rotated on every refresh. The first-party app will not share token instances with third-party clients; instead, all clients will reuse the same hosted login UI and central authorization server session.
+Both first-party and third-party clients will use JWT access tokens issued by OpenIddict. Refresh tokens will be client-bound and rotated on every refresh. The first-party app will not have a separate custom JWT/refresh pipeline; instead, all clients will reuse the same hosted login UI and central authorization server session, while still receiving their own client-bound token sets.
 
 Alternatives considered:
 
 - Cookie-only first-party sessions: simpler browser flow, but rejected because the requirement is JWT for all parties.
+- Separate custom first-party JWT helpers: rejected because they duplicate protocol behavior already handled by OpenIddict.
 - Shared token set across clients: rejected because refresh tokens must remain client-bound for security and auditability.
 
-### 3. Keep the hosted login UI inside the identity service
+### 3. Keep the login experience FE-owned while the identity service owns the auth protocol
 
-The identity service will own the login experience so both first-party and third-party clients can redirect to the same hosted screen. A successful login establishes the authorization server session and allows silent reuse of that login across clients when policy permits.
+The identity service will own the authentication/session protocol so both first-party and third-party clients can redirect into the same auth-server path. The browser-rendered login page itself will be implemented in the FE phase on the same host. That FE page will submit JSON credentials to the backend login API, and after a successful response the FE will navigate the browser back to the `returnUrl` supplied by the authorization request.
+
+The hosted identity-server session will use the ASP.NET Core Identity application cookie with JSON `/api/auth/login` and `/api/auth/logout` backend routes. The cookie will remain separate from bearer-token API auth and will use browser-friendly cookie settings so authorization requests originating from other sites can still reuse the session when redirected back to the identity service. Anonymous authorization requests will be redirected to the FE login route, not to a server-rendered login page.
 
 Alternatives considered:
 
-- Separate login UI hosted by the first-party app: weakens reuse and complicates third-party client integration.
-- Different login screens per client: increases inconsistency and maintenance cost.
+- Separate login UI per client: increases inconsistency and maintenance cost.
+- Server-rendered temporary login pages in the backend: acceptable for scaffolding, but not the desired long-term contract.
 
 ### 4. Use vertical slices with action-style minimal API endpoints
 
-Backend use cases will be organized by feature slice, with each slice owning its endpoint mapping, request/response models, validation, and data access. Routes will be action-oriented, such as `/api/user/get`, `/api/user/create`, `/api/role/edit`, and `/api/auth/refresh`, to align with the requested API style.
+Backend use cases will be organized by feature slice, with each slice owning its endpoint mapping, request/response models, validation, and data access. Routes will be action-oriented where the route is a domain/account helper, such as `/api/user/get`, `/api/user/create`, `/api/role/edit`, `/api/auth/login`, `/api/auth/logout`, `/api/auth/change-password`, and `/api/auth/me`. These custom endpoints will accept JSON bodies and return API responses only. OIDC protocol endpoints like `/connect/authorize` and `/connect/token` remain standard redirect/token endpoints.
 
 Alternatives considered:
 
@@ -107,7 +110,7 @@ Alternatives considered:
 
 ### 9. Seed a bootstrap administrator account that must rotate its password
 
-Phase 1 seeds a deterministic `SystemAdministrator` account so a new environment can be accessed immediately after the reviewed SQL is applied. The seeded account starts with `RequirePasswordChange = true`, and the self-service password change endpoint clears that flag and returns a fresh access token after a successful password update.
+Phase 1 seeds a deterministic `SystemAdministrator` account so a new environment can be accessed immediately after the reviewed SQL is applied. The seeded account starts with `RequirePasswordChange = true`, and the self-service password change endpoint clears that flag. After the password is changed, the client must re-authenticate through the normal OpenIddict flow to receive updated token claims.
 
 Alternatives considered:
 
@@ -126,8 +129,9 @@ Alternatives considered:
 ## Risks / Trade-offs
 
 - [Short-lived JWT access tokens still remain valid until expiry] -> Enable OpenIddict token/authorization entry validation where appropriate and keep access tokens short-lived.
-- [Using JWT for the first-party app increases browser auth complexity compared with cookie-only sessions] -> Hide refresh tokens from JavaScript and keep the first-party refresh flow backend-assisted.
+- [Using OpenIddict for the first-party app increases browser auth complexity compared with custom helper endpoints] -> Keep the protocol unified now so the FE phase only has one authentication model to integrate.
 - [Client-bound token sets add more configuration] -> Register the first-party web app as an OpenIddict client and keep client registration patterns consistent for future clients.
+- [Strict one-time refresh-token rotation can reject truly concurrent client refreshes] -> Set the OpenIddict refresh-token reuse leeway explicitly and keep third-party clients from parallelizing refresh attempts.
 - [Manual DB execution can slow deployment] -> Generate idempotent scripts and document a clear operator workflow.
 - [The bootstrap administrator credential is deterministic] -> Force `RequirePasswordChange` on first login and require operators to rotate it immediately after first use.
 - [Permission hierarchy bugs could over-grant access] -> Centralize hierarchy resolution and add focused authorization tests.
@@ -139,7 +143,7 @@ Alternatives considered:
 2. Scaffold initial EF Core migrations for Identity, OpenIddict, custom domain tables, and outbox messages.
 3. Generate an idempotent SQL migration script for manual review.
 4. Embed deterministic seed data for baseline roles, workspace, permission catalog rows, and the bootstrap `SystemAdministrator` account in migration-safe logic.
-5. After manual script execution, verify the first-party auth flow and API authorization in a non-production environment.
+5. After manual script execution, verify the shared OpenIddict flow and API authorization in a non-production environment.
 
 Rollback will rely on standard database rollback procedures and migration-aware restore plans, because the service will not auto-apply schema changes.
 
