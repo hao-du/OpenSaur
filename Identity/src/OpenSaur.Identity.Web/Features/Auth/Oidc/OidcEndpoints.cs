@@ -7,6 +7,7 @@ using OpenIddict.Abstractions;
 using OpenIddict.Server.AspNetCore;
 using OpenSaur.Identity.Web.Domain.Identity;
 using OpenSaur.Identity.Web.Infrastructure.Persistence;
+using OpenSaur.Identity.Web.Infrastructure.Resilience;
 using OpenSaur.Identity.Web.Infrastructure.Security;
 
 namespace OpenSaur.Identity.Web.Features.Auth.Oidc;
@@ -83,7 +84,8 @@ public static class OidcEndpoints
                     principal,
                     authenticationScheme: OpenIddictServerAspNetCoreDefaults.AuthenticationScheme);
             })
-            .AllowAnonymous();
+            .AllowAnonymous()
+            .WithResilienceScope(EndpointResiliencePolicyScope.Token);
 
         return app;
     }

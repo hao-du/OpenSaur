@@ -39,3 +39,12 @@
 - [ ] 6.2 Add automated tests for outbox message creation and soft-delete behavior.
 - [ ] 6.3 Document the manual migration-script review/execution workflow and the Phase 1 operational assumptions.
 - [x] 6.4 Add development-only Swagger/OpenAPI support with bearer-auth documentation and host-level availability tests.
+
+## 7. Endpoint Resilience
+
+- [x] 7.1 Add the required ASP.NET Core resilience dependencies and configuration options for rate limiting, idempotency, and inbound circuit breaker policies.
+- [x] 7.2 Configure a default rate-limit policy for all endpoints with stricter named policies for sensitive auth and token routes.
+- [x] 7.3 Add `HybridCache`-backed idempotency handling for selected mutating application endpoints using `Idempotency-Key`, endpoint metadata, and request fingerprinting.
+- [x] 7.4 Implement endpoint-aware inbound circuit breaker behavior that opens on repeated `5xx`/exception failures and returns `503` while open.
+- [x] 7.5 Add automated tests for rate limiting, idempotent replay/conflict handling, and circuit-breaker open/half-open behavior.
+- [x] 7.6 Document Phase 1 resilience thresholds, idempotency storage assumptions, and rollback expectations.

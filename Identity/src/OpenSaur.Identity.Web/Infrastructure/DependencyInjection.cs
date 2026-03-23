@@ -1,9 +1,11 @@
 using System.Security.Cryptography.X509Certificates;
 using System.Security.Claims;
+using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.Extensions.Caching.Hybrid;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using OpenIddict.Abstractions;
@@ -14,6 +16,9 @@ using OpenSaur.Identity.Web.Features.Users;
 using OpenSaur.Identity.Web.Infrastructure.Authorization;
 using OpenSaur.Identity.Web.Domain.Identity;
 using OpenSaur.Identity.Web.Infrastructure.Persistence;
+using OpenSaur.Identity.Web.Infrastructure.Resilience;
+using OpenSaur.Identity.Web.Infrastructure.Resilience.CircuitBreaker;
+using OpenSaur.Identity.Web.Infrastructure.Resilience.Idempotency;
 using OpenSaur.Identity.Web.Infrastructure.Security;
 
 namespace OpenSaur.Identity.Web.Infrastructure;
@@ -29,6 +34,8 @@ public static class DependencyInjection
             ?? throw new InvalidOperationException("Connection string 'IdentityDb' is required.");
         var oidcOptions = configuration.GetRequiredSection(OidcOptions.SectionName).Get<OidcOptions>()
             ?? throw new InvalidOperationException("OIDC configuration is required.");
+        var endpointResilienceOptions = new EndpointResilienceOptions();
+        configuration.GetSection(EndpointResilienceOptions.SectionName).Bind(endpointResilienceOptions);
 
         services.AddProblemDetails();
         services.AddEndpointsApiExplorer();
@@ -70,6 +77,7 @@ public static class DependencyInjection
                 });
         });
         services.AddDataProtection();
+        services.AddHybridCache();
         services.AddHttpsRedirection(options => options.HttpsPort = 443);
         services.AddHttpContextAccessor();
         services.Configure<ForwardedHeadersOptions>(options =>
@@ -82,6 +90,8 @@ public static class DependencyInjection
             options.KnownProxies.Clear();
         });
         services.Configure<OidcOptions>(configuration.GetRequiredSection(OidcOptions.SectionName));
+        services.Configure<EndpointResilienceOptions>(configuration.GetSection(EndpointResilienceOptions.SectionName));
+        services.AddSingleton(endpointResilienceOptions);
         services.AddDbContext<ApplicationDbContext>(options =>
         {
             options.UseNpgsql(connectionString);
@@ -130,6 +140,36 @@ public static class DependencyInjection
         services.AddScoped<PermissionAuthorizationService>();
         services.AddScoped<UserAuthorizationService>();
         services.AddScoped<IAuthorizationHandler, PermissionAuthorizationHandler>();
+        services.AddSingleton<InboundCircuitBreakerStateStore>();
+        services.AddSingleton<IdempotencyRequestLockProvider>();
+        services.AddRateLimiter(
+            options =>
+            {
+                options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+                options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(
+                    httpContext =>
+                    {
+                        var callerScope = EndpointResilienceCallerScope.GetPartitionKey(httpContext);
+                        var policyScope = EndpointResiliencePolicySelector.SelectScope(httpContext);
+                        var policy = policyScope switch
+                        {
+                            EndpointResiliencePolicyScope.Auth => endpointResilienceOptions.RateLimiting.Auth,
+                            EndpointResiliencePolicyScope.Token => endpointResilienceOptions.RateLimiting.Token,
+                            _ => endpointResilienceOptions.RateLimiting.Default
+                        };
+
+                        return RateLimitPartition.GetFixedWindowLimiter(
+                            $"{policyScope}:{callerScope}",
+                            _ => new FixedWindowRateLimiterOptions
+                            {
+                                AutoReplenishment = true,
+                                PermitLimit = policy.PermitLimit,
+                                QueueLimit = policy.QueueLimit,
+                                QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                                Window = TimeSpan.FromSeconds(policy.WindowSeconds)
+                            });
+                    });
+            });
         services.AddOpenIddict()
             .AddCore(options =>
             {

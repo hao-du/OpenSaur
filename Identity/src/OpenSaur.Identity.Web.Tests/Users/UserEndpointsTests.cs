@@ -122,7 +122,8 @@ public sealed class UserEndpointsTests : IClassFixture<OpenSaurWebApplicationFac
         var accessToken = await GetAccessTokenAsync(client, managerCredentials.UserName, managerCredentials.Password);
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
-        var response = await client.PostAsJsonAsync(
+        var response = await PostAsJsonWithIdempotencyAsync(
+            client,
             "/api/user/create",
             new CreateUserRequest(
                 newUserCredentials.UserName,
@@ -156,7 +157,8 @@ public sealed class UserEndpointsTests : IClassFixture<OpenSaurWebApplicationFac
         var accessToken = await GetAccessTokenAsync(client, managerCredentials.UserName, managerCredentials.Password);
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
-        var response = await client.PutAsJsonAsync(
+        var response = await PutAsJsonWithIdempotencyAsync(
+            client,
             "/api/user/edit",
             new EditUserRequest(
                 targetUserId,
@@ -193,7 +195,8 @@ public sealed class UserEndpointsTests : IClassFixture<OpenSaurWebApplicationFac
         var accessToken = await GetAccessTokenAsync(client, managerCredentials.UserName, managerCredentials.Password);
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
-        var response = await client.PutAsJsonAsync(
+        var response = await PutAsJsonWithIdempotencyAsync(
+            client,
             "/api/user/edit",
             new EditUserRequest(
                 targetUserId,
@@ -220,7 +223,8 @@ public sealed class UserEndpointsTests : IClassFixture<OpenSaurWebApplicationFac
         var accessToken = await GetAccessTokenAsync(client, managerCredentials.UserName, managerCredentials.Password);
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
-        var response = await client.PutAsJsonAsync(
+        var response = await PutAsJsonWithIdempotencyAsync(
+            client,
             "/api/user/changepassword",
             new ChangeUserPasswordRequest(targetUserId, resetPassword));
 
@@ -259,7 +263,8 @@ public sealed class UserEndpointsTests : IClassFixture<OpenSaurWebApplicationFac
         var accessToken = await GetAccessTokenAsync(client, managerCredentials.UserName, managerCredentials.Password);
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
-        var response = await client.PutAsJsonAsync(
+        var response = await PutAsJsonWithIdempotencyAsync(
+            client,
             "/api/user/changepassword",
             new ChangeUserPasswordRequest(targetUserId, TestFakers.CreatePassword()));
 
@@ -279,7 +284,8 @@ public sealed class UserEndpointsTests : IClassFixture<OpenSaurWebApplicationFac
         var accessToken = await GetAccessTokenAsync(client, administratorCredentials.UserName, administratorCredentials.Password);
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
-        var response = await client.PutAsJsonAsync(
+        var response = await PutAsJsonWithIdempotencyAsync(
+            client,
             "/api/user/change-workspace",
             new ChangeUserWorkspaceRequest(targetUserId, targetWorkspaceId));
 
@@ -297,7 +303,8 @@ public sealed class UserEndpointsTests : IClassFixture<OpenSaurWebApplicationFac
         var accessToken = await GetAccessTokenAsync(client, "SystemAdministrator", "Password1");
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
-        var response = await client.PutAsJsonAsync(
+        var response = await PutAsJsonWithIdempotencyAsync(
+            client,
             "/api/user/change-workspace",
             new ChangeUserWorkspaceRequest(targetUserId, targetWorkspaceId));
 
@@ -321,7 +328,8 @@ public sealed class UserEndpointsTests : IClassFixture<OpenSaurWebApplicationFac
         var accessToken = await GetAccessTokenAsync(client, "SystemAdministrator", "Password1");
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
-        var response = await client.PutAsJsonAsync(
+        var response = await PutAsJsonWithIdempotencyAsync(
+            client,
             "/api/user/change-workspace",
             new ChangeUserWorkspaceRequest(targetUserId, targetWorkspaceId));
 
@@ -476,6 +484,37 @@ public sealed class UserEndpointsTests : IClassFixture<OpenSaurWebApplicationFac
         using var payload = await JsonDocument.ParseAsync(payloadStream);
 
         return payload.RootElement.GetProperty("access_token").GetString();
+    }
+
+    private static Task<HttpResponseMessage> PostAsJsonWithIdempotencyAsync<TRequest>(
+        HttpClient client,
+        string requestUri,
+        TRequest payload)
+    {
+        return SendJsonWithIdempotencyAsync(client, HttpMethod.Post, requestUri, payload);
+    }
+
+    private static Task<HttpResponseMessage> PutAsJsonWithIdempotencyAsync<TRequest>(
+        HttpClient client,
+        string requestUri,
+        TRequest payload)
+    {
+        return SendJsonWithIdempotencyAsync(client, HttpMethod.Put, requestUri, payload);
+    }
+
+    private static async Task<HttpResponseMessage> SendJsonWithIdempotencyAsync<TRequest>(
+        HttpClient client,
+        HttpMethod method,
+        string requestUri,
+        TRequest payload)
+    {
+        using var request = new HttpRequestMessage(method, requestUri)
+        {
+            Content = JsonContent.Create(payload)
+        };
+        request.Headers.Add("Idempotency-Key", Guid.NewGuid().ToString("N"));
+
+        return await client.SendAsync(request);
     }
 
     private static string CreateAuthorizeUrl()

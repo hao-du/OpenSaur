@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
@@ -20,12 +21,26 @@ public sealed class OpenSaurWebApplicationFactory : WebApplicationFactory<Progra
     public const string Issuer = "https://identity.test.opensaur";
     private const string IdentityDbConnectionString = "Host=localhost;Port=5432;Database=opensaur_identity_tests;Username=test;Password=test";
 
+    private readonly IReadOnlyDictionary<string, string?> _settings;
+    private readonly Action<IWebHostBuilder>? _configureWebHost;
+    private readonly Action<DbContextOptionsBuilder>? _configureDbContext;
     private readonly SqliteConnection _connection = new("DataSource=:memory:");
     private readonly SemaphoreSlim _databaseInitializationLock = new(1, 1);
     private bool _databaseInitialized;
 
     public OpenSaurWebApplicationFactory()
+        : this(null, null, null)
     {
+    }
+
+    internal OpenSaurWebApplicationFactory(
+        IReadOnlyDictionary<string, string?>? settings = null,
+        Action<IWebHostBuilder>? configureWebHost = null,
+        Action<DbContextOptionsBuilder>? configureDbContext = null)
+    {
+        _settings = settings ?? new Dictionary<string, string?>();
+        _configureWebHost = configureWebHost;
+        _configureDbContext = configureDbContext;
         _connection.Open();
     }
 
@@ -34,6 +49,20 @@ public sealed class OpenSaurWebApplicationFactory : WebApplicationFactory<Progra
         builder.UseEnvironment(Environments.Development);
         builder.UseSetting("ConnectionStrings:IdentityDb", IdentityDbConnectionString);
         builder.UseSetting("Oidc:Issuer", Issuer);
+        builder.UseSetting("EndpointResilience:RateLimiting:Default:PermitLimit", "1000");
+        builder.UseSetting("EndpointResilience:RateLimiting:Auth:PermitLimit", "1000");
+        builder.UseSetting("EndpointResilience:RateLimiting:Token:PermitLimit", "1000");
+        builder.UseSetting("EndpointResilience:CircuitBreaker:Default:FailureThreshold", "100");
+        builder.UseSetting("EndpointResilience:CircuitBreaker:Auth:FailureThreshold", "100");
+        builder.UseSetting("EndpointResilience:CircuitBreaker:Token:FailureThreshold", "100");
+        foreach (var setting in _settings)
+        {
+            if (!string.IsNullOrWhiteSpace(setting.Value))
+            {
+                builder.UseSetting(setting.Key, setting.Value);
+            }
+        }
+
         builder.ConfigureServices(
             services =>
             {
@@ -48,8 +77,10 @@ public sealed class OpenSaurWebApplicationFactory : WebApplicationFactory<Progra
                     {
                         options.UseSqlite(_connection);
                         options.UseOpenIddict<Guid>();
+                        _configureDbContext?.Invoke(options);
                     });
             });
+        _configureWebHost?.Invoke(builder);
     }
 
     protected override IHost CreateHost(IHostBuilder builder)

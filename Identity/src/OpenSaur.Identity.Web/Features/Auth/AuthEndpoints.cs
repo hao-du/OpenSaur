@@ -3,6 +3,7 @@ using OpenSaur.Identity.Web.Features.Auth.Login;
 using OpenSaur.Identity.Web.Features.Auth.Logout;
 using OpenSaur.Identity.Web.Features.Auth.Me;
 using OpenSaur.Identity.Web.Infrastructure;
+using OpenSaur.Identity.Web.Infrastructure.Resilience;
 
 namespace OpenSaur.Identity.Web.Features.Auth;
 
@@ -13,13 +14,16 @@ public static class AuthEndpoints
         var auth = app.MapGroup("/api/auth");
 
         auth.MapPost("/login", LoginHandler.HandleAsync)
-            .AllowAnonymous();
+            .AllowAnonymous()
+            .WithResilienceScope(EndpointResiliencePolicyScope.Auth);
 
         auth.MapPost("/logout", (Delegate)LogoutHandler.HandleAsync)
-            .RequireAuthorization(AuthorizationPolicies.Api);
+            .RequireAuthorization(AuthorizationPolicies.Api)
+            .WithResilienceScope(EndpointResiliencePolicyScope.Auth);
 
         auth.MapPost("/change-password", ChangePasswordHandler.HandleAsync)
-            .RequireAuthorization(AuthorizationPolicies.Api);
+            .RequireAuthorization(AuthorizationPolicies.Api)
+            .WithResilienceScope(EndpointResiliencePolicyScope.Auth);
 
         auth.MapGet("/me", GetCurrentUserHandler.Handle)
             .RequireAuthorization(AuthorizationPolicies.Api);

@@ -44,7 +44,6 @@ public sealed class ApplicationDbContext
     public DbSet<RolePermission> RolePermissions => Set<RolePermission>();
 
     public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
-
     public override int SaveChanges(bool acceptAllChangesOnSuccess)
     {
         ApplyRuntimeEntityDefaults();

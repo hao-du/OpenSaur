@@ -23,6 +23,7 @@ The service must stay maintainable, so the implementation should prefer vertical
 - Support a deterministic bootstrap administrator account that is forced through a self-service password change on first login.
 - Support future third-party clients using OpenIddict authorization code flow with rotating refresh tokens.
 - Enforce hierarchical permissions and workspace-aware administration.
+- Apply endpoint resilience policies for rate limiting, selected write idempotency, and inbound circuit breaker behavior.
 - Produce EF Core migrations and idempotent SQL scripts without automatically executing them.
 
 **Non-Goals:**
@@ -31,6 +32,7 @@ The service must stay maintainable, so the implementation should prefer vertical
 - Impersonation UI and advanced cross-workspace admin experience
 - Message broker publishing from the outbox in Phase 1
 - Automatic database migration execution or script execution
+- Outbound dependency circuit breaker policies or distributed resilience state in Phase 1
 
 ## Decisions
 
@@ -126,6 +128,54 @@ Alternatives considered:
 - No Swagger: simpler, but slows backend validation and manual endpoint exploration during Phase 1.
 - Swagger in every environment: convenient, but not the preferred default for an identity-focused service.
 
+### 11. Apply built-in rate limiting to all endpoints with stricter auth/token policies
+
+Phase 1 will apply a default ASP.NET Core rate-limit policy to every endpoint, partitioned by authenticated user id when available and by client identity fallback for anonymous callers. Sensitive routes such as `/api/auth/login`, `/api/auth/logout`, `/api/auth/change-password`, `/connect/authorize`, and `/connect/token` will use stricter named policies.
+
+The initial Phase 1 thresholds are:
+
+- Default endpoints: `60` requests per `60` seconds
+- Sensitive auth endpoints: `5` requests per `60` seconds
+- OIDC authorize/token endpoints: `10` requests per `60` seconds
+
+Alternatives considered:
+
+- Protect only auth routes: rejected because the approved scope is all endpoints.
+- Custom rate-limit middleware: rejected because the platform already provides the required policy and endpoint integration model.
+
+### 12. Add idempotency only for selected mutating application endpoints
+
+Idempotency will apply only to selected `POST`/`PUT` application endpoints such as user-management writes and later role/permission write endpoints. These endpoints will opt in through endpoint metadata, require an `Idempotency-Key`, store the first completed response together with a request fingerprint in `HybridCache`, and replay that response for safe retries. OIDC protocol endpoints will not participate in this generic idempotency mechanism because they already have protocol-defined one-time semantics.
+
+The initial Phase 1 idempotent endpoints are:
+
+- `/api/user/create`
+- `/api/user/edit`
+- `/api/user/changepassword`
+- `/api/user/change-workspace`
+
+The Phase 1 idempotency replay entry will retain responses for `5` minutes in `HybridCache`. This keeps the common caching foundation reusable for later slices while avoiding a dedicated schema table, while still covering rapid duplicate clicks and page-refresh retries. Without a configured distributed secondary cache, replay guarantees remain per instance and do not survive process restarts.
+
+Alternatives considered:
+
+- Global idempotency for every endpoint: rejected because it adds storage and replay overhead to read paths and protocol routes that do not benefit from it.
+- In-memory-only idempotency: rejected because replay guarantees would be lost across restarts.
+
+### 13. Add inbound endpoint circuit breaker protection per endpoint policy scope
+
+The host will track repeated `5xx` responses and unhandled exceptions per endpoint policy scope and temporarily short-circuit requests with `503` while the circuit is open. Authentication failures, authorization failures, validation failures, and rate-limit rejections will not count toward the breaker threshold. After cooldown, a successful half-open probe closes the circuit again. Endpoint policy scope selection will be metadata-driven for application routes, with a small fallback only for OpenIddict-owned routes such as `/connect/token`.
+
+The initial Phase 1 breaker thresholds are:
+
+- Default endpoints: open after `5` counted failures, break for `30` seconds
+- Sensitive auth endpoints: open after `3` counted failures, break for `30` seconds
+- OIDC authorize/token endpoints: open after `3` counted failures, break for `30` seconds
+
+Alternatives considered:
+
+- Outbound-only circuit breaking: rejected because the approved scope is inbound endpoint protection.
+- One global breaker for the whole host: rejected because one failing route should not block unrelated endpoints.
+
 ## Risks / Trade-offs
 
 - [Short-lived JWT access tokens still remain valid until expiry] -> Enable OpenIddict token/authorization entry validation where appropriate and keep access tokens short-lived.
@@ -136,6 +186,9 @@ Alternatives considered:
 - [The bootstrap administrator credential is deterministic] -> Force `RequirePasswordChange` on first login and require operators to rotate it immediately after first use.
 - [Permission hierarchy bugs could over-grant access] -> Centralize hierarchy resolution and add focused authorization tests.
 - [Outbox rows may accumulate if publishing is not yet implemented] -> Include processing status fields and document manual inspection/cleanup expectations.
+- [Per-instance breaker and rate-limit state can diverge across scaled-out instances] -> Accept per-instance behavior in Phase 1 and keep the policy model explicit so distributed state can be added later if needed.
+- [HybridCache-backed idempotency is not durable without a distributed secondary cache] -> Accept per-instance replay guarantees in Phase 1 and allow a later Redis-backed `IDistributedCache` to strengthen cross-instance behavior without changing the endpoint contract.
+- [Overly strict thresholds can reject legitimate auth traffic] -> Apply stricter policies only to sensitive routes and make the thresholds configurable.
 
 ## Migration Plan
 
@@ -143,7 +196,8 @@ Alternatives considered:
 2. Scaffold initial EF Core migrations for Identity, OpenIddict, custom domain tables, and outbox messages.
 3. Generate an idempotent SQL migration script for manual review.
 4. Embed deterministic seed data for baseline roles, workspace, permission catalog rows, and the bootstrap `SystemAdministrator` account in migration-safe logic.
-5. After manual script execution, verify the shared OpenIddict flow and API authorization in a non-production environment.
+5. Wire the resilience policies into the host pipeline using endpoint metadata and `HybridCache`-backed idempotency replay storage.
+6. After manual script execution, verify the shared OpenIddict flow, resilience behavior, and API authorization in a non-production environment.
 
 Rollback will rely on standard database rollback procedures and migration-aware restore plans, because the service will not auto-apply schema changes.
 

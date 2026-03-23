@@ -7,6 +7,7 @@ using OpenSaur.Identity.Web.Features.Users.GetUsers;
 using OpenSaur.Identity.Web.Infrastructure.Authorization;
 using OpenSaur.Identity.Web.Infrastructure;
 using OpenSaur.Identity.Web.Domain.Permissions;
+using OpenSaur.Identity.Web.Infrastructure.Resilience;
 
 namespace OpenSaur.Identity.Web.Features.Users;
 
@@ -21,10 +22,14 @@ public static class UserEndpoints
 
         users.MapGet("/get", GetUsersHandler.HandleAsync);
         users.MapGet("/getbyid/{id:guid}", GetUserByIdHandler.HandleAsync);
-        users.MapPost("/create", CreateUserHandler.HandleAsync);
-        users.MapPut("/edit", EditUserHandler.HandleAsync);
-        users.MapPut("/changepassword", ChangeUserPasswordHandler.HandleAsync);
+        users.MapPost("/create", CreateUserHandler.HandleAsync)
+            .RequireIdempotency();
+        users.MapPut("/edit", EditUserHandler.HandleAsync)
+            .RequireIdempotency();
+        users.MapPut("/changepassword", ChangeUserPasswordHandler.HandleAsync)
+            .RequireIdempotency();
         users.MapPut("/change-workspace", ChangeUserWorkspaceHandler.HandleAsync)
+            .RequireIdempotency()
             .RequireWorkspaceAccess(restrictToSuperAdministrator: true);
 
         return app;
