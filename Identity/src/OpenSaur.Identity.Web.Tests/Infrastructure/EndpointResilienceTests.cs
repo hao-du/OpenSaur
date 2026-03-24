@@ -3,22 +3,20 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text;
-using System.Data.Common;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Data.Sqlite;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.AspNetCore.Routing.Patterns;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Diagnostics;
-using Microsoft.Extensions.Caching.Hybrid;
 using Microsoft.Extensions.DependencyInjection;
 using OpenSaur.Identity.Web.Domain.Identity;
 using OpenSaur.Identity.Web.Infrastructure.Database;
-using OpenSaur.Identity.Web.Infrastructure.Resilience;
-using OpenSaur.Identity.Web.Infrastructure.Resilience.Idempotency;
+using OpenSaur.Identity.Web.Infrastructure.Http.Configuration;
+using OpenSaur.Identity.Web.Infrastructure.Http.Idempotency;
+using OpenSaur.Identity.Web.Infrastructure.Http.Metadata;
+using OpenSaur.Identity.Web.Infrastructure.Http.RateLimiting;
 using OpenSaur.Identity.Web.Tests.Support;
 
 namespace OpenSaur.Identity.Web.Tests.Infrastructure;
@@ -65,7 +63,7 @@ public sealed class EndpointResilienceTests
             {"value":"test"}
             """);
         httpContext.RequestServices = services;
-        httpContext.SetEndpoint(CreateEndpoint(new EndpointIdempotencyMetadata()));
+        httpContext.SetEndpoint(CreateEndpoint(new EndpointResilienceMetadata { RequiresIdempotency = true }));
 
         var middleware = new IdempotencyMiddleware(
             async _ =>
@@ -73,11 +71,12 @@ public sealed class EndpointResilienceTests
                 Interlocked.Increment(ref invocationCount);
                 await Results.Ok(new MetadataReplayResponse(invocationCount)).ExecuteAsync(httpContext);
             },
-            new EndpointResilienceOptions());
+            new EndpointResilienceOptions(),
+            new EndpointResilienceContextResolver());
 
         await middleware.InvokeAsync(
             httpContext,
-            services.GetRequiredService<HybridCache>(),
+            services.GetRequiredService<IdempotencyCacheStore>(),
             services.GetRequiredService<IdempotencyRequestLockProvider>());
 
         Assert.Equal(HttpStatusCode.BadRequest, (HttpStatusCode)httpContext.Response.StatusCode);
@@ -95,7 +94,8 @@ public sealed class EndpointResilienceTests
                 var response = new MetadataReplayResponse(Interlocked.Increment(ref invocationCount));
                 await Results.Json(response).ExecuteAsync(httpContext);
             },
-            new EndpointResilienceOptions());
+            new EndpointResilienceOptions(),
+            new EndpointResilienceContextResolver());
 
         var firstContext = CreateHttpContext(
             HttpMethods.Post,
@@ -105,11 +105,11 @@ public sealed class EndpointResilienceTests
             """);
         firstContext.RequestServices = services;
         firstContext.Request.Headers["Idempotency-Key"] = "metadata-replay-key";
-        firstContext.SetEndpoint(CreateEndpoint(new EndpointIdempotencyMetadata()));
+        firstContext.SetEndpoint(CreateEndpoint(new EndpointResilienceMetadata { RequiresIdempotency = true }));
 
         await middleware.InvokeAsync(
             firstContext,
-            services.GetRequiredService<HybridCache>(),
+            services.GetRequiredService<IdempotencyCacheStore>(),
             services.GetRequiredService<IdempotencyRequestLockProvider>());
 
         var secondContext = CreateHttpContext(
@@ -120,11 +120,11 @@ public sealed class EndpointResilienceTests
             """);
         secondContext.RequestServices = services;
         secondContext.Request.Headers["Idempotency-Key"] = "metadata-replay-key";
-        secondContext.SetEndpoint(CreateEndpoint(new EndpointIdempotencyMetadata()));
+        secondContext.SetEndpoint(CreateEndpoint(new EndpointResilienceMetadata { RequiresIdempotency = true }));
 
         await middleware.InvokeAsync(
             secondContext,
-            services.GetRequiredService<HybridCache>(),
+            services.GetRequiredService<IdempotencyCacheStore>(),
             services.GetRequiredService<IdempotencyRequestLockProvider>());
 
         Assert.Equal(1, invocationCount);
@@ -136,12 +136,17 @@ public sealed class EndpointResilienceTests
     }
 
     [Fact]
-    public void Selector_WhenEndpointHasMetadataScope_UsesAnnotatedPolicyScope()
+    public void ContextResolver_WhenEndpointHasMetadataScope_UsesAnnotatedPolicyScope()
     {
         var httpContext = CreateHttpContext(HttpMethods.Get, "/__test/auth-rate");
-        httpContext.SetEndpoint(CreateEndpoint(new EndpointResilienceScopeMetadata(EndpointResiliencePolicyScope.Auth)));
+        httpContext.SetEndpoint(
+            CreateEndpoint(
+                new EndpointResilienceMetadata
+                {
+                    PolicyScope = EndpointResiliencePolicyScope.Auth
+                }));
 
-        var policyScope = EndpointResiliencePolicySelector.SelectScope(httpContext);
+        var policyScope = new EndpointResilienceContextResolver().Resolve(httpContext).PolicyScope;
 
         Assert.Equal(EndpointResiliencePolicyScope.Auth, policyScope);
     }
@@ -249,43 +254,6 @@ public sealed class EndpointResilienceTests
         Assert.Equal(HttpStatusCode.Conflict, secondResponse.StatusCode);
     }
 
-    [Fact]
-    public async Task AuthEndpoint_WhenCircuitBreakerOpens_ReturnsServiceUnavailableUntilCooldownSucceeds()
-    {
-        var probeState = new CircuitProbeState();
-        var interceptor = new ThrowingSqliteCommandInterceptor(probeState);
-
-        using var factory = CreateConfiguredFactory(
-            configureDbContext: options => options.AddInterceptors(interceptor),
-            overrides:
-            [
-                ("EndpointResilience:CircuitBreaker:Auth:FailureThreshold", "2"),
-                ("EndpointResilience:CircuitBreaker:Auth:BreakDurationSeconds", "1")
-            ]);
-
-        await factory.ResetDatabaseAsync();
-
-        using var client = CreateClient(factory);
-        probeState.ShouldFail = true;
-
-        var firstResponse = await client.PostAsJsonAsync("/api/auth/login", new LoginRequest("circuit-user", "Password1"));
-        var secondResponse = await client.PostAsJsonAsync("/api/auth/login", new LoginRequest("circuit-user", "Password1"));
-        var openResponse = await client.PostAsJsonAsync("/api/auth/login", new LoginRequest("circuit-user", "Password1"));
-
-        Assert.Equal(HttpStatusCode.InternalServerError, firstResponse.StatusCode);
-        Assert.Equal(HttpStatusCode.InternalServerError, secondResponse.StatusCode);
-        Assert.Equal(HttpStatusCode.ServiceUnavailable, openResponse.StatusCode);
-
-        probeState.ShouldFail = false;
-        await Task.Delay(TimeSpan.FromSeconds(1.1));
-
-        var halfOpenResponse = await client.PostAsJsonAsync("/api/auth/login", new LoginRequest("circuit-user", "Password1"));
-        var recoveredResponse = await client.PostAsJsonAsync("/api/auth/login", new LoginRequest("circuit-user", "Password1"));
-
-        Assert.Equal(HttpStatusCode.Unauthorized, halfOpenResponse.StatusCode);
-        Assert.Equal(HttpStatusCode.Unauthorized, recoveredResponse.StatusCode);
-    }
-
     private static OpenSaurWebApplicationFactory CreateFactory(
         params (string Key, string Value)[] overrides)
     {
@@ -305,13 +273,7 @@ public sealed class EndpointResilienceTests
             ["EndpointResilience:RateLimiting:Auth:WindowSeconds"] = "60",
             ["EndpointResilience:RateLimiting:Token:PermitLimit"] = "10",
             ["EndpointResilience:RateLimiting:Token:WindowSeconds"] = "60",
-            ["EndpointResilience:Idempotency:ReplayRetentionMinutes"] = "60",
-            ["EndpointResilience:CircuitBreaker:Default:FailureThreshold"] = "5",
-            ["EndpointResilience:CircuitBreaker:Default:BreakDurationSeconds"] = "30",
-            ["EndpointResilience:CircuitBreaker:Auth:FailureThreshold"] = "3",
-            ["EndpointResilience:CircuitBreaker:Auth:BreakDurationSeconds"] = "30",
-            ["EndpointResilience:CircuitBreaker:Token:FailureThreshold"] = "3",
-            ["EndpointResilience:CircuitBreaker:Token:BreakDurationSeconds"] = "30"
+            ["EndpointResilience:Idempotency:ReplayRetentionMinutes"] = "60"
         };
 
         foreach (var (key, value) in overrides)
@@ -338,6 +300,7 @@ public sealed class EndpointResilienceTests
         var services = new ServiceCollection();
         services.AddLogging();
         services.AddHybridCache();
+        services.AddSingleton<IdempotencyCacheStore>();
         services.AddSingleton<IdempotencyRequestLockProvider>();
         return services.BuildServiceProvider();
     }
@@ -458,61 +421,6 @@ public sealed class EndpointResilienceTests
                 ["state"] = "endpoint-resilience-state"
             });
     }
-
-    private sealed class CircuitProbeState
-    {
-        public bool ShouldFail { get; set; }
-    }
-
-    private sealed class ThrowingSqliteCommandInterceptor(CircuitProbeState probeState) : DbCommandInterceptor
-    {
-        public override InterceptionResult<DbDataReader> ReaderExecuting(
-            DbCommand command,
-            CommandEventData eventData,
-            InterceptionResult<DbDataReader> result)
-        {
-            ThrowIfRequested();
-            return base.ReaderExecuting(command, eventData, result);
-        }
-
-        public override ValueTask<InterceptionResult<DbDataReader>> ReaderExecutingAsync(
-            DbCommand command,
-            CommandEventData eventData,
-            InterceptionResult<DbDataReader> result,
-            CancellationToken cancellationToken = default)
-        {
-            ThrowIfRequested();
-            return base.ReaderExecutingAsync(command, eventData, result, cancellationToken);
-        }
-
-        public override InterceptionResult<object> ScalarExecuting(
-            DbCommand command,
-            CommandEventData eventData,
-            InterceptionResult<object> result)
-        {
-            ThrowIfRequested();
-            return base.ScalarExecuting(command, eventData, result);
-        }
-
-        public override ValueTask<InterceptionResult<object>> ScalarExecutingAsync(
-            DbCommand command,
-            CommandEventData eventData,
-            InterceptionResult<object> result,
-            CancellationToken cancellationToken = default)
-        {
-            ThrowIfRequested();
-            return base.ScalarExecutingAsync(command, eventData, result, cancellationToken);
-        }
-
-        private void ThrowIfRequested()
-        {
-            if (probeState.ShouldFail)
-            {
-                throw new SqliteException("Resilience test failure.", 1);
-            }
-        }
-    }
-
     private sealed record LoginRequest(string UserName, string Password);
 
     private sealed record CreateUserRequest(

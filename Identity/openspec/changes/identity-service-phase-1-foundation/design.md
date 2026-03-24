@@ -25,7 +25,7 @@ The service must stay maintainable, so the implementation should prefer vertical
 - Support a deterministic bootstrap administrator account that is forced through a self-service password change on first login.
 - Support future third-party clients using OpenIddict authorization code flow with rotating refresh tokens.
 - Enforce hierarchical permissions and workspace-aware administration.
-- Apply endpoint resilience policies for rate limiting, selected write idempotency, and inbound circuit breaker behavior.
+- Apply endpoint resilience policies for rate limiting and selected write idempotency.
 - Produce EF Core migrations and idempotent SQL scripts without automatically executing them.
 
 **Non-Goals:**
@@ -161,27 +161,12 @@ The initial Phase 1 idempotent endpoints are:
 - `/api/user/changepassword`
 - `/api/user/change-workspace`
 
-The Phase 1 idempotency replay entry will retain responses for `5` minutes in `HybridCache`. This keeps the common caching foundation reusable for later slices while avoiding a dedicated schema table, while still covering rapid duplicate clicks and page-refresh retries. Without a configured distributed secondary cache, replay guarantees remain per instance and do not survive process restarts.
+The Phase 1 idempotency replay entry will retain responses for `5` minutes in `HybridCache`. This keeps the common caching foundation reusable for later slices while avoiding a dedicated schema table, while still covering rapid duplicate clicks and page-refresh retries. When a distributed secondary cache such as Redis is configured, replay guarantees extend across instances; without it, they remain per instance and do not survive process restarts.
 
 Alternatives considered:
 
 - Global idempotency for every endpoint: rejected because it adds storage and replay overhead to read paths and protocol routes that do not benefit from it.
 - In-memory-only idempotency: rejected because replay guarantees would be lost across restarts.
-
-### 13. Add inbound endpoint circuit breaker protection per endpoint policy scope
-
-The host will track repeated `5xx` responses and unhandled exceptions per endpoint policy scope and temporarily short-circuit requests with `503` while the circuit is open. Authentication failures, authorization failures, validation failures, and rate-limit rejections will not count toward the breaker threshold. After cooldown, a successful half-open probe closes the circuit again. Endpoint policy scope selection will be metadata-driven for application routes, with a small fallback only for OpenIddict-owned routes such as `/connect/token`.
-
-The initial Phase 1 breaker thresholds are:
-
-- Default endpoints: open after `5` counted failures, break for `30` seconds
-- Sensitive auth endpoints: open after `3` counted failures, break for `30` seconds
-- OIDC authorize/token endpoints: open after `3` counted failures, break for `30` seconds
-
-Alternatives considered:
-
-- Outbound-only circuit breaking: rejected because the approved scope is inbound endpoint protection.
-- One global breaker for the whole host: rejected because one failing route should not block unrelated endpoints.
 
 ## Risks / Trade-offs
 
@@ -194,8 +179,8 @@ Alternatives considered:
 - [Permission hierarchy bugs could over-grant access] -> Centralize hierarchy resolution and add focused authorization tests.
 - [Vertical-slice cleanup can create file churn while the feature set is still moving] -> Keep all DB entities in `Domain/**`, limit `Infrastructure/**` to host concerns, and refactor capability logic incrementally with integration-test coverage.
 - [Outbox rows may accumulate if publishing is not yet implemented] -> Include processing status fields and document manual inspection/cleanup expectations.
-- [Per-instance breaker and rate-limit state can diverge across scaled-out instances] -> Accept per-instance behavior in Phase 1 and keep the policy model explicit so distributed state can be added later if needed.
-- [HybridCache-backed idempotency is not durable without a distributed secondary cache] -> Accept per-instance replay guarantees in Phase 1 and allow a later Redis-backed `IDistributedCache` to strengthen cross-instance behavior without changing the endpoint contract.
+- [Per-instance rate-limit state can diverge across scaled-out instances] -> Accept per-instance behavior in Phase 1 and keep the policy model explicit so distributed state can be added later if needed.
+- [HybridCache-backed idempotency still depends on distributed cache configuration for cross-instance replay] -> Support optional Redis-backed `IDistributedCache` in Phase 1 while keeping the endpoint contract unchanged when only local cache is available.
 - [Overly strict thresholds can reject legitimate auth traffic] -> Apply stricter policies only to sensitive routes and make the thresholds configurable.
 
 ## Migration Plan

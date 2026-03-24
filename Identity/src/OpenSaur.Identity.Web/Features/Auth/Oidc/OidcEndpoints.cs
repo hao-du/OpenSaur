@@ -7,7 +7,8 @@ using OpenIddict.Abstractions;
 using OpenIddict.Server.AspNetCore;
 using OpenSaur.Identity.Web.Domain.Identity;
 using OpenSaur.Identity.Web.Infrastructure.Database;
-using OpenSaur.Identity.Web.Infrastructure.Resilience;
+using OpenSaur.Identity.Web.Infrastructure.Http.Metadata;
+using OpenSaur.Identity.Web.Infrastructure.Http.RateLimiting;
 using OpenSaur.Identity.Web.Infrastructure.Security;
 
 namespace OpenSaur.Identity.Web.Features.Auth.Oidc;

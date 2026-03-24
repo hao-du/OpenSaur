@@ -64,34 +64,8 @@ The system SHALL allow application endpoints to opt into resilience policy scope
 
 #### Scenario: Application endpoint opts into a stricter resilience scope
 - **WHEN** an application endpoint is annotated with a stricter resilience scope
-- **THEN** the system applies that scope when evaluating rate limiting and inbound circuit breaker behavior
+- **THEN** the system applies that scope when evaluating rate limiting behavior
 
 #### Scenario: Application endpoint opts into idempotency
 - **WHEN** an application endpoint is annotated for idempotency handling
 - **THEN** the system requires `Idempotency-Key` and evaluates replay behavior for that endpoint even if its URL is not part of a hardcoded route list
-
-### Requirement: Endpoints SHALL participate in inbound circuit breaker protection
-The system SHALL track repeated server-side failures per endpoint policy scope and SHALL temporarily short-circuit requests with a service-unavailable response when the inbound circuit breaker is open.
-
-#### Scenario: Repeated server failures open a circuit
-- **WHEN** an endpoint accumulates failures that count toward its configured breaker threshold
-- **THEN** the system opens the inbound circuit for that endpoint policy scope
-
-#### Scenario: Open circuit rejects requests
-- **WHEN** a caller invokes an endpoint whose inbound circuit is open
-- **THEN** the system returns a service-unavailable response without executing the endpoint handler
-
-#### Scenario: Successful half-open probe closes the circuit
-- **WHEN** the breaker cooldown elapses and a subsequent probe request succeeds
-- **THEN** the system closes the circuit and resumes normal request execution
-
-### Requirement: Only server failures SHALL count toward the inbound circuit breaker
-The system SHALL count only server-side failures and unhandled exceptions toward the inbound circuit breaker, and SHALL exclude authentication failures, authorization failures, validation errors, and rate-limit rejections from breaker failure counts.
-
-#### Scenario: Client error does not trip the circuit
-- **WHEN** an endpoint returns a client error such as unauthorized, forbidden, validation failure, or not found
-- **THEN** the system does not treat that response as a breaker-counted failure
-
-#### Scenario: Rate-limit rejection does not trip the circuit
-- **WHEN** a request is rejected by rate limiting
-- **THEN** the system does not count that rejection as an inbound circuit-breaker failure

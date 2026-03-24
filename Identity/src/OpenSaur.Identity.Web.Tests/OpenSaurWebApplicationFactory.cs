@@ -52,9 +52,6 @@ public sealed class OpenSaurWebApplicationFactory : WebApplicationFactory<Progra
         builder.UseSetting("EndpointResilience:RateLimiting:Default:PermitLimit", "1000");
         builder.UseSetting("EndpointResilience:RateLimiting:Auth:PermitLimit", "1000");
         builder.UseSetting("EndpointResilience:RateLimiting:Token:PermitLimit", "1000");
-        builder.UseSetting("EndpointResilience:CircuitBreaker:Default:FailureThreshold", "100");
-        builder.UseSetting("EndpointResilience:CircuitBreaker:Auth:FailureThreshold", "100");
-        builder.UseSetting("EndpointResilience:CircuitBreaker:Token:FailureThreshold", "100");
         foreach (var setting in _settings)
         {
             if (!string.IsNullOrWhiteSpace(setting.Value))

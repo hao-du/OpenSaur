@@ -21,10 +21,11 @@ using OpenSaur.Identity.Web.Infrastructure.Authorization;
 using OpenSaur.Identity.Web.Infrastructure.Authorization.Handlers;
 using OpenSaur.Identity.Web.Infrastructure.Authorization.Services;
 using OpenSaur.Identity.Web.Infrastructure.Database;
+using OpenSaur.Identity.Web.Infrastructure.Http.Configuration;
+using OpenSaur.Identity.Web.Infrastructure.Http.Idempotency;
+using OpenSaur.Identity.Web.Infrastructure.Http.Metadata;
+using OpenSaur.Identity.Web.Infrastructure.Http.RateLimiting;
 using OpenSaur.Identity.Web.Infrastructure.Oidc;
-using OpenSaur.Identity.Web.Infrastructure.Resilience;
-using OpenSaur.Identity.Web.Infrastructure.Resilience.CircuitBreaker;
-using OpenSaur.Identity.Web.Infrastructure.Resilience.Idempotency;
 using OpenSaur.Identity.Web.Infrastructure.Security;
 
 namespace OpenSaur.Identity.Web.Infrastructure;
@@ -36,13 +37,44 @@ public static class DependencyInjection
         IConfiguration configuration,
         IHostEnvironment environment)
     {
-        var connectionString = configuration.GetConnectionString("IdentityDb")
+        var connectionString = GetRequiredIdentityConnectionString(configuration);
+        var redisConnectionString = configuration.GetConnectionString("Redis");
+        var oidcOptions = GetRequiredOidcOptions(configuration);
+        var endpointResilienceOptions = BindEndpointResilienceOptions(configuration);
+
+        services.AddDeveloperExperienceServices()
+            .AddCacheAndHostServices(configuration, redisConnectionString, endpointResilienceOptions)
+            .AddPersistenceServices(connectionString)
+            .AddIdentityAndAuthorizationServices()
+            .AddApplicationServices()
+            .AddRateLimitingServices();
+
+        services.AddOpenIddictServices(oidcOptions, environment);
+
+        return services;
+    }
+
+    private static string GetRequiredIdentityConnectionString(IConfiguration configuration)
+    {
+        return configuration.GetConnectionString("IdentityDb")
             ?? throw new InvalidOperationException("Connection string 'IdentityDb' is required.");
-        var oidcOptions = configuration.GetRequiredSection(OidcOptions.SectionName).Get<OidcOptions>()
+    }
+
+    private static OidcOptions GetRequiredOidcOptions(IConfiguration configuration)
+    {
+        return configuration.GetRequiredSection(OidcOptions.SectionName).Get<OidcOptions>()
             ?? throw new InvalidOperationException("OIDC configuration is required.");
+    }
+
+    private static EndpointResilienceOptions BindEndpointResilienceOptions(IConfiguration configuration)
+    {
         var endpointResilienceOptions = new EndpointResilienceOptions();
         configuration.GetSection(EndpointResilienceOptions.SectionName).Bind(endpointResilienceOptions);
+        return endpointResilienceOptions;
+    }
 
+    private static IServiceCollection AddDeveloperExperienceServices(this IServiceCollection services)
+    {
         services.AddProblemDetails();
         services.AddEndpointsApiExplorer();
         services.AddSwaggerGen(options =>
@@ -82,7 +114,23 @@ public static class DependencyInjection
                     ] = []
                 });
         });
+
+        return services;
+    }
+
+    private static IServiceCollection AddCacheAndHostServices(
+        this IServiceCollection services,
+        IConfiguration configuration,
+        string? redisConnectionString,
+        EndpointResilienceOptions endpointResilienceOptions)
+    {
         services.AddDataProtection();
+
+        if (!string.IsNullOrWhiteSpace(redisConnectionString))
+        {
+            services.AddStackExchangeRedisCache(options => options.Configuration = redisConnectionString);
+        }
+
         services.AddHybridCache();
         services.AddHttpsRedirection(options => options.HttpsPort = 443);
         services.AddHttpContextAccessor();
@@ -98,11 +146,23 @@ public static class DependencyInjection
         services.Configure<OidcOptions>(configuration.GetRequiredSection(OidcOptions.SectionName));
         services.Configure<EndpointResilienceOptions>(configuration.GetSection(EndpointResilienceOptions.SectionName));
         services.AddSingleton(endpointResilienceOptions);
+
+        return services;
+    }
+
+    private static IServiceCollection AddPersistenceServices(this IServiceCollection services, string connectionString)
+    {
         services.AddDbContext<ApplicationDbContext>(options =>
         {
             options.UseNpgsql(connectionString);
             options.UseOpenIddict<Guid>();
         });
+
+        return services;
+    }
+
+    private static IServiceCollection AddIdentityAndAuthorizationServices(this IServiceCollection services)
+    {
         services.AddIdentity<ApplicationUser, ApplicationRole>(options =>
             {
                 options.User.RequireUniqueEmail = true;
@@ -142,12 +202,26 @@ public static class DependencyInjection
                     policy.RequireAuthenticatedUser();
                 });
         });
+
+        return services;
+    }
+
+    private static IServiceCollection AddApplicationServices(this IServiceCollection services)
+    {
         services.AddScoped<ICurrentUserAccessor, HttpContextCurrentUserAccessor>();
         services.AddScoped<PermissionAuthorizationService>();
         services.AddScoped<UserAuthorizationService>();
         services.AddScoped<IAuthorizationHandler, PermissionAuthorizationHandler>();
-        services.AddSingleton<InboundCircuitBreakerStateStore>();
+        services.AddSingleton<IdempotencyCacheStore>();
         services.AddSingleton<IdempotencyRequestLockProvider>();
+        services.AddSingleton<EndpointResilienceContextResolver>();
+        services.AddSingleton<EndpointResiliencePolicyResolver>();
+
+        return services;
+    }
+
+    private static IServiceCollection AddRateLimitingServices(this IServiceCollection services)
+    {
         services.AddRateLimiter(
             options =>
             {
@@ -155,17 +229,13 @@ public static class DependencyInjection
                 options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(
                     httpContext =>
                     {
-                        var callerScope = EndpointResilienceCallerScope.GetPartitionKey(httpContext);
-                        var policyScope = EndpointResiliencePolicySelector.SelectScope(httpContext);
-                        var policy = policyScope switch
-                        {
-                            EndpointResiliencePolicyScope.Auth => endpointResilienceOptions.RateLimiting.Auth,
-                            EndpointResiliencePolicyScope.Token => endpointResilienceOptions.RateLimiting.Token,
-                            _ => endpointResilienceOptions.RateLimiting.Default
-                        };
+                        var contextResolver = httpContext.RequestServices.GetRequiredService<EndpointResilienceContextResolver>();
+                        var policyResolver = httpContext.RequestServices.GetRequiredService<EndpointResiliencePolicyResolver>();
+                        var resilienceContext = contextResolver.Resolve(httpContext);
+                        var policy = policyResolver.GetRateLimitingPolicy(resilienceContext.PolicyScope);
 
                         return RateLimitPartition.GetFixedWindowLimiter(
-                            $"{policyScope}:{callerScope}",
+                            $"{resilienceContext.PolicyScope}:{resilienceContext.CallerScopeKey}",
                             _ => new FixedWindowRateLimiterOptions
                             {
                                 AutoReplenishment = true,
@@ -176,6 +246,15 @@ public static class DependencyInjection
                             });
                     });
             });
+
+        return services;
+    }
+
+    private static IServiceCollection AddOpenIddictServices(
+        this IServiceCollection services,
+        OidcOptions oidcOptions,
+        IHostEnvironment environment)
+    {
         services.AddOpenIddict()
             .AddCore(options =>
             {

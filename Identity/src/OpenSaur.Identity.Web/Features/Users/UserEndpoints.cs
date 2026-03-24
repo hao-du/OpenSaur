@@ -7,7 +7,7 @@ using OpenSaur.Identity.Web.Features.Users.GetUsers;
 using OpenSaur.Identity.Web.Domain.Permissions;
 using OpenSaur.Identity.Web.Infrastructure.Authorization;
 using OpenSaur.Identity.Web.Infrastructure.Authorization.Builders;
-using OpenSaur.Identity.Web.Infrastructure.Resilience;
+using OpenSaur.Identity.Web.Infrastructure.Http.Metadata;
 
 namespace OpenSaur.Identity.Web.Features.Users;
 

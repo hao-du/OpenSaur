@@ -3,7 +3,8 @@ using OpenSaur.Identity.Web.Features.Auth.Login;
 using OpenSaur.Identity.Web.Features.Auth.Logout;
 using OpenSaur.Identity.Web.Features.Auth.Me;
 using OpenSaur.Identity.Web.Infrastructure.Authorization;
-using OpenSaur.Identity.Web.Infrastructure.Resilience;
+using OpenSaur.Identity.Web.Infrastructure.Http.Metadata;
+using OpenSaur.Identity.Web.Infrastructure.Http.RateLimiting;
 
 namespace OpenSaur.Identity.Web.Features.Auth;
 

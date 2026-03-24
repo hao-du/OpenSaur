@@ -10,7 +10,7 @@
 - Add app-owned audited entities and tables for workspaces, permissions, role-permissions, user-role assignments, and outbox messages.
 - Add a permission catalog model that uses stable `CodeId` integers, display-friendly names, descriptions, and hierarchical implication rules.
 - Add JSON-based login/logout backend APIs that support both first-party and third-party OpenIddict authorization code flow with rotating refresh tokens and shared auth-server session reuse, while deferring the actual login page UI to the FE phase.
-- Add endpoint resilience policies for rate limiting, selected write idempotency, and inbound circuit breaker behavior across the Phase 1 HTTP surface.
+- Add endpoint resilience policies for rate limiting and selected write idempotency across the Phase 1 HTTP surface.
 - Add development-only Swagger/OpenAPI output so the Phase 1 authentication endpoints can be explored and tested locally.
 - Add migration-backed schema creation, deterministic seed data, and idempotent SQL script generation for manual database review/execution.
 - Add a deterministic bootstrap `SystemAdministrator` account that requires a password change on first login for first-time environment access.
@@ -25,7 +25,7 @@
 - `identity-permissions`: Permission catalog, role-permission assignment, and hierarchical permission implication using stable `CodeId` values.
 - `identity-persistence-foundation`: PostgreSQL/EF Core/Identity/OpenIddict schema, migration generation, baseline seed data, and manual DB script workflow.
 - `identity-outbox`: Transactional outbox storage for user, user-role, and permission lifecycle events.
-- `identity-endpoint-resilience`: Cross-cutting rate limiting, idempotent write handling, and inbound circuit breaker policies for identity-service endpoints.
+- `identity-endpoint-resilience`: Cross-cutting rate limiting and idempotent write handling for identity-service endpoints.
 
 ### Modified Capabilities
 
