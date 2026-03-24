@@ -7,8 +7,15 @@ The system SHALL store permissions with a stable integer `CodeId`, a display-fri
 - **WHEN** the system persists or returns a permission record
 - **THEN** the record includes `CodeId`, display-friendly `Name`, `Description`, and audit metadata suitable for administrator selection workflows
 
+### Requirement: Permission scopes SHALL be first-class records for UI lookup
+The system SHALL maintain a code-defined set of permission scopes and persist them as auditable app-owned records so API clients can render and group permissions by scope.
+
+#### Scenario: Scope is returned for UI lookup
+- **WHEN** an authorized client requests permission scope data
+- **THEN** the system returns first-class scope records with identifiers and display metadata suitable for grouping permissions in the UI
+
 ### Requirement: Permission definitions SHALL map database records to code-owned metadata
-The system SHALL maintain a code-owned permission catalog that maps each `CodeId` to a canonical permission code and family/rank metadata used by authorization logic.
+The system SHALL maintain a code-owned permission catalog that maps each `CodeId` to a canonical permission code, `PermissionScopeId`, and rank metadata used by authorization logic.
 
 #### Scenario: Authorization resolves canonical permission metadata
 - **WHEN** the system evaluates a permission assignment by `CodeId`
@@ -21,16 +28,20 @@ The system SHALL allow roles to be assigned permissions through role-permission 
 - **WHEN** an authorized administrator assigns a permission to a role
 - **THEN** the system stores a role-permission record that links the role to the selected permission definition
 
-### Requirement: Permission hierarchy SHALL imply lower permissions within a family
-The system SHALL treat higher-ranked permissions in the same permission family as implying all lower-ranked permissions in that family.
+### Requirement: Permission hierarchy SHALL imply lower permissions within a scope
+The system SHALL treat higher-ranked permissions in the same `PermissionScopeId` as implying all lower-ranked permissions in that same scope.
 
-#### Scenario: Highest document permission implies lower document permissions
-- **WHEN** a user is granted a role that includes `Document.CanDelete`
-- **THEN** the system also treats that user as having `Document.CanEdit`, `Document.CanShare`, and `Document.CanView`
+#### Scenario: Higher-ranked permission implies lower-ranked permissions in the same scope
+- **WHEN** a user is granted a role that includes a higher-ranked permission within a scope
+- **THEN** the system also treats that user as having all lower-ranked permissions in that same scope
 
-#### Scenario: Mid-level document permission does not imply higher permissions
-- **WHEN** a user is granted a role that includes `Document.CanShare`
-- **THEN** the system treats that user as having `Document.CanView` but not `Document.CanEdit` or `Document.CanDelete`
+#### Scenario: Mid-ranked permission does not imply higher permissions in the same scope
+- **WHEN** a user is granted a role that includes a mid-ranked permission within a scope
+- **THEN** the system treats that user as having the lower-ranked permissions in that same scope but not the higher-ranked permissions
+
+#### Scenario: Permission implication does not cross scopes
+- **WHEN** a user is granted a permission in one scope
+- **THEN** the system does not imply permissions from any different scope
 
 ### Requirement: Administrative authorization SHALL combine roles and permissions
 The system SHALL use role assignment, workspace scope, and resolved permission implication to authorize management endpoints.

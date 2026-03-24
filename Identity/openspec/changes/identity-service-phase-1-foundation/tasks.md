@@ -10,6 +10,7 @@
 - [x] 2.3 Implement the code-owned permission catalog, canonical permission metadata, and hierarchical implication resolution by `CodeId`.
 - [x] 2.4 Scaffold EF Core migrations and generate idempotent PostgreSQL SQL scripts for manual review/execution.
 - [x] 2.5 Seed deterministic baseline data for default roles, the `Personal` workspace, and the initial permission catalog.
+- [x] 2.6 Add a code-defined `PermissionScope` entity/table, persistence mapping, and deterministic seed data for shipped scopes.
 
 ## 3. Authentication And Authorization Flows
 
@@ -18,14 +19,17 @@
 - [x] 3.3 Configure OpenIddict authorization code flow with rotating refresh tokens for registered third-party clients.
 - [x] 3.4 Implement current-user/session bootstrap behavior and shared hosted login session reuse across clients.
 - [x] 3.5 Enforce workspace-aware role checks and permission-based authorization across protected endpoints.
+- [x] 3.6 Adjust permission resolution so implication is based on `PermissionScopeId` and rank, with no cross-scope implication.
 
 ## 4. Identity Management APIs
 
 - [x] 4.1 Implement action-style user endpoints for get, get-by-id, create, edit, and password change with soft delete through `IsActive`.
-- [ ] 4.2 Implement action-style role endpoints for get, get-by-id, create, and edit.
-- [ ] 4.3 Implement action-style permission endpoints for permission lookup and role-permission assignment support.
+- [x] 4.2 Implement action-style role endpoints for get, get-by-id, create, and edit.
+- [x] 4.3 Implement action-style permission endpoints for permission lookup and role-permission assignment support.
 - [ ] 4.4 Implement action-style user-role endpoints for get, create, and edit using app-owned user-role records.
 - [ ] 4.5 Implement workspace lookup and management support needed for Phase 1 backend scope without delete endpoints.
+- [x] 4.6 Implement action-style permission-scope endpoints for UI lookup and include explicit scope metadata in permission responses.
+- [x] 4.7 Reorganize permission- and authorization-related application code to better follow vertical-slice boundaries while keeping DB-backed entities in `Domain/**`.
 
 ## 5. Outbox And Event Recording
 
@@ -39,6 +43,7 @@
 - [ ] 6.2 Add automated tests for outbox message creation and soft-delete behavior.
 - [ ] 6.3 Document the manual migration-script review/execution workflow and the Phase 1 operational assumptions.
 - [x] 6.4 Add development-only Swagger/OpenAPI support with bearer-auth documentation and host-level availability tests.
+- [x] 6.5 Add automated tests for permission-scope lookup and scope-based permission implication behavior.
 
 ## 7. Endpoint Resilience
 

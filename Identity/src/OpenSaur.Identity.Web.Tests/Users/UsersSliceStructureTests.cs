@@ -13,12 +13,20 @@ public sealed class UsersSliceStructureTests
         Assert.NotNull(assembly.GetType("OpenSaur.Identity.Web.Features.Users.EditUser.EditUserHandler"));
         Assert.NotNull(assembly.GetType("OpenSaur.Identity.Web.Features.Users.ChangeUserPassword.ChangeUserPasswordHandler"));
         Assert.NotNull(assembly.GetType("OpenSaur.Identity.Web.Features.Users.ChangeWorkspace.ChangeUserWorkspaceHandler"));
-        Assert.NotNull(assembly.GetType("OpenSaur.Identity.Web.Features.Users.UserAuthorizationService"));
         Assert.NotNull(assembly.GetType("OpenSaur.Identity.Web.Infrastructure.Security.CurrentUserContext"));
-        Assert.NotNull(assembly.GetType("OpenSaur.Identity.Web.Infrastructure.Authorization.PermissionAuthorizationRequirement"));
-        Assert.NotNull(assembly.GetType("OpenSaur.Identity.Web.Infrastructure.Authorization.PermissionAuthorizationHandler"));
-        Assert.NotNull(assembly.GetType("OpenSaur.Identity.Web.Infrastructure.Authorization.EndpointAuthorizationExtensions"));
-        Assert.NotNull(assembly.GetType("OpenSaur.Identity.Web.Infrastructure.Authorization.WorkspaceAccessFilter"));
+        Assert.NotNull(assembly.GetType("OpenSaur.Identity.Web.Infrastructure.Authorization.Requirements.PermissionAuthorizationRequirement"));
+        Assert.NotNull(assembly.GetType("OpenSaur.Identity.Web.Infrastructure.Authorization.Handlers.PermissionAuthorizationHandler"));
+        Assert.NotNull(assembly.GetType("OpenSaur.Identity.Web.Infrastructure.Authorization.Builders.PermissionEndpointConventionBuilderExtensions"));
+        Assert.NotNull(assembly.GetType("OpenSaur.Identity.Web.Infrastructure.Authorization.Filters.WorkspaceAccessFilter"));
+        Assert.NotNull(assembly.GetType("OpenSaur.Identity.Web.Infrastructure.Authorization.Builders.WorkspaceEndpointConventionBuilderExtensions"));
+        Assert.NotNull(assembly.GetType("OpenSaur.Identity.Web.Infrastructure.Authorization.Services.UserAuthorizationService"));
+        Assert.NotNull(assembly.GetType("OpenSaur.Identity.Web.Infrastructure.Authorization.AuthorizationPolicies"));
+        Assert.Null(assembly.GetType("OpenSaur.Identity.Web.Features.Permissions.Authorization.PermissionAuthorizationRequirement"));
+        Assert.Null(assembly.GetType("OpenSaur.Identity.Web.Features.Permissions.Authorization.PermissionAuthorizationHandler"));
+        Assert.Null(assembly.GetType("OpenSaur.Identity.Web.Features.Permissions.Authorization.PermissionEndpointConventionBuilderExtensions"));
+        Assert.Null(assembly.GetType("OpenSaur.Identity.Web.Features.Users.Authorization.WorkspaceAccessFilter"));
+        Assert.Null(assembly.GetType("OpenSaur.Identity.Web.Features.Users.Authorization.WorkspaceEndpointConventionBuilderExtensions"));
+        Assert.Null(assembly.GetType("OpenSaur.Identity.Web.Features.Users.UserAuthorizationService"));
         Assert.Null(assembly.GetType("OpenSaur.Identity.Web.Features.Users.UserWorkspaceAccessResolvers"));
     }
 
@@ -40,7 +48,7 @@ public sealed class UsersSliceStructureTests
     public void UsersSlice_TargetUserHandlers_DoNotDependOnUserAuthorizationService()
     {
         var assembly = typeof(Program).Assembly;
-        var userAuthorizationServiceType = assembly.GetType("OpenSaur.Identity.Web.Features.Users.UserAuthorizationService");
+        var userAuthorizationServiceType = assembly.GetType("OpenSaur.Identity.Web.Infrastructure.Authorization.Services.UserAuthorizationService");
 
         Assert.NotNull(userAuthorizationServiceType);
         Assert.DoesNotContain(

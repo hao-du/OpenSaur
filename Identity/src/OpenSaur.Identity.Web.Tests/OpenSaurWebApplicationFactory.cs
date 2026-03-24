@@ -11,7 +11,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using OpenIddict.Abstractions;
 using OpenSaur.Identity.Web.Domain.Identity;
-using OpenSaur.Identity.Web.Infrastructure.Persistence;
+using OpenSaur.Identity.Web.Infrastructure.Database;
 using OpenSaur.Identity.Web.Tests.Support;
 
 namespace OpenSaur.Identity.Web.Tests;

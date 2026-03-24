@@ -16,7 +16,7 @@ using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Caching.Hybrid;
 using Microsoft.Extensions.DependencyInjection;
 using OpenSaur.Identity.Web.Domain.Identity;
-using OpenSaur.Identity.Web.Infrastructure.Persistence;
+using OpenSaur.Identity.Web.Infrastructure.Database;
 using OpenSaur.Identity.Web.Infrastructure.Resilience;
 using OpenSaur.Identity.Web.Infrastructure.Resilience.Idempotency;
 using OpenSaur.Identity.Web.Tests.Support;

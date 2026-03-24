@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using OpenSaur.Identity.Web.Domain.Identity;
 using OpenSaur.Identity.Web.Domain.Workspaces;
-using OpenSaur.Identity.Web.Infrastructure.Persistence;
+using OpenSaur.Identity.Web.Infrastructure.Database;
 using OpenSaur.Identity.Web.Tests.Support;
 
 namespace OpenSaur.Identity.Web.Tests.Users;

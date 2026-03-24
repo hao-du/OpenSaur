@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using OpenSaur.Identity.Web.Domain.Identity;
-using OpenSaur.Identity.Web.Infrastructure.Persistence;
+using OpenSaur.Identity.Web.Infrastructure.Database;
 
 namespace OpenSaur.Identity.Web.Features.Users.ChangeWorkspace;
 

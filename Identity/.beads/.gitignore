@@ -20,6 +20,7 @@ push-state.json
 
 # Lock files (various runtime locks)
 *.lock
+dolt.lock-*
 
 # Local version tracking (prevents upgrade notification spam after git ops)
 .local_version

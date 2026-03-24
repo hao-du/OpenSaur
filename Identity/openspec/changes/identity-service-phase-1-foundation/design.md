@@ -10,6 +10,7 @@
 - Soft delete via `IsActive` instead of delete endpoints
 - Audited app-owned tables with `Description`
 - Transactional outbox events for user, user-role, and permission changes
+- Code-defined permission scopes with first-class scope data for UI lookup
 
 The service must stay maintainable, so the implementation should prefer vertical slices, explicit API contracts, and the minimum infrastructure necessary to support these requirements cleanly.
 
@@ -19,6 +20,7 @@ The service must stay maintainable, so the implementation should prefer vertical
 
 - Establish a single ASP.NET Core host that acts as both the first-party API backend and the central OpenIddict authorization server.
 - Model users, roles, workspaces, permissions, role-permissions, user-role assignments, and outbox messages with auditable app-owned data structures.
+- Model permission scopes explicitly so UI clients can load scope metadata without reverse-parsing canonical permission codes.
 - Support first-party browser login using the same OpenIddict authorization code flow and rotating refresh tokens as other clients.
 - Support a deterministic bootstrap administrator account that is forced through a self-service password change on first login.
 - Support future third-party clients using OpenIddict authorization code flow with rotating refresh tokens.
@@ -68,7 +70,9 @@ Alternatives considered:
 
 ### 4. Use vertical slices with action-style minimal API endpoints
 
-Backend use cases will be organized by feature slice, with each slice owning its endpoint mapping, request/response models, validation, and data access. Routes will be action-oriented where the route is a domain/account helper, such as `/api/user/get`, `/api/user/create`, `/api/user/change-workspace`, `/api/role/edit`, `/api/auth/login`, `/api/auth/logout`, `/api/auth/change-password`, and `/api/auth/me`. These custom endpoints will accept JSON bodies and return API responses only. User create/edit contracts will not accept workspace reassignment directly; workspace moves go through the dedicated super-administrator-only change-workspace action. Self-service password change remains in the auth/account helpers, while administrator password reset stays in the user-management slice. For non-super administrators, user lookups/edits are scoped in the query path to the caller's current workspace, while `SuperAdministrator` bypasses that scope. OIDC protocol endpoints like `/connect/authorize` and `/connect/token` remain standard redirect/token endpoints.
+Backend use cases will be organized by feature slice, with each slice owning its endpoint mapping, request/response models, validation, and slice-specific services/query logic. Routes will be action-oriented where the route is a domain/account helper, such as `/api/user/get`, `/api/user/create`, `/api/user/change-workspace`, `/api/role/edit`, `/api/permission/get`, `/api/permission-scope/get`, `/api/auth/login`, `/api/auth/logout`, `/api/auth/change-password`, and `/api/auth/me`. These custom endpoints will accept JSON bodies and return API responses only. User create/edit contracts will not accept workspace reassignment directly; workspace moves go through the dedicated super-administrator-only change-workspace action. Self-service password change remains in the auth/account helpers, while administrator password reset stays in the user-management slice. For non-super administrators, user lookups/edits are scoped in the query path to the caller's current workspace, while `SuperAdministrator` bypasses that scope. OIDC protocol endpoints like `/connect/authorize` and `/connect/token` remain standard redirect/token endpoints.
+
+Database-backed entities remain under `Domain/**` so the persistence model stays easy to discover. `Infrastructure/**` is reserved for host plumbing such as DI, `ApplicationDbContext`, EF Core configuration/migrations, middleware, auth wiring, resilience, and security adapters. Permission- and authorization-specific application logic should move toward the relevant feature slices instead of accumulating under generic infrastructure folders.
 
 Alternatives considered:
 
@@ -83,13 +87,16 @@ Alternatives considered:
 
 - Bare Identity join table for user-role assignment: simpler, but insufficient for the requested CRUD semantics and auditing.
 
-### 6. Use a code-owned permission catalog with database-backed display data
+### 6. Use a code-owned permission scope and permission catalog with database-backed display data
 
-Permissions will be defined in code with stable `CodeId` values and canonical codes, while the database stores the user-facing display `Name`, `Description`, and audit fields. Authorization checks will resolve permissions by `CodeId` and apply hierarchical implication inside permission families.
+Permissions will be defined in code with stable `CodeId` values and canonical codes such as `Administrator.CanManage`, while the database stores auditable `PermissionScope` and `Permission` rows for UI lookup and assignment workflows. The `Permission` record references its scope via `PermissionScopeId`, and the code-owned catalog maps each `CodeId` to its canonical code, `PermissionScopeId`, display metadata, and rank. Authorization checks will resolve permissions by `CodeId` and apply hierarchical implication only within the same `PermissionScopeId`, where a higher-ranked permission implies all lower-ranked permissions in that same scope.
+
+Phase 1 keeps permission scopes code-defined only. The shipped baseline is the `Administrator` scope and its related permission entries. Roles and scopes are independent concepts: multiple roles can grant permissions from the same scope, and a role does not own or define a scope. The service should also expose a dedicated permission-scope lookup endpoint so future UI clients can render scopes directly.
 
 Alternatives considered:
 
 - String-only permission identifiers in the database: easier to inspect manually, but weaker for stable integrations and hierarchy rules.
+- Deriving scope only by parsing the canonical code string at runtime: workable for authorization, but insufficient because UI clients also need a first-class scope model.
 - Duplicating implied permissions into `RolePermissions`: rejected because it creates redundant assignment rows and brittle updates.
 
 ### 7. Add a transactional outbox for user, user-role, and permission changes
@@ -185,6 +192,7 @@ Alternatives considered:
 - [Manual DB execution can slow deployment] -> Generate idempotent scripts and document a clear operator workflow.
 - [The bootstrap administrator credential is deterministic] -> Force `RequirePasswordChange` on first login and require operators to rotate it immediately after first use.
 - [Permission hierarchy bugs could over-grant access] -> Centralize hierarchy resolution and add focused authorization tests.
+- [Vertical-slice cleanup can create file churn while the feature set is still moving] -> Keep all DB entities in `Domain/**`, limit `Infrastructure/**` to host concerns, and refactor capability logic incrementally with integration-test coverage.
 - [Outbox rows may accumulate if publishing is not yet implemented] -> Include processing status fields and document manual inspection/cleanup expectations.
 - [Per-instance breaker and rate-limit state can diverge across scaled-out instances] -> Accept per-instance behavior in Phase 1 and keep the policy model explicit so distributed state can be added later if needed.
 - [HybridCache-backed idempotency is not durable without a distributed secondary cache] -> Accept per-instance replay guarantees in Phase 1 and allow a later Redis-backed `IDistributedCache` to strengthen cross-instance behavior without changing the endpoint contract.

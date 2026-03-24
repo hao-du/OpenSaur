@@ -12,10 +12,16 @@ using OpenIddict.Abstractions;
 using OpenIddict.Validation.AspNetCore;
 using OpenSaur.Identity.Web.Features.Auth;
 using OpenSaur.Identity.Web.Features.Auth.Oidc;
+using OpenSaur.Identity.Web.Features.PermissionScopes;
+using OpenSaur.Identity.Web.Features.Permissions;
+using OpenSaur.Identity.Web.Features.Roles;
 using OpenSaur.Identity.Web.Features.Users;
-using OpenSaur.Identity.Web.Infrastructure.Authorization;
 using OpenSaur.Identity.Web.Domain.Identity;
-using OpenSaur.Identity.Web.Infrastructure.Persistence;
+using OpenSaur.Identity.Web.Infrastructure.Authorization;
+using OpenSaur.Identity.Web.Infrastructure.Authorization.Handlers;
+using OpenSaur.Identity.Web.Infrastructure.Authorization.Services;
+using OpenSaur.Identity.Web.Infrastructure.Database;
+using OpenSaur.Identity.Web.Infrastructure.Oidc;
 using OpenSaur.Identity.Web.Infrastructure.Resilience;
 using OpenSaur.Identity.Web.Infrastructure.Resilience.CircuitBreaker;
 using OpenSaur.Identity.Web.Infrastructure.Resilience.Idempotency;
@@ -263,6 +269,9 @@ public static class DependencyInjection
         app.MapOidcEndpoints();
         app.MapAuthEndpoints();
         app.MapUserEndpoints();
+        app.MapRoleEndpoints();
+        app.MapPermissionEndpoints();
+        app.MapPermissionScopeEndpoints();
 
         return app;
     }

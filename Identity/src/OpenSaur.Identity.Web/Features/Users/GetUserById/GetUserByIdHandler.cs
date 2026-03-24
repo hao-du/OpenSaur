@@ -1,5 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using OpenSaur.Identity.Web.Infrastructure.Persistence;
+using OpenSaur.Identity.Web.Infrastructure.Database;
 using OpenSaur.Identity.Web.Infrastructure.Security;
 
 namespace OpenSaur.Identity.Web.Features.Users.GetUserById;

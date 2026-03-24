@@ -2,7 +2,7 @@ using OpenSaur.Identity.Web.Features.Auth.ChangePassword;
 using OpenSaur.Identity.Web.Features.Auth.Login;
 using OpenSaur.Identity.Web.Features.Auth.Logout;
 using OpenSaur.Identity.Web.Features.Auth.Me;
-using OpenSaur.Identity.Web.Infrastructure;
+using OpenSaur.Identity.Web.Infrastructure.Authorization;
 using OpenSaur.Identity.Web.Infrastructure.Resilience;
 
 namespace OpenSaur.Identity.Web.Features.Auth;

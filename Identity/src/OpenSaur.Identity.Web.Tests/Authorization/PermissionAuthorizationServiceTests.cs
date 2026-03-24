@@ -6,8 +6,8 @@ using Microsoft.EntityFrameworkCore.Diagnostics;
 using OpenSaur.Identity.Web.Domain.Identity;
 using OpenSaur.Identity.Web.Domain.Permissions;
 using OpenSaur.Identity.Web.Domain.Workspaces;
-using OpenSaur.Identity.Web.Infrastructure.Authorization;
-using OpenSaur.Identity.Web.Infrastructure.Persistence;
+using OpenSaur.Identity.Web.Infrastructure.Authorization.Services;
+using OpenSaur.Identity.Web.Infrastructure.Database;
 using OpenSaur.Identity.Web.Infrastructure.Security;
 using OpenSaur.Identity.Web.Tests.Support;
 
@@ -110,6 +110,71 @@ public sealed class PermissionAuthorizationServiceTests
             PermissionCode.Administrator_CanManage);
 
         Assert.True(isAuthorized);
+    }
+
+    [Fact]
+    public async Task HasPermissionAsync_WhenAdministratorCanManageAssigned_AlsoGrantsAdministratorCanView()
+    {
+        await using var testDbContext = await CreateDbContextAsync();
+        var dbContext = testDbContext.DbContext;
+        var workspace = await dbContext.Workspaces.SingleAsync();
+        var user = await CreateUserAsync(dbContext, workspace.Id);
+
+        dbContext.UserRoles.Add(new ApplicationUserRole
+        {
+            UserId = user.Id,
+            RoleId = await GetRoleIdAsync(dbContext, SystemRoles.Administrator)
+        });
+        await dbContext.SaveChangesAsync();
+
+        var service = new PermissionAuthorizationService(dbContext);
+
+        var isAuthorized = await service.HasPermissionAsync(
+            user.Id,
+            PermissionCode.Administrator_CanView);
+
+        Assert.True(isAuthorized);
+    }
+
+    [Fact]
+    public async Task HasPermissionAsync_WhenOnlyAdministratorCanViewAssigned_DoesNotGrantAdministratorCanManage()
+    {
+        await using var testDbContext = await CreateDbContextAsync();
+        var dbContext = testDbContext.DbContext;
+        var workspace = await dbContext.Workspaces.SingleAsync();
+        var permission = await dbContext.Permissions.SingleAsync(
+            record => record.CodeId == (int)PermissionCode.Administrator_CanView);
+        var roleName = TestFakers.CreateRoleName();
+        var viewOnlyRole = new ApplicationRole
+        {
+            Id = Guid.CreateVersion7(),
+            Name = roleName,
+            NormalizedName = roleName.ToUpperInvariant(),
+            CreatedBy = Guid.CreateVersion7(),
+            CreatedOn = DateTime.UtcNow
+        };
+        var user = await CreateUserAsync(dbContext, workspace.Id);
+
+        dbContext.Roles.Add(viewOnlyRole);
+        dbContext.UserRoles.Add(new ApplicationUserRole
+        {
+            UserId = user.Id,
+            RoleId = viewOnlyRole.Id
+        });
+        dbContext.RolePermissions.Add(new RolePermission
+        {
+            RoleId = viewOnlyRole.Id,
+            PermissionId = permission.Id
+        });
+        await dbContext.SaveChangesAsync();
+
+        var service = new PermissionAuthorizationService(dbContext);
+
+        var isAuthorized = await service.HasPermissionAsync(
+            user.Id,
+            PermissionCode.Administrator_CanManage);
+
+        Assert.False(isAuthorized);
     }
 
     [Fact]

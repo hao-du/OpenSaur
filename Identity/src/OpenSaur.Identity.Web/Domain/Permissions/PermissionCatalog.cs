@@ -8,7 +8,9 @@ public static class PermissionCatalog
     private static readonly IReadOnlyDictionary<int, PermissionDefinition> Definitions =
         CreateDefinitions();
 
-    public static IReadOnlyCollection<PermissionDefinition> GetDefinitions() => Definitions.Values.ToArray();
+    public static IReadOnlyCollection<PermissionDefinition> GetDefinitions() => Definitions.Values
+        .OrderBy(definition => definition.CodeId)
+        .ToArray();
 
     public static PermissionDefinition GetDefinition(int codeId)
     {
@@ -25,8 +27,10 @@ public static class PermissionCatalog
         var definition = GetDefinition(codeId);
 
         return Definitions.Values
-            .Where(candidate => candidate.Family == definition.Family && candidate.Rank <= definition.Rank)
-            .OrderBy(candidate => candidate.CodeId)
+            .Where(candidate => candidate.PermissionScopeId == definition.PermissionScopeId
+                                && candidate.Rank <= definition.Rank)
+            .OrderByDescending(candidate => candidate.Rank)
+            .ThenBy(candidate => candidate.CodeId)
             .Select(candidate => candidate.CodeId)
             .ToArray();
     }
@@ -35,20 +39,30 @@ public static class PermissionCatalog
     {
         return new Dictionary<int, PermissionDefinition>
         {
-            [(int)PermissionCode.Administrator_CanManage] = CreateDefinition(PermissionCode.Administrator_CanManage, "Can Manage", "Allows administrator management operations.", rank: 1)
+            [(int)PermissionCode.Administrator_CanManage] = CreateDefinition(
+                PermissionCode.Administrator_CanManage,
+                PermissionScopeCatalog.AdministratorPermissionScopeId,
+                "Can Manage",
+                "Allows administrators to manage identity configuration and records.",
+                rank: 2),
+            [(int)PermissionCode.Administrator_CanView] = CreateDefinition(
+                PermissionCode.Administrator_CanView,
+                PermissionScopeCatalog.AdministratorPermissionScopeId,
+                "Can View",
+                "Allows administrators to view identity configuration and records.",
+                rank: 1)
         };
     }
 
     private static PermissionDefinition CreateDefinition(
         PermissionCode permissionCode,
+        Guid permissionScopeId,
         string name,
         string description,
         int rank)
     {
         var code = GetCanonicalCode(permissionCode);
-        var family = code.Split('.', 2)[0];
-
-        return new PermissionDefinition((int)permissionCode, code, name, description, family, rank);
+        return new PermissionDefinition((int)permissionCode, permissionScopeId, code, name, description, rank);
     }
 
     private static string GetCanonicalCode(PermissionCode permissionCode)
