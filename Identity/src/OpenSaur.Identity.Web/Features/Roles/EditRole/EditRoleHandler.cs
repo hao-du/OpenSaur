@@ -1,9 +1,17 @@
+using FluentValidation;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using OpenSaur.Identity.Web.Domain.Identity;
 using OpenSaur.Identity.Web.Domain.Permissions;
 using OpenSaur.Identity.Web.Infrastructure.Database;
+using OpenSaur.Identity.Web.Infrastructure.Database.Repositories.Permissions;
+using OpenSaur.Identity.Web.Infrastructure.Database.Repositories.Permissions.Dtos;
+using OpenSaur.Identity.Web.Infrastructure.Database.Repositories.Roles;
+using OpenSaur.Identity.Web.Infrastructure.Database.Repositories.Roles.Dtos;
+using OpenSaur.Identity.Web.Infrastructure.Http.Responses;
+using OpenSaur.Identity.Web.Infrastructure.Results;
 using OpenSaur.Identity.Web.Infrastructure.Security;
+using OpenSaur.Identity.Web.Infrastructure.Validation;
 
 namespace OpenSaur.Identity.Web.Features.Roles.EditRole;
 
@@ -11,29 +19,41 @@ public static class EditRoleHandler
 {
     public static async Task<IResult> HandleAsync(
         EditRoleRequest request,
+        IValidator<EditRoleRequest> validator,
         CurrentUserContext currentUserContext,
         ApplicationDbContext dbContext,
+        RoleRepository roleRepository,
+        PermissionRepository permissionRepository,
         RoleManager<ApplicationRole> roleManager,
         CancellationToken cancellationToken)
     {
-        var role = await dbContext.Roles.SingleOrDefaultAsync(candidate => candidate.Id == request.Id, cancellationToken);
-        if (role is null)
+        if (await validator.ValidateRequestAsync(request, cancellationToken) is { } validationFailure)
         {
-            return Results.NotFound();
+            return validationFailure;
+        }
+
+        var roleResult = await roleRepository.GetRoleByIdAsync(
+            new GetRoleByIdRequest(request.Id, TrackChanges: true),
+            cancellationToken);
+        if (!roleResult.IsSuccess || roleResult.Value is null)
+        {
+            return roleResult.ToApiErrorResult();
         }
 
         var selectedCodeIds = request.PermissionCodeIds
             .Distinct()
             .ToArray();
-        var permissions = await dbContext.Permissions
-            .Where(permission => permission.IsActive && selectedCodeIds.Contains(permission.CodeId))
-            .ToListAsync(cancellationToken);
+        var permissionsResult = await permissionRepository.GetActivePermissionsByCodeIdsAsync(
+            new GetActivePermissionsByCodeIdsRequest(selectedCodeIds),
+            cancellationToken);
+        var permissions = permissionsResult.Value?.Permissions ?? [];
 
         if (permissions.Count != selectedCodeIds.Length)
         {
-            return Results.ValidationProblem(RoleValidationProblems.ForPermissions());
+            return Result.Validation(RoleValidationProblems.ForPermissions()).ToApiErrorResult();
         }
 
+        var role = roleResult.Value.Role;
         role.Name = request.Name;
         role.Description = request.Description;
         role.IsActive = request.IsActive;
@@ -43,7 +63,7 @@ public static class EditRoleHandler
         var updateResult = await roleManager.UpdateAsync(role);
         if (!updateResult.Succeeded)
         {
-            return Results.ValidationProblem(RoleValidationProblems.FromIdentityErrors(updateResult.Errors));
+            return Result.Validation(RoleValidationProblems.FromIdentityErrors(updateResult.Errors)).ToApiErrorResult();
         }
 
         var selectedPermissionIds = permissions
@@ -82,6 +102,6 @@ public static class EditRoleHandler
         await dbContext.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
 
-        return Results.NoContent();
+        return Result.Success().ToApiResult();
     }
 }

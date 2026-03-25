@@ -44,7 +44,7 @@ public sealed class ApiAuthAccountEndpointsTests : IClassFixture<OpenSaurWebAppl
             "/api/auth/login",
             new LoginRequest(credentials.UserName, credentials.Password));
 
-        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+        await ApiResponseReader.AssertNullSuccessDataAsync(response);
         Assert.Contains(
             response.Headers.GetValues("Set-Cookie"),
             value => value.StartsWith("opensaur.identity.session=", StringComparison.Ordinal));
@@ -61,7 +61,22 @@ public sealed class ApiAuthAccountEndpointsTests : IClassFixture<OpenSaurWebAppl
             "/api/auth/login",
             new LoginRequest(credentials.UserName, TestFakers.CreateDifferentPassword(credentials.Password)));
 
-        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        await ApiResponseReader.ReadFailureEnvelopeAsync(response, HttpStatusCode.Unauthorized);
+    }
+
+    [Fact]
+    public async Task PostLogin_WhenRequestShapeIsInvalid_ReturnsValidationEnvelope()
+    {
+        using var client = CreateClient();
+
+        var response = await client.PostAsJsonAsync(
+            "/api/auth/login",
+            new LoginRequest("", ""));
+        var payload = await ApiResponseReader.ReadFailureEnvelopeAsync(response, HttpStatusCode.BadRequest);
+
+        Assert.All(payload.Errors, static error => Assert.Equal("validation_error", error.Code));
+        Assert.All(payload.Errors, static error => Assert.False(string.IsNullOrWhiteSpace(error.Message)));
+        Assert.All(payload.Errors, static error => Assert.False(string.IsNullOrWhiteSpace(error.Detail)));
     }
 
     [Fact]
@@ -75,7 +90,7 @@ public sealed class ApiAuthAccountEndpointsTests : IClassFixture<OpenSaurWebAppl
 
         var response = await client.PostAsync("/api/auth/logout", content: null);
 
-        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+        await ApiResponseReader.AssertNullSuccessDataAsync(response);
         Assert.Contains(
             response.Headers.GetValues("Set-Cookie"),
             value => value.StartsWith("opensaur.identity.session=", StringComparison.Ordinal)
@@ -92,7 +107,7 @@ public sealed class ApiAuthAccountEndpointsTests : IClassFixture<OpenSaurWebAppl
 
         var response = await client.PostAsync("/api/auth/logout", content: null);
 
-        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        await ApiResponseReader.ReadFailureEnvelopeAsync(response, HttpStatusCode.Unauthorized);
     }
 
     [Fact]
@@ -106,10 +121,8 @@ public sealed class ApiAuthAccountEndpointsTests : IClassFixture<OpenSaurWebAppl
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
         var response = await client.GetAsync("/api/auth/me");
-        var payload = await response.Content.ReadFromJsonAsync<AuthMeResponse>();
+        var payload = await ApiResponseReader.ReadSuccessDataAsync<AuthMeResponse>(response);
 
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        Assert.NotNull(payload);
         Assert.Equal(credentials.UserName, payload.UserName);
         Assert.False(payload.RequirePasswordChange);
         Assert.Contains(SystemRoles.Administrator, payload.Roles);
@@ -128,7 +141,7 @@ public sealed class ApiAuthAccountEndpointsTests : IClassFixture<OpenSaurWebAppl
             "/api/auth/change-password",
             new ChangePasswordRequest("Password1", newPassword));
 
-        Assert.Equal(HttpStatusCode.NoContent, changePasswordResponse.StatusCode);
+        await ApiResponseReader.AssertNullSuccessDataAsync(changePasswordResponse);
 
         using var oldPasswordClient = CreateClient();
         var oldPasswordAccessToken = await TryGetAccessTokenAsync(oldPasswordClient, "SystemAdministrator", "Password1");
@@ -141,10 +154,8 @@ public sealed class ApiAuthAccountEndpointsTests : IClassFixture<OpenSaurWebAppl
             new AuthenticationHeaderValue("Bearer", newPasswordAccessToken);
 
         var meResponse = await newPasswordClient.GetAsync("/api/auth/me");
-        var mePayload = await meResponse.Content.ReadFromJsonAsync<AuthMeResponse>();
+        var mePayload = await ApiResponseReader.ReadSuccessDataAsync<AuthMeResponse>(meResponse);
 
-        Assert.Equal(HttpStatusCode.OK, meResponse.StatusCode);
-        Assert.NotNull(mePayload);
         Assert.False(mePayload.RequirePasswordChange);
     }
 
@@ -176,7 +187,7 @@ public sealed class ApiAuthAccountEndpointsTests : IClassFixture<OpenSaurWebAppl
         var loginResponse = await client.PostAsJsonAsync(
             "/api/auth/login",
             new LoginRequest(userName, password));
-        if (loginResponse.StatusCode != HttpStatusCode.NoContent)
+        if (loginResponse.StatusCode != HttpStatusCode.OK)
         {
             return null;
         }

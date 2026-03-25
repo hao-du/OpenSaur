@@ -1,5 +1,6 @@
 using System.Net;
 using Microsoft.AspNetCore.Mvc.Testing;
+using OpenSaur.Identity.Web.Tests.Support;
 
 namespace OpenSaur.Identity.Web.Tests.Auth;
 
@@ -23,6 +24,6 @@ public sealed class ApiAuthMeEndpointTests : IClassFixture<OpenSaurWebApplicatio
 
         var response = await client.GetAsync("/api/auth/me");
 
-        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        await ApiResponseReader.ReadFailureEnvelopeAsync(response, HttpStatusCode.Unauthorized);
     }
 }

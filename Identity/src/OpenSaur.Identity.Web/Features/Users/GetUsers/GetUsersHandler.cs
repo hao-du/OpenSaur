@@ -1,5 +1,8 @@
-using Microsoft.EntityFrameworkCore;
+using OpenSaur.Identity.Web.Domain.Identity;
+using OpenSaur.Identity.Web.Infrastructure.Database.Repositories.Users;
+using OpenSaur.Identity.Web.Infrastructure.Database.Repositories.Users.Dtos;
 using OpenSaur.Identity.Web.Infrastructure.Database;
+using OpenSaur.Identity.Web.Infrastructure.Http.Responses;
 using OpenSaur.Identity.Web.Infrastructure.Security;
 
 namespace OpenSaur.Identity.Web.Features.Users.GetUsers;
@@ -8,29 +11,22 @@ public static class GetUsersHandler
 {
     public static async Task<IResult> HandleAsync(
         CurrentUserContext currentUserContext,
-        ApplicationDbContext dbContext,
+        UserRepository userRepository,
         CancellationToken cancellationToken)
     {
-        var query = dbContext.Users
-            .AsNoTracking()
-            .OrderBy(user => user.UserName)
-            .AsQueryable();
+        var usersResult = await userRepository.GetManagedUsersAsync(
+            new GetManagedUsersRequest(currentUserContext),
+            cancellationToken);
 
-        if (!currentUserContext.IsSuperAdministrator)
-        {
-            query = query.Where(user => user.WorkspaceId == currentUserContext.WorkspaceId);
-        }
-
-        var payload = await query
-            .Select(user => new GetUsersResponse(
+        return usersResult.ToApiResult(
+            users => users.Users.Select(
+                static user => new GetUsersResponse(
                 user.Id,
                 user.UserName ?? string.Empty,
                 user.Email ?? string.Empty,
                 user.WorkspaceId,
                 user.IsActive,
                 user.RequirePasswordChange))
-            .ToListAsync(cancellationToken);
-
-        return Results.Ok(payload);
+                .ToList());
     }
 }

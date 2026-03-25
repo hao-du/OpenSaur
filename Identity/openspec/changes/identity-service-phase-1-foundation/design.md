@@ -21,6 +21,7 @@ The service must stay maintainable, so the implementation should prefer vertical
 - Establish a single ASP.NET Core host that acts as both the first-party API backend and the central OpenIddict authorization server.
 - Model users, roles, workspaces, permissions, role-permissions, user-role assignments, and outbox messages with auditable app-owned data structures.
 - Model permission scopes explicitly so UI clients can load scope metadata without reverse-parsing canonical permission codes.
+- Standardize `/api/*` responses on one JSON envelope so FE clients can handle success and failure consistently without special-casing HTTP-body shapes.
 - Support first-party browser login using the same OpenIddict authorization code flow and rotating refresh tokens as other clients.
 - Support a deterministic bootstrap administrator account that is forced through a self-service password change on first login.
 - Support future third-party clients using OpenIddict authorization code flow with rotating refresh tokens.
@@ -70,14 +71,15 @@ Alternatives considered:
 
 ### 4. Use vertical slices with action-style minimal API endpoints
 
-Backend use cases will be organized by feature slice, with each slice owning its endpoint mapping, request/response models, validation, and slice-specific services/query logic. Routes will be action-oriented where the route is a domain/account helper, such as `/api/user/get`, `/api/user/create`, `/api/user/change-workspace`, `/api/role/edit`, `/api/permission/get`, `/api/permission-scope/get`, `/api/auth/login`, `/api/auth/logout`, `/api/auth/change-password`, and `/api/auth/me`. These custom endpoints will accept JSON bodies and return API responses only. User create/edit contracts will not accept workspace reassignment directly; workspace moves go through the dedicated super-administrator-only change-workspace action. Self-service password change remains in the auth/account helpers, while administrator password reset stays in the user-management slice. For non-super administrators, user lookups/edits are scoped in the query path to the caller's current workspace, while `SuperAdministrator` bypasses that scope. OIDC protocol endpoints like `/connect/authorize` and `/connect/token` remain standard redirect/token endpoints.
+Backend use cases will be organized by feature slice, with each slice owning its endpoint mapping, request/response models, validation, and response mapping. Routes will be action-oriented where the route is a domain/account helper, such as `/api/user/get`, `/api/user/create`, `/api/user/change-workspace`, `/api/role/edit`, `/api/permission/get`, `/api/permission-scope/get`, `/api/auth/login`, `/api/auth/logout`, `/api/auth/change-password`, and `/api/auth/me`. These custom endpoints will accept JSON bodies and return API responses only. User create/edit contracts will not accept workspace reassignment directly; workspace moves go through the dedicated super-administrator-only change-workspace action. Self-service password change remains in the auth/account helpers, while administrator password reset stays in the user-management slice. For non-super administrators, user lookups/edits are scoped in the query path to the caller's current workspace, while `SuperAdministrator` bypasses that scope. OIDC protocol endpoints like `/connect/authorize` and `/connect/token` remain standard redirect/token endpoints.
 
-Database-backed entities remain under `Domain/**` so the persistence model stays easy to discover. `Infrastructure/**` is reserved for host plumbing such as DI, `ApplicationDbContext`, EF Core configuration/migrations, middleware, auth wiring, resilience, and security adapters. Permission- and authorization-specific application logic should move toward the relevant feature slices instead of accumulating under generic infrastructure folders.
+Database-backed entities remain under `Domain/**` so the persistence model stays easy to discover. `Infrastructure/**` is reserved for host plumbing such as DI, `ApplicationDbContext`, EF Core configuration/migrations, middleware, auth wiring, resilience, security adapters, and EF-backed repositories. Repositories should live under `Infrastructure/Database/Repositories/<Slice>/**`, with slice-specific repository request DTOs under `Infrastructure/Database/Repositories/<Slice>/Dtos/**`. Repositories should return application results that contain domain entities only, while feature handlers remain responsible for decorating those entities into API response models. Permission- and authorization-specific application logic should move toward the relevant feature slices instead of accumulating under generic infrastructure folders.
 
 Alternatives considered:
 
 - Controller-based layered architecture: familiar, but heavier than necessary for this service.
 - Resource-style REST endpoints with delete semantics: rejected because the requested API style is explicit action endpoints and the service uses soft delete only.
+- Generic `Repository<T>` abstractions or repositories returning feature response DTOs: rejected because they weaken slice intent and couple the database layer to API contracts.
 
 ### 5. Use app-owned entities for audited records and explicit user-role management
 
@@ -168,6 +170,19 @@ Alternatives considered:
 - Global idempotency for every endpoint: rejected because it adds storage and replay overhead to read paths and protocol routes that do not benefit from it.
 - In-memory-only idempotency: rejected because replay guarantees would be lost across restarts.
 
+### 13. Standardize `/api/*` responses with a shared JSON envelope and leave OIDC endpoints protocol-native
+
+All custom application endpoints under `/api/*` will return one consistent JSON envelope with `success`, `data`, and `errors` fields so FE clients can process all successful and failed application calls through the same response contract. Successful `/api/*` responses will return `200 OK` with JSON even for create and update flows that might otherwise use `201 Created` or `204 NoContent`. When there is no success payload, `data` will be `null`.
+
+Failed `/api/*` responses will return `success = false`, `data = null`, and an `errors` array whose items always contain string `code`, `message`, and `detail` properties. Expected application failures such as validation, authorization, not-found, and conflict outcomes should be represented through a result pattern and converted explicitly through shared helpers such as `ToApiResult` and `ToApiErrorResult`, rather than wrapping every handler in repetitive local `try/catch` blocks. That result pattern should flow naturally from the repository layer upward: repositories accept repository-specific request DTOs, return `Result<TEntity>` or `Result<IReadOnlyList<TEntity>>`, and keep HTTP and feature response contracts out of the database layer. Unexpected exceptions should be allowed to bubble to one centralized API exception normalizer that returns the same envelope for `/api/*` requests. Existing ASP.NET Core `ProblemDetails` paths should be translated into the same envelope for `/api/*` requests rather than leaking mixed response shapes. OIDC protocol endpoints under `/connect/*` remain unchanged because their redirect and token response formats must stay standards-compliant for first-party and third-party clients.
+
+Alternatives considered:
+
+- Keeping standard ASP.NET Core `ProblemDetails` for errors and wrapping only success responses: rejected because FE callers would still need separate parsing logic for success and failure.
+- Global middleware-only wrapping of all results without explicit endpoint helpers: rejected because it obscures behavior and makes creation, validation, and protocol boundaries harder to reason about.
+- Per-handler `try/catch` around every database or service call: rejected because it creates noisy handlers and inconsistent failure mapping for routine business outcomes.
+- Wrapping `/connect/*` protocol endpoints with the same envelope: rejected because it would break OAuth/OpenID Connect compliance.
+
 ## Risks / Trade-offs
 
 - [Short-lived JWT access tokens still remain valid until expiry] -> Enable OpenIddict token/authorization entry validation where appropriate and keep access tokens short-lived.
@@ -182,6 +197,7 @@ Alternatives considered:
 - [Per-instance rate-limit state can diverge across scaled-out instances] -> Accept per-instance behavior in Phase 1 and keep the policy model explicit so distributed state can be added later if needed.
 - [HybridCache-backed idempotency still depends on distributed cache configuration for cross-instance replay] -> Support optional Redis-backed `IDistributedCache` in Phase 1 while keeping the endpoint contract unchanged when only local cache is available.
 - [Overly strict thresholds can reject legitimate auth traffic] -> Apply stricter policies only to sensitive routes and make the thresholds configurable.
+- [A custom response envelope can drift from framework defaults and hide useful status semantics] -> Preserve truthful HTTP status codes for failures, keep `/connect/*` protocol-native, and cover the envelope contract with focused integration tests.
 
 ## Migration Plan
 

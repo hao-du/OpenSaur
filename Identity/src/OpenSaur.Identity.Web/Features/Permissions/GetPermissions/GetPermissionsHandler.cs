@@ -1,23 +1,22 @@
-using Microsoft.EntityFrameworkCore;
 using OpenSaur.Identity.Web.Domain.Permissions;
-using OpenSaur.Identity.Web.Infrastructure.Database;
+using OpenSaur.Identity.Web.Infrastructure.Database.Repositories.Permissions;
+using OpenSaur.Identity.Web.Infrastructure.Database.Repositories.Permissions.Dtos;
+using OpenSaur.Identity.Web.Infrastructure.Http.Responses;
 
 namespace OpenSaur.Identity.Web.Features.Permissions.GetPermissions;
 
 public static class GetPermissionsHandler
 {
     public static async Task<IResult> HandleAsync(
-        ApplicationDbContext dbContext,
+        PermissionRepository permissionRepository,
         CancellationToken cancellationToken)
     {
-        var permissions = await dbContext.Permissions
-            .AsNoTracking()
-            .Include(permission => permission.PermissionScope)
-            .OrderBy(permission => permission.CodeId)
-            .ToListAsync(cancellationToken);
+        var permissionsResult = await permissionRepository.GetPermissionsAsync(
+            new GetPermissionsRequest(),
+            cancellationToken);
 
-        var payload = permissions
-            .Select(
+        return permissionsResult.ToApiResult(
+            response => response.Permissions.Select(
                 permission =>
                 {
                     var definition = PermissionCatalog.GetDefinition(permission.CodeId);
@@ -31,8 +30,6 @@ public static class GetPermissionsHandler
                         permission.Description,
                         permission.IsActive);
                 })
-            .ToList();
-
-        return Results.Ok(payload);
+                .ToList());
     }
 }

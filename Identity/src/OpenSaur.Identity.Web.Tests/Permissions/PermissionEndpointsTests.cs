@@ -48,11 +48,7 @@ public sealed class PermissionEndpointsTests : IClassFixture<OpenSaurWebApplicat
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
         var response = await client.GetAsync("/api/permission/get");
-
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-
-        var payload = await response.Content.ReadFromJsonAsync<IReadOnlyList<PermissionResponse>>();
-        Assert.NotNull(payload);
+        var payload = await ApiResponseReader.ReadSuccessDataAsync<IReadOnlyList<PermissionResponse>>(response);
 
         var administratorCanManage = Assert.Single(payload, permission => permission.CodeId == (int)PermissionCode.Administrator_CanManage);
         Assert.Equal("Administrator.CanManage", administratorCanManage.Code);
@@ -85,11 +81,7 @@ public sealed class PermissionEndpointsTests : IClassFixture<OpenSaurWebApplicat
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
         var response = await client.GetAsync($"/api/permission/getbyid/{codeId}");
-
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-
-        var payload = await response.Content.ReadFromJsonAsync<PermissionResponse>();
-        Assert.NotNull(payload);
+        var payload = await ApiResponseReader.ReadSuccessDataAsync<PermissionResponse>(response);
         Assert.Equal(codeId, payload.CodeId);
         Assert.Equal("Administrator.CanManage", payload.Code);
         Assert.Equal(PermissionScopeCatalog.AdministratorPermissionScopeId, payload.PermissionScopeId);
@@ -167,7 +159,7 @@ public sealed class PermissionEndpointsTests : IClassFixture<OpenSaurWebApplicat
         var returnUrl = loginQuery["returnUrl"].ToString();
 
         var loginResponse = await client.PostAsJsonAsync("/api/auth/login", new LoginRequest(userName, password));
-        if (loginResponse.StatusCode != HttpStatusCode.NoContent)
+        if (loginResponse.StatusCode != HttpStatusCode.OK)
         {
             return null;
         }

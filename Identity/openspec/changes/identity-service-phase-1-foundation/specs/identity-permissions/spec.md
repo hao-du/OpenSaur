@@ -53,3 +53,14 @@ The system SHALL use role assignment, workspace scope, and resolved permission i
 #### Scenario: Missing permission blocks action
 - **WHEN** a caller does not resolve to the required permission for an action
 - **THEN** the system rejects the action even if the caller is otherwise authenticated
+
+### Requirement: Permission APIs SHALL return the common application JSON envelope
+The system SHALL return the common application JSON envelope for `/api/permission/*` and `/api/permission-scope/*` endpoints. Successful permission and scope lookups SHALL return `200 OK` with `success = true`, the payload in `data`, and an empty `errors` array. Expected permission-related failures SHALL be represented through the application result pattern and converted into the envelope, while unexpected exceptions SHALL be normalized centrally into the same failure envelope format.
+
+#### Scenario: Permission lookup succeeds
+- **WHEN** an authorized client retrieves permission or permission-scope data
+- **THEN** the system returns `200 OK` with the common success envelope and the lookup payload in `data`
+
+#### Scenario: Permission lookup fails
+- **WHEN** a permission-related API request fails because of authorization, validation, not-found, or an unexpected exception
+- **THEN** the system returns the common failure envelope with `errors` items that each contain string `code`, `message`, and `detail` fields

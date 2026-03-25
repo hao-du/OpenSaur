@@ -26,10 +26,12 @@
 - [x] 4.1 Implement action-style user endpoints for get, get-by-id, create, edit, and password change with soft delete through `IsActive`.
 - [x] 4.2 Implement action-style role endpoints for get, get-by-id, create, and edit.
 - [x] 4.3 Implement action-style permission endpoints for permission lookup and role-permission assignment support.
-- [ ] 4.4 Implement action-style user-role endpoints for get, create, and edit using app-owned user-role records.
-- [ ] 4.5 Implement workspace lookup and management support needed for Phase 1 backend scope without delete endpoints.
+- [x] 4.4 Implement action-style user-role endpoints for get, create, and edit using app-owned user-role records.
+- [x] 4.5 Implement workspace lookup and management support needed for Phase 1 backend scope without delete endpoints.
 - [x] 4.6 Implement action-style permission-scope endpoints for UI lookup and include explicit scope metadata in permission responses.
 - [x] 4.7 Reorganize permission- and authorization-related application code to better follow vertical-slice boundaries while keeping DB-backed entities in `Domain/**`.
+- [x] 4.8 Implement slice-specific repositories under `Infrastructure/Database/Repositories/*` with repository request DTOs under `Dtos/*`, return `Result<TEntity>`/`Result<IReadOnlyList<TEntity>>` with domain entities only, and use them to support the shared application result pattern plus `ToApiResult` and `ToApiErrorResult` helpers for expected `/api/*` outcomes while keeping `/connect/*` protocol responses unchanged.
+- [x] 4.9 Add centralized `/api/*` exception normalization that maps unexpected exceptions, validation, and `ProblemDetails` paths into the common error envelope while keeping successful application responses on `200 OK`.
 
 ## 5. Outbox And Event Recording
 
@@ -44,6 +46,7 @@
 - [ ] 6.3 Document the manual migration-script review/execution workflow and the Phase 1 operational assumptions.
 - [x] 6.4 Add development-only Swagger/OpenAPI support with bearer-auth documentation and host-level availability tests.
 - [x] 6.5 Add automated tests for permission-scope lookup and scope-based permission implication behavior.
+- [x] 6.6 Add automated tests for the common `/api/*` response envelope, including normalized validation/auth/not-found failures and unexpected exception handling.
 
 ## 7. Endpoint Resilience
 

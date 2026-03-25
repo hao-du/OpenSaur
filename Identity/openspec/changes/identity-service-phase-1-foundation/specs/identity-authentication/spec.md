@@ -82,6 +82,17 @@ The system SHALL expose non-protocol account-management helper endpoints using e
 - **WHEN** an anonymous browser starts an authorization request at `/connect/authorize`
 - **THEN** the system redirects the browser to the FE login route with a `returnUrl` that the FE can navigate back to after a successful API login
 
+### Requirement: `/api/auth/*` helpers SHALL return the common application JSON envelope
+The system SHALL return a common JSON response envelope for `/api/auth/*` helper endpoints, where successful responses contain `success`, `data`, and `errors`, and failed responses normalize validation, authorization, and unexpected exception paths into the same shape. Expected authentication helper failures SHALL be represented through the application result pattern and converted into the common envelope, while unexpected exceptions SHALL be normalized centrally instead of requiring handler-local `try/catch` blocks. OIDC protocol endpoints under `/connect/*` SHALL remain standards-compliant and SHALL NOT be wrapped in the application envelope.
+
+#### Scenario: Auth helper succeeds without a payload
+- **WHEN** an `/api/auth/*` helper operation succeeds without a domain payload, such as login, logout, or password change
+- **THEN** the system returns `200 OK` with `success = true`, `data = null`, and an empty `errors` array
+
+#### Scenario: Auth helper fails with a normalized error envelope
+- **WHEN** an `/api/auth/*` helper request fails because of invalid credentials, authorization, validation, or an unexpected server exception
+- **THEN** the system returns a failure response whose `errors` array contains one or more items with string `code`, `message`, and `detail` fields
+
 ### Requirement: Development environments SHALL expose Swagger for first-party auth helpers
 The system SHALL expose Swagger/OpenAPI documentation in `Development` so the authentication helper endpoints can be explored locally, and SHALL keep Swagger disabled outside `Development`.
 

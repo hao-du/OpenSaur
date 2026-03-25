@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
+using OpenSaur.Identity.Web.Infrastructure.Http.Responses;
+using OpenSaur.Identity.Web.Infrastructure.Results;
 
 namespace OpenSaur.Identity.Web.Features.Auth.Logout;
 
@@ -9,6 +11,6 @@ public static class LogoutHandler
     {
         await httpContext.SignOutAsync(IdentityConstants.ApplicationScheme);
 
-        return Results.NoContent();
+        return Result.Success().ToApiResult();
     }
 }

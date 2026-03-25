@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.HttpOverrides;
 using OpenSaur.Identity.Web.Infrastructure;
 using OpenSaur.Identity.Web.Infrastructure.Http.Idempotency;
+using OpenSaur.Identity.Web.Infrastructure.Http.Responses;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -9,6 +10,7 @@ builder.Services.AddOpenSaurInfrastructure(builder.Configuration, builder.Enviro
 var app = builder.Build();
 
 app.UseForwardedHeaders();
+app.UseExceptionHandler();
 
 if (!app.Environment.IsDevelopment())
 {
@@ -16,6 +18,7 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseStatusCodePages(ApiStatusCodeResponseWriter.TryWriteAsync);
 
 if (app.Environment.IsDevelopment())
 {

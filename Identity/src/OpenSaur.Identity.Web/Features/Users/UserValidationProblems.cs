@@ -1,23 +1,24 @@
 using Microsoft.AspNetCore.Identity;
+using OpenSaur.Identity.Web.Infrastructure.Results;
 
 namespace OpenSaur.Identity.Web.Features.Users;
 
 internal static class UserValidationProblems
 {
-    public static Dictionary<string, string[]> FromIdentityErrors(IEnumerable<IdentityError> errors)
+    public static ResultError[] FromIdentityErrors(IEnumerable<IdentityError> errors)
     {
         return errors
-            .GroupBy(error => error.Code)
-            .ToDictionary(
-                group => group.Key,
-                group => group.Select(error => error.Description).ToArray());
+            .Select(error => ResultErrors.Validation("Validation failed.", error.Description))
+            .ToArray();
     }
 
-    public static Dictionary<string, string[]> ForWorkspace()
+    public static ResultError[] ForWorkspace()
     {
-        return new Dictionary<string, string[]>
-        {
-            ["WorkspaceId"] = ["An active workspace is required."]
-        };
+        return
+        [
+            ResultErrors.Validation(
+                "Invalid workspace selection.",
+                "An active workspace is required.")
+        ];
     }
 }

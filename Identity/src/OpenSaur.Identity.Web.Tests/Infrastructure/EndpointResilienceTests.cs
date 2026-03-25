@@ -201,16 +201,12 @@ public sealed class EndpointResilienceTests
         var firstResponse = await SendCreateUserRequestAsync(client, request, idempotencyKey);
         var secondResponse = await SendCreateUserRequestAsync(client, request, idempotencyKey);
 
-        Assert.Equal(HttpStatusCode.Created, firstResponse.StatusCode);
-        Assert.Equal(HttpStatusCode.Created, secondResponse.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, firstResponse.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, secondResponse.StatusCode);
 
-        var firstPayload = await firstResponse.Content.ReadFromJsonAsync<CreateUserResponse>();
-        var secondPayload = await secondResponse.Content.ReadFromJsonAsync<CreateUserResponse>();
-
-        Assert.NotNull(firstPayload);
-        Assert.NotNull(secondPayload);
+        var firstPayload = await ApiResponseReader.ReadSuccessDataAsync<CreateUserResponse>(firstResponse);
+        var secondPayload = await ApiResponseReader.ReadSuccessDataAsync<CreateUserResponse>(secondResponse);
         Assert.Equal(firstPayload.Id, secondPayload.Id);
-        Assert.Equal(firstResponse.Headers.Location, secondResponse.Headers.Location);
 
         using var scope = factory.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
@@ -250,8 +246,8 @@ public sealed class EndpointResilienceTests
         var firstResponse = await SendCreateUserRequestAsync(client, firstRequest, idempotencyKey);
         var secondResponse = await SendCreateUserRequestAsync(client, secondRequest, idempotencyKey);
 
-        Assert.Equal(HttpStatusCode.Created, firstResponse.StatusCode);
-        Assert.Equal(HttpStatusCode.Conflict, secondResponse.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, firstResponse.StatusCode);
+        await ApiResponseReader.ReadFailureEnvelopeAsync(secondResponse, HttpStatusCode.Conflict);
     }
 
     private static OpenSaurWebApplicationFactory CreateFactory(
@@ -365,7 +361,7 @@ public sealed class EndpointResilienceTests
         var returnUrl = loginQuery["returnUrl"].ToString();
 
         var loginResponse = await client.PostAsJsonAsync("/api/auth/login", new LoginRequest(userName, password));
-        if (loginResponse.StatusCode != HttpStatusCode.NoContent)
+        if (loginResponse.StatusCode != HttpStatusCode.OK)
         {
             throw new InvalidOperationException("Login was expected to succeed.");
         }

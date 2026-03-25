@@ -1,9 +1,14 @@
+using FluentValidation;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
 using OpenSaur.Identity.Web.Domain.Identity;
 using OpenSaur.Identity.Web.Domain.Permissions;
 using OpenSaur.Identity.Web.Infrastructure.Database;
+using OpenSaur.Identity.Web.Infrastructure.Database.Repositories.Permissions;
+using OpenSaur.Identity.Web.Infrastructure.Database.Repositories.Permissions.Dtos;
+using OpenSaur.Identity.Web.Infrastructure.Http.Responses;
+using OpenSaur.Identity.Web.Infrastructure.Results;
 using OpenSaur.Identity.Web.Infrastructure.Security;
+using OpenSaur.Identity.Web.Infrastructure.Validation;
 
 namespace OpenSaur.Identity.Web.Features.Roles.CreateRole;
 
@@ -11,21 +16,29 @@ public static class CreateRoleHandler
 {
     public static async Task<IResult> HandleAsync(
         CreateRoleRequest request,
+        IValidator<CreateRoleRequest> validator,
         CurrentUserContext currentUserContext,
         ApplicationDbContext dbContext,
+        PermissionRepository permissionRepository,
         RoleManager<ApplicationRole> roleManager,
         CancellationToken cancellationToken)
     {
+        if (await validator.ValidateRequestAsync(request, cancellationToken) is { } validationFailure)
+        {
+            return validationFailure;
+        }
+
         var selectedCodeIds = request.PermissionCodeIds
             .Distinct()
             .ToArray();
-        var permissions = await dbContext.Permissions
-            .Where(permission => permission.IsActive && selectedCodeIds.Contains(permission.CodeId))
-            .ToListAsync(cancellationToken);
+        var permissionsResult = await permissionRepository.GetActivePermissionsByCodeIdsAsync(
+            new GetActivePermissionsByCodeIdsRequest(selectedCodeIds),
+            cancellationToken);
+        var permissions = permissionsResult.Value?.Permissions ?? [];
 
         if (permissions.Count != selectedCodeIds.Length)
         {
-            return Results.ValidationProblem(RoleValidationProblems.ForPermissions());
+            return Result.Validation(RoleValidationProblems.ForPermissions()).ToApiErrorResult();
         }
 
         var role = new ApplicationRole
@@ -41,7 +54,7 @@ public static class CreateRoleHandler
         var createResult = await roleManager.CreateAsync(role);
         if (!createResult.Succeeded)
         {
-            return Results.ValidationProblem(RoleValidationProblems.FromIdentityErrors(createResult.Errors));
+            return Result.Validation(RoleValidationProblems.FromIdentityErrors(createResult.Errors)).ToApiErrorResult();
         }
 
         foreach (var permission in permissions)
@@ -59,8 +72,6 @@ public static class CreateRoleHandler
         await dbContext.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
 
-        return Results.Created(
-            $"/api/role/getbyid/{role.Id}",
-            new CreateRoleResponse(role.Id));
+        return ApiResponses.Success(new CreateRoleResponse(role.Id));
     }
 }

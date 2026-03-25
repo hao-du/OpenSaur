@@ -73,7 +73,7 @@ public sealed class OidcAuthorizationFlowTests : IClassFixture<OpenSaurWebApplic
             "/api/auth/login",
             new LoginRequest(credentials.UserName, credentials.Password));
 
-        Assert.Equal(HttpStatusCode.NoContent, loginResponse.StatusCode);
+        await ApiResponseReader.AssertNullSuccessDataAsync(loginResponse);
         Assert.Contains(
             loginResponse.Headers.GetValues("Set-Cookie"),
             value => value.StartsWith("opensaur.identity.session=", StringComparison.Ordinal));
@@ -136,7 +136,7 @@ public sealed class OidcAuthorizationFlowTests : IClassFixture<OpenSaurWebApplic
             "/api/auth/login",
             new LoginRequest(credentials.UserName, TestFakers.CreateDifferentPassword(credentials.Password)));
 
-        Assert.Equal(HttpStatusCode.Unauthorized, loginResponse.StatusCode);
+        await ApiResponseReader.ReadFailureEnvelopeAsync(loginResponse, HttpStatusCode.Unauthorized);
         Assert.DoesNotContain("Set-Cookie", loginResponse.Headers.Select(header => header.Key), StringComparer.OrdinalIgnoreCase);
     }
 
@@ -165,7 +165,7 @@ public sealed class OidcAuthorizationFlowTests : IClassFixture<OpenSaurWebApplic
             "/api/auth/login",
             new LoginRequest(credentials.UserName, credentials.Password));
 
-        Assert.Equal(HttpStatusCode.Unauthorized, loginResponse.StatusCode);
+        await ApiResponseReader.ReadFailureEnvelopeAsync(loginResponse, HttpStatusCode.Unauthorized);
     }
 
     [Fact]
@@ -251,7 +251,7 @@ public sealed class OidcAuthorizationFlowTests : IClassFixture<OpenSaurWebApplic
 
         var logoutResponse = await client.PostAsync("/api/auth/logout", content: null);
 
-        Assert.Equal(HttpStatusCode.NoContent, logoutResponse.StatusCode);
+        await ApiResponseReader.AssertNullSuccessDataAsync(logoutResponse);
         Assert.Contains(
             logoutResponse.Headers.GetValues("Set-Cookie"),
             value => value.StartsWith("opensaur.identity.session=", StringComparison.Ordinal)
@@ -302,7 +302,7 @@ public sealed class OidcAuthorizationFlowTests : IClassFixture<OpenSaurWebApplic
         var returnUrl = loginQuery["returnUrl"].ToString();
 
         var loginResponse = await client.PostAsJsonAsync("/api/auth/login", new LoginRequest(userName, password));
-        Assert.Equal(HttpStatusCode.NoContent, loginResponse.StatusCode);
+        await ApiResponseReader.AssertNullSuccessDataAsync(loginResponse);
         var finalAuthorizeResponse = await client.GetAsync(returnUrl);
 
         Assert.Equal(HttpStatusCode.Redirect, finalAuthorizeResponse.StatusCode);
@@ -323,7 +323,7 @@ public sealed class OidcAuthorizationFlowTests : IClassFixture<OpenSaurWebApplic
         var returnUrl = loginQuery["returnUrl"].ToString();
 
         var loginResponse = await client.PostAsJsonAsync("/api/auth/login", new LoginRequest(userName, password));
-        Assert.Equal(HttpStatusCode.NoContent, loginResponse.StatusCode);
+        await ApiResponseReader.AssertNullSuccessDataAsync(loginResponse);
         var callbackResponse = await client.GetAsync(returnUrl);
         var callbackUri = callbackResponse.Headers.Location ?? throw new InvalidOperationException("Client callback redirect was expected.");
         var callbackQuery = QueryHelpers.ParseQuery(callbackUri.Query);

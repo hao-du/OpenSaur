@@ -1,7 +1,13 @@
+using FluentValidation;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
 using OpenSaur.Identity.Web.Domain.Identity;
-using OpenSaur.Identity.Web.Infrastructure.Database;
+using OpenSaur.Identity.Web.Infrastructure.Database.Repositories.Users;
+using OpenSaur.Identity.Web.Infrastructure.Database.Repositories.Users.Dtos;
+using OpenSaur.Identity.Web.Infrastructure.Database.Repositories.Workspaces;
+using OpenSaur.Identity.Web.Infrastructure.Database.Repositories.Workspaces.Dtos;
+using OpenSaur.Identity.Web.Infrastructure.Http.Responses;
+using OpenSaur.Identity.Web.Infrastructure.Results;
+using OpenSaur.Identity.Web.Infrastructure.Validation;
 
 namespace OpenSaur.Identity.Web.Features.Users.ChangeWorkspace;
 
@@ -9,32 +15,42 @@ public static class ChangeUserWorkspaceHandler
 {
     public static async Task<IResult> HandleAsync(
         ChangeUserWorkspaceRequest request,
-        ApplicationDbContext dbContext,
+        IValidator<ChangeUserWorkspaceRequest> validator,
+        UserRepository userRepository,
+        WorkspaceRepository workspaceRepository,
         UserManager<ApplicationUser> userManager,
         CancellationToken cancellationToken)
     {
-        var user = await userManager.FindByIdAsync(request.UserId.ToString());
-        if (user is null)
+        if (await validator.ValidateRequestAsync(request, cancellationToken) is { } validationFailure)
         {
-            return Results.NotFound();
+            return validationFailure;
         }
 
-        var workspace = await dbContext.Workspaces
-            .AsNoTracking()
-            .SingleOrDefaultAsync(candidate => candidate.Id == request.WorkspaceId, cancellationToken);
-        if (workspace is null || !workspace.IsActive)
+        var userResult = await userRepository.GetUserByIdAsync(
+            new GetUserByIdRequest(request.UserId, TrackChanges: true),
+            cancellationToken);
+        if (!userResult.IsSuccess || userResult.Value is null)
         {
-            return Results.ValidationProblem(UserValidationProblems.ForWorkspace());
+            return userResult.ToApiErrorResult();
         }
 
+        var workspaceResult = await workspaceRepository.GetActiveWorkspaceByIdAsync(
+            new GetActiveWorkspaceByIdRequest(request.WorkspaceId, TrackChanges: false),
+            cancellationToken);
+        if (!workspaceResult.IsSuccess)
+        {
+            return workspaceResult.ToApiErrorResult();
+        }
+
+        var user = userResult.Value.User;
         user.WorkspaceId = request.WorkspaceId;
 
         var updateResult = await userManager.UpdateAsync(user);
         if (!updateResult.Succeeded)
         {
-            return Results.ValidationProblem(UserValidationProblems.FromIdentityErrors(updateResult.Errors));
+            return Result.Validation(UserValidationProblems.FromIdentityErrors(updateResult.Errors)).ToApiErrorResult();
         }
 
-        return Results.NoContent();
+        return Result.Success().ToApiResult();
     }
 }

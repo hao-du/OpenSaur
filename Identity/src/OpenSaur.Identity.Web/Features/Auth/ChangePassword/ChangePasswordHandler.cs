@@ -1,6 +1,10 @@
 using System.Security.Claims;
+using FluentValidation;
 using Microsoft.AspNetCore.Identity;
 using OpenSaur.Identity.Web.Domain.Identity;
+using OpenSaur.Identity.Web.Infrastructure.Http.Responses;
+using OpenSaur.Identity.Web.Infrastructure.Results;
+using OpenSaur.Identity.Web.Infrastructure.Validation;
 
 namespace OpenSaur.Identity.Web.Features.Auth.ChangePassword;
 
@@ -8,19 +12,32 @@ public static class ChangePasswordHandler
 {
     public static async Task<IResult> HandleAsync(
         ChangePasswordRequest request,
+        IValidator<ChangePasswordRequest> validator,
         ClaimsPrincipal principal,
-        UserManager<ApplicationUser> userManager)
+        UserManager<ApplicationUser> userManager,
+        CancellationToken cancellationToken)
     {
+        if (await validator.ValidateRequestAsync(request, cancellationToken) is { } validationFailure)
+        {
+            return validationFailure;
+        }
+
         var userId = AuthPrincipalReader.GetUserId(principal);
         if (string.IsNullOrWhiteSpace(userId))
         {
-            return Results.Unauthorized();
+            return Result.Unauthorized(
+                    "Authentication is required.",
+                    "The request requires a valid authenticated API session or bearer token.")
+                .ToApiErrorResult();
         }
 
         var user = await userManager.FindByIdAsync(userId);
         if (user is null || !user.IsActive)
         {
-            return Results.Unauthorized();
+            return Result.Unauthorized(
+                    "Authentication is required.",
+                    "The request requires a valid authenticated API session or bearer token.")
+                .ToApiErrorResult();
         }
 
         var changePasswordResult = await userManager.ChangePasswordAsync(
@@ -29,7 +46,7 @@ public static class ChangePasswordHandler
             request.NewPassword);
         if (!changePasswordResult.Succeeded)
         {
-            return Results.ValidationProblem(ToValidationProblem(changePasswordResult.Errors));
+            return Result.Validation(ToValidationErrors(changePasswordResult.Errors)).ToApiErrorResult();
         }
 
         if (user.RequirePasswordChange)
@@ -38,19 +55,17 @@ public static class ChangePasswordHandler
             var updateResult = await userManager.UpdateAsync(user);
             if (!updateResult.Succeeded)
             {
-                return Results.ValidationProblem(ToValidationProblem(updateResult.Errors));
+                return Result.Validation(ToValidationErrors(updateResult.Errors)).ToApiErrorResult();
             }
         }
 
-        return Results.NoContent();
+        return Result.Success().ToApiResult();
     }
 
-    private static IDictionary<string, string[]> ToValidationProblem(IEnumerable<IdentityError> errors)
+    private static ResultError[] ToValidationErrors(IEnumerable<IdentityError> errors)
     {
         return errors
-            .GroupBy(static error => error.Code)
-            .ToDictionary(
-                group => group.Key,
-                group => group.Select(static error => error.Description).ToArray());
+            .Select(static error => ResultErrors.Validation("Validation failed.", error.Description))
+            .ToArray();
     }
 }

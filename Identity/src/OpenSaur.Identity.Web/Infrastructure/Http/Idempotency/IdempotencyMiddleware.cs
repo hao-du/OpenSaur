@@ -1,5 +1,7 @@
 using OpenSaur.Identity.Web.Infrastructure.Http.Configuration;
 using OpenSaur.Identity.Web.Infrastructure.Http.Metadata;
+using OpenSaur.Identity.Web.Infrastructure.Http.Responses;
+using OpenSaur.Identity.Web.Infrastructure.Results;
 
 namespace OpenSaur.Identity.Web.Infrastructure.Http.Idempotency;
 
@@ -165,21 +167,21 @@ public sealed class IdempotencyMiddleware
     private static Task WriteMissingKeyResponseAsync(HttpContext httpContext, string headerName)
     {
         // Selected write endpoints require an explicit Idempotency-Key so retries are intentional and traceable.
-        return Results.ValidationProblem(
-                new Dictionary<string, string[]>
-                {
-                    [headerName] = ["The idempotency key header is required for this endpoint."]
-                })
+        return Result.Validation(
+                ResultErrors.Validation(
+                    "Idempotency key is required.",
+                    $"The {headerName} header is required for this endpoint."))
+            .ToApiErrorResult()
             .ExecuteAsync(httpContext);
     }
 
     private static Task WriteConflictResponseAsync(HttpContext httpContext)
     {
         // Reusing the same key for a different payload is treated as a client error instead of a new write.
-        return Results.Problem(
-                title: "Idempotency key reuse conflict.",
-                detail: "The supplied idempotency key was already used with a different request payload.",
-                statusCode: StatusCodes.Status409Conflict)
+        return Result.Conflict(
+                "Idempotency key reuse conflict.",
+                "The supplied idempotency key was already used with a different request payload.")
+            .ToApiErrorResult()
             .ExecuteAsync(httpContext);
     }
 

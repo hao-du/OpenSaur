@@ -1,23 +1,24 @@
 using Microsoft.AspNetCore.Identity;
+using OpenSaur.Identity.Web.Infrastructure.Results;
 
 namespace OpenSaur.Identity.Web.Features.Roles;
 
 internal static class RoleValidationProblems
 {
-    public static Dictionary<string, string[]> FromIdentityErrors(IEnumerable<IdentityError> errors)
+    public static ResultError[] FromIdentityErrors(IEnumerable<IdentityError> errors)
     {
         return errors
-            .GroupBy(error => error.Code)
-            .ToDictionary(
-                group => group.Key,
-                group => group.Select(error => error.Description).ToArray());
+            .Select(error => ResultErrors.Validation("Validation failed.", error.Description))
+            .ToArray();
     }
 
-    public static Dictionary<string, string[]> ForPermissions()
+    public static ResultError[] ForPermissions()
     {
-        return new Dictionary<string, string[]>
-        {
-            ["PermissionCodeIds"] = ["One or more permissions are invalid."]
-        };
+        return
+        [
+            ResultErrors.Validation(
+                "Invalid permission selection.",
+                "One or more permissions are invalid.")
+        ];
     }
 }

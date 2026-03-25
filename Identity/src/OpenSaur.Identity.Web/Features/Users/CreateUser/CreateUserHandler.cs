@@ -1,6 +1,10 @@
+using FluentValidation;
 using Microsoft.AspNetCore.Identity;
 using OpenSaur.Identity.Web.Domain.Identity;
+using OpenSaur.Identity.Web.Infrastructure.Http.Responses;
+using OpenSaur.Identity.Web.Infrastructure.Results;
 using OpenSaur.Identity.Web.Infrastructure.Security;
+using OpenSaur.Identity.Web.Infrastructure.Validation;
 
 namespace OpenSaur.Identity.Web.Features.Users.CreateUser;
 
@@ -8,10 +12,16 @@ public static class CreateUserHandler
 {
     public static async Task<IResult> HandleAsync(
         CreateUserRequest request,
+        IValidator<CreateUserRequest> validator,
         CurrentUserContext currentUserContext,
         UserManager<ApplicationUser> userManager,
         CancellationToken cancellationToken)
     {
+        if (await validator.ValidateRequestAsync(request, cancellationToken) is { } validationFailure)
+        {
+            return validationFailure;
+        }
+
         var user = new ApplicationUser
         {
             UserName = request.UserName,
@@ -27,11 +37,9 @@ public static class CreateUserHandler
         var createResult = await userManager.CreateAsync(user, request.Password);
         if (!createResult.Succeeded)
         {
-            return Results.ValidationProblem(UserValidationProblems.FromIdentityErrors(createResult.Errors));
+            return Result.Validation(UserValidationProblems.FromIdentityErrors(createResult.Errors)).ToApiErrorResult();
         }
 
-        return Results.Created(
-            $"/api/user/getbyid/{user.Id}",
-            new CreateUserResponse(user.Id));
+        return ApiResponses.Success(new CreateUserResponse(user.Id));
     }
 }

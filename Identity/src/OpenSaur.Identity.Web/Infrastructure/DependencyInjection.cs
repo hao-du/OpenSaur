@@ -1,3 +1,4 @@
+using FluentValidation;
 using System.Security.Cryptography.X509Certificates;
 using System.Security.Claims;
 using System.Threading.RateLimiting;
@@ -11,21 +12,32 @@ using Microsoft.OpenApi.Models;
 using OpenIddict.Abstractions;
 using OpenIddict.Validation.AspNetCore;
 using OpenSaur.Identity.Web.Features.Auth;
+using OpenSaur.Identity.Web.Features.Auth.Login;
 using OpenSaur.Identity.Web.Features.Auth.Oidc;
 using OpenSaur.Identity.Web.Features.PermissionScopes;
 using OpenSaur.Identity.Web.Features.Permissions;
 using OpenSaur.Identity.Web.Features.Roles;
+using OpenSaur.Identity.Web.Features.UserRoles;
 using OpenSaur.Identity.Web.Features.Users;
+using OpenSaur.Identity.Web.Features.Workspaces;
 using OpenSaur.Identity.Web.Domain.Identity;
 using OpenSaur.Identity.Web.Infrastructure.Authorization;
 using OpenSaur.Identity.Web.Infrastructure.Authorization.Handlers;
 using OpenSaur.Identity.Web.Infrastructure.Authorization.Services;
 using OpenSaur.Identity.Web.Infrastructure.Database;
+using OpenSaur.Identity.Web.Infrastructure.Database.Repositories.Users;
+using OpenSaur.Identity.Web.Infrastructure.Database.Repositories.PermissionScopes;
+using OpenSaur.Identity.Web.Infrastructure.Database.Repositories.Permissions;
+using OpenSaur.Identity.Web.Infrastructure.Database.Repositories.Roles;
+using OpenSaur.Identity.Web.Infrastructure.Database.Repositories.UserRoles;
+using OpenSaur.Identity.Web.Infrastructure.Database.Repositories.Workspaces;
 using OpenSaur.Identity.Web.Infrastructure.Http.Configuration;
 using OpenSaur.Identity.Web.Infrastructure.Http.Idempotency;
 using OpenSaur.Identity.Web.Infrastructure.Http.Metadata;
 using OpenSaur.Identity.Web.Infrastructure.Http.RateLimiting;
+using OpenSaur.Identity.Web.Infrastructure.Http.Responses;
 using OpenSaur.Identity.Web.Infrastructure.Oidc;
+using OpenSaur.Identity.Web.Infrastructure.Results;
 using OpenSaur.Identity.Web.Infrastructure.Security;
 
 namespace OpenSaur.Identity.Web.Infrastructure;
@@ -46,6 +58,7 @@ public static class DependencyInjection
             .AddCacheAndHostServices(configuration, redisConnectionString, endpointResilienceOptions)
             .AddPersistenceServices(connectionString)
             .AddIdentityAndAuthorizationServices()
+            .AddValidationServices()
             .AddApplicationServices()
             .AddRateLimitingServices();
 
@@ -76,6 +89,7 @@ public static class DependencyInjection
     private static IServiceCollection AddDeveloperExperienceServices(this IServiceCollection services)
     {
         services.AddProblemDetails();
+        services.AddExceptionHandler<ApiExceptionHandler>();
         services.AddEndpointsApiExplorer();
         services.AddSwaggerGen(options =>
         {
@@ -157,6 +171,12 @@ public static class DependencyInjection
             options.UseNpgsql(connectionString);
             options.UseOpenIddict<Guid>();
         });
+        services.AddScoped<UserRepository>();
+        services.AddScoped<RoleRepository>();
+        services.AddScoped<PermissionRepository>();
+        services.AddScoped<PermissionScopeRepository>();
+        services.AddScoped<UserRoleRepository>();
+        services.AddScoped<WorkspaceRepository>();
 
         return services;
     }
@@ -217,6 +237,12 @@ public static class DependencyInjection
         services.AddSingleton<EndpointResilienceContextResolver>();
         services.AddSingleton<EndpointResiliencePolicyResolver>();
 
+        return services;
+    }
+
+    private static IServiceCollection AddValidationServices(this IServiceCollection services)
+    {
+        services.AddValidatorsFromAssemblyContaining<LoginRequestValidator>(ServiceLifetime.Transient);
         return services;
     }
 
@@ -348,6 +374,8 @@ public static class DependencyInjection
         app.MapOidcEndpoints();
         app.MapAuthEndpoints();
         app.MapUserEndpoints();
+        app.MapUserRoleEndpoints();
+        app.MapWorkspaceEndpoints();
         app.MapRoleEndpoints();
         app.MapPermissionEndpoints();
         app.MapPermissionScopeEndpoints();

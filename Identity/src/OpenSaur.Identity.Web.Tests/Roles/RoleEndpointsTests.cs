@@ -48,11 +48,7 @@ public sealed class RoleEndpointsTests : IClassFixture<OpenSaurWebApplicationFac
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
         var response = await client.GetAsync("/api/role/get");
-
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-
-        var payload = await response.Content.ReadFromJsonAsync<IReadOnlyList<RoleSummaryResponse>>();
-        Assert.NotNull(payload);
+        var payload = await ApiResponseReader.ReadSuccessDataAsync<IReadOnlyList<RoleSummaryResponse>>(response);
         Assert.Contains(payload, role => role.Name == SystemRoles.Administrator);
         Assert.Contains(payload, role => role.Name == SystemRoles.SuperAdministrator);
         Assert.Contains(payload, role => role.Name == SystemRoles.User);
@@ -79,11 +75,7 @@ public sealed class RoleEndpointsTests : IClassFixture<OpenSaurWebApplicationFac
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
         var response = await client.GetAsync($"/api/role/getbyid/{administratorRoleId}");
-
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-
-        var payload = await response.Content.ReadFromJsonAsync<RoleDetailResponse>();
-        Assert.NotNull(payload);
+        var payload = await ApiResponseReader.ReadSuccessDataAsync<RoleDetailResponse>(response);
         Assert.Equal(administratorRoleId, payload.Id);
         Assert.Contains((int)PermissionCode.Administrator_CanManage, payload.PermissionCodeIds);
     }
@@ -108,7 +100,7 @@ public sealed class RoleEndpointsTests : IClassFixture<OpenSaurWebApplicationFac
                 TestFakers.CreateDescription(),
                 [(int)PermissionCode.Administrator_CanManage]));
 
-        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        await ApiResponseReader.ReadSuccessDataAsync<JsonElement>(response);
 
         using var scope = _factory.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
@@ -144,7 +136,7 @@ public sealed class RoleEndpointsTests : IClassFixture<OpenSaurWebApplicationFac
                 IsActive: false,
                 PermissionCodeIds: []));
 
-        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+        await ApiResponseReader.AssertNullSuccessDataAsync(response);
 
         using var scope = _factory.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
@@ -277,7 +269,7 @@ public sealed class RoleEndpointsTests : IClassFixture<OpenSaurWebApplicationFac
         var returnUrl = loginQuery["returnUrl"].ToString();
 
         var loginResponse = await client.PostAsJsonAsync("/api/auth/login", new LoginRequest(userName, password));
-        if (loginResponse.StatusCode != HttpStatusCode.NoContent)
+        if (loginResponse.StatusCode != HttpStatusCode.OK)
         {
             return null;
         }

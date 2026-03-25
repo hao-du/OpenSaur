@@ -1,6 +1,7 @@
-using Microsoft.EntityFrameworkCore;
 using OpenSaur.Identity.Web.Domain.Permissions;
-using OpenSaur.Identity.Web.Infrastructure.Database;
+using OpenSaur.Identity.Web.Infrastructure.Database.Repositories.Permissions;
+using OpenSaur.Identity.Web.Infrastructure.Database.Repositories.Permissions.Dtos;
+using OpenSaur.Identity.Web.Infrastructure.Http.Responses;
 
 namespace OpenSaur.Identity.Web.Features.Permissions.GetPermissionById;
 
@@ -8,30 +9,28 @@ public static class GetPermissionByIdHandler
 {
     public static async Task<IResult> HandleAsync(
         int codeId,
-        ApplicationDbContext dbContext,
+        PermissionRepository permissionRepository,
         CancellationToken cancellationToken)
     {
-        var permission = await dbContext.Permissions
-            .AsNoTracking()
-            .Include(candidate => candidate.PermissionScope)
-            .SingleOrDefaultAsync(candidate => candidate.CodeId == codeId, cancellationToken);
-
-        if (permission is null)
+        var permissionResult = await permissionRepository.GetPermissionByCodeIdAsync(
+            new GetPermissionByCodeIdRequest(codeId),
+            cancellationToken);
+        if (!permissionResult.IsSuccess || permissionResult.Value is null)
         {
-            return Results.NotFound();
+            return permissionResult.ToApiErrorResult();
         }
 
-        var definition = PermissionCatalog.GetDefinition(permission.CodeId);
+        var definition = PermissionCatalog.GetDefinition(permissionResult.Value.Permission.CodeId);
 
-        return Results.Ok(
+        return ApiResponses.Success(
             new GetPermissionByIdResponse(
-                permission.Id,
-                permission.CodeId,
-                permission.PermissionScopeId,
-                permission.PermissionScope?.Name ?? string.Empty,
+                permissionResult.Value.Permission.Id,
+                permissionResult.Value.Permission.CodeId,
+                permissionResult.Value.Permission.PermissionScopeId,
+                permissionResult.Value.Permission.PermissionScope?.Name ?? string.Empty,
                 definition.Code,
-                permission.Name,
-                permission.Description,
-                permission.IsActive));
+                permissionResult.Value.Permission.Name,
+                permissionResult.Value.Permission.Description,
+                permissionResult.Value.Permission.IsActive));
     }
 }

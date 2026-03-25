@@ -1,24 +1,24 @@
-using Microsoft.EntityFrameworkCore;
-using OpenSaur.Identity.Web.Infrastructure.Database;
+using OpenSaur.Identity.Web.Infrastructure.Database.Repositories.Roles;
+using OpenSaur.Identity.Web.Infrastructure.Database.Repositories.Roles.Dtos;
+using OpenSaur.Identity.Web.Infrastructure.Http.Responses;
 
 namespace OpenSaur.Identity.Web.Features.Roles.GetRoles;
 
 public static class GetRolesHandler
 {
     public static async Task<IResult> HandleAsync(
-        ApplicationDbContext dbContext,
+        RoleRepository roleRepository,
         CancellationToken cancellationToken)
     {
-        var payload = await dbContext.Roles
-            .AsNoTracking()
-            .OrderBy(role => role.Name)
-            .Select(role => new GetRolesResponse(
-                role.Id,
-                role.Name ?? string.Empty,
-                role.Description,
-                role.IsActive))
-            .ToListAsync(cancellationToken);
+        var rolesResult = await roleRepository.GetRolesAsync(new GetRolesRequest(), cancellationToken);
 
-        return Results.Ok(payload);
+        return rolesResult.ToApiResult(
+            response => response.Roles.Select(
+                static role => new GetRolesResponse(
+                    role.Id,
+                    role.Name ?? string.Empty,
+                    role.Description,
+                    role.IsActive))
+                .ToList());
     }
 }

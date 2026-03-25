@@ -1,8 +1,12 @@
+using FluentValidation;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
 using OpenSaur.Identity.Web.Domain.Identity;
-using OpenSaur.Identity.Web.Infrastructure.Database;
+using OpenSaur.Identity.Web.Infrastructure.Database.Repositories.Users;
+using OpenSaur.Identity.Web.Infrastructure.Database.Repositories.Users.Dtos;
+using OpenSaur.Identity.Web.Infrastructure.Http.Responses;
+using OpenSaur.Identity.Web.Infrastructure.Results;
 using OpenSaur.Identity.Web.Infrastructure.Security;
+using OpenSaur.Identity.Web.Infrastructure.Validation;
 
 namespace OpenSaur.Identity.Web.Features.Users.ChangeUserPassword;
 
@@ -10,37 +14,40 @@ public static class ChangeUserPasswordHandler
 {
     public static async Task<IResult> HandleAsync(
         ChangeUserPasswordRequest request,
+        IValidator<ChangeUserPasswordRequest> validator,
         CurrentUserContext currentUserContext,
-        ApplicationDbContext dbContext,
+        UserRepository userRepository,
         UserManager<ApplicationUser> userManager,
         CancellationToken cancellationToken)
     {
-        var query = dbContext.Users.AsQueryable();
-        if (!currentUserContext.IsSuperAdministrator)
+        if (await validator.ValidateRequestAsync(request, cancellationToken) is { } validationFailure)
         {
-            query = query.Where(candidate => candidate.WorkspaceId == currentUserContext.WorkspaceId);
+            return validationFailure;
         }
 
-        var user = await query.SingleOrDefaultAsync(candidate => candidate.Id == request.UserId, cancellationToken);
-        if (user is null)
+        var userResult = await userRepository.GetManagedUserByIdAsync(
+            new GetManagedUserByIdRequest(request.UserId, currentUserContext, TrackChanges: true),
+            cancellationToken);
+        if (!userResult.IsSuccess || userResult.Value is null)
         {
-            return Results.NotFound();
+            return userResult.ToApiErrorResult();
         }
 
+        var user = userResult.Value.User;
         var resetToken = await userManager.GeneratePasswordResetTokenAsync(user);
         var resetResult = await userManager.ResetPasswordAsync(user, resetToken, request.NewPassword);
         if (!resetResult.Succeeded)
         {
-            return Results.ValidationProblem(UserValidationProblems.FromIdentityErrors(resetResult.Errors));
+            return Result.Validation(UserValidationProblems.FromIdentityErrors(resetResult.Errors)).ToApiErrorResult();
         }
 
         user.RequirePasswordChange = true;
         var updateResult = await userManager.UpdateAsync(user);
         if (!updateResult.Succeeded)
         {
-            return Results.ValidationProblem(UserValidationProblems.FromIdentityErrors(updateResult.Errors));
+            return Result.Validation(UserValidationProblems.FromIdentityErrors(updateResult.Errors)).ToApiErrorResult();
         }
 
-        return Results.NoContent();
+        return Result.Success().ToApiResult();
     }
 }

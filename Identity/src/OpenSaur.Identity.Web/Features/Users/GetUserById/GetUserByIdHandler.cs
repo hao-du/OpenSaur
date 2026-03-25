@@ -1,5 +1,7 @@
-using Microsoft.EntityFrameworkCore;
+using OpenSaur.Identity.Web.Infrastructure.Database.Repositories.Users;
+using OpenSaur.Identity.Web.Infrastructure.Database.Repositories.Users.Dtos;
 using OpenSaur.Identity.Web.Infrastructure.Database;
+using OpenSaur.Identity.Web.Infrastructure.Http.Responses;
 using OpenSaur.Identity.Web.Infrastructure.Security;
 
 namespace OpenSaur.Identity.Web.Features.Users.GetUserById;
@@ -9,30 +11,22 @@ public static class GetUserByIdHandler
     public static async Task<IResult> HandleAsync(
         Guid id,
         CurrentUserContext currentUserContext,
-        ApplicationDbContext dbContext,
+        UserRepository userRepository,
         CancellationToken cancellationToken)
     {
-        var query = dbContext.Users.AsNoTracking().AsQueryable();
-        if (!currentUserContext.IsSuperAdministrator)
-        {
-            query = query.Where(candidate => candidate.WorkspaceId == currentUserContext.WorkspaceId);
-        }
+        var userResult = await userRepository.GetManagedUserByIdAsync(
+            new GetManagedUserByIdRequest(id, currentUserContext),
+            cancellationToken);
 
-        var user = await query.SingleOrDefaultAsync(candidate => candidate.Id == id, cancellationToken);
-        if (user is null)
-        {
-            return Results.NotFound();
-        }
-
-        return Results.Ok(
-            new GetUserByIdResponse(
-                user.Id,
-                user.UserName ?? string.Empty,
-                user.Email ?? string.Empty,
-                user.WorkspaceId,
-                user.Description,
-                user.IsActive,
-                user.RequirePasswordChange,
-                user.UserSettings));
+        return userResult.ToApiResult(
+            response => new GetUserByIdResponse(
+                response.User.Id,
+                response.User.UserName ?? string.Empty,
+                response.User.Email ?? string.Empty,
+                response.User.WorkspaceId,
+                response.User.Description,
+                response.User.IsActive,
+                response.User.RequirePasswordChange,
+                response.User.UserSettings));
     }
 }

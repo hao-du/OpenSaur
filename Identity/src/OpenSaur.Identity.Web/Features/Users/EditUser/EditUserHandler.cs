@@ -1,8 +1,12 @@
+using FluentValidation;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
 using OpenSaur.Identity.Web.Domain.Identity;
-using OpenSaur.Identity.Web.Infrastructure.Database;
+using OpenSaur.Identity.Web.Infrastructure.Database.Repositories.Users;
+using OpenSaur.Identity.Web.Infrastructure.Database.Repositories.Users.Dtos;
+using OpenSaur.Identity.Web.Infrastructure.Http.Responses;
+using OpenSaur.Identity.Web.Infrastructure.Results;
 using OpenSaur.Identity.Web.Infrastructure.Security;
+using OpenSaur.Identity.Web.Infrastructure.Validation;
 
 namespace OpenSaur.Identity.Web.Features.Users.EditUser;
 
@@ -10,23 +14,26 @@ public static class EditUserHandler
 {
     public static async Task<IResult> HandleAsync(
         EditUserRequest request,
+        IValidator<EditUserRequest> validator,
         CurrentUserContext currentUserContext,
-        ApplicationDbContext dbContext,
+        UserRepository userRepository,
         UserManager<ApplicationUser> userManager,
         CancellationToken cancellationToken)
     {
-        var query = dbContext.Users.AsQueryable();
-        if (!currentUserContext.IsSuperAdministrator)
+        if (await validator.ValidateRequestAsync(request, cancellationToken) is { } validationFailure)
         {
-            query = query.Where(candidate => candidate.WorkspaceId == currentUserContext.WorkspaceId);
+            return validationFailure;
         }
 
-        var user = await query.SingleOrDefaultAsync(candidate => candidate.Id == request.Id, cancellationToken);
-        if (user is null)
+        var userResult = await userRepository.GetManagedUserByIdAsync(
+            new GetManagedUserByIdRequest(request.Id, currentUserContext, TrackChanges: true),
+            cancellationToken);
+        if (!userResult.IsSuccess || userResult.Value is null)
         {
-            return Results.NotFound();
+            return userResult.ToApiErrorResult();
         }
 
+        var user = userResult.Value.User;
         user.UserName = request.UserName;
         user.Email = request.Email;
         user.Description = request.Description;
@@ -36,9 +43,9 @@ public static class EditUserHandler
         var updateResult = await userManager.UpdateAsync(user);
         if (!updateResult.Succeeded)
         {
-            return Results.ValidationProblem(UserValidationProblems.FromIdentityErrors(updateResult.Errors));
+            return Result.Validation(UserValidationProblems.FromIdentityErrors(updateResult.Errors)).ToApiErrorResult();
         }
 
-        return Results.NoContent();
+        return Result.Success().ToApiResult();
     }
 }

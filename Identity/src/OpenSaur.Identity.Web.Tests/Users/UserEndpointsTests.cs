@@ -57,11 +57,7 @@ public sealed class UserEndpointsTests : IClassFixture<OpenSaurWebApplicationFac
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
         var response = await client.GetAsync("/api/user/get");
-
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-
-        var payload = await response.Content.ReadFromJsonAsync<IReadOnlyList<UserSummaryResponse>>();
-        Assert.NotNull(payload);
+        var payload = await ApiResponseReader.ReadSuccessDataAsync<IReadOnlyList<UserSummaryResponse>>(response);
         Assert.Contains(payload, user => user.UserName == sameWorkspaceUserCredentials.UserName);
         Assert.DoesNotContain(payload, user => user.UserName == otherWorkspaceUserCredentials.UserName);
     }
@@ -84,8 +80,7 @@ public sealed class UserEndpointsTests : IClassFixture<OpenSaurWebApplicationFac
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
         var response = await client.GetAsync($"/api/user/getbyid/{otherWorkspaceUserId}");
-
-        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        await ApiResponseReader.ReadFailureEnvelopeAsync(response, HttpStatusCode.NotFound);
     }
 
     [Fact]
@@ -103,10 +98,7 @@ public sealed class UserEndpointsTests : IClassFixture<OpenSaurWebApplicationFac
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
         var response = await client.GetAsync($"/api/user/getbyid/{otherWorkspaceUserId}");
-
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        var payload = await response.Content.ReadFromJsonAsync<UserDetailResponse>();
-        Assert.NotNull(payload);
+        var payload = await ApiResponseReader.ReadSuccessDataAsync<UserDetailResponse>(response);
         Assert.Equal(otherWorkspaceUserId, payload.Id);
     }
 
@@ -132,7 +124,7 @@ public sealed class UserEndpointsTests : IClassFixture<OpenSaurWebApplicationFac
                 TestFakers.CreateDescription(),
                 "{\"theme\":\"dark\"}"));
 
-        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        await ApiResponseReader.ReadSuccessDataAsync<JsonElement>(response);
 
         using var scope = _factory.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
@@ -168,7 +160,7 @@ public sealed class UserEndpointsTests : IClassFixture<OpenSaurWebApplicationFac
                 false,
                 "{\"language\":\"vi\"}"));
 
-        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+        await ApiResponseReader.AssertNullSuccessDataAsync(response);
 
         using var scope = _factory.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
@@ -206,7 +198,7 @@ public sealed class UserEndpointsTests : IClassFixture<OpenSaurWebApplicationFac
                 true,
                 "{\"language\":\"en\"}"));
 
-        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        await ApiResponseReader.ReadFailureEnvelopeAsync(response, HttpStatusCode.NotFound);
     }
 
     [Fact]
@@ -228,7 +220,7 @@ public sealed class UserEndpointsTests : IClassFixture<OpenSaurWebApplicationFac
             "/api/user/changepassword",
             new ChangeUserPasswordRequest(targetUserId, resetPassword));
 
-        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+        await ApiResponseReader.AssertNullSuccessDataAsync(response);
 
         using var oldPasswordClient = CreateClient();
         var oldAccessToken = await TryGetAccessTokenAsync(oldPasswordClient, targetCredentials.UserName, targetCredentials.Password);
@@ -239,10 +231,7 @@ public sealed class UserEndpointsTests : IClassFixture<OpenSaurWebApplicationFac
         newPasswordClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", newAccessToken);
 
         var meResponse = await newPasswordClient.GetAsync("/api/auth/me");
-        var mePayload = await meResponse.Content.ReadFromJsonAsync<AuthMeResponse>();
-
-        Assert.Equal(HttpStatusCode.OK, meResponse.StatusCode);
-        Assert.NotNull(mePayload);
+        var mePayload = await ApiResponseReader.ReadSuccessDataAsync<AuthMeResponse>(meResponse);
         Assert.True(mePayload.RequirePasswordChange);
     }
 
@@ -268,7 +257,7 @@ public sealed class UserEndpointsTests : IClassFixture<OpenSaurWebApplicationFac
             "/api/user/changepassword",
             new ChangeUserPasswordRequest(targetUserId, TestFakers.CreatePassword()));
 
-        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        await ApiResponseReader.ReadFailureEnvelopeAsync(response, HttpStatusCode.NotFound);
     }
 
     [Fact]
@@ -289,7 +278,7 @@ public sealed class UserEndpointsTests : IClassFixture<OpenSaurWebApplicationFac
             "/api/user/change-workspace",
             new ChangeUserWorkspaceRequest(targetUserId, targetWorkspaceId));
 
-        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+        await ApiResponseReader.ReadFailureEnvelopeAsync(response, HttpStatusCode.Forbidden);
     }
 
     [Fact]
@@ -308,7 +297,7 @@ public sealed class UserEndpointsTests : IClassFixture<OpenSaurWebApplicationFac
             "/api/user/change-workspace",
             new ChangeUserWorkspaceRequest(targetUserId, targetWorkspaceId));
 
-        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+        await ApiResponseReader.AssertNullSuccessDataAsync(response);
 
         using var scope = _factory.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
@@ -333,7 +322,7 @@ public sealed class UserEndpointsTests : IClassFixture<OpenSaurWebApplicationFac
             "/api/user/change-workspace",
             new ChangeUserWorkspaceRequest(targetUserId, targetWorkspaceId));
 
-        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        await ApiResponseReader.ReadFailureEnvelopeAsync(response, HttpStatusCode.BadRequest);
     }
 
     private HttpClient CreateClient()
@@ -444,7 +433,7 @@ public sealed class UserEndpointsTests : IClassFixture<OpenSaurWebApplicationFac
         var returnUrl = loginQuery["returnUrl"].ToString();
 
         var loginResponse = await client.PostAsJsonAsync("/api/auth/login", new LoginRequest(userName, password));
-        if (loginResponse.StatusCode != HttpStatusCode.NoContent)
+        if (loginResponse.StatusCode != HttpStatusCode.OK)
         {
             return null;
         }

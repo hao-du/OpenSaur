@@ -48,11 +48,7 @@ public sealed class PermissionScopeEndpointsTests : IClassFixture<OpenSaurWebApp
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
         var response = await client.GetAsync("/api/permission-scope/get");
-
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-
-        var payload = await response.Content.ReadFromJsonAsync<IReadOnlyList<PermissionScopeResponse>>();
-        Assert.NotNull(payload);
+        var payload = await ApiResponseReader.ReadSuccessDataAsync<IReadOnlyList<PermissionScopeResponse>>(response);
 
         var administratorScope = Assert.Single(payload, scope => scope.Id == PermissionScopeCatalog.AdministratorPermissionScopeId);
         Assert.Equal("Administrator", administratorScope.Name);
@@ -130,7 +126,7 @@ public sealed class PermissionScopeEndpointsTests : IClassFixture<OpenSaurWebApp
         var returnUrl = loginQuery["returnUrl"].ToString();
 
         var loginResponse = await client.PostAsJsonAsync("/api/auth/login", new LoginRequest(userName, password));
-        if (loginResponse.StatusCode != HttpStatusCode.NoContent)
+        if (loginResponse.StatusCode != HttpStatusCode.OK)
         {
             return null;
         }
