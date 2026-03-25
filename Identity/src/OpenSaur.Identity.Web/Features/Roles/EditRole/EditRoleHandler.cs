@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using OpenSaur.Identity.Web.Domain.Identity;
 using OpenSaur.Identity.Web.Domain.Permissions;
 using OpenSaur.Identity.Web.Infrastructure.Database;
+using OpenSaur.Identity.Web.Infrastructure.Database.Outbox;
 using OpenSaur.Identity.Web.Infrastructure.Database.Repositories.Permissions;
 using OpenSaur.Identity.Web.Infrastructure.Database.Repositories.Permissions.Dtos;
 using OpenSaur.Identity.Web.Infrastructure.Database.Repositories.Roles;
@@ -22,6 +23,7 @@ public static class EditRoleHandler
         IValidator<EditRoleRequest> validator,
         CurrentUserContext currentUserContext,
         ApplicationDbContext dbContext,
+        OutboxMessageWriter outboxMessageWriter,
         RoleRepository roleRepository,
         PermissionRepository permissionRepository,
         RoleManager<ApplicationRole> roleManager,
@@ -63,7 +65,7 @@ public static class EditRoleHandler
         var updateResult = await roleManager.UpdateAsync(role);
         if (!updateResult.Succeeded)
         {
-            return Result.Validation(RoleValidationProblems.FromIdentityErrors(updateResult.Errors)).ToApiErrorResult();
+            return Result.Validation(ValidationErrorMappings.ToResultErrors(updateResult.Errors)).ToApiErrorResult();
         }
 
         var selectedPermissionIds = permissions
@@ -99,6 +101,7 @@ public static class EditRoleHandler
                 });
         }
 
+        outboxMessageWriter.EnqueueRolePermissionsUpdated(role, selectedCodeIds, currentUserContext.UserId);
         await dbContext.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
 

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity;
 using OpenSaur.Identity.Web.Domain.Identity;
 using OpenSaur.Identity.Web.Domain.Permissions;
 using OpenSaur.Identity.Web.Infrastructure.Database;
+using OpenSaur.Identity.Web.Infrastructure.Database.Outbox;
 using OpenSaur.Identity.Web.Infrastructure.Database.Repositories.Permissions;
 using OpenSaur.Identity.Web.Infrastructure.Database.Repositories.Permissions.Dtos;
 using OpenSaur.Identity.Web.Infrastructure.Http.Responses;
@@ -19,6 +20,7 @@ public static class CreateRoleHandler
         IValidator<CreateRoleRequest> validator,
         CurrentUserContext currentUserContext,
         ApplicationDbContext dbContext,
+        OutboxMessageWriter outboxMessageWriter,
         PermissionRepository permissionRepository,
         RoleManager<ApplicationRole> roleManager,
         CancellationToken cancellationToken)
@@ -54,7 +56,7 @@ public static class CreateRoleHandler
         var createResult = await roleManager.CreateAsync(role);
         if (!createResult.Succeeded)
         {
-            return Result.Validation(RoleValidationProblems.FromIdentityErrors(createResult.Errors)).ToApiErrorResult();
+            return Result.Validation(ValidationErrorMappings.ToResultErrors(createResult.Errors)).ToApiErrorResult();
         }
 
         foreach (var permission in permissions)
@@ -69,6 +71,7 @@ public static class CreateRoleHandler
                 });
         }
 
+        outboxMessageWriter.EnqueueRolePermissionsCreated(role, selectedCodeIds, currentUserContext.UserId);
         await dbContext.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
 

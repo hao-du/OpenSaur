@@ -1,4 +1,3 @@
-using System.Text.Json;
 using FluentValidation;
 
 namespace OpenSaur.Identity.Web.Features.Users.CreateUser;
@@ -28,25 +27,7 @@ public sealed class CreateUserRequestValidator : AbstractValidator<CreateUserReq
             .WithMessage("Description must be 255 characters or fewer.");
 
         RuleFor(request => request.UserSettings)
-            .Must(BeValidJson)
+            .Must(UserSettingsJson.IsValid)
             .WithMessage("User settings must be valid JSON.");
-    }
-
-    private static bool BeValidJson(string? userSettings)
-    {
-        if (string.IsNullOrWhiteSpace(userSettings))
-        {
-            return true;
-        }
-
-        try
-        {
-            using var _ = JsonDocument.Parse(userSettings);
-            return true;
-        }
-        catch (JsonException)
-        {
-            return false;
-        }
     }
 }

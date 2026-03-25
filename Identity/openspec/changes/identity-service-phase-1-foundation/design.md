@@ -9,7 +9,7 @@
 - Action-style minimal APIs instead of RESTful controller/state endpoints
 - Soft delete via `IsActive` instead of delete endpoints
 - Audited app-owned tables with `Description`
-- Transactional outbox events for user, user-role, and permission changes
+- Transactional outbox events for user, user-role, and role-permission assignment changes
 - Code-defined permission scopes with first-class scope data for UI lookup
 
 The service must stay maintainable, so the implementation should prefer vertical slices, explicit API contracts, and the minimum infrastructure necessary to support these requirements cleanly.
@@ -101,9 +101,11 @@ Alternatives considered:
 - Deriving scope only by parsing the canonical code string at runtime: workable for authorization, but insufficient because UI clients also need a first-class scope model.
 - Duplicating implied permissions into `RolePermissions`: rejected because it creates redundant assignment rows and brittle updates.
 
-### 7. Add a transactional outbox for user, user-role, and permission changes
+### 7. Add a transactional outbox for user, user-role, and role-permission assignment changes
 
-Create/update operations for users, user-role assignments, and permissions will write an outbox row in the same transaction as the business change. Phase 1 only stores outbox messages; publishing to external infrastructure is deferred.
+Create/update operations for users, user-role assignments, and role-permission assignments will write an outbox row in the same transaction as the business change. Phase 1 only stores outbox messages; publishing to external infrastructure is deferred.
+
+Because Phase 1 permission definitions are code-defined and not editable through runtime APIs, the mutable "permission" surface in this phase is the role-permission assignment snapshot managed by the role create/edit flows. The outbox contract therefore records `RolePermissionsCreated` and `RolePermissionsUpdated` events that capture the role's current assigned permission `CodeId` list.
 
 Alternatives considered:
 
@@ -209,6 +211,23 @@ Alternatives considered:
 6. After manual script execution, verify the shared OpenIddict flow, resilience behavior, and API authorization in a non-production environment.
 
 Rollback will rely on standard database rollback procedures and migration-aware restore plans, because the service will not auto-apply schema changes.
+
+## Operator Guidance
+
+Phase 1 operators are expected to handle schema changes manually:
+
+1. Generate or collect the reviewed idempotent SQL script produced from the EF Core migrations.
+2. Review the script before execution instead of allowing the application to run migrations automatically.
+3. Execute the script through the approved PostgreSQL administration workflow for the target environment.
+4. Start or restart the application only after the reviewed script has been applied successfully.
+5. Verify the shared login flow, protected `/api/*` endpoints, and the expected seed data in a non-production validation pass.
+
+Phase 1 runtime assumptions are:
+
+- PostgreSQL schema changes are applied manually and remain the source of truth through the recorded EF Core migration history.
+- Outbox rows accumulate in the database until a later publishing/cleanup slice is added, so operators should monitor growth and inspect `Status`, `Retries`, `Error`, and `ProcessedOn` when troubleshooting.
+- Rate limiting is enforced per application instance.
+- Idempotent replay is per instance unless Redis-backed distributed cache is configured behind `HybridCache`.
 
 ## Open Questions
 

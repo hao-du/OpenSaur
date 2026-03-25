@@ -14,7 +14,7 @@
 - Add development-only Swagger/OpenAPI output so the Phase 1 authentication endpoints can be explored and tested locally.
 - Add migration-backed schema creation, deterministic seed data, and idempotent SQL script generation for manual database review/execution.
 - Add a deterministic bootstrap `SystemAdministrator` account that requires a password change on first login for first-time environment access.
-- Add transactional outbox events for user, user-role, and permission create/update operations.
+- Add transactional outbox events for user, user-role, and role-permission assignment create/update operations.
 - Remove hard-delete API behavior. Entity deactivation SHALL be done by editing `IsActive`.
 
 ## Capabilities
@@ -24,7 +24,7 @@
 - `identity-directory-management`: User, role, user-role, and workspace management APIs with action-style minimal endpoints, audit columns, and soft delete through `IsActive`.
 - `identity-permissions`: Permission catalog, role-permission assignment, and hierarchical permission implication using stable `CodeId` values.
 - `identity-persistence-foundation`: PostgreSQL/EF Core/Identity/OpenIddict schema, migration generation, baseline seed data, and manual DB script workflow.
-- `identity-outbox`: Transactional outbox storage for user, user-role, and permission lifecycle events.
+- `identity-outbox`: Transactional outbox storage for user, user-role, and role-permission assignment lifecycle events.
 - `identity-endpoint-resilience`: Cross-cutting rate limiting and idempotent write handling for identity-service endpoints.
 
 ### Modified Capabilities

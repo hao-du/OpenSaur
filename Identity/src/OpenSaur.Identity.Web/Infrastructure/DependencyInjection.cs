@@ -19,12 +19,14 @@ using OpenSaur.Identity.Web.Features.Permissions;
 using OpenSaur.Identity.Web.Features.Roles;
 using OpenSaur.Identity.Web.Features.UserRoles;
 using OpenSaur.Identity.Web.Features.Users;
+using OpenSaur.Identity.Web.Features.Users.Outbox;
 using OpenSaur.Identity.Web.Features.Workspaces;
 using OpenSaur.Identity.Web.Domain.Identity;
 using OpenSaur.Identity.Web.Infrastructure.Authorization;
 using OpenSaur.Identity.Web.Infrastructure.Authorization.Handlers;
 using OpenSaur.Identity.Web.Infrastructure.Authorization.Services;
 using OpenSaur.Identity.Web.Infrastructure.Database;
+using OpenSaur.Identity.Web.Infrastructure.Database.Outbox;
 using OpenSaur.Identity.Web.Infrastructure.Database.Repositories.Users;
 using OpenSaur.Identity.Web.Infrastructure.Database.Repositories.PermissionScopes;
 using OpenSaur.Identity.Web.Infrastructure.Database.Repositories.Permissions;
@@ -229,6 +231,8 @@ public static class DependencyInjection
     private static IServiceCollection AddApplicationServices(this IServiceCollection services)
     {
         services.AddScoped<ICurrentUserAccessor, HttpContextCurrentUserAccessor>();
+        services.AddScoped<OutboxMessageWriter>();
+        services.AddScoped<UserOutboxWriter>();
         services.AddScoped<PermissionAuthorizationService>();
         services.AddScoped<UserAuthorizationService>();
         services.AddScoped<IAuthorizationHandler, PermissionAuthorizationHandler>();

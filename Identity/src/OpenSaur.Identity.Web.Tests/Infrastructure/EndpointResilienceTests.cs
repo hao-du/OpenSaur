@@ -5,8 +5,6 @@ using System.Text.Json;
 using System.Text;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.AspNetCore.Routing.Patterns;
 using Microsoft.EntityFrameworkCore;
@@ -23,10 +21,6 @@ namespace OpenSaur.Identity.Web.Tests.Infrastructure;
 
 public sealed class EndpointResilienceTests
 {
-    private const string ClientId = "first-party-web";
-    private const string RedirectUri = "https://first-party.test.opensaur/auth/callback";
-    private const string ClientSecret = "test-first-party-secret";
-
     [Fact]
     public async Task GetMe_WhenDefaultRateLimitIsExceeded_ReturnsTooManyRequests()
     {
@@ -36,10 +30,13 @@ public sealed class EndpointResilienceTests
             ("EndpointResilience:RateLimiting:Token:PermitLimit", "10"));
 
         await factory.ResetDatabaseAsync();
-        await factory.SeedOidcClientAsync(ClientId, RedirectUri, ClientSecret);
+        await factory.SeedOidcClientAsync(
+            FirstPartyApiTestClient.ClientId,
+            FirstPartyApiTestClient.RedirectUri,
+            FirstPartyApiTestClient.ClientSecret);
 
-        using var client = CreateClient(factory);
-        var accessToken = await GetAccessTokenAsync(client, "SystemAdministrator", "Password1");
+        using var client = FirstPartyApiTestClient.CreateClient(factory);
+        var accessToken = await FirstPartyApiTestClient.GetAccessTokenAsync(client, "SystemAdministrator", "Password1");
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
         var firstResponse = await client.GetAsync("/api/auth/me");
@@ -160,16 +157,16 @@ public sealed class EndpointResilienceTests
 
         await factory.ResetDatabaseAsync();
 
-        using var client = CreateClient(factory);
+        using var client = FirstPartyApiTestClient.CreateClient(factory);
         var firstCredentials = TestFakers.CreateUserCredentials();
         var secondCredentials = TestFakers.CreateUserCredentials();
 
         var firstResponse = await client.PostAsJsonAsync(
             "/api/auth/login",
-            new LoginRequest(firstCredentials.UserName, firstCredentials.Password));
+            new { UserName = firstCredentials.UserName, Password = firstCredentials.Password });
         var secondResponse = await client.PostAsJsonAsync(
             "/api/auth/login",
-            new LoginRequest(secondCredentials.UserName, secondCredentials.Password));
+            new { UserName = secondCredentials.UserName, Password = secondCredentials.Password });
 
         Assert.Equal(HttpStatusCode.Unauthorized, firstResponse.StatusCode);
         Assert.Equal((HttpStatusCode)429, secondResponse.StatusCode);
@@ -180,14 +177,17 @@ public sealed class EndpointResilienceTests
     {
         using var factory = CreateFactory();
         await factory.ResetDatabaseAsync();
-        await factory.SeedOidcClientAsync(ClientId, RedirectUri, ClientSecret);
+        await factory.SeedOidcClientAsync(
+            FirstPartyApiTestClient.ClientId,
+            FirstPartyApiTestClient.RedirectUri,
+            FirstPartyApiTestClient.ClientSecret);
 
         var managerCredentials = TestFakers.CreateUserCredentials();
         var newUserCredentials = TestFakers.CreateUserCredentials();
         await factory.SeedUserAsync(managerCredentials.UserName, managerCredentials.Password, [SystemRoles.Administrator]);
 
-        using var client = CreateClient(factory);
-        var accessToken = await GetAccessTokenAsync(client, managerCredentials.UserName, managerCredentials.Password);
+        using var client = FirstPartyApiTestClient.CreateClient(factory);
+        var accessToken = await FirstPartyApiTestClient.GetAccessTokenAsync(client, managerCredentials.UserName, managerCredentials.Password);
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
         const string idempotencyKey = "create-user-replay-key";
@@ -218,15 +218,18 @@ public sealed class EndpointResilienceTests
     {
         using var factory = CreateFactory();
         await factory.ResetDatabaseAsync();
-        await factory.SeedOidcClientAsync(ClientId, RedirectUri, ClientSecret);
+        await factory.SeedOidcClientAsync(
+            FirstPartyApiTestClient.ClientId,
+            FirstPartyApiTestClient.RedirectUri,
+            FirstPartyApiTestClient.ClientSecret);
 
         var managerCredentials = TestFakers.CreateUserCredentials();
         var firstUserCredentials = TestFakers.CreateUserCredentials();
         var secondUserCredentials = TestFakers.CreateUserCredentials();
         await factory.SeedUserAsync(managerCredentials.UserName, managerCredentials.Password, [SystemRoles.Administrator]);
 
-        using var client = CreateClient(factory);
-        var accessToken = await GetAccessTokenAsync(client, managerCredentials.UserName, managerCredentials.Password);
+        using var client = FirstPartyApiTestClient.CreateClient(factory);
+        var accessToken = await FirstPartyApiTestClient.GetAccessTokenAsync(client, managerCredentials.UserName, managerCredentials.Password);
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
         const string idempotencyKey = "create-user-conflict-key";
@@ -278,17 +281,6 @@ public sealed class EndpointResilienceTests
         }
 
         return new OpenSaurWebApplicationFactory(settings, configureWebHost, configureDbContext);
-    }
-
-    private static HttpClient CreateClient(OpenSaurWebApplicationFactory factory)
-    {
-        return factory.CreateClient(
-            new WebApplicationFactoryClientOptions
-            {
-                AllowAutoRedirect = false,
-                BaseAddress = new Uri(OpenSaurWebApplicationFactory.Issuer),
-                HandleCookies = true
-            });
     }
 
     private static ServiceProvider CreateHybridCacheServices()
@@ -344,80 +336,12 @@ public sealed class EndpointResilienceTests
         CreateUserRequest request,
         string idempotencyKey)
     {
-        using var httpRequest = new HttpRequestMessage(HttpMethod.Post, "/api/user/create")
-        {
-            Content = JsonContent.Create(request)
-        };
-        httpRequest.Headers.Add("Idempotency-Key", idempotencyKey);
-
-        return await client.SendAsync(httpRequest);
+        return await FirstPartyApiTestClient.PostAsJsonWithIdempotencyAsync(
+            client,
+            "/api/user/create",
+            request,
+            idempotencyKey);
     }
-
-    private static async Task<string> GetAccessTokenAsync(HttpClient client, string userName, string password)
-    {
-        var authorizeResponse = await client.GetAsync(CreateAuthorizeUrl());
-        var loginUri = authorizeResponse.Headers.Location ?? throw new InvalidOperationException("FE login redirect was expected.");
-        var loginQuery = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(loginUri.Query);
-        var returnUrl = loginQuery["returnUrl"].ToString();
-
-        var loginResponse = await client.PostAsJsonAsync("/api/auth/login", new LoginRequest(userName, password));
-        if (loginResponse.StatusCode != HttpStatusCode.OK)
-        {
-            throw new InvalidOperationException("Login was expected to succeed.");
-        }
-
-        var callbackResponse = await client.GetAsync(returnUrl);
-        if (callbackResponse.StatusCode != HttpStatusCode.Redirect
-            || callbackResponse.Headers.Location is null
-            || !string.Equals(callbackResponse.Headers.Location.GetLeftPart(UriPartial.Path), RedirectUri, StringComparison.Ordinal))
-        {
-            throw new InvalidOperationException("Authorization code callback was expected.");
-        }
-
-        var callbackQuery = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(callbackResponse.Headers.Location.Query);
-        var authorizationCode = callbackQuery["code"].ToString();
-        if (string.IsNullOrWhiteSpace(authorizationCode))
-        {
-            throw new InvalidOperationException("Authorization code was expected.");
-        }
-
-        var tokenResponse = await client.PostAsync(
-            "/connect/token",
-            new FormUrlEncodedContent(
-            [
-                new KeyValuePair<string, string>("grant_type", "authorization_code"),
-                new KeyValuePair<string, string>("client_id", ClientId),
-                new KeyValuePair<string, string>("client_secret", ClientSecret),
-                new KeyValuePair<string, string>("redirect_uri", RedirectUri),
-                new KeyValuePair<string, string>("code", authorizationCode)
-            ]));
-
-        if (tokenResponse.StatusCode != HttpStatusCode.OK)
-        {
-            throw new InvalidOperationException("Token exchange was expected to succeed.");
-        }
-
-        await using var payloadStream = await tokenResponse.Content.ReadAsStreamAsync();
-        using var payload = await JsonDocument.ParseAsync(payloadStream);
-
-        return payload.RootElement.GetProperty("access_token").GetString()
-               ?? throw new InvalidOperationException("Access token was expected.");
-    }
-
-    private static string CreateAuthorizeUrl()
-    {
-        return Microsoft.AspNetCore.WebUtilities.QueryHelpers.AddQueryString(
-            "/connect/authorize",
-            new Dictionary<string, string?>
-            {
-                ["client_id"] = ClientId,
-                ["redirect_uri"] = RedirectUri,
-                ["response_type"] = "code",
-                ["scope"] = "openid profile email roles offline_access api",
-                ["state"] = "endpoint-resilience-state"
-            });
-    }
-    private sealed record LoginRequest(string UserName, string Password);
 
     private sealed record CreateUserRequest(
         string UserName,

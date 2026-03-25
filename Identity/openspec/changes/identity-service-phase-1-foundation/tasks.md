@@ -1,6 +1,6 @@
 ## 1. Foundation Setup
 
-- [ ] 1.1 Add the required package references and establish the vertical-slice project structure for auth, users, roles, permissions, user-role assignments, workspaces, and outbox handling.
+- [x] 1.1 Add the required package references and establish the vertical-slice project structure for auth, users, roles, permissions, user-role assignments, workspaces, and outbox handling.
 - [x] 1.2 Configure PostgreSQL, ASP.NET Core Identity, OpenIddict, authentication/authorization, and configuration binding without hardcoding environment secrets.
 
 ## 2. Domain And Persistence Model
@@ -35,15 +35,15 @@
 
 ## 5. Outbox And Event Recording
 
-- [ ] 5.1 Define domain event payload contracts for user, user-role, and permission create/update operations.
-- [ ] 5.2 Write outbox messages transactionally for user, user-role, and permission create/update operations.
-- [ ] 5.3 Ensure deactivation flows emit update events and never emit delete events for soft-deleted records.
+- [x] 5.1 Define domain event payload contracts for user, user-role, and role-permission assignment create/update operations.
+- [x] 5.2 Write outbox messages transactionally for user, user-role, and role-permission assignment create/update operations.
+- [x] 5.3 Ensure deactivation flows emit update events and never emit delete events for soft-deleted records.
 
 ## 6. Verification And Operator Guidance
 
 - [x] 6.1 Add automated tests for login, refresh, bootstrap password change, authorization, workspace scoping, and permission hierarchy behavior.
-- [ ] 6.2 Add automated tests for outbox message creation and soft-delete behavior.
-- [ ] 6.3 Document the manual migration-script review/execution workflow and the Phase 1 operational assumptions.
+- [x] 6.2 Add automated tests for outbox message creation and soft-delete behavior.
+- [x] 6.3 Document the manual migration-script review/execution workflow and the Phase 1 operational assumptions.
 - [x] 6.4 Add development-only Swagger/OpenAPI support with bearer-auth documentation and host-level availability tests.
 - [x] 6.5 Add automated tests for permission-scope lookup and scope-based permission implication behavior.
 - [x] 6.6 Add automated tests for the common `/api/*` response envelope, including normalized validation/auth/not-found failures and unexpected exception handling.

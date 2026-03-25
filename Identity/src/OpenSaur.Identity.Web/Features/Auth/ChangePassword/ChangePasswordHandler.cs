@@ -2,8 +2,11 @@ using System.Security.Claims;
 using FluentValidation;
 using Microsoft.AspNetCore.Identity;
 using OpenSaur.Identity.Web.Domain.Identity;
+using OpenSaur.Identity.Web.Features.Users.Outbox;
+using OpenSaur.Identity.Web.Infrastructure.Database;
 using OpenSaur.Identity.Web.Infrastructure.Http.Responses;
 using OpenSaur.Identity.Web.Infrastructure.Results;
+using OpenSaur.Identity.Web.Infrastructure.Security;
 using OpenSaur.Identity.Web.Infrastructure.Validation;
 
 namespace OpenSaur.Identity.Web.Features.Auth.ChangePassword;
@@ -14,6 +17,9 @@ public static class ChangePasswordHandler
         ChangePasswordRequest request,
         IValidator<ChangePasswordRequest> validator,
         ClaimsPrincipal principal,
+        CurrentUserContext currentUserContext,
+        ApplicationDbContext dbContext,
+        UserOutboxWriter userOutboxWriter,
         UserManager<ApplicationUser> userManager,
         CancellationToken cancellationToken)
     {
@@ -40,13 +46,15 @@ public static class ChangePasswordHandler
                 .ToApiErrorResult();
         }
 
+        await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
+
         var changePasswordResult = await userManager.ChangePasswordAsync(
             user,
             request.CurrentPassword,
             request.NewPassword);
         if (!changePasswordResult.Succeeded)
         {
-            return Result.Validation(ToValidationErrors(changePasswordResult.Errors)).ToApiErrorResult();
+            return Result.Validation(ValidationErrorMappings.ToResultErrors(changePasswordResult.Errors)).ToApiErrorResult();
         }
 
         if (user.RequirePasswordChange)
@@ -55,17 +63,14 @@ public static class ChangePasswordHandler
             var updateResult = await userManager.UpdateAsync(user);
             if (!updateResult.Succeeded)
             {
-                return Result.Validation(ToValidationErrors(updateResult.Errors)).ToApiErrorResult();
+                return Result.Validation(ValidationErrorMappings.ToResultErrors(updateResult.Errors)).ToApiErrorResult();
             }
         }
 
-        return Result.Success().ToApiResult();
-    }
+        userOutboxWriter.EnqueueUserUpdated(user, currentUserContext.UserId);
+        await dbContext.SaveChangesAsync(cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
 
-    private static ResultError[] ToValidationErrors(IEnumerable<IdentityError> errors)
-    {
-        return errors
-            .Select(static error => ResultErrors.Validation("Validation failed.", error.Description))
-            .ToArray();
+        return Result.Success().ToApiResult();
     }
 }

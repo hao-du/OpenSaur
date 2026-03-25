@@ -9,6 +9,7 @@ using OpenSaur.Identity.Web.Domain.Identity;
 using OpenSaur.Identity.Web.Features.UserRoles.CreateUserRole;
 using OpenSaur.Identity.Web.Features.UserRoles.EditUserRole;
 using OpenSaur.Identity.Web.Infrastructure.Database;
+using OpenSaur.Identity.Web.Infrastructure.Database.Outbox;
 using OpenSaur.Identity.Web.Infrastructure.Database.Repositories.Roles;
 using OpenSaur.Identity.Web.Infrastructure.Database.Repositories.UserRoles;
 using OpenSaur.Identity.Web.Infrastructure.Database.Repositories.Users;
@@ -90,6 +91,7 @@ public sealed class UserRolePersistenceResultTests
             new CreateUserRoleRequestValidator(),
             new CurrentUserContext(Guid.CreateVersion7(), workspaceIdForContext, false),
             handlerContext,
+            new OutboxMessageWriter(handlerContext),
             new UserRepository(handlerContext),
             new RoleRepository(handlerContext),
             new UserRoleRepository(handlerContext),
@@ -206,6 +208,7 @@ public sealed class UserRolePersistenceResultTests
             new EditUserRoleRequestValidator(),
             new CurrentUserContext(Guid.CreateVersion7(), workspaceId, false),
             handlerContext,
+            new OutboxMessageWriter(handlerContext),
             new RoleRepository(handlerContext),
             new UserRoleRepository(handlerContext),
             CancellationToken.None);

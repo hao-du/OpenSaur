@@ -15,21 +15,18 @@ public static class ApiStatusCodeResponseWriter
 
         var result = httpContext.Response.StatusCode switch
         {
-            StatusCodes.Status401Unauthorized => ApiResponses.Error(
-                StatusCodes.Status401Unauthorized,
-                [ResultErrors.Unauthorized(
+            StatusCodes.Status401Unauthorized => Result.Unauthorized(
                     "Authentication is required.",
-                    "The request requires a valid authenticated API session or bearer token.")]),
-            StatusCodes.Status403Forbidden => ApiResponses.Error(
-                StatusCodes.Status403Forbidden,
-                [ResultErrors.Forbidden(
+                    "The request requires a valid authenticated API session or bearer token.")
+                .ToApiErrorResult(),
+            StatusCodes.Status403Forbidden => Result.Forbidden(
                     "Access is forbidden.",
-                    "You do not have permission to perform this action.")]),
-            StatusCodes.Status404NotFound => ApiResponses.Error(
-                StatusCodes.Status404NotFound,
-                [ResultErrors.NotFound(
+                    "You do not have permission to perform this action.")
+                .ToApiErrorResult(),
+            StatusCodes.Status404NotFound => Result.NotFound(
                     "Resource not found.",
-                    "The requested API resource could not be found.")]),
+                    "The requested API resource could not be found.")
+                .ToApiErrorResult(),
             _ => null
         };
 

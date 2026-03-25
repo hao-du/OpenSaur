@@ -1,6 +1,8 @@
 using FluentValidation;
 using Microsoft.AspNetCore.Identity;
 using OpenSaur.Identity.Web.Domain.Identity;
+using OpenSaur.Identity.Web.Features.Users.Outbox;
+using OpenSaur.Identity.Web.Infrastructure.Database;
 using OpenSaur.Identity.Web.Infrastructure.Database.Repositories.Users;
 using OpenSaur.Identity.Web.Infrastructure.Database.Repositories.Users.Dtos;
 using OpenSaur.Identity.Web.Infrastructure.Http.Responses;
@@ -16,6 +18,8 @@ public static class EditUserHandler
         EditUserRequest request,
         IValidator<EditUserRequest> validator,
         CurrentUserContext currentUserContext,
+        ApplicationDbContext dbContext,
+        UserOutboxWriter userOutboxWriter,
         UserRepository userRepository,
         UserManager<ApplicationUser> userManager,
         CancellationToken cancellationToken)
@@ -40,11 +44,17 @@ public static class EditUserHandler
         user.IsActive = request.IsActive;
         user.UserSettings = string.IsNullOrWhiteSpace(request.UserSettings) ? "{}" : request.UserSettings;
 
+        await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
+
         var updateResult = await userManager.UpdateAsync(user);
         if (!updateResult.Succeeded)
         {
-            return Result.Validation(UserValidationProblems.FromIdentityErrors(updateResult.Errors)).ToApiErrorResult();
+            return Result.Validation(ValidationErrorMappings.ToResultErrors(updateResult.Errors)).ToApiErrorResult();
         }
+
+        userOutboxWriter.EnqueueUserUpdated(user, currentUserContext.UserId);
+        await dbContext.SaveChangesAsync(cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
 
         return Result.Success().ToApiResult();
     }

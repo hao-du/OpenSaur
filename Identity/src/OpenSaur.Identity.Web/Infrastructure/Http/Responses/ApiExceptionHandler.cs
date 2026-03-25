@@ -18,10 +18,11 @@ public sealed class ApiExceptionHandler(ILogger<ApiExceptionHandler> logger) : I
         logger.LogError(exception, "Unhandled exception while processing API request {Method} {Path}.", httpContext.Request.Method, httpContext.Request.Path);
 
         await ApiResponses.Error(
-                StatusCodes.Status500InternalServerError,
-                [ResultErrors.Server(
-                    "The request could not be completed.",
-                    "An unexpected error occurred while processing the request.")])
+                Result.Failure(
+                    StatusCodes.Status500InternalServerError,
+                    ResultErrors.Server(
+                        "The request could not be completed.",
+                        "An unexpected error occurred while processing the request.")))
             .ExecuteAsync(httpContext);
 
         return true;

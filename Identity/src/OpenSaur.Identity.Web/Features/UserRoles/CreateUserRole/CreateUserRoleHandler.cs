@@ -2,6 +2,7 @@ using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using OpenSaur.Identity.Web.Domain.Identity;
 using OpenSaur.Identity.Web.Infrastructure.Database;
+using OpenSaur.Identity.Web.Infrastructure.Database.Outbox;
 using OpenSaur.Identity.Web.Infrastructure.Database.Repositories.Roles;
 using OpenSaur.Identity.Web.Infrastructure.Database.Repositories.Roles.Dtos;
 using OpenSaur.Identity.Web.Infrastructure.Database.Repositories.UserRoles;
@@ -22,6 +23,7 @@ public static class CreateUserRoleHandler
         IValidator<CreateUserRoleRequest> validator,
         CurrentUserContext currentUserContext,
         ApplicationDbContext dbContext,
+        OutboxMessageWriter outboxMessageWriter,
         UserRepository userRepository,
         RoleRepository roleRepository,
         UserRoleRepository userRoleRepository,
@@ -66,6 +68,7 @@ public static class CreateUserRoleHandler
         };
 
         dbContext.UserRoles.Add(assignment);
+        outboxMessageWriter.EnqueueUserRoleCreated(assignment, currentUserContext.UserId);
         try
         {
             await dbContext.SaveChangesAsync(cancellationToken);

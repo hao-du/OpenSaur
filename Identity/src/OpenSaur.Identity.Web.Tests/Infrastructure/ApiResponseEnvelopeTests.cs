@@ -3,8 +3,6 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -20,10 +18,6 @@ namespace OpenSaur.Identity.Web.Tests.Infrastructure;
 
 public sealed class ApiResponseEnvelopeTests : IClassFixture<OpenSaurWebApplicationFactory>, IAsyncLifetime
 {
-    private const string ClientId = "first-party-web";
-    private const string RedirectUri = "https://first-party.test.opensaur/auth/callback";
-    private const string ClientSecret = "test-first-party-secret";
-
     private readonly OpenSaurWebApplicationFactory _factory;
 
     public ApiResponseEnvelopeTests(OpenSaurWebApplicationFactory factory)
@@ -34,7 +28,10 @@ public sealed class ApiResponseEnvelopeTests : IClassFixture<OpenSaurWebApplicat
     public async Task InitializeAsync()
     {
         await _factory.ResetDatabaseAsync();
-        await _factory.SeedOidcClientAsync(ClientId, RedirectUri, ClientSecret);
+        await _factory.SeedOidcClientAsync(
+            FirstPartyApiTestClient.ClientId,
+            FirstPartyApiTestClient.RedirectUri,
+            FirstPartyApiTestClient.ClientSecret);
     }
 
     public Task DisposeAsync()
@@ -47,11 +44,11 @@ public sealed class ApiResponseEnvelopeTests : IClassFixture<OpenSaurWebApplicat
     {
         var credentials = TestFakers.CreateUserCredentials();
         await _factory.SeedUserAsync(credentials.UserName, credentials.Password, [SystemRoles.User]);
-        using var client = CreateClient();
+        using var client = FirstPartyApiTestClient.CreateClient(_factory);
 
         var response = await client.PostAsJsonAsync(
             "/api/auth/login",
-            new LoginRequest(credentials.UserName, credentials.Password));
+            new { UserName = credentials.UserName, Password = credentials.Password });
         var payload = await ReadEnvelopeAsync(response);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -65,9 +62,8 @@ public sealed class ApiResponseEnvelopeTests : IClassFixture<OpenSaurWebApplicat
     {
         var credentials = TestFakers.CreateUserCredentials();
         await _factory.SeedUserAsync(credentials.UserName, credentials.Password, [SystemRoles.Administrator]);
-        using var client = CreateClient();
-
-        var accessToken = await GetAccessTokenAsync(client, credentials.UserName, credentials.Password);
+        using var client = FirstPartyApiTestClient.CreateClient(_factory);
+        var accessToken = await FirstPartyApiTestClient.GetAccessTokenAsync(client, credentials.UserName, credentials.Password);
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
         var response = await client.GetAsync("/api/auth/me");
@@ -85,7 +81,7 @@ public sealed class ApiResponseEnvelopeTests : IClassFixture<OpenSaurWebApplicat
     [Fact]
     public async Task GetUsers_WhenCallerIsAnonymous_ReturnsCommonUnauthorizedEnvelope()
     {
-        using var client = CreateClient();
+        using var client = FirstPartyApiTestClient.CreateClient(_factory);
 
         var response = await client.GetAsync("/api/user/get");
         var payload = await ReadEnvelopeAsync(response);
@@ -112,8 +108,8 @@ public sealed class ApiResponseEnvelopeTests : IClassFixture<OpenSaurWebApplicat
             [SystemRoles.User],
             workspaceName: TestFakers.CreateWorkspaceName());
 
-        using var client = CreateClient();
-        var accessToken = await GetAccessTokenAsync(client, managerCredentials.UserName, managerCredentials.Password);
+        using var client = FirstPartyApiTestClient.CreateClient(_factory);
+        var accessToken = await FirstPartyApiTestClient.GetAccessTokenAsync(client, managerCredentials.UserName, managerCredentials.Password);
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
         var response = await client.GetAsync($"/api/user/getbyid/{otherWorkspaceUserId}");
@@ -131,11 +127,11 @@ public sealed class ApiResponseEnvelopeTests : IClassFixture<OpenSaurWebApplicat
     [Fact]
     public async Task PostCreateWorkspace_WhenRequestIsInvalid_ReturnsCommonValidationEnvelope()
     {
-        using var client = CreateClient();
-        var accessToken = await GetAccessTokenAsync(client, "SystemAdministrator", "Password1");
+        using var client = FirstPartyApiTestClient.CreateClient(_factory);
+        var accessToken = await FirstPartyApiTestClient.GetAccessTokenAsync(client, "SystemAdministrator", "Password1");
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
-        var response = await PostAsJsonWithIdempotencyAsync(
+        var response = await FirstPartyApiTestClient.PostAsJsonWithIdempotencyAsync(
             client,
             "/api/workspace/create",
             new CreateWorkspaceRequest("   ", TestFakers.CreateDescription()));
@@ -153,19 +149,19 @@ public sealed class ApiResponseEnvelopeTests : IClassFixture<OpenSaurWebApplicat
     [Fact]
     public async Task PostCreateWorkspace_WhenIdempotencyKeyIsReusedForDifferentPayload_ReturnsCommonConflictEnvelope()
     {
-        using var client = CreateClient();
-        var accessToken = await GetAccessTokenAsync(client, "SystemAdministrator", "Password1");
+        using var client = FirstPartyApiTestClient.CreateClient(_factory);
+        var accessToken = await FirstPartyApiTestClient.GetAccessTokenAsync(client, "SystemAdministrator", "Password1");
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
         const string idempotencyKey = "workspace-envelope-conflict";
 
-        var firstResponse = await PostAsJsonWithIdempotencyAsync(
+        var firstResponse = await FirstPartyApiTestClient.PostAsJsonWithIdempotencyAsync(
             client,
             "/api/workspace/create",
             new CreateWorkspaceRequest(TestFakers.CreateWorkspaceName(), TestFakers.CreateDescription()),
             idempotencyKey);
 
-        var secondResponse = await PostAsJsonWithIdempotencyAsync(
+        var secondResponse = await FirstPartyApiTestClient.PostAsJsonWithIdempotencyAsync(
             client,
             "/api/workspace/create",
             new CreateWorkspaceRequest(TestFakers.CreateWorkspaceName(), TestFakers.CreateDescription()),
@@ -193,11 +189,11 @@ public sealed class ApiResponseEnvelopeTests : IClassFixture<OpenSaurWebApplicat
                         services.RemoveAll<UserRepository>();
                         services.AddScoped<UserRepository, ThrowingUserRepository>();
                     }));
-        using var client = CreateClient(failingFactory);
+        using var client = FirstPartyApiTestClient.CreateClient(failingFactory);
 
         var response = await client.PostAsJsonAsync(
             "/api/auth/login",
-            new LoginRequest("unexpected-user", "Password1"));
+            new { UserName = "unexpected-user", Password = "Password1" });
         var payload = await ReadEnvelopeAsync(response);
 
         Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
@@ -207,80 +203,6 @@ public sealed class ApiResponseEnvelopeTests : IClassFixture<OpenSaurWebApplicat
         Assert.Equal("server_error", payload.Errors[0].Code);
         Assert.False(string.IsNullOrWhiteSpace(payload.Errors[0].Message));
         Assert.False(string.IsNullOrWhiteSpace(payload.Errors[0].Detail));
-    }
-
-    private HttpClient CreateClient()
-    {
-        return CreateClient(_factory);
-    }
-
-    private static HttpClient CreateClient(OpenSaurWebApplicationFactory factory)
-    {
-        return factory.CreateClient(
-            new WebApplicationFactoryClientOptions
-            {
-                AllowAutoRedirect = false,
-                BaseAddress = new Uri(OpenSaurWebApplicationFactory.Issuer),
-                HandleCookies = true
-            });
-    }
-
-    private async Task<string> GetAccessTokenAsync(HttpClient client, string userName, string password)
-    {
-        var accessToken = await TryGetAccessTokenAsync(client, userName, password);
-        return accessToken ?? throw new InvalidOperationException("Access token was expected.");
-    }
-
-    private async Task<string?> TryGetAccessTokenAsync(HttpClient client, string userName, string password)
-    {
-        var authorizeResponse = await client.GetAsync(CreateAuthorizeUrl());
-        var loginUri = authorizeResponse.Headers.Location ?? throw new InvalidOperationException("Hosted login redirect was expected.");
-        var loginQuery = QueryHelpers.ParseQuery(loginUri.Query);
-        var returnUrl = loginQuery["returnUrl"].ToString();
-
-        var loginResponse = await client.PostAsJsonAsync(
-            "/api/auth/login",
-            new LoginRequest(userName, password));
-        if (loginResponse.StatusCode != HttpStatusCode.OK)
-        {
-            return null;
-        }
-
-        var callbackResponse = await client.GetAsync(returnUrl);
-        if (callbackResponse.StatusCode != HttpStatusCode.Redirect
-            || callbackResponse.Headers.Location is null
-            || !string.Equals(callbackResponse.Headers.Location.GetLeftPart(UriPartial.Path), RedirectUri, StringComparison.Ordinal))
-        {
-            return null;
-        }
-
-        var callbackQuery = QueryHelpers.ParseQuery(callbackResponse.Headers.Location.Query);
-        var authorizationCode = callbackQuery["code"].ToString();
-        if (string.IsNullOrWhiteSpace(authorizationCode))
-        {
-            return null;
-        }
-
-        var tokenResponse = await client.PostAsync(
-            "/connect/token",
-            new FormUrlEncodedContent(
-            [
-                new KeyValuePair<string, string>("grant_type", "authorization_code"),
-                new KeyValuePair<string, string>("client_id", ClientId),
-                new KeyValuePair<string, string>("client_secret", ClientSecret),
-                new KeyValuePair<string, string>("redirect_uri", RedirectUri),
-                new KeyValuePair<string, string>("code", authorizationCode)
-            ]));
-
-        if (tokenResponse.StatusCode != HttpStatusCode.OK)
-        {
-            return null;
-        }
-
-        await using var payloadStream = await tokenResponse.Content.ReadAsStreamAsync();
-        using var payload = await JsonDocument.ParseAsync(payloadStream);
-
-        return payload.RootElement.GetProperty("access_token").GetString();
     }
 
     private async Task<Guid> SeedUserAsync(
@@ -347,31 +269,6 @@ public sealed class ApiResponseEnvelopeTests : IClassFixture<OpenSaurWebApplicat
         return user.Id;
     }
 
-    private static string CreateAuthorizeUrl()
-    {
-        return QueryHelpers.AddQueryString(
-            "/connect/authorize",
-            new Dictionary<string, string?>
-            {
-                ["client_id"] = ClientId,
-                ["redirect_uri"] = RedirectUri,
-                ["response_type"] = "code",
-                ["scope"] = "openid profile email roles offline_access api",
-                ["state"] = "first-party-state"
-            });
-    }
-
-    private static Task<HttpResponseMessage> PostAsJsonWithIdempotencyAsync<TRequest>(
-        HttpClient client,
-        string requestUri,
-        TRequest request,
-        string? idempotencyKey = null)
-    {
-        client.DefaultRequestHeaders.Remove("Idempotency-Key");
-        client.DefaultRequestHeaders.Add("Idempotency-Key", idempotencyKey ?? Guid.NewGuid().ToString("N"));
-        return client.PostAsJsonAsync(requestUri, request);
-    }
-
     private static async Task<ApiEnvelope<JsonElement?>> ReadEnvelopeAsync(HttpResponseMessage response)
     {
         var payload = await response.Content.ReadFromJsonAsync<ApiEnvelope<JsonElement?>>();
@@ -386,8 +283,6 @@ public sealed class ApiResponseEnvelopeTests : IClassFixture<OpenSaurWebApplicat
     private sealed record ApiEnvelope<T>(bool Success, T? Data, ApiError[] Errors);
 
     private sealed record ApiError(string Code, string Message, string Detail);
-
-    private sealed record LoginRequest(string UserName, string Password);
 
     private sealed record CreateWorkspaceRequest(string Name, string? Description);
 
