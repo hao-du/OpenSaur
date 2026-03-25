@@ -13,6 +13,12 @@ public static class FirstPartyApiTestClient
     public const string ClientSecret = "test-first-party-secret";
     public const string Scope = "openid profile email roles offline_access api";
 
+    public static async Task InitializeFactoryAsync(OpenSaurWebApplicationFactory factory)
+    {
+        await factory.ResetDatabaseAsync();
+        await factory.SeedOidcClientAsync(ClientId, RedirectUri, ClientSecret);
+    }
+
     public static HttpClient CreateClient(OpenSaurWebApplicationFactory factory)
     {
         return factory.CreateClient(

@@ -4,6 +4,13 @@ using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using OpenSaur.Identity.Web.Domain.Identity;
+using OpenSaur.Identity.Web.Features.Auth.Me;
+using OpenSaur.Identity.Web.Features.Users.ChangeUserPassword;
+using OpenSaur.Identity.Web.Features.Users.ChangeWorkspace;
+using OpenSaur.Identity.Web.Features.Users.CreateUser;
+using OpenSaur.Identity.Web.Features.Users.EditUser;
+using OpenSaur.Identity.Web.Features.Users.GetUserById;
+using OpenSaur.Identity.Web.Features.Users.GetUsers;
 using OpenSaur.Identity.Web.Infrastructure.Database;
 using OpenSaur.Identity.Web.Tests.Support;
 
@@ -20,11 +27,7 @@ public sealed class UserEndpointsTests : IClassFixture<OpenSaurWebApplicationFac
 
     public async Task InitializeAsync()
     {
-        await _factory.ResetDatabaseAsync();
-        await _factory.SeedOidcClientAsync(
-            FirstPartyApiTestClient.ClientId,
-            FirstPartyApiTestClient.RedirectUri,
-            FirstPartyApiTestClient.ClientSecret);
+        await FirstPartyApiTestClient.InitializeFactoryAsync(_factory);
     }
 
     public Task DisposeAsync()
@@ -53,7 +56,7 @@ public sealed class UserEndpointsTests : IClassFixture<OpenSaurWebApplicationFac
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
         var response = await client.GetAsync("/api/user/get");
-        var payload = await ApiResponseReader.ReadSuccessDataAsync<IReadOnlyList<UserSummaryResponse>>(response);
+        var payload = await ApiResponseReader.ReadSuccessDataAsync<IReadOnlyList<GetUsersResponse>>(response);
         Assert.Contains(payload, user => user.UserName == sameWorkspaceUserCredentials.UserName);
         Assert.DoesNotContain(payload, user => user.UserName == otherWorkspaceUserCredentials.UserName);
     }
@@ -96,7 +99,7 @@ public sealed class UserEndpointsTests : IClassFixture<OpenSaurWebApplicationFac
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
         var response = await client.GetAsync($"/api/user/getbyid/{otherWorkspaceUserId}");
-        var payload = await ApiResponseReader.ReadSuccessDataAsync<UserDetailResponse>(response);
+        var payload = await ApiResponseReader.ReadSuccessDataAsync<GetUserByIdResponse>(response);
         Assert.Equal(otherWorkspaceUserId, payload.Id);
     }
 
@@ -330,30 +333,4 @@ public sealed class UserEndpointsTests : IClassFixture<OpenSaurWebApplicationFac
 
         await ApiResponseReader.ReadFailureEnvelopeAsync(response, HttpStatusCode.BadRequest);
     }
-
-    private sealed record CreateUserRequest(
-        string UserName,
-        string Email,
-        string Password,
-        string Description,
-        string UserSettings);
-
-    private sealed record EditUserRequest(
-        Guid Id,
-        string UserName,
-        string Email,
-        string Description,
-        bool IsActive,
-        string UserSettings);
-
-    private sealed record ChangeUserPasswordRequest(Guid UserId, string NewPassword);
-
-    private sealed record ChangeUserWorkspaceRequest(Guid UserId, Guid WorkspaceId);
-
-    private sealed record UserSummaryResponse(Guid Id, string UserName, Guid WorkspaceId, bool IsActive);
-
-    private sealed record UserDetailResponse(Guid Id, string UserName, Guid WorkspaceId, bool IsActive);
-
-    private sealed record AuthMeResponse(string Id, string UserName, string[] Roles, bool RequirePasswordChange);
-
 }

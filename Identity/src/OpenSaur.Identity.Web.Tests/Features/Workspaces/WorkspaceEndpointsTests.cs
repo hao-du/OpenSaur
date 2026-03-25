@@ -4,6 +4,9 @@ using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using OpenSaur.Identity.Web.Domain.Identity;
+using OpenSaur.Identity.Web.Features.Workspaces.CreateWorkspace;
+using OpenSaur.Identity.Web.Features.Workspaces.EditWorkspace;
+using OpenSaur.Identity.Web.Features.Workspaces.GetWorkspaces;
 using OpenSaur.Identity.Web.Infrastructure.Database;
 using OpenSaur.Identity.Web.Tests.Support;
 
@@ -20,11 +23,7 @@ public sealed class WorkspaceEndpointsTests : IClassFixture<OpenSaurWebApplicati
 
     public async Task InitializeAsync()
     {
-        await _factory.ResetDatabaseAsync();
-        await _factory.SeedOidcClientAsync(
-            FirstPartyApiTestClient.ClientId,
-            FirstPartyApiTestClient.RedirectUri,
-            FirstPartyApiTestClient.ClientSecret);
+        await FirstPartyApiTestClient.InitializeFactoryAsync(_factory);
     }
 
     public Task DisposeAsync()
@@ -44,7 +43,7 @@ public sealed class WorkspaceEndpointsTests : IClassFixture<OpenSaurWebApplicati
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
         var response = await client.GetAsync("/api/workspace/get");
-        var payload = await ApiResponseReader.ReadSuccessDataAsync<IReadOnlyList<WorkspaceResponse>>(response);
+        var payload = await ApiResponseReader.ReadSuccessDataAsync<IReadOnlyList<GetWorkspacesResponse>>(response);
         Assert.Single(payload);
         Assert.DoesNotContain(payload, workspace => workspace.Id == otherWorkspaceId);
     }
@@ -132,10 +131,4 @@ public sealed class WorkspaceEndpointsTests : IClassFixture<OpenSaurWebApplicati
         Assert.Equal("Updated Workspace", workspace.Name);
         Assert.False(workspace.IsActive);
     }
-
-    private sealed record CreateWorkspaceRequest(string Name, string Description);
-
-    private sealed record EditWorkspaceRequest(Guid Id, string Name, string Description, bool IsActive);
-
-    private sealed record WorkspaceResponse(Guid Id, string Name, string Description, bool IsActive);
 }

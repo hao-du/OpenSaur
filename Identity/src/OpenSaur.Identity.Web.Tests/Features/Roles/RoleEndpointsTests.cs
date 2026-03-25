@@ -5,6 +5,10 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using OpenSaur.Identity.Web.Domain.Identity;
 using OpenSaur.Identity.Web.Domain.Permissions;
+using OpenSaur.Identity.Web.Features.Roles.CreateRole;
+using OpenSaur.Identity.Web.Features.Roles.EditRole;
+using OpenSaur.Identity.Web.Features.Roles.GetRoleById;
+using OpenSaur.Identity.Web.Features.Roles.GetRoles;
 using OpenSaur.Identity.Web.Infrastructure.Database;
 using OpenSaur.Identity.Web.Tests.Support;
 
@@ -21,11 +25,7 @@ public sealed class RoleEndpointsTests : IClassFixture<OpenSaurWebApplicationFac
 
     public async Task InitializeAsync()
     {
-        await _factory.ResetDatabaseAsync();
-        await _factory.SeedOidcClientAsync(
-            FirstPartyApiTestClient.ClientId,
-            FirstPartyApiTestClient.RedirectUri,
-            FirstPartyApiTestClient.ClientSecret);
+        await FirstPartyApiTestClient.InitializeFactoryAsync(_factory);
     }
 
     public Task DisposeAsync()
@@ -44,7 +44,7 @@ public sealed class RoleEndpointsTests : IClassFixture<OpenSaurWebApplicationFac
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
         var response = await client.GetAsync("/api/role/get");
-        var payload = await ApiResponseReader.ReadSuccessDataAsync<IReadOnlyList<RoleSummaryResponse>>(response);
+        var payload = await ApiResponseReader.ReadSuccessDataAsync<IReadOnlyList<GetRolesResponse>>(response);
         Assert.Contains(payload, role => role.Name == SystemRoles.Administrator);
         Assert.Contains(payload, role => role.Name == SystemRoles.SuperAdministrator);
         Assert.Contains(payload, role => role.Name == SystemRoles.User);
@@ -71,7 +71,7 @@ public sealed class RoleEndpointsTests : IClassFixture<OpenSaurWebApplicationFac
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
         var response = await client.GetAsync($"/api/role/getbyid/{administratorRoleId}");
-        var payload = await ApiResponseReader.ReadSuccessDataAsync<RoleDetailResponse>(response);
+        var payload = await ApiResponseReader.ReadSuccessDataAsync<GetRoleByIdResponse>(response);
         Assert.Equal(administratorRoleId, payload.Id);
         Assert.Contains((int)PermissionCode.Administrator_CanManage, payload.PermissionCodeIds);
     }
@@ -147,12 +147,4 @@ public sealed class RoleEndpointsTests : IClassFixture<OpenSaurWebApplicationFac
         Assert.NotEmpty(permissionAssignments);
         Assert.All(permissionAssignments, assignment => Assert.False(assignment.IsActive));
     }
-
-    private sealed record CreateRoleRequest(string Name, string Description, int[] PermissionCodeIds);
-
-    private sealed record EditRoleRequest(Guid Id, string Name, string Description, bool IsActive, int[] PermissionCodeIds);
-
-    private sealed record RoleSummaryResponse(Guid Id, string Name, string Description, bool IsActive);
-
-    private sealed record RoleDetailResponse(Guid Id, string Name, string Description, bool IsActive, int[] PermissionCodeIds);
 }

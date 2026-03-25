@@ -16,7 +16,8 @@ public static class TestIdentitySeeder
         string password,
         IEnumerable<string> roles,
         string? workspaceName = null,
-        bool isActive = true)
+        bool isActive = true,
+        bool workspaceIsActive = true)
     {
         using var scope = factory.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
@@ -36,6 +37,7 @@ public static class TestIdentitySeeder
                         {
                             Name = workspaceName,
                             Description = TestFakers.CreateDescription(),
+                            IsActive = workspaceIsActive,
                             CreatedBy = Guid.CreateVersion7()
                         };
 
@@ -44,6 +46,12 @@ public static class TestIdentitySeeder
                 dbContext.Workspaces.Add(workspace);
                 await dbContext.SaveChangesAsync();
             }
+        }
+
+        if (workspace.IsActive != workspaceIsActive)
+        {
+            workspace.IsActive = workspaceIsActive;
+            await dbContext.SaveChangesAsync();
         }
 
         var existingUser = await userManager.FindByNameAsync(userName);

@@ -1,6 +1,8 @@
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using OpenSaur.Identity.Web.Features.Auth.ChangePassword;
+using OpenSaur.Identity.Web.Features.Auth.Me;
 using OpenSaur.Identity.Web.Domain.Identity;
 using OpenSaur.Identity.Web.Tests.Support;
 
@@ -17,11 +19,7 @@ public sealed class ApiAuthAccountEndpointsTests : IClassFixture<OpenSaurWebAppl
 
     public async Task InitializeAsync()
     {
-        await _factory.ResetDatabaseAsync();
-        await _factory.SeedOidcClientAsync(
-            FirstPartyApiTestClient.ClientId,
-            FirstPartyApiTestClient.RedirectUri,
-            FirstPartyApiTestClient.ClientSecret);
+        await FirstPartyApiTestClient.InitializeFactoryAsync(_factory);
     }
 
     public Task DisposeAsync()
@@ -33,7 +31,7 @@ public sealed class ApiAuthAccountEndpointsTests : IClassFixture<OpenSaurWebAppl
     public async Task PostLogin_WhenCredentialsAreValid_EstablishesHostedSessionAndReturnsNoContent()
     {
         var credentials = TestFakers.CreateUserCredentials();
-        await _factory.SeedUserAsync(credentials.UserName, credentials.Password, [SystemRoles.User]);
+        await TestIdentitySeeder.SeedUserAsync(_factory, credentials.UserName, credentials.Password, [SystemRoles.User]);
         using var client = FirstPartyApiTestClient.CreateClient(_factory);
 
         var response = await client.PostAsJsonAsync(
@@ -50,7 +48,7 @@ public sealed class ApiAuthAccountEndpointsTests : IClassFixture<OpenSaurWebAppl
     public async Task PostLogin_WhenCredentialsAreInvalid_ReturnsUnauthorized()
     {
         var credentials = TestFakers.CreateUserCredentials();
-        await _factory.SeedUserAsync(credentials.UserName, credentials.Password, [SystemRoles.User]);
+        await TestIdentitySeeder.SeedUserAsync(_factory, credentials.UserName, credentials.Password, [SystemRoles.User]);
         using var client = FirstPartyApiTestClient.CreateClient(_factory);
 
         var response = await client.PostAsJsonAsync(
@@ -83,7 +81,7 @@ public sealed class ApiAuthAccountEndpointsTests : IClassFixture<OpenSaurWebAppl
     public async Task PostLogout_WhenHostedSessionExistsAndApiCallerIsAuthorized_ClearsSessionAndReturnsNoContent()
     {
         var credentials = TestFakers.CreateUserCredentials();
-        await _factory.SeedUserAsync(credentials.UserName, credentials.Password, [SystemRoles.User]);
+        await TestIdentitySeeder.SeedUserAsync(_factory, credentials.UserName, credentials.Password, [SystemRoles.User]);
         using var client = FirstPartyApiTestClient.CreateClient(_factory);
         var accessToken = await FirstPartyApiTestClient.GetAccessTokenAsync(client, credentials.UserName, credentials.Password);
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
@@ -101,7 +99,7 @@ public sealed class ApiAuthAccountEndpointsTests : IClassFixture<OpenSaurWebAppl
     public async Task PostLogout_WhenApiCallerIsAnonymous_ReturnsUnauthorized()
     {
         var credentials = TestFakers.CreateUserCredentials();
-        await _factory.SeedUserAsync(credentials.UserName, credentials.Password, [SystemRoles.User]);
+        await TestIdentitySeeder.SeedUserAsync(_factory, credentials.UserName, credentials.Password, [SystemRoles.User]);
         using var client = FirstPartyApiTestClient.CreateClient(_factory);
         await client.PostAsJsonAsync(
             "/api/auth/login",
@@ -116,7 +114,7 @@ public sealed class ApiAuthAccountEndpointsTests : IClassFixture<OpenSaurWebAppl
     public async Task GetMe_WhenOidcAccessTokenIsValid_ReturnsCurrentUserContext()
     {
         var credentials = TestFakers.CreateUserCredentials();
-        await _factory.SeedUserAsync(credentials.UserName, credentials.Password, [SystemRoles.Administrator]);
+        await TestIdentitySeeder.SeedUserAsync(_factory, credentials.UserName, credentials.Password, [SystemRoles.Administrator]);
         using var client = FirstPartyApiTestClient.CreateClient(_factory);
         var accessToken = await FirstPartyApiTestClient.GetAccessTokenAsync(client, credentials.UserName, credentials.Password);
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
@@ -164,8 +162,4 @@ public sealed class ApiAuthAccountEndpointsTests : IClassFixture<OpenSaurWebAppl
 
         Assert.False(mePayload.RequirePasswordChange);
     }
-
-    private sealed record ChangePasswordRequest(string CurrentPassword, string NewPassword);
-
-    private sealed record AuthMeResponse(string Id, string UserName, string[] Roles, bool RequirePasswordChange);
 }

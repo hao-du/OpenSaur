@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Headers;
 using OpenSaur.Identity.Web.Domain.Identity;
 using OpenSaur.Identity.Web.Domain.Permissions;
+using OpenSaur.Identity.Web.Features.PermissionScopes.GetPermissionScopes;
 using OpenSaur.Identity.Web.Tests.Support;
 
 namespace OpenSaur.Identity.Web.Tests.Features.Permissions;
@@ -17,11 +18,7 @@ public sealed class PermissionScopeEndpointsTests : IClassFixture<OpenSaurWebApp
 
     public async Task InitializeAsync()
     {
-        await _factory.ResetDatabaseAsync();
-        await _factory.SeedOidcClientAsync(
-            FirstPartyApiTestClient.ClientId,
-            FirstPartyApiTestClient.RedirectUri,
-            FirstPartyApiTestClient.ClientSecret);
+        await FirstPartyApiTestClient.InitializeFactoryAsync(_factory);
     }
 
     public Task DisposeAsync()
@@ -40,12 +37,10 @@ public sealed class PermissionScopeEndpointsTests : IClassFixture<OpenSaurWebApp
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
         var response = await client.GetAsync("/api/permission-scope/get");
-        var payload = await ApiResponseReader.ReadSuccessDataAsync<IReadOnlyList<PermissionScopeResponse>>(response);
+        var payload = await ApiResponseReader.ReadSuccessDataAsync<IReadOnlyList<GetPermissionScopesResponse>>(response);
 
         var administratorScope = Assert.Single(payload, scope => scope.Id == PermissionScopeCatalog.AdministratorPermissionScopeId);
         Assert.Equal("Administrator", administratorScope.Name);
         Assert.False(string.IsNullOrWhiteSpace(administratorScope.Description));
     }
-
-    private sealed record PermissionScopeResponse(Guid Id, string Name, string Description, bool IsActive);
 }

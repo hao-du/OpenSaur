@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.DataProtection;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
@@ -10,9 +9,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using OpenIddict.Abstractions;
-using OpenSaur.Identity.Web.Domain.Identity;
 using OpenSaur.Identity.Web.Infrastructure.Database;
-using OpenSaur.Identity.Web.Tests.Support;
 
 namespace OpenSaur.Identity.Web.Tests;
 
@@ -85,59 +82,6 @@ public sealed class OpenSaurWebApplicationFactory : WebApplicationFactory<Progra
         var host = base.CreateHost(builder);
         EnsureDatabaseCreatedAsync(host.Services).GetAwaiter().GetResult();
         return host;
-    }
-
-    public async Task SeedUserAsync(
-        string userName,
-        string password,
-        IEnumerable<string> roles,
-        bool isActive = true,
-        bool workspaceIsActive = true)
-    {
-        await EnsureDatabaseCreatedAsync();
-
-        using var scope = Services.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-
-        var workspace = await dbContext.Workspaces.SingleAsync();
-        workspace.IsActive = workspaceIsActive;
-        await dbContext.SaveChangesAsync();
-
-        var existingUser = await userManager.FindByNameAsync(userName);
-        if (existingUser is not null)
-        {
-            return;
-        }
-
-        var user = new ApplicationUser
-        {
-            Id = Guid.CreateVersion7(),
-            UserName = userName,
-            Email = TestFakers.CreateEmail(userName),
-            RequirePasswordChange = false,
-            WorkspaceId = workspace.Id,
-            IsActive = isActive,
-            CreatedBy = Guid.CreateVersion7(),
-            CreatedOn = DateTime.UtcNow
-        };
-
-        var createResult = await userManager.CreateAsync(user, password);
-        if (!createResult.Succeeded)
-        {
-            var errors = string.Join(", ", createResult.Errors.Select(static error => error.Description));
-            throw new InvalidOperationException($"Failed to seed test user '{userName}': {errors}");
-        }
-
-        if (roles.Any())
-        {
-            var addRolesResult = await userManager.AddToRolesAsync(user, roles);
-            if (!addRolesResult.Succeeded)
-            {
-                var errors = string.Join(", ", addRolesResult.Errors.Select(static error => error.Description));
-                throw new InvalidOperationException($"Failed to assign roles to '{userName}': {errors}");
-            }
-        }
     }
 
     public async Task ResetDatabaseAsync()

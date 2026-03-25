@@ -4,6 +4,9 @@ using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using OpenSaur.Identity.Web.Domain.Identity;
+using OpenSaur.Identity.Web.Features.UserRoles.CreateUserRole;
+using OpenSaur.Identity.Web.Features.UserRoles.EditUserRole;
+using OpenSaur.Identity.Web.Features.UserRoles.GetUserRoles;
 using OpenSaur.Identity.Web.Infrastructure.Database;
 using OpenSaur.Identity.Web.Tests.Support;
 
@@ -20,11 +23,7 @@ public sealed class UserRoleEndpointsTests : IClassFixture<OpenSaurWebApplicatio
 
     public async Task InitializeAsync()
     {
-        await _factory.ResetDatabaseAsync();
-        await _factory.SeedOidcClientAsync(
-            FirstPartyApiTestClient.ClientId,
-            FirstPartyApiTestClient.RedirectUri,
-            FirstPartyApiTestClient.ClientSecret);
+        await FirstPartyApiTestClient.InitializeFactoryAsync(_factory);
     }
 
     public Task DisposeAsync()
@@ -62,7 +61,7 @@ public sealed class UserRoleEndpointsTests : IClassFixture<OpenSaurWebApplicatio
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
         var response = await client.GetAsync("/api/user-role/get");
-        var payload = await ApiResponseReader.ReadSuccessDataAsync<IReadOnlyList<UserRoleResponse>>(response);
+        var payload = await ApiResponseReader.ReadSuccessDataAsync<IReadOnlyList<GetUserRolesResponse>>(response);
         Assert.Contains(payload, assignment => assignment.UserId == sameWorkspaceUserId);
         Assert.DoesNotContain(payload, assignment => assignment.UserId == otherWorkspaceUserId);
     }
@@ -184,17 +183,4 @@ public sealed class UserRoleEndpointsTests : IClassFixture<OpenSaurWebApplicatio
 
         await ApiResponseReader.ReadFailureEnvelopeAsync(response, HttpStatusCode.NotFound);
     }
-
-    private sealed record CreateUserRoleRequest(Guid UserId, Guid RoleId, string Description);
-
-    private sealed record EditUserRoleRequest(Guid Id, Guid RoleId, string Description, bool IsActive);
-
-    private sealed record UserRoleResponse(
-        Guid Id,
-        Guid UserId,
-        string UserName,
-        Guid RoleId,
-        string RoleName,
-        string Description,
-        bool IsActive);
 }

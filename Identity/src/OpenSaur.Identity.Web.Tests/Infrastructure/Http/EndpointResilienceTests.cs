@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Routing.Patterns;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using OpenSaur.Identity.Web.Domain.Identity;
+using OpenSaur.Identity.Web.Features.Users.CreateUser;
 using OpenSaur.Identity.Web.Infrastructure.Database;
 using OpenSaur.Identity.Web.Infrastructure.Http.Configuration;
 using OpenSaur.Identity.Web.Infrastructure.Http.Idempotency;
@@ -29,11 +30,7 @@ public sealed class EndpointResilienceTests
             ("EndpointResilience:RateLimiting:Auth:PermitLimit", "10"),
             ("EndpointResilience:RateLimiting:Token:PermitLimit", "10"));
 
-        await factory.ResetDatabaseAsync();
-        await factory.SeedOidcClientAsync(
-            FirstPartyApiTestClient.ClientId,
-            FirstPartyApiTestClient.RedirectUri,
-            FirstPartyApiTestClient.ClientSecret);
+        await FirstPartyApiTestClient.InitializeFactoryAsync(factory);
 
         using var client = FirstPartyApiTestClient.CreateClient(factory);
         var accessToken = await FirstPartyApiTestClient.GetAccessTokenAsync(client, "SystemAdministrator", "Password1");
@@ -176,15 +173,11 @@ public sealed class EndpointResilienceTests
     public async Task PostCreate_WhenIdempotencyKeyMatches_ReplaysStoredResponseWithoutCreatingDuplicate()
     {
         using var factory = CreateFactory();
-        await factory.ResetDatabaseAsync();
-        await factory.SeedOidcClientAsync(
-            FirstPartyApiTestClient.ClientId,
-            FirstPartyApiTestClient.RedirectUri,
-            FirstPartyApiTestClient.ClientSecret);
+        await FirstPartyApiTestClient.InitializeFactoryAsync(factory);
 
         var managerCredentials = TestFakers.CreateUserCredentials();
         var newUserCredentials = TestFakers.CreateUserCredentials();
-        await factory.SeedUserAsync(managerCredentials.UserName, managerCredentials.Password, [SystemRoles.Administrator]);
+        await TestIdentitySeeder.SeedUserAsync(factory, managerCredentials.UserName, managerCredentials.Password, [SystemRoles.Administrator]);
 
         using var client = FirstPartyApiTestClient.CreateClient(factory);
         var accessToken = await FirstPartyApiTestClient.GetAccessTokenAsync(client, managerCredentials.UserName, managerCredentials.Password);
@@ -217,16 +210,12 @@ public sealed class EndpointResilienceTests
     public async Task PostCreate_WhenIdempotencyKeyIsReusedWithDifferentPayload_ReturnsConflict()
     {
         using var factory = CreateFactory();
-        await factory.ResetDatabaseAsync();
-        await factory.SeedOidcClientAsync(
-            FirstPartyApiTestClient.ClientId,
-            FirstPartyApiTestClient.RedirectUri,
-            FirstPartyApiTestClient.ClientSecret);
+        await FirstPartyApiTestClient.InitializeFactoryAsync(factory);
 
         var managerCredentials = TestFakers.CreateUserCredentials();
         var firstUserCredentials = TestFakers.CreateUserCredentials();
         var secondUserCredentials = TestFakers.CreateUserCredentials();
-        await factory.SeedUserAsync(managerCredentials.UserName, managerCredentials.Password, [SystemRoles.Administrator]);
+        await TestIdentitySeeder.SeedUserAsync(factory, managerCredentials.UserName, managerCredentials.Password, [SystemRoles.Administrator]);
 
         using var client = FirstPartyApiTestClient.CreateClient(factory);
         var accessToken = await FirstPartyApiTestClient.GetAccessTokenAsync(client, managerCredentials.UserName, managerCredentials.Password);
@@ -342,15 +331,5 @@ public sealed class EndpointResilienceTests
             request,
             idempotencyKey);
     }
-
-    private sealed record CreateUserRequest(
-        string UserName,
-        string Email,
-        string Password,
-        string Description,
-        string UserSettings);
-
-    private sealed record CreateUserResponse(Guid Id);
-
     private sealed record MetadataReplayResponse(int InvocationCount);
 }

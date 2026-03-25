@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using OpenSaur.Identity.Web.Domain.Identity;
 using OpenSaur.Identity.Web.Domain.Permissions;
+using OpenSaur.Identity.Web.Features.Permissions.GetPermissions;
 using OpenSaur.Identity.Web.Infrastructure.Database;
 using OpenSaur.Identity.Web.Tests.Support;
 
@@ -20,11 +21,7 @@ public sealed class PermissionEndpointsTests : IClassFixture<OpenSaurWebApplicat
 
     public async Task InitializeAsync()
     {
-        await _factory.ResetDatabaseAsync();
-        await _factory.SeedOidcClientAsync(
-            FirstPartyApiTestClient.ClientId,
-            FirstPartyApiTestClient.RedirectUri,
-            FirstPartyApiTestClient.ClientSecret);
+        await FirstPartyApiTestClient.InitializeFactoryAsync(_factory);
     }
 
     public Task DisposeAsync()
@@ -43,7 +40,7 @@ public sealed class PermissionEndpointsTests : IClassFixture<OpenSaurWebApplicat
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
         var response = await client.GetAsync("/api/permission/get");
-        var payload = await ApiResponseReader.ReadSuccessDataAsync<IReadOnlyList<PermissionResponse>>(response);
+        var payload = await ApiResponseReader.ReadSuccessDataAsync<IReadOnlyList<GetPermissionsResponse>>(response);
 
         var administratorCanManage = Assert.Single(payload, permission => permission.CodeId == (int)PermissionCode.Administrator_CanManage);
         Assert.Equal("Administrator.CanManage", administratorCanManage.Code);
@@ -76,20 +73,10 @@ public sealed class PermissionEndpointsTests : IClassFixture<OpenSaurWebApplicat
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
         var response = await client.GetAsync($"/api/permission/getbyid/{codeId}");
-        var payload = await ApiResponseReader.ReadSuccessDataAsync<PermissionResponse>(response);
+        var payload = await ApiResponseReader.ReadSuccessDataAsync<GetPermissionsResponse>(response);
         Assert.Equal(codeId, payload.CodeId);
         Assert.Equal("Administrator.CanManage", payload.Code);
         Assert.Equal(PermissionScopeCatalog.AdministratorPermissionScopeId, payload.PermissionScopeId);
         Assert.Equal("Administrator", payload.PermissionScopeName);
     }
-
-    private sealed record PermissionResponse(
-        Guid Id,
-        int CodeId,
-        Guid PermissionScopeId,
-        string PermissionScopeName,
-        string Code,
-        string Name,
-        string Description,
-        bool IsActive);
 }

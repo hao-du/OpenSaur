@@ -57,7 +57,7 @@ public sealed class OidcAuthorizationFlowTests : IClassFixture<OpenSaurWebApplic
         const string redirectUri = "https://client.test.opensaur/signin-oidc";
         var credentials = TestFakers.CreateUserCredentials();
         await _factory.SeedOidcClientAsync(clientId, redirectUri, ClientSecret);
-        await _factory.SeedUserAsync(credentials.UserName, credentials.Password, [SystemRoles.User]);
+        await TestIdentitySeeder.SeedUserAsync(_factory, credentials.UserName, credentials.Password, [SystemRoles.User]);
         using var client = FirstPartyApiTestClient.CreateClient(_factory);
 
         var authorizeResponse = await client.GetAsync(
@@ -101,10 +101,10 @@ public sealed class OidcAuthorizationFlowTests : IClassFixture<OpenSaurWebApplic
 
         await _factory.SeedOidcClientAsync(clientIdOne, redirectUriOne, ClientSecret);
         await _factory.SeedOidcClientAsync(clientIdTwo, redirectUriTwo, ClientSecret);
-        await _factory.SeedUserAsync(credentials.UserName, credentials.Password, [SystemRoles.User]);
+        await TestIdentitySeeder.SeedUserAsync(_factory, credentials.UserName, credentials.Password, [SystemRoles.User]);
         using var client = FirstPartyApiTestClient.CreateClient(_factory);
 
-        await CompleteApiLoginAsync(client, clientIdOne, redirectUriOne, credentials.UserName, credentials.Password);
+        await OidcTestClient.CompleteApiLoginAsync(client, clientIdOne, redirectUriOne, credentials.UserName, credentials.Password);
 
         var secondAuthorizeResponse = await client.GetAsync(
             FirstPartyApiTestClient.CreateAuthorizeUrl(clientIdTwo, redirectUriTwo, "oidc-state"));
@@ -125,7 +125,7 @@ public sealed class OidcAuthorizationFlowTests : IClassFixture<OpenSaurWebApplic
         const string redirectUri = "https://client.test.opensaur/signin-oidc";
         var credentials = TestFakers.CreateUserCredentials();
         await _factory.SeedOidcClientAsync(clientId, redirectUri, ClientSecret);
-        await _factory.SeedUserAsync(credentials.UserName, credentials.Password, [SystemRoles.User]);
+        await TestIdentitySeeder.SeedUserAsync(_factory, credentials.UserName, credentials.Password, [SystemRoles.User]);
         using var client = FirstPartyApiTestClient.CreateClient(_factory);
 
         var authorizeResponse = await client.GetAsync(
@@ -154,7 +154,8 @@ public sealed class OidcAuthorizationFlowTests : IClassFixture<OpenSaurWebApplic
         const string redirectUri = "https://client.test.opensaur/signin-oidc";
         var credentials = TestFakers.CreateUserCredentials();
         await _factory.SeedOidcClientAsync(clientId, redirectUri, ClientSecret);
-        await _factory.SeedUserAsync(
+        await TestIdentitySeeder.SeedUserAsync(
+            _factory,
             credentials.UserName,
             credentials.Password,
             [SystemRoles.User],
@@ -184,10 +185,10 @@ public sealed class OidcAuthorizationFlowTests : IClassFixture<OpenSaurWebApplic
         var credentials = TestFakers.CreateUserCredentials();
 
         await _factory.SeedOidcClientAsync(clientId, redirectUri, ClientSecret);
-        await _factory.SeedUserAsync(credentials.UserName, credentials.Password, [SystemRoles.User]);
+        await TestIdentitySeeder.SeedUserAsync(_factory, credentials.UserName, credentials.Password, [SystemRoles.User]);
         using var client = FirstPartyApiTestClient.CreateClient(_factory);
 
-        var authorizationCode = await AuthorizeAsync(client, clientId, redirectUri, credentials.UserName, credentials.Password);
+        var authorizationCode = await OidcTestClient.AuthorizeAsync(client, clientId, redirectUri, credentials.UserName, credentials.Password);
 
         var tokenResponse = await client.PostAsync(
             "/connect/token",
@@ -202,7 +203,7 @@ public sealed class OidcAuthorizationFlowTests : IClassFixture<OpenSaurWebApplic
 
         Assert.Equal(HttpStatusCode.OK, tokenResponse.StatusCode);
 
-        var tokenPayload = await ReadOidcTokenResponseAsync(tokenResponse);
+        var tokenPayload = await OidcTestClient.ReadTokenResponseAsync(tokenResponse);
 
         Assert.False(string.IsNullOrWhiteSpace(tokenPayload.AccessToken));
         Assert.False(string.IsNullOrWhiteSpace(tokenPayload.RefreshToken));
@@ -220,7 +221,7 @@ public sealed class OidcAuthorizationFlowTests : IClassFixture<OpenSaurWebApplic
 
         Assert.Equal(HttpStatusCode.OK, refreshResponse.StatusCode);
 
-        var refreshPayload = await ReadOidcTokenResponseAsync(refreshResponse);
+        var refreshPayload = await OidcTestClient.ReadTokenResponseAsync(refreshResponse);
 
         Assert.False(string.IsNullOrWhiteSpace(refreshPayload.AccessToken));
         Assert.False(string.IsNullOrWhiteSpace(refreshPayload.RefreshToken));
@@ -251,7 +252,7 @@ public sealed class OidcAuthorizationFlowTests : IClassFixture<OpenSaurWebApplic
         var credentials = TestFakers.CreateUserCredentials();
 
         await _factory.SeedOidcClientAsync(clientId, redirectUri, ClientSecret);
-        await _factory.SeedUserAsync(credentials.UserName, credentials.Password, [SystemRoles.User]);
+        await TestIdentitySeeder.SeedUserAsync(_factory, credentials.UserName, credentials.Password, [SystemRoles.User]);
         using var client = FirstPartyApiTestClient.CreateClient(_factory);
 
         var accessToken = await FirstPartyApiTestClient.GetAccessTokenAsync(
@@ -280,64 +281,4 @@ public sealed class OidcAuthorizationFlowTests : IClassFixture<OpenSaurWebApplic
         Assert.Equal("/login", authorizeResponse.Headers.Location!.AbsolutePath);
     }
 
-    private static async Task CompleteApiLoginAsync(
-        HttpClient client,
-        string clientId,
-        string redirectUri,
-        string userName,
-        string password)
-    {
-        var authorizeResponse = await client.GetAsync(
-            FirstPartyApiTestClient.CreateAuthorizeUrl(clientId, redirectUri, "oidc-state"));
-        var loginUri = authorizeResponse.Headers.Location ?? throw new InvalidOperationException("Hosted login redirect was expected.");
-        var loginQuery = QueryHelpers.ParseQuery(loginUri.Query);
-        var returnUrl = loginQuery["returnUrl"].ToString();
-
-        var loginResponse = await client.PostAsJsonAsync(
-            "/api/auth/login",
-            new { UserName = userName, Password = password });
-        await ApiResponseReader.AssertNullSuccessDataAsync(loginResponse);
-        var finalAuthorizeResponse = await client.GetAsync(returnUrl);
-
-        Assert.Equal(HttpStatusCode.Redirect, finalAuthorizeResponse.StatusCode);
-        Assert.NotNull(finalAuthorizeResponse.Headers.Location);
-        Assert.Equal(redirectUri, finalAuthorizeResponse.Headers.Location!.GetLeftPart(UriPartial.Path));
-    }
-
-    private static async Task<string> AuthorizeAsync(
-        HttpClient client,
-        string clientId,
-        string redirectUri,
-        string userName,
-        string password)
-    {
-        var authorizeResponse = await client.GetAsync(
-            FirstPartyApiTestClient.CreateAuthorizeUrl(clientId, redirectUri, "oidc-state"));
-        var loginUri = authorizeResponse.Headers.Location ?? throw new InvalidOperationException("Hosted login redirect was expected.");
-        var loginQuery = QueryHelpers.ParseQuery(loginUri.Query);
-        var returnUrl = loginQuery["returnUrl"].ToString();
-
-        var loginResponse = await client.PostAsJsonAsync(
-            "/api/auth/login",
-            new { UserName = userName, Password = password });
-        await ApiResponseReader.AssertNullSuccessDataAsync(loginResponse);
-        var callbackResponse = await client.GetAsync(returnUrl);
-        var callbackUri = callbackResponse.Headers.Location ?? throw new InvalidOperationException("Client callback redirect was expected.");
-        var callbackQuery = QueryHelpers.ParseQuery(callbackUri.Query);
-
-        return callbackQuery["code"].ToString();
-    }
-
-    private static async Task<OidcTokenResponse> ReadOidcTokenResponseAsync(HttpResponseMessage response)
-    {
-        await using var stream = await response.Content.ReadAsStreamAsync();
-        using var document = await JsonDocument.ParseAsync(stream);
-
-        return new OidcTokenResponse(
-            document.RootElement.GetProperty("access_token").GetString() ?? string.Empty,
-            document.RootElement.GetProperty("refresh_token").GetString() ?? string.Empty,
-            document.RootElement.GetProperty("token_type").GetString() ?? string.Empty);
-    }
-
-    private sealed record OidcTokenResponse(string AccessToken, string RefreshToken, string TokenType);
 }

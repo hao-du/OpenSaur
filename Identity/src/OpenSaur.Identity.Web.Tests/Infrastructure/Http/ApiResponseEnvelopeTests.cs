@@ -5,6 +5,8 @@ using System.Text.Json;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using OpenSaur.Identity.Web.Domain.Identity;
+using OpenSaur.Identity.Web.Features.Auth.Me;
+using OpenSaur.Identity.Web.Features.Workspaces.CreateWorkspace;
 using OpenSaur.Identity.Web.Infrastructure.Database;
 using OpenSaur.Identity.Web.Infrastructure.Database.Repositories.Users;
 using OpenSaur.Identity.Web.Infrastructure.Database.Repositories.Users.Dtos;
@@ -24,11 +26,7 @@ public sealed class ApiResponseEnvelopeTests : IClassFixture<OpenSaurWebApplicat
 
     public async Task InitializeAsync()
     {
-        await _factory.ResetDatabaseAsync();
-        await _factory.SeedOidcClientAsync(
-            FirstPartyApiTestClient.ClientId,
-            FirstPartyApiTestClient.RedirectUri,
-            FirstPartyApiTestClient.ClientSecret);
+        await FirstPartyApiTestClient.InitializeFactoryAsync(_factory);
     }
 
     public Task DisposeAsync()
@@ -40,7 +38,7 @@ public sealed class ApiResponseEnvelopeTests : IClassFixture<OpenSaurWebApplicat
     public async Task PostLogin_WhenCredentialsAreValid_ReturnsCommonSuccessEnvelope()
     {
         var credentials = TestFakers.CreateUserCredentials();
-        await _factory.SeedUserAsync(credentials.UserName, credentials.Password, [SystemRoles.User]);
+        await TestIdentitySeeder.SeedUserAsync(_factory, credentials.UserName, credentials.Password, [SystemRoles.User]);
         using var client = FirstPartyApiTestClient.CreateClient(_factory);
 
         var response = await client.PostAsJsonAsync(
@@ -58,7 +56,7 @@ public sealed class ApiResponseEnvelopeTests : IClassFixture<OpenSaurWebApplicat
     public async Task GetMe_WhenOidcAccessTokenIsValid_ReturnsPayloadInsideCommonSuccessEnvelope()
     {
         var credentials = TestFakers.CreateUserCredentials();
-        await _factory.SeedUserAsync(credentials.UserName, credentials.Password, [SystemRoles.Administrator]);
+        await TestIdentitySeeder.SeedUserAsync(_factory, credentials.UserName, credentials.Password, [SystemRoles.Administrator]);
         using var client = FirstPartyApiTestClient.CreateClient(_factory);
         var accessToken = await FirstPartyApiTestClient.GetAccessTokenAsync(client, credentials.UserName, credentials.Password);
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
@@ -98,7 +96,7 @@ public sealed class ApiResponseEnvelopeTests : IClassFixture<OpenSaurWebApplicat
         var managerCredentials = TestFakers.CreateUserCredentials();
         var otherWorkspaceUserCredentials = TestFakers.CreateUserCredentials();
 
-        await _factory.SeedUserAsync(managerCredentials.UserName, managerCredentials.Password, [SystemRoles.Administrator]);
+        await TestIdentitySeeder.SeedUserAsync(_factory, managerCredentials.UserName, managerCredentials.Password, [SystemRoles.Administrator]);
         var otherWorkspaceUserId = await TestIdentitySeeder.SeedUserAsync(
             _factory,
             otherWorkspaceUserCredentials.UserName,
@@ -213,14 +211,6 @@ public sealed class ApiResponseEnvelopeTests : IClassFixture<OpenSaurWebApplicat
     {
         Assert.True(payload.Data is null || payload.Data.Value.ValueKind == JsonValueKind.Null);
     }
-
-    private sealed record ApiEnvelope<T>(bool Success, T? Data, ApiError[] Errors);
-
-    private sealed record ApiError(string Code, string Message, string Detail);
-
-    private sealed record CreateWorkspaceRequest(string Name, string? Description);
-
-    private sealed record AuthMeResponse(string Id, string UserName, string[] Roles, bool RequirePasswordChange);
 
     private sealed class ThrowingUserRepository(ApplicationDbContext dbContext) : UserRepository(dbContext)
     {
