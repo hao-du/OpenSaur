@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Text.Json;
 using OpenSaur.Identity.Web.Features.Auth.ChangePassword;
 using OpenSaur.Identity.Web.Features.Auth.Me;
 using OpenSaur.Identity.Web.Domain.Identity;
@@ -161,5 +162,32 @@ public sealed class ApiAuthAccountEndpointsTests : IClassFixture<OpenSaurWebAppl
         var mePayload = await ApiResponseReader.ReadSuccessDataAsync<AuthMeResponse>(meResponse);
 
         Assert.False(mePayload.RequirePasswordChange);
+    }
+
+    [Fact]
+    public async Task PostWebSessionExchange_WhenFirstPartyAuthorizationCodeIsValid_ReturnsAccessTokenAndRefreshCookie()
+    {
+        var credentials = TestFakers.CreateUserCredentials();
+        await TestIdentitySeeder.SeedUserAsync(_factory, credentials.UserName, credentials.Password, [SystemRoles.User]);
+        using var client = FirstPartyApiTestClient.CreateClient(_factory);
+
+        var authorizationCode = await OidcTestClient.AuthorizeAsync(
+            client,
+            FirstPartyApiTestClient.ClientId,
+            FirstPartyApiTestClient.RedirectUri,
+            credentials.UserName,
+            credentials.Password);
+
+        var response = await client.PostAsJsonAsync(
+            "/api/auth/web-session/exchange",
+            new { Code = authorizationCode });
+
+        var payload = await ApiResponseReader.ReadSuccessDataAsync<JsonElement>(response);
+
+        Assert.False(string.IsNullOrWhiteSpace(payload.GetProperty("accessToken").GetString()));
+        Assert.False(string.IsNullOrWhiteSpace(payload.GetProperty("expiresAt").GetString()));
+        Assert.Contains(
+            response.Headers.GetValues("Set-Cookie"),
+            value => value.StartsWith("opensaur.identity.refresh=", StringComparison.Ordinal));
     }
 }

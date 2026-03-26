@@ -7,7 +7,7 @@
 ## 2. Auth Infrastructure
 
 - [x] 2.1 Implement the shared axios client and auth state infrastructure that keeps the access token in memory only and uses the backend-managed refresh cookie flow.
-- [ ] 2.2 Implement first-party authorization callback completion, `/api/auth/me` bootstrap, and redirect-back handling for protected routes.
+- [x] 2.2 Implement first-party authorization callback completion, `/api/auth/me` bootstrap, and redirect-back handling for protected routes.
 - [ ] 2.3 Implement proactive refresh-before-expiry and expired-session fallback to `/login?returnUrl=...`.
 
 ## 3. Auth UI

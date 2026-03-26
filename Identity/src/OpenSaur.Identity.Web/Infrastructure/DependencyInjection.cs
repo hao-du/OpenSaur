@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Caching.Hybrid;
+using Microsoft.Extensions.Options;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using OpenIddict.Abstractions;
@@ -236,6 +237,12 @@ public static class DependencyInjection
         services.AddScoped<PermissionAuthorizationService>();
         services.AddScoped<UserAuthorizationService>();
         services.AddScoped<IAuthorizationHandler, PermissionAuthorizationHandler>();
+        services.AddHttpClient<IFirstPartyOidcTokenClient, FirstPartyOidcTokenClient>(
+            (serviceProvider, client) =>
+            {
+                var oidcOptions = serviceProvider.GetRequiredService<IOptions<OidcOptions>>().Value;
+                client.BaseAddress = new Uri(oidcOptions.Issuer);
+            });
         services.AddSingleton<IdempotencyCacheStore>();
         services.AddSingleton<IdempotencyRequestLockProvider>();
         services.AddSingleton<EndpointResilienceContextResolver>();

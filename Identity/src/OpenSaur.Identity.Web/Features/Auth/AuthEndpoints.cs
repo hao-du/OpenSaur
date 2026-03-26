@@ -2,6 +2,7 @@ using OpenSaur.Identity.Web.Features.Auth.ChangePassword;
 using OpenSaur.Identity.Web.Features.Auth.Login;
 using OpenSaur.Identity.Web.Features.Auth.Logout;
 using OpenSaur.Identity.Web.Features.Auth.Me;
+using OpenSaur.Identity.Web.Features.Auth.WebSession;
 using OpenSaur.Identity.Web.Infrastructure.Authorization;
 using OpenSaur.Identity.Web.Infrastructure.Http.Metadata;
 using OpenSaur.Identity.Web.Infrastructure.Http.RateLimiting;
@@ -28,6 +29,10 @@ public static class AuthEndpoints
 
         auth.MapGet("/me", GetCurrentUserHandler.Handle)
             .RequireAuthorization(AuthorizationPolicies.Api);
+
+        auth.MapPost("/web-session/exchange", ExchangeWebSessionHandler.HandleAsync)
+            .AllowAnonymous()
+            .WithResilienceScope(EndpointResiliencePolicyScope.Auth);
 
         return app;
     }

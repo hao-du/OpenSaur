@@ -3,6 +3,7 @@ import {
   RouterProvider,
   createBrowserRouter
 } from "react-router-dom";
+import { ProtectedRoute } from "../../features/auth/components/ProtectedRoute";
 import { AuthCallbackPage } from "../../pages/auth-callback/AuthCallbackPage";
 import { ChangePasswordPage } from "../../pages/change-password/ChangePasswordPage";
 import { HomePage } from "../../pages/home/HomePage";
@@ -11,7 +12,11 @@ import { LoginPage } from "../../pages/login/LoginPage";
 const router = createBrowserRouter([
   {
     path: "/",
-    element: <HomePage />
+    element: (
+      <ProtectedRoute>
+        <HomePage />
+      </ProtectedRoute>
+    )
   },
   {
     path: "/login",

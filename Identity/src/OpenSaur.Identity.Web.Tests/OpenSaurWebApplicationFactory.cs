@@ -8,8 +8,11 @@ using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
+using System.Text.Json;
 using OpenIddict.Abstractions;
 using OpenSaur.Identity.Web.Infrastructure.Database;
+using OpenSaur.Identity.Web.Infrastructure.Oidc;
+using OpenSaur.Identity.Web.Tests.Support;
 
 namespace OpenSaur.Identity.Web.Tests;
 
@@ -46,6 +49,9 @@ public sealed class OpenSaurWebApplicationFactory : WebApplicationFactory<Progra
         builder.UseEnvironment(Environments.Development);
         builder.UseSetting("ConnectionStrings:IdentityDb", IdentityDbConnectionString);
         builder.UseSetting("Oidc:Issuer", Issuer);
+        builder.UseSetting("Oidc:FirstPartyWeb:ClientId", FirstPartyApiTestClient.ClientId);
+        builder.UseSetting("Oidc:FirstPartyWeb:ClientSecret", FirstPartyApiTestClient.ClientSecret);
+        builder.UseSetting("Oidc:FirstPartyWeb:RedirectUri", FirstPartyApiTestClient.RedirectUri);
         builder.UseSetting("EndpointResilience:RateLimiting:Default:PermitLimit", "1000");
         builder.UseSetting("EndpointResilience:RateLimiting:Auth:PermitLimit", "1000");
         builder.UseSetting("EndpointResilience:RateLimiting:Token:PermitLimit", "1000");
@@ -66,6 +72,9 @@ public sealed class OpenSaurWebApplicationFactory : WebApplicationFactory<Progra
                 services.RemoveAll<IDataProtectionProvider>();
                 services.AddSingleton(_connection);
                 services.AddSingleton<IDataProtectionProvider>(new EphemeralDataProtectionProvider());
+                services.RemoveAll<IFirstPartyOidcTokenClient>();
+                services.AddScoped<IFirstPartyOidcTokenClient>(
+                    _ => new TestServerFirstPartyOidcTokenClient(this));
                 services.AddDbContext<ApplicationDbContext>(
                     options =>
                     {
@@ -186,5 +195,58 @@ public sealed class OpenSaurWebApplicationFactory : WebApplicationFactory<Progra
         _connection.Dispose();
 
         base.Dispose(disposing);
+    }
+
+    private sealed class TestServerFirstPartyOidcTokenClient : IFirstPartyOidcTokenClient
+    {
+        private readonly OpenSaurWebApplicationFactory _factory;
+
+        public TestServerFirstPartyOidcTokenClient(OpenSaurWebApplicationFactory factory)
+        {
+            _factory = factory;
+        }
+
+        public async Task<FirstPartyOidcTokenResult?> ExchangeAuthorizationCodeAsync(
+            string code,
+            CancellationToken cancellationToken)
+        {
+            using var client = FirstPartyApiTestClient.CreateClient(_factory);
+            using var response = await client.PostAsync(
+                "/connect/token",
+                new FormUrlEncodedContent(
+                [
+                    new KeyValuePair<string, string>("grant_type", "authorization_code"),
+                    new KeyValuePair<string, string>("client_id", FirstPartyApiTestClient.ClientId),
+                    new KeyValuePair<string, string>("client_secret", FirstPartyApiTestClient.ClientSecret),
+                    new KeyValuePair<string, string>("redirect_uri", FirstPartyApiTestClient.RedirectUri),
+                    new KeyValuePair<string, string>("code", code)
+                ]),
+                cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                return null;
+            }
+
+            await using var payloadStream = await response.Content.ReadAsStreamAsync(cancellationToken);
+            using var payload = await JsonDocument.ParseAsync(payloadStream, cancellationToken: cancellationToken);
+
+            var accessToken = payload.RootElement.GetProperty("access_token").GetString();
+            var refreshToken = payload.RootElement.GetProperty("refresh_token").GetString();
+            if (string.IsNullOrWhiteSpace(accessToken) || string.IsNullOrWhiteSpace(refreshToken))
+            {
+                return null;
+            }
+
+            var expiresInSeconds = payload.RootElement.TryGetProperty("expires_in", out var expiresInElement)
+                && expiresInElement.TryGetInt32(out var expiresIn)
+                    ? expiresIn
+                    : 3600;
+
+            return new FirstPartyOidcTokenResult(
+                accessToken,
+                refreshToken,
+                DateTimeOffset.UtcNow.AddSeconds(expiresInSeconds));
+        }
     }
 }
