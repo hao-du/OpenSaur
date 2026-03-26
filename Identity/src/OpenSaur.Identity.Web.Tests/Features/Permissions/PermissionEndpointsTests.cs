@@ -79,4 +79,31 @@ public sealed class PermissionEndpointsTests : IClassFixture<OpenSaurWebApplicat
         Assert.Equal(PermissionScopeCatalog.AdministratorPermissionScopeId, payload.PermissionScopeId);
         Assert.Equal("Administrator", payload.PermissionScopeName);
     }
+
+    [Fact]
+    public async Task GetPermissionById_WhenPermissionCodeChangesInDatabase_ReturnsDatabaseCode()
+    {
+        var managerCredentials = TestFakers.CreateUserCredentials();
+        await TestIdentitySeeder.SeedUserAsync(_factory, managerCredentials.UserName, managerCredentials.Password, [SystemRoles.Administrator]);
+
+        int codeId;
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            var permission = await dbContext.Permissions
+                .SingleAsync(candidate => candidate.CodeId == (int)PermissionCode.Administrator_CanManage);
+            permission.Code = "Administrator.CustomManage";
+            await dbContext.SaveChangesAsync();
+            codeId = permission.CodeId;
+        }
+
+        using var client = FirstPartyApiTestClient.CreateClient(_factory);
+        var accessToken = await FirstPartyApiTestClient.GetAccessTokenAsync(client, managerCredentials.UserName, managerCredentials.Password);
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+        var response = await client.GetAsync($"/api/permission/getbyid/{codeId}");
+        var payload = await ApiResponseReader.ReadSuccessDataAsync<GetPermissionsResponse>(response);
+
+        Assert.Equal("Administrator.CustomManage", payload.Code);
+    }
 }

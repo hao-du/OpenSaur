@@ -6,6 +6,10 @@ public class Permission : AuditedEntity
 {
     public int CodeId { get; set; }
 
+    public string Code { get; set; } = string.Empty;
+
+    public int Rank { get; set; }
+
     public Guid PermissionScopeId { get; set; }
 
     public string Name { get; set; } = string.Empty;

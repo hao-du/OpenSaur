@@ -60,6 +60,15 @@ Use project agents when their specialty matches the task:
 - `Kulpreet Alagh`: UI/UX and responsive design
 - `Ho Thanh Toan`: test cases and Playwright automation
 
+These named agent definitions live under `.codex/agents/*.toml` and are the canonical project agents for this repository.
+
+When delegation is needed:
+
+- Prefer the matching named project agent from `.codex/agents/` over generic ad-hoc agents.
+- Do not spawn generic `default`, `worker`, or `explorer` agents when a matching project agent already exists in `.codex/agents/`.
+- Use a generic fallback agent only when no project agent fits the task or when the user explicitly asks for a different delegation shape.
+- If delegation is not necessary, do the work directly instead of creating extra agents.
+
 ## Validation
 
 - For code changes, run relevant build, test, or verification commands when possible.

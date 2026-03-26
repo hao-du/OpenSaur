@@ -1,4 +1,3 @@
-using OpenSaur.Identity.Web.Domain.Permissions;
 using OpenSaur.Identity.Web.Infrastructure.Database.Repositories.Permissions;
 using OpenSaur.Identity.Web.Infrastructure.Database.Repositories.Permissions.Dtos;
 using OpenSaur.Identity.Web.Infrastructure.Http.Responses;
@@ -20,15 +19,13 @@ public static class GetPermissionByIdHandler
             return permissionResult.ToApiErrorResult();
         }
 
-        var definition = PermissionCatalog.GetDefinition(permissionResult.Value.Permission.CodeId);
-
         return ApiResponses.Success(
             new GetPermissionByIdResponse(
                 permissionResult.Value.Permission.Id,
                 permissionResult.Value.Permission.CodeId,
                 permissionResult.Value.Permission.PermissionScopeId,
                 permissionResult.Value.Permission.PermissionScope?.Name ?? string.Empty,
-                definition.Code,
+                permissionResult.Value.Permission.Code,
                 permissionResult.Value.Permission.Name,
                 permissionResult.Value.Permission.Description,
                 permissionResult.Value.Permission.IsActive));

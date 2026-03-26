@@ -97,7 +97,9 @@ public sealed class ApplicationDbContextModelTests
         Assert.Contains(
             permissionSeeds,
             seed => Equals(seed[nameof(Permission.CodeId)], (int)PermissionCode.Administrator_CanManage)
+                    && string.Equals(seed[nameof(Permission.Code)] as string, "Administrator.CanManage", StringComparison.Ordinal)
                     && string.Equals(seed[nameof(Permission.Name)] as string, "Can Manage", StringComparison.Ordinal)
+                    && Equals(seed[nameof(Permission.Rank)], 2)
                     && Equals(seed[nameof(Permission.PermissionScopeId)], PermissionScopeCatalog.AdministratorPermissionScopeId));
 
         var administratorRoleSeed = roleSeeds.Single(

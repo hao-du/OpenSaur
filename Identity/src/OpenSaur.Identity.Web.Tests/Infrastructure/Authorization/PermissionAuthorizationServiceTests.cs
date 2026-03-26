@@ -208,6 +208,116 @@ public sealed class PermissionAuthorizationServiceTests
     }
 
     [Fact]
+    public async Task HasPermissionAsync_WhenImpliedPermissionIsInactive_DoesNotGrantInactivePermission()
+    {
+        await using var testDbContext = await CreateDbContextAsync();
+        var dbContext = testDbContext.DbContext;
+        var workspace = await dbContext.Workspaces.SingleAsync();
+        var user = await CreateUserAsync(dbContext, workspace.Id);
+        var administratorRoleId = await GetRoleIdAsync(dbContext, SystemRoles.Administrator);
+
+        dbContext.UserRoles.Add(new ApplicationUserRole
+        {
+            UserId = user.Id,
+            RoleId = administratorRoleId
+        });
+        await dbContext.SaveChangesAsync();
+
+        var administratorCanView = await dbContext.Permissions.SingleAsync(
+            permission => permission.CodeId == (int)PermissionCode.Administrator_CanView);
+        administratorCanView.IsActive = false;
+        await dbContext.SaveChangesAsync();
+
+        var service = new PermissionAuthorizationService(dbContext);
+
+        var isAuthorized = await service.HasPermissionAsync(
+            user.Id,
+            PermissionCode.Administrator_CanView);
+
+        Assert.False(isAuthorized);
+    }
+
+    [Fact]
+    public async Task HasPermissionAsync_WhenPermissionScopeChangesInDatabase_UsesDatabaseScopeForImplication()
+    {
+        await using var testDbContext = await CreateDbContextAsync();
+        var dbContext = testDbContext.DbContext;
+        var workspace = await dbContext.Workspaces.SingleAsync();
+        var user = await CreateUserAsync(dbContext, workspace.Id);
+        var administratorRoleId = await GetRoleIdAsync(dbContext, SystemRoles.Administrator);
+        var newScope = new PermissionScope
+        {
+            Id = Guid.CreateVersion7(),
+            Name = "Custom",
+            CreatedBy = Guid.CreateVersion7(),
+            CreatedOn = DateTime.UtcNow
+        };
+
+        dbContext.PermissionScopes.Add(newScope);
+        dbContext.UserRoles.Add(new ApplicationUserRole
+        {
+            UserId = user.Id,
+            RoleId = administratorRoleId
+        });
+        await dbContext.SaveChangesAsync();
+
+        var administratorCanManage = await dbContext.Permissions.SingleAsync(
+            permission => permission.CodeId == (int)PermissionCode.Administrator_CanManage);
+        administratorCanManage.PermissionScopeId = newScope.Id;
+        await dbContext.SaveChangesAsync();
+
+        var service = new PermissionAuthorizationService(dbContext);
+
+        var canManage = await service.HasPermissionAsync(
+            user.Id,
+            PermissionCode.Administrator_CanManage);
+        var canView = await service.HasPermissionAsync(
+            user.Id,
+            PermissionCode.Administrator_CanView);
+
+        Assert.True(canManage);
+        Assert.False(canView);
+    }
+
+    [Fact]
+    public async Task HasPermissionAsync_WhenPermissionRanksChangeInDatabase_UsesDatabaseRankForImplication()
+    {
+        await using var testDbContext = await CreateDbContextAsync();
+        var dbContext = testDbContext.DbContext;
+        var workspace = await dbContext.Workspaces.SingleAsync();
+        var user = await CreateUserAsync(dbContext, workspace.Id);
+        var administratorRoleId = await GetRoleIdAsync(dbContext, SystemRoles.Administrator);
+
+        dbContext.UserRoles.Add(new ApplicationUserRole
+        {
+            UserId = user.Id,
+            RoleId = administratorRoleId
+        });
+        await dbContext.SaveChangesAsync();
+
+        var administratorCanManage = await dbContext.Permissions.SingleAsync(
+            permission => permission.CodeId == (int)PermissionCode.Administrator_CanManage);
+        var administratorCanView = await dbContext.Permissions.SingleAsync(
+            permission => permission.CodeId == (int)PermissionCode.Administrator_CanView);
+
+        administratorCanManage.Rank = 1;
+        administratorCanView.Rank = 2;
+        await dbContext.SaveChangesAsync();
+
+        var service = new PermissionAuthorizationService(dbContext);
+
+        var canManage = await service.HasPermissionAsync(
+            user.Id,
+            PermissionCode.Administrator_CanManage);
+        var canView = await service.HasPermissionAsync(
+            user.Id,
+            PermissionCode.Administrator_CanView);
+
+        Assert.True(canManage);
+        Assert.False(canView);
+    }
+
+    [Fact]
     public async Task CanManageWorkspaceAsync_WhenAdministratorTargetsDifferentWorkspace_ReturnsFalse()
     {
         await using var testDbContext = await CreateDbContextAsync();
@@ -382,7 +492,7 @@ public sealed class PermissionAuthorizationServiceTests
     }
 
     [Fact]
-    public async Task HasPermissionAsync_WhenPermissionChecked_ExecutesSingleDatabaseQuery()
+    public async Task HasPermissionAsync_WhenPermissionChecked_ExecutesTwoDatabaseQueries()
     {
         var commandCounter = new CommandCounterInterceptor();
 
@@ -407,7 +517,7 @@ public sealed class PermissionAuthorizationServiceTests
             (int)PermissionCode.Administrator_CanManage);
 
         Assert.True(isAuthorized);
-        Assert.Equal(1, commandCounter.CommandCount);
+        Assert.Equal(2, commandCounter.CommandCount);
     }
 
     private static ClaimsPrincipal CreatePrincipal(

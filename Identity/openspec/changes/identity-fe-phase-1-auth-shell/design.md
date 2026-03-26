@@ -32,7 +32,7 @@ Security and UX constraints also matter:
 - Support `/login`, `/auth/callback`, `/change-password`, and one protected shell route.
 - Use the same OpenIddict authorization-code model for the first-party FE instead of inventing a second auth protocol.
 - Keep access tokens out of local persistence and refresh them before expiry through a backend-controlled refresh path.
-- Preserve the user’s intended destination through login, callback completion, password rotation, and refresh failures.
+- Preserve the user's intended destination through login, callback completion, password rotation, and refresh failures.
 - Make the initial UI responsive and reusable enough to support later admin pages without building those pages yet.
 
 **Non-Goals:**
@@ -81,16 +81,24 @@ client/src/
   shared/
 ```
 
-This mirrors the backend’s feature intent without forcing a heavier FSD taxonomy into an auth-only slice.
+This mirrors the backend's feature intent without forcing a heavier FSD taxonomy into an auth-only slice.
 
 Alternatives considered:
 
 - Pure technical layers (`components/hooks/services/pages`): rejected because it usually drifts into mixed ownership as feature count grows.
 - Full formal Feature-Sliced Design: rejected for Phase 1 FE because it adds more ceremony than value for the initial auth shell.
 
-### 4. Keep the first-party FE on OpenIddict authorization code flow
+### 4. Keep the first-party FE on OpenIddict authorization code flow with backend-assisted token handling
 
-The FE will not use a parallel custom token API. After a successful `/api/auth/login`, the browser continues through the same first-party OpenIddict authorize/callback flow already established in the backend design. The FE callback route completes the code exchange and hydrates the frontend auth state.
+The FE will not use a parallel non-OIDC auth model. After a successful `/api/auth/login`, the browser continues through the same first-party OpenIddict authorize/callback flow already established in the backend design. The difference is that the first-party FE will use thin backend web-session endpoints to complete the sensitive token work:
+
+- the FE callback route receives the authorization `code`
+- the FE posts that `code` to a first-party backend helper endpoint
+- the backend exchanges the code through the token endpoint
+- the backend returns the JWT access token to the FE
+- the backend stores the refresh token in a secure `httpOnly` cookie
+
+This keeps the first-party FE aligned with authorization code flow while preventing the refresh token from ever being exposed to browser JavaScript.
 
 Alternatives considered:
 
@@ -99,7 +107,20 @@ Alternatives considered:
 
 ### 5. Store access tokens in memory and keep refresh tokens in backend-managed `httpOnly` cookies
 
-The FE will keep the access token in memory only and will never persist it to localStorage or sessionStorage. The backend remains responsible for refresh token custody through an `httpOnly` cookie. The FE will call the backend refresh path before expiry and receive a replacement access token without exposing the refresh token to JavaScript.
+The FE will keep the access token in memory only and will never persist it to localStorage or sessionStorage. The backend remains responsible for refresh token custody through an `httpOnly` cookie. The FE will call a first-party backend refresh endpoint before expiry and receive a replacement access token without exposing the refresh token to JavaScript.
+
+The intended first-party contract is:
+
+- `POST /api/auth/web-session/exchange`
+  - FE sends the authorization `code`
+  - backend exchanges the code for tokens
+  - backend writes the refresh token cookie
+  - backend returns the access token payload to the FE
+- `POST /api/auth/web-session/refresh`
+  - FE asks for proactive refresh
+  - backend reads the refresh cookie and calls the token endpoint
+  - backend rotates the refresh cookie when needed
+  - backend returns the replacement access token payload to the FE
 
 Alternatives considered:
 
@@ -112,7 +133,7 @@ Token expiry, proactive refresh, auth bootstrap, and redirect-back behavior will
 
 - decode or otherwise track access-token expiry
 - attempt refresh before expiry
-- call the backend to confirm the session/refresh path is still valid when needed
+- call the backend first-party web-session endpoints to confirm the session/refresh path is still valid when needed
 - replace the in-memory access token after a successful refresh
 - clear auth state and redirect to `/login?returnUrl=currentPath` if refresh fails or the access token is already expired without a valid recovery path
 
@@ -152,7 +173,7 @@ The FE should not wrap every dependency in excessive abstraction during this pha
 ## Risks / Trade-offs
 
 - [Vite development uses a separate FE dev server while production is same-host] -> Keep same-host deployment as the contract and document the dev/prod difference clearly.
-- [OpenIddict callback handling in the browser is more complex than a custom login API] -> Reuse the backend’s existing first-party client model and keep callback logic centralized in one route/module.
+- [OpenIddict callback handling in the browser is more complex than a custom login API] -> Reuse the backend's existing first-party client model and keep callback logic centralized in one route/module.
 - [In-memory access tokens are lost on refresh or tab restart] -> Re-bootstrap through the backend-managed refresh path on app startup and protected-route entry when a valid refresh session still exists.
 - [Refresh-before-expiry timing can race across tabs] -> Keep the first FE phase simple, centralize refresh orchestration, and let invalid/expired refresh attempts fall back to login cleanly.
 - [Responsive auth UI can still drift if atomic layers are ignored] -> Define the auth pages on top of template/organism layers from the start instead of composing directly in route files.
@@ -162,15 +183,15 @@ The FE should not wrap every dependency in excessive abstraction during this pha
 
 1. Create the frontend app under `src/OpenSaur.Identity.Web/client` with the agreed FE stack and same-host assumptions.
 2. Add ASP.NET Core host integration for Vite development and built-asset serving in deployment.
-3. Implement shared auth infrastructure for callback completion, session bootstrap, refresh-before-expiry, and redirect-back.
-4. Implement the auth-only routes and responsive UI layers.
-5. Add automated frontend/e2e coverage for login, callback, password change, refresh, logout, and expired-session fallback.
-6. Validate same-host routing so `/api/*` remains backend-only and non-API routes are served by the FE.
+3. Add first-party backend web-session endpoints for authorization-code exchange and refresh-cookie-backed token rotation.
+4. Implement shared auth infrastructure for callback completion, session bootstrap, refresh-before-expiry, and redirect-back.
+5. Implement the auth-only routes and responsive UI layers.
+6. Add automated frontend/e2e coverage for login, callback, password change, refresh, logout, and expired-session fallback.
+7. Validate same-host routing so `/api/*` remains backend-only and non-API routes are served by the FE.
 
 Rollback can disable FE asset serving and remove the client integration without affecting the already-complete backend identity foundation.
 
 ## Open Questions
 
-- What exact backend refresh/validation contract should the FE call before expiry: direct `/connect/token` use, a thin backend helper, or both?
 - Whether the first protected route should be `/` or `/dashboard` in the initial FE slice.
 - Whether Playwright should be introduced in this phase or deferred to a follow-up FE hardening slice if existing test infrastructure is enough for the first pass.

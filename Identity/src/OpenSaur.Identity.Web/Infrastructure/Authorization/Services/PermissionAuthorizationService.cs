@@ -135,9 +135,24 @@ public sealed class PermissionAuthorizationService
                         _dbContext.Permissions.AsNoTracking().Where(permission => permission.IsActive),
                         rolePermission => rolePermission.PermissionId,
                         permission => permission.Id,
-                        (_, permission) => (int?)permission.CodeId)
+                        (_, permission) => new
+                        {
+                            CodeId = (int?)permission.CodeId,
+                            PermissionScopeId = (Guid?)permission.PermissionScopeId,
+                            Rank = (int?)permission.Rank
+                        })
                     .DefaultIfEmpty(),
-                (role, codeId) => new PermissionRow(role.RoleName, codeId))
+                (role, permission) => new PermissionRow(
+                    role.RoleName,
+                    permission == null
+                    || !permission.CodeId.HasValue
+                    || !permission.PermissionScopeId.HasValue
+                    || !permission.Rank.HasValue
+                        ? null
+                        : new PermissionMetadata(
+                            permission.CodeId.Value,
+                            permission.PermissionScopeId.Value,
+                            permission.Rank.Value)))
             .ToListAsync(cancellationToken);
 
         if (permissionRows.Count == 0)
@@ -150,16 +165,46 @@ public sealed class PermissionAuthorizationService
             return PermissionSnapshot.SuperAdministrator;
         }
 
-        var grantedCodeIds = permissionRows
-            .Where(row => row.CodeId.HasValue)
-            .Select(row => row.CodeId!.Value)
-            .SelectMany(PermissionCatalog.ResolveGrantedCodeIds)
+        var directlyAssignedPermissions = permissionRows
+            .Where(row => row.Permission is not null)
+            .Select(row => row.Permission!)
+            .Distinct()
+            .ToArray();
+
+        if (directlyAssignedPermissions.Length == 0)
+        {
+            return PermissionSnapshot.Empty;
+        }
+
+        var relevantPermissionScopeIds = directlyAssignedPermissions
+            .Select(permission => permission.PermissionScopeId)
+            .Distinct()
+            .ToArray();
+
+        var activePermissions = await _dbContext.Permissions
+            .AsNoTracking()
+            .Where(permission => permission.IsActive && relevantPermissionScopeIds.Contains(permission.PermissionScopeId))
+            .Select(permission => new PermissionMetadata(
+                permission.CodeId,
+                permission.PermissionScopeId,
+                permission.Rank))
+            .ToListAsync(cancellationToken);
+
+        var grantedCodeIds = directlyAssignedPermissions
+            .SelectMany(
+                assignedPermission => activePermissions.Where(
+                    candidate =>
+                        candidate.PermissionScopeId == assignedPermission.PermissionScopeId
+                        && candidate.Rank <= assignedPermission.Rank))
+            .Select(candidate => candidate.CodeId)
             .ToHashSet();
 
         return new PermissionSnapshot(false, grantedCodeIds);
     }
 
-    private sealed record PermissionRow(string RoleName, int? CodeId);
+    private sealed record PermissionRow(string RoleName, PermissionMetadata? Permission);
+
+    private sealed record PermissionMetadata(int CodeId, Guid PermissionScopeId, int Rank);
 
     private sealed record PermissionSnapshot(bool IsSuperAdministrator, HashSet<int> GrantedCodeIds)
     {

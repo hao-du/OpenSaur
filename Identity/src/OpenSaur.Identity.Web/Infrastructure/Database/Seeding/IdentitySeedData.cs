@@ -80,6 +80,8 @@ internal static class IdentitySeedData
             {
                 Id = PermissionIds[definition.CodeId],
                 CodeId = definition.CodeId,
+                Code = definition.Code,
+                Rank = definition.Rank,
                 PermissionScopeId = definition.PermissionScopeId,
                 Name = definition.Name,
                 Description = definition.Description,

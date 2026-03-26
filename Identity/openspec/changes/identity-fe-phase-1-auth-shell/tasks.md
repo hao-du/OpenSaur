@@ -1,12 +1,12 @@
 ## 1. Frontend Foundation
 
-- [ ] 1.1 Create the React + Vite frontend under `src/OpenSaur.Identity.Web/client` with the agreed package dependencies and feature-first folder structure.
-- [ ] 1.2 Add ASP.NET Core host integration for Vite development and built-asset serving so `/api/*` stays backend traffic and non-API routes serve the frontend.
-- [ ] 1.3 Add shared frontend providers for routing, TanStack Query, theme/layout setup, and auth bootstrap entry points.
+- [x] 1.1 Create the React + Vite frontend under `src/OpenSaur.Identity.Web/client` with the agreed package dependencies and feature-first folder structure.
+- [x] 1.2 Add ASP.NET Core host integration for Vite development and built-asset serving so `/api/*` stays backend traffic and non-API routes serve the frontend.
+- [x] 1.3 Add shared frontend providers for routing, TanStack Query, theme/layout setup, and auth bootstrap entry points.
 
 ## 2. Auth Infrastructure
 
-- [ ] 2.1 Implement the shared axios client and auth state infrastructure that keeps the access token in memory only and uses the backend-managed refresh cookie flow.
+- [x] 2.1 Implement the shared axios client and auth state infrastructure that keeps the access token in memory only and uses the backend-managed refresh cookie flow.
 - [ ] 2.2 Implement first-party authorization callback completion, `/api/auth/me` bootstrap, and redirect-back handling for protected routes.
 - [ ] 2.3 Implement proactive refresh-before-expiry and expired-session fallback to `/login?returnUrl=...`.
 

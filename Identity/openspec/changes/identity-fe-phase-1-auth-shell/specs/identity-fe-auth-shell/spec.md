@@ -33,19 +33,23 @@ The frontend login flow SHALL preserve the originally requested protected route 
 - **WHEN** the user completes login and the first-party callback succeeds
 - **THEN** the frontend navigates the user back to the preserved `returnUrl` instead of leaving the user on the login or callback page
 
-### Requirement: First-party frontend SHALL receive and use JWT access tokens
-The first-party frontend SHALL complete the authorization-code flow and SHALL receive a JWT access token for authenticated API access after successful callback handling.
+### Requirement: First-party frontend SHALL receive JWT access tokens through a backend-assisted web-session exchange
+The first-party frontend SHALL complete the authorization-code flow through the same identity host, SHALL send the returned authorization `code` to a first-party backend web-session exchange endpoint, and SHALL receive a JWT access token for authenticated API access without receiving the refresh token in browser JavaScript.
 
 #### Scenario: Callback completes successfully
 - **WHEN** the frontend receives a valid first-party authorization callback
-- **THEN** the frontend obtains a JWT access token and uses it for subsequent protected API requests
+- **THEN** the frontend posts the authorization `code` to the backend web-session exchange endpoint
+- **AND** the backend returns a JWT access token payload to the frontend
+- **AND** the backend stores the refresh token in a secure `httpOnly` cookie instead of returning it to browser JavaScript
 
-### Requirement: Frontend SHALL refresh access tokens before expiry without re-prompting the user
-The frontend SHALL monitor access-token expiry, SHALL check the server for a still-valid session before expiry, and SHALL use the refresh path to obtain a replacement access token before the current token expires when the server still accepts the session.
+### Requirement: Frontend SHALL refresh access tokens before expiry through a backend-managed refresh-cookie path
+The frontend SHALL monitor access-token expiry, SHALL check the server for a still-valid session before expiry, and SHALL use a first-party backend refresh endpoint to obtain a replacement access token before the current token expires when the server still accepts the session.
 
 #### Scenario: Access token is still refreshable before expiry
 - **WHEN** the current access token approaches expiry and the backend still accepts the refresh/session path
-- **THEN** the frontend obtains a replacement access token without interrupting the user with a fresh login prompt
+- **THEN** the frontend calls the backend web-session refresh endpoint
+- **AND** the backend uses the secure refresh-token cookie to obtain a replacement access token
+- **AND** the frontend receives the replacement access token without interrupting the user with a fresh login prompt
 
 ### Requirement: Expired or invalid auth state SHALL return the user to login
 The frontend SHALL clear its auth state and SHALL redirect the user to `/login` when the access token is expired and the backend no longer accepts refresh or session recovery.
