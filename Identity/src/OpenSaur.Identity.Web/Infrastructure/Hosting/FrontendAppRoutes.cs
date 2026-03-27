@@ -19,6 +19,11 @@ public static class FrontendAppRoutes
         return ShellRoutes.Contains(path.Value, StringComparer.OrdinalIgnoreCase);
     }
 
+    public static bool ShouldServeBuiltShell(IWebHostEnvironment environment)
+    {
+        return !environment.IsDevelopment() || HasBuiltShell(environment);
+    }
+
     public static IEndpointRouteBuilder MapShellRoutes(this IEndpointRouteBuilder app)
     {
         foreach (var route in ShellRoutes)
@@ -32,12 +37,22 @@ public static class FrontendAppRoutes
 
     private static Task<IResult> ServeShellAsync(IWebHostEnvironment environment)
     {
-        IFileInfo indexFile = environment.WebRootFileProvider.GetFileInfo("index.html");
+        IFileInfo indexFile = GetShellIndexFile(environment);
         if (!indexFile.Exists || string.IsNullOrWhiteSpace(indexFile.PhysicalPath))
         {
             return Task.FromResult<IResult>(TypedResults.NotFound());
         }
 
         return Task.FromResult<IResult>(TypedResults.PhysicalFile(indexFile.PhysicalPath, "text/html; charset=utf-8"));
+    }
+
+    private static bool HasBuiltShell(IWebHostEnvironment environment)
+    {
+        return GetShellIndexFile(environment).Exists;
+    }
+
+    private static IFileInfo GetShellIndexFile(IWebHostEnvironment environment)
+    {
+        return environment.WebRootFileProvider.GetFileInfo("index.html");
     }
 }

@@ -53,8 +53,16 @@ export const authSessionStore = {
     return returnUrl;
   },
 
+  clearRememberedReturnUrl() {
+    getSessionStorage()?.removeItem(returnUrlStorageKey);
+  },
+
   getAccessToken() {
     return snapshot.accessToken;
+  },
+
+  getRememberedReturnUrl() {
+    return getSessionStorage()?.getItem(returnUrlStorageKey) ?? null;
   },
 
   getSnapshot() {

@@ -34,6 +34,10 @@ public static class AuthEndpoints
             .AllowAnonymous()
             .WithResilienceScope(EndpointResiliencePolicyScope.Auth);
 
+        auth.MapPost("/web-session/refresh", RefreshWebSessionHandler.HandleAsync)
+            .AllowAnonymous()
+            .WithResilienceScope(EndpointResiliencePolicyScope.Auth);
+
         return app;
     }
 }

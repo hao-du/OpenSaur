@@ -12,7 +12,7 @@ public sealed record GetManagedUserByIdRequest(
 
 public sealed record GetUserByIdRequest(Guid UserId, bool TrackChanges = false);
 
-public sealed record GetUserByUserNameRequest(string UserName, bool TrackChanges = false);
+public sealed record GetUserByUserNameRequest(string NormalizedUserName, bool TrackChanges = false);
 
 public sealed record GetManagedUsersResponse(IReadOnlyList<ApplicationUser> Users);
 

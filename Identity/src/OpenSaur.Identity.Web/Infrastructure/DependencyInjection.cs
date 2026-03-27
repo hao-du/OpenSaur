@@ -11,6 +11,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using OpenIddict.Abstractions;
+using OpenIddict.Server;
 using OpenIddict.Validation.AspNetCore;
 using OpenSaur.Identity.Web.Features.Auth;
 using OpenSaur.Identity.Web.Features.Auth.Login;
@@ -199,7 +200,7 @@ public static class DependencyInjection
             .AddDefaultTokenProviders();
         services.ConfigureApplicationCookie(options =>
         {
-            options.Cookie.Name = "opensaur.identity.session";
+            options.Cookie.Name = AuthCookieNames.Session;
             options.Cookie.HttpOnly = true;
             options.Cookie.IsEssential = true;
             options.Cookie.SameSite = SameSiteMode.Lax;
@@ -237,12 +238,8 @@ public static class DependencyInjection
         services.AddScoped<PermissionAuthorizationService>();
         services.AddScoped<UserAuthorizationService>();
         services.AddScoped<IAuthorizationHandler, PermissionAuthorizationHandler>();
-        services.AddHttpClient<IFirstPartyOidcTokenClient, FirstPartyOidcTokenClient>(
-            (serviceProvider, client) =>
-            {
-                var oidcOptions = serviceProvider.GetRequiredService<IOptions<OidcOptions>>().Value;
-                client.BaseAddress = new Uri(oidcOptions.Issuer);
-            });
+        services.AddScoped<FirstPartyOidcClientRegistrar>();
+        services.AddScoped<IFirstPartyOidcTokenClient, FirstPartyOidcTokenClient>();
         services.AddSingleton<IdempotencyCacheStore>();
         services.AddSingleton<IdempotencyRequestLockProvider>();
         services.AddSingleton<EndpointResilienceContextResolver>();
@@ -322,6 +319,10 @@ public static class DependencyInjection
                 // shared signing material. Token encryption is not part of the current model.
                 options.DisableAccessTokenEncryption();
                 ConfigureOidcKeyMaterial(options, oidcOptions, environment);
+                options.AddEventHandler<OpenIddictServerEvents.ApplyTokenResponseContext>(builder =>
+                    builder.UseScopedHandler<InternalFirstPartyTokenResponseHandler>()
+                        .SetOrder(int.MaxValue)
+                        .SetType(OpenIddictServerHandlerType.Custom));
                 options.UseAspNetCore()
                     .EnableAuthorizationEndpointPassthrough()
                     .EnableEndSessionEndpointPassthrough();

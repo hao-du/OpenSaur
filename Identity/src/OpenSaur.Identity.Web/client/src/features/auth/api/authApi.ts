@@ -5,6 +5,11 @@ export type LoginRequest = {
   userName: string;
 };
 
+export type ChangePasswordRequest = {
+  currentPassword: string;
+  newPassword: string;
+};
+
 export type AuthMeResponse = {
   id: string;
   requirePasswordChange: boolean;
@@ -48,6 +53,10 @@ export async function logout() {
   return await httpClient.post("/api/auth/logout");
 }
 
+export async function changePassword(request: ChangePasswordRequest) {
+  return await httpClient.post("/api/auth/change-password", request);
+}
+
 export async function getCurrentUser() {
   return await unwrapData<AuthMeResponse>(httpClient.get("/api/auth/me"));
 }
@@ -55,5 +64,11 @@ export async function getCurrentUser() {
 export async function exchangeWebSession(request: ExchangeWebSessionRequest) {
   return await unwrapData<ExchangeWebSessionResponse>(
     httpClient.post("/api/auth/web-session/exchange", request)
+  );
+}
+
+export async function refreshWebSession() {
+  return await unwrapData<ExchangeWebSessionResponse>(
+    httpClient.post("/api/auth/web-session/refresh")
   );
 }

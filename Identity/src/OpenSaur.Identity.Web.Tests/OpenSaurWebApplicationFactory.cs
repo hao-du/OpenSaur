@@ -24,23 +24,26 @@ public sealed class OpenSaurWebApplicationFactory : WebApplicationFactory<Progra
     private readonly IReadOnlyDictionary<string, string?> _settings;
     private readonly Action<IWebHostBuilder>? _configureWebHost;
     private readonly Action<DbContextOptionsBuilder>? _configureDbContext;
+    private readonly bool _useTestFirstPartyOidcTokenClient;
     private readonly SqliteConnection _connection = new("DataSource=:memory:");
     private readonly SemaphoreSlim _databaseInitializationLock = new(1, 1);
     private bool _databaseInitialized;
 
     public OpenSaurWebApplicationFactory()
-        : this(null, null, null)
+        : this(null, null, null, true)
     {
     }
 
     internal OpenSaurWebApplicationFactory(
         IReadOnlyDictionary<string, string?>? settings = null,
         Action<IWebHostBuilder>? configureWebHost = null,
-        Action<DbContextOptionsBuilder>? configureDbContext = null)
+        Action<DbContextOptionsBuilder>? configureDbContext = null,
+        bool useTestFirstPartyOidcTokenClient = true)
     {
         _settings = settings ?? new Dictionary<string, string?>();
         _configureWebHost = configureWebHost;
         _configureDbContext = configureDbContext;
+        _useTestFirstPartyOidcTokenClient = useTestFirstPartyOidcTokenClient;
         _connection.Open();
     }
 
@@ -72,9 +75,12 @@ public sealed class OpenSaurWebApplicationFactory : WebApplicationFactory<Progra
                 services.RemoveAll<IDataProtectionProvider>();
                 services.AddSingleton(_connection);
                 services.AddSingleton<IDataProtectionProvider>(new EphemeralDataProtectionProvider());
-                services.RemoveAll<IFirstPartyOidcTokenClient>();
-                services.AddScoped<IFirstPartyOidcTokenClient>(
-                    _ => new TestServerFirstPartyOidcTokenClient(this));
+                if (_useTestFirstPartyOidcTokenClient)
+                {
+                    services.RemoveAll<IFirstPartyOidcTokenClient>();
+                    services.AddScoped<IFirstPartyOidcTokenClient>(
+                        _ => new TestServerFirstPartyOidcTokenClient(this));
+                }
                 services.AddDbContext<ApplicationDbContext>(
                     options =>
                     {
@@ -104,6 +110,7 @@ public sealed class OpenSaurWebApplicationFactory : WebApplicationFactory<Progra
             var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
             await dbContext.Database.EnsureDeletedAsync();
             await dbContext.Database.EnsureCreatedAsync();
+            await EnsureConfiguredFirstPartyOidcClientAsync(scope.ServiceProvider);
             _databaseInitialized = true;
         }
         finally
@@ -181,6 +188,7 @@ public sealed class OpenSaurWebApplicationFactory : WebApplicationFactory<Progra
             using var scope = services.CreateScope();
             var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
             await dbContext.Database.EnsureCreatedAsync();
+            await EnsureConfiguredFirstPartyOidcClientAsync(scope.ServiceProvider);
             _databaseInitialized = true;
         }
         finally
@@ -195,6 +203,12 @@ public sealed class OpenSaurWebApplicationFactory : WebApplicationFactory<Progra
         _connection.Dispose();
 
         base.Dispose(disposing);
+    }
+
+    private static async Task EnsureConfiguredFirstPartyOidcClientAsync(IServiceProvider services)
+    {
+        var registrar = services.GetRequiredService<FirstPartyOidcClientRegistrar>();
+        await registrar.EnsureConfiguredClientAsync();
     }
 
     private sealed class TestServerFirstPartyOidcTokenClient : IFirstPartyOidcTokenClient
@@ -246,6 +260,48 @@ public sealed class OpenSaurWebApplicationFactory : WebApplicationFactory<Progra
             return new FirstPartyOidcTokenResult(
                 accessToken,
                 refreshToken,
+                DateTimeOffset.UtcNow.AddSeconds(expiresInSeconds));
+        }
+
+        public async Task<FirstPartyOidcTokenResult?> RefreshAccessTokenAsync(
+            string refreshToken,
+            CancellationToken cancellationToken)
+        {
+            using var client = FirstPartyApiTestClient.CreateClient(_factory);
+            using var response = await client.PostAsync(
+                "/connect/token",
+                new FormUrlEncodedContent(
+                [
+                    new KeyValuePair<string, string>("grant_type", "refresh_token"),
+                    new KeyValuePair<string, string>("client_id", FirstPartyApiTestClient.ClientId),
+                    new KeyValuePair<string, string>("client_secret", FirstPartyApiTestClient.ClientSecret),
+                    new KeyValuePair<string, string>("refresh_token", refreshToken)
+                ]),
+                cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                return null;
+            }
+
+            await using var payloadStream = await response.Content.ReadAsStreamAsync(cancellationToken);
+            using var payload = await JsonDocument.ParseAsync(payloadStream, cancellationToken: cancellationToken);
+
+            var accessToken = payload.RootElement.GetProperty("access_token").GetString();
+            var rotatedRefreshToken = payload.RootElement.GetProperty("refresh_token").GetString();
+            if (string.IsNullOrWhiteSpace(accessToken) || string.IsNullOrWhiteSpace(rotatedRefreshToken))
+            {
+                return null;
+            }
+
+            var expiresInSeconds = payload.RootElement.TryGetProperty("expires_in", out var expiresInElement)
+                && expiresInElement.TryGetInt32(out var expiresIn)
+                    ? expiresIn
+                    : 3600;
+
+            return new FirstPartyOidcTokenResult(
+                accessToken,
+                rotatedRefreshToken,
                 DateTimeOffset.UtcNow.AddSeconds(expiresInSeconds));
         }
     }

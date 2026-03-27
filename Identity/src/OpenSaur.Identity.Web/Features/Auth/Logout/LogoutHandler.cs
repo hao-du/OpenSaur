@@ -10,6 +10,15 @@ public static class LogoutHandler
     public static async Task<IResult> HandleAsync(HttpContext httpContext)
     {
         await httpContext.SignOutAsync(IdentityConstants.ApplicationScheme);
+        httpContext.Response.Cookies.Delete(
+            AuthCookieNames.Refresh,
+            new CookieOptions
+            {
+                HttpOnly = true,
+                IsEssential = true,
+                SameSite = SameSiteMode.Lax,
+                Secure = true
+            });
 
         return Result.Success().ToApiResult();
     }

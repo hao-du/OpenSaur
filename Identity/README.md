@@ -152,6 +152,42 @@ dotnet run --project .\src\OpenSaur.Identity.Web\OpenSaur.Identity.Web.csproj
 
 The current starter endpoint is defined in `src/OpenSaur.Identity.Web/Program.cs`.
 
+## Frontend Workflow
+
+The first-party React client lives under `src/OpenSaur.Identity.Web/client`.
+
+For frontend development:
+
+```powershell
+cd .\src\OpenSaur.Identity.Web\client
+npm install
+npm run dev
+```
+
+Vite runs on `http://localhost:5173` for frontend-only development and proxies `/api`, `/.well-known`, and `/connect` back to the ASP.NET Core host.
+
+For same-host local review and deployment:
+
+```powershell
+cd .\src\OpenSaur.Identity.Web\client
+npm run build
+dotnet run --project ..\OpenSaur.Identity.Web.csproj
+```
+
+The client build writes into `src/OpenSaur.Identity.Web/wwwroot`, and ASP.NET Core serves the built app on the same host as the backend routes.
+
+Current hosted auth routes:
+
+- `/login`
+- `/auth/callback`
+- `/change-password`
+- `/`
+
+Browser automation note:
+
+- frontend unit/integration-style tests stay close to the client app
+- browser automation should be added later in a separate automation test project, not inside `src/OpenSaur.Identity.Web/client`
+
 ## Example Prompt
 
 To kick off the next feature, you can say:

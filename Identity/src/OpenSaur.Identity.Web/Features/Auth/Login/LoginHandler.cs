@@ -28,8 +28,9 @@ public static class LoginHandler
             return validationFailure;
         }
 
+        var normalizedUserName = userManager.NormalizeName(request.UserName);
         var userResult = await userRepository.GetUserByUserNameAsync(
-            new GetUserByUserNameRequest(request.UserName, TrackChanges: true),
+            new GetUserByUserNameRequest(normalizedUserName, TrackChanges: true),
             cancellationToken);
         if (!userResult.IsSuccess || userResult.Value is null || !userResult.Value.User.IsActive)
         {

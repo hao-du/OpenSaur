@@ -1,14 +1,132 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { MemoryRouter } from "react-router-dom";
+import { AppProviders } from "../../app/providers/AppProviders";
+import * as authApi from "../../features/auth/api/authApi";
+import { authSessionStore } from "../../features/auth/state/authSessionStore";
+import * as firstPartyOidc from "../../features/auth/utils/firstPartyOidc";
 import { LoginPage } from "./LoginPage";
 
-describe("LoginPage", () => {
-  it("renders the sign in heading for the auth shell", () => {
-    render(<LoginPage />);
+vi.mock("../../features/auth/api/authApi", async () => {
+  const actual = await vi.importActual<typeof import("../../features/auth/api/authApi")>("../../features/auth/api/authApi");
 
-    expect(
-      screen.getByRole("heading", {
-        name: /sign in/i
-      })
-    ).toBeDefined();
+  return {
+    ...actual,
+    login: vi.fn()
+  };
+});
+
+vi.mock("../../features/auth/utils/firstPartyOidc", async () => {
+  const actual = await vi.importActual<typeof import("../../features/auth/utils/firstPartyOidc")>("../../features/auth/utils/firstPartyOidc");
+
+  return {
+    ...actual,
+    startFirstPartyAuthorization: vi.fn()
+  };
+});
+
+describe("LoginPage", () => {
+  beforeEach(() => {
+    authSessionStore.clearSession();
+    sessionStorage.clear();
+    vi.resetAllMocks();
+  });
+
+  it("renders the sign in form for the auth shell", () => {
+    render(
+      <AppProviders>
+        <MemoryRouter initialEntries={["/login"]}>
+          <LoginPage />
+        </MemoryRouter>
+      </AppProviders>
+    );
+
+    expect(screen.getByRole("heading", { level: 3, name: /^sign in$/i })).toBeDefined();
+    expect(screen.getByLabelText(/username/i)).toBeDefined();
+    expect(screen.getByLabelText(/^password$/i)).toBeDefined();
+    expect(screen.getByRole("button", { name: /sign in/i })).toBeDefined();
+  });
+
+  it("posts credentials and starts the first-party authorize flow", async () => {
+    vi.mocked(authApi.login).mockResolvedValue({
+      data: { data: null, errors: [], success: true }
+    } as Awaited<ReturnType<typeof authApi.login>>);
+
+    render(
+      <AppProviders>
+        <MemoryRouter initialEntries={["/login?returnUrl=%2Freports%3Ftab%3Drecent"]}>
+          <LoginPage />
+        </MemoryRouter>
+      </AppProviders>
+    );
+
+    fireEvent.change(screen.getByLabelText(/username/i), {
+      target: { value: "demo.user" }
+    });
+    fireEvent.change(screen.getByLabelText(/^password$/i), {
+      target: { value: "Password1!" }
+    });
+    fireEvent.click(screen.getByRole("button", { name: /sign in/i }));
+
+    await waitFor(() => {
+      expect(vi.mocked(authApi.login).mock.calls[0]?.[0]).toEqual({
+        password: "Password1!",
+        userName: "demo.user"
+      });
+    });
+
+    expect(authSessionStore.consumeReturnUrl()).toBe("/reports?tab=recent");
+    expect(firstPartyOidc.startFirstPartyAuthorization).toHaveBeenCalledOnce();
+  });
+
+  it("shows an error message when the hosted login request fails", async () => {
+    vi.mocked(authApi.login).mockRejectedValue(new Error("invalid credentials"));
+
+    render(
+      <AppProviders>
+        <MemoryRouter initialEntries={["/login"]}>
+          <LoginPage />
+        </MemoryRouter>
+      </AppProviders>
+    );
+
+    fireEvent.change(screen.getByLabelText(/username/i), {
+      target: { value: "demo.user" }
+    });
+    fireEvent.change(screen.getByLabelText(/^password$/i), {
+      target: { value: "wrong-password" }
+    });
+    fireEvent.click(screen.getByRole("button", { name: /sign in/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText(/sign in failed/i)).toBeDefined();
+    });
+
+    expect(firstPartyOidc.startFirstPartyAuthorization).not.toHaveBeenCalled();
+  });
+
+  it("shows a visible loading indicator while the hosted login request is pending", async () => {
+    vi.mocked(authApi.login).mockReturnValue(new Promise(() => {}) as Awaited<ReturnType<typeof authApi.login>>);
+
+    render(
+      <AppProviders>
+        <MemoryRouter initialEntries={["/login"]}>
+          <LoginPage />
+        </MemoryRouter>
+      </AppProviders>
+    );
+
+    fireEvent.change(screen.getByLabelText(/username/i), {
+      target: { value: "demo.user" }
+    });
+    fireEvent.change(screen.getByLabelText(/^password$/i), {
+      target: { value: "Password1!" }
+    });
+    fireEvent.click(screen.getByRole("button", { name: /sign in/i }));
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: /signing in/i })).toBeDefined();
+      expect(screen.getByRole("progressbar")).toBeDefined();
+    });
   });
 });

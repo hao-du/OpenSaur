@@ -42,7 +42,43 @@ public sealed class ApiAuthAccountEndpointsTests : IClassFixture<OpenSaurWebAppl
         await ApiResponseReader.AssertNullSuccessDataAsync(response);
         Assert.Contains(
             response.Headers.GetValues("Set-Cookie"),
-            value => value.StartsWith("opensaur.identity.session=", StringComparison.Ordinal));
+            value => value.StartsWith("s=", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public async Task PostLogin_WhenUserNameCasingDiffers_StillEstablishesHostedSession()
+    {
+        var userName = "CaseSensitiveUser";
+        var password = TestFakers.CreatePassword();
+        await TestIdentitySeeder.SeedUserAsync(_factory, userName, password, [SystemRoles.User]);
+        using var client = FirstPartyApiTestClient.CreateClient(_factory);
+
+        var response = await client.PostAsJsonAsync(
+            "/api/auth/login",
+            new { UserName = userName.ToLowerInvariant(), Password = password });
+
+        await ApiResponseReader.AssertNullSuccessDataAsync(response);
+        Assert.Contains(
+            response.Headers.GetValues("Set-Cookie"),
+            value => value.StartsWith("s=", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public async Task GetAuthorize_WhenUsingConfiguredFirstPartyClient_AnonymousBrowserIsRedirectedToLoginWithoutManualClientSeeding()
+    {
+        using var factory = new OpenSaurWebApplicationFactory();
+        await factory.ResetDatabaseAsync();
+        using var client = FirstPartyApiTestClient.CreateClient(factory);
+
+        var response = await client.GetAsync(
+            FirstPartyApiTestClient.CreateAuthorizeUrl(
+                FirstPartyApiTestClient.ClientId,
+                FirstPartyApiTestClient.RedirectUri,
+                "first-party-state"));
+
+        Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
+        Assert.NotNull(response.Headers.Location);
+        Assert.Equal("/login", response.Headers.Location!.AbsolutePath);
     }
 
     [Fact]
@@ -92,7 +128,7 @@ public sealed class ApiAuthAccountEndpointsTests : IClassFixture<OpenSaurWebAppl
         await ApiResponseReader.AssertNullSuccessDataAsync(response);
         Assert.Contains(
             response.Headers.GetValues("Set-Cookie"),
-            value => value.StartsWith("opensaur.identity.session=", StringComparison.Ordinal)
+            value => value.StartsWith("s=", StringComparison.Ordinal)
                      && value.Contains("expires=", StringComparison.OrdinalIgnoreCase));
     }
 
@@ -188,6 +224,103 @@ public sealed class ApiAuthAccountEndpointsTests : IClassFixture<OpenSaurWebAppl
         Assert.False(string.IsNullOrWhiteSpace(payload.GetProperty("expiresAt").GetString()));
         Assert.Contains(
             response.Headers.GetValues("Set-Cookie"),
-            value => value.StartsWith("opensaur.identity.refresh=", StringComparison.Ordinal));
+            value => value.StartsWith("r=", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public async Task PostWebSessionExchange_WhenUsingRealFirstPartyTokenClient_CompletesWithoutLoopbackHttp()
+    {
+        using var factory = new OpenSaurWebApplicationFactory(useTestFirstPartyOidcTokenClient: false);
+        await FirstPartyApiTestClient.InitializeFactoryAsync(factory);
+
+        var credentials = TestFakers.CreateUserCredentials();
+        await TestIdentitySeeder.SeedUserAsync(factory, credentials.UserName, credentials.Password, [SystemRoles.User]);
+        using var client = FirstPartyApiTestClient.CreateClient(factory);
+
+        var authorizationCode = await OidcTestClient.AuthorizeAsync(
+            client,
+            FirstPartyApiTestClient.ClientId,
+            FirstPartyApiTestClient.RedirectUri,
+            credentials.UserName,
+            credentials.Password);
+
+        var response = await client.PostAsJsonAsync(
+            "/api/auth/web-session/exchange",
+            new { Code = authorizationCode });
+
+        var payload = await ApiResponseReader.ReadSuccessDataAsync<JsonElement>(response);
+
+        Assert.False(string.IsNullOrWhiteSpace(payload.GetProperty("accessToken").GetString()));
+        Assert.False(string.IsNullOrWhiteSpace(payload.GetProperty("expiresAt").GetString()));
+        Assert.Contains(
+            response.Headers.GetValues("Set-Cookie"),
+            value => value.StartsWith("r=", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public async Task PostWebSessionRefresh_WhenRefreshCookieIsValid_ReturnsReplacementAccessTokenAndRotatesRefreshCookie()
+    {
+        var credentials = TestFakers.CreateUserCredentials();
+        await TestIdentitySeeder.SeedUserAsync(_factory, credentials.UserName, credentials.Password, [SystemRoles.User]);
+        using var client = FirstPartyApiTestClient.CreateClient(_factory);
+
+        var authorizationCode = await OidcTestClient.AuthorizeAsync(
+            client,
+            FirstPartyApiTestClient.ClientId,
+            FirstPartyApiTestClient.RedirectUri,
+            credentials.UserName,
+            credentials.Password);
+
+        var exchangeResponse = await client.PostAsJsonAsync(
+            "/api/auth/web-session/exchange",
+            new { Code = authorizationCode });
+        var initialRefreshCookie = exchangeResponse.Headers
+            .GetValues("Set-Cookie")
+            .Single(value => value.StartsWith("r=", StringComparison.Ordinal));
+
+        var refreshResponse = await client.PostAsync("/api/auth/web-session/refresh", content: null);
+        var payload = await ApiResponseReader.ReadSuccessDataAsync<JsonElement>(refreshResponse);
+        var rotatedRefreshCookie = refreshResponse.Headers
+            .GetValues("Set-Cookie")
+            .Single(value => value.StartsWith("r=", StringComparison.Ordinal));
+
+        Assert.False(string.IsNullOrWhiteSpace(payload.GetProperty("accessToken").GetString()));
+        Assert.False(string.IsNullOrWhiteSpace(payload.GetProperty("expiresAt").GetString()));
+        Assert.NotEqual(initialRefreshCookie, rotatedRefreshCookie);
+    }
+
+    [Fact]
+    public async Task PostWebSessionRefresh_WhenUsingRealFirstPartyTokenClient_RotatesRefreshCookieWithoutLoopbackHttp()
+    {
+        using var factory = new OpenSaurWebApplicationFactory(useTestFirstPartyOidcTokenClient: false);
+        await FirstPartyApiTestClient.InitializeFactoryAsync(factory);
+
+        var credentials = TestFakers.CreateUserCredentials();
+        await TestIdentitySeeder.SeedUserAsync(factory, credentials.UserName, credentials.Password, [SystemRoles.User]);
+        using var client = FirstPartyApiTestClient.CreateClient(factory);
+
+        var authorizationCode = await OidcTestClient.AuthorizeAsync(
+            client,
+            FirstPartyApiTestClient.ClientId,
+            FirstPartyApiTestClient.RedirectUri,
+            credentials.UserName,
+            credentials.Password);
+
+        var exchangeResponse = await client.PostAsJsonAsync(
+            "/api/auth/web-session/exchange",
+            new { Code = authorizationCode });
+        var initialRefreshCookie = exchangeResponse.Headers
+            .GetValues("Set-Cookie")
+            .Single(value => value.StartsWith("r=", StringComparison.Ordinal));
+
+        var refreshResponse = await client.PostAsync("/api/auth/web-session/refresh", content: null);
+        var payload = await ApiResponseReader.ReadSuccessDataAsync<JsonElement>(refreshResponse);
+        var rotatedRefreshCookie = refreshResponse.Headers
+            .GetValues("Set-Cookie")
+            .Single(value => value.StartsWith("r=", StringComparison.Ordinal));
+
+        Assert.False(string.IsNullOrWhiteSpace(payload.GetProperty("accessToken").GetString()));
+        Assert.False(string.IsNullOrWhiteSpace(payload.GetProperty("expiresAt").GetString()));
+        Assert.NotEqual(initialRefreshCookie, rotatedRefreshCookie);
     }
 }

@@ -1,30 +1,47 @@
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { CircularProgress, Stack, Typography } from "@mui/material";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { AuthPageTemplate } from "../../components/templates";
-import {
-  exchangeWebSession,
-  getCurrentUser
-} from "../../features/auth/api/authApi";
+import { useCurrentUserQuery } from "../../features/auth/hooks/useCurrentUserQuery";
+import { useExchangeWebSession } from "../../features/auth/hooks/useExchangeWebSession";
 import { authSessionStore } from "../../features/auth/state/authSessionStore";
+import type { ExchangeWebSessionResponse } from "../../features/auth/api/authApi";
+
+const exchangeRequestsByCode = new Map<string, Promise<ExchangeWebSessionResponse>>();
+
+function exchangeSessionOnce(
+  authorizationCode: string,
+  exchangeSession: (request: { code: string; }) => Promise<ExchangeWebSessionResponse>
+) {
+  const existingRequest = exchangeRequestsByCode.get(authorizationCode);
+  if (existingRequest) {
+    return existingRequest;
+  }
+
+  const request = exchangeSession({ code: authorizationCode })
+    .catch(error => {
+      exchangeRequestsByCode.delete(authorizationCode);
+      throw error;
+    });
+
+  exchangeRequestsByCode.set(authorizationCode, request);
+  return request;
+}
 
 export function AuthCallbackPage() {
-  const hasStartedRef = useRef(false);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { clearCurrentUser, fetchCurrentUser } = useCurrentUserQuery();
+  const { exchangeSession } = useExchangeWebSession();
 
   useEffect(() => {
-    if (hasStartedRef.current) {
-      return;
-    }
-
-    hasStartedRef.current = true;
     let isCancelled = false;
 
     async function completeSignIn() {
       const authorizationCode = searchParams.get("code");
-      const rememberedReturnUrl = authSessionStore.consumeReturnUrl() ?? "/";
+      const rememberedReturnUrl = authSessionStore.getRememberedReturnUrl() ?? "/";
       if (!authorizationCode) {
+        authSessionStore.clearRememberedReturnUrl();
         navigate(`/login?returnUrl=${encodeURIComponent(rememberedReturnUrl)}`, {
           replace: true
         });
@@ -32,14 +49,14 @@ export function AuthCallbackPage() {
       }
 
       try {
-        const session = await exchangeWebSession({ code: authorizationCode });
+        const session = await exchangeSessionOnce(authorizationCode, exchangeSession);
         if (isCancelled) {
           return;
         }
 
         authSessionStore.setAuthenticatedSession(session);
 
-        const currentUser = await getCurrentUser();
+        const currentUser = await fetchCurrentUser();
         if (isCancelled) {
           return;
         }
@@ -50,8 +67,10 @@ export function AuthCallbackPage() {
           return;
         }
 
+        authSessionStore.clearRememberedReturnUrl();
         navigate(rememberedReturnUrl, { replace: true });
       } catch {
+        clearCurrentUser();
         authSessionStore.clearSession();
         navigate(`/login?returnUrl=${encodeURIComponent(rememberedReturnUrl)}`, {
           replace: true
@@ -64,7 +83,7 @@ export function AuthCallbackPage() {
     return () => {
       isCancelled = true;
     };
-  }, [navigate, searchParams]);
+  }, [clearCurrentUser, exchangeSession, fetchCurrentUser, navigate, searchParams]);
 
   return (
     <AuthPageTemplate

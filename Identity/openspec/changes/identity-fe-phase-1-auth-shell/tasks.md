@@ -8,18 +8,17 @@
 
 - [x] 2.1 Implement the shared axios client and auth state infrastructure that keeps the access token in memory only and uses the backend-managed refresh cookie flow.
 - [x] 2.2 Implement first-party authorization callback completion, `/api/auth/me` bootstrap, and redirect-back handling for protected routes.
-- [ ] 2.3 Implement proactive refresh-before-expiry and expired-session fallback to `/login?returnUrl=...`.
+- [x] 2.3 Implement proactive refresh-before-expiry and expired-session fallback to `/login?returnUrl=...`.
 
 ## 3. Auth UI
 
-- [ ] 3.1 Build the atomic-design auth UI layers using React Hook Form, Lucide icons, and MUI `Divider`.
-- [ ] 3.2 Implement the `/login` page and form flow that posts credentials to `/api/auth/login` and resumes the first-party authorization flow.
-- [ ] 3.3 Implement the `/auth/callback` route that finalizes auth state and redirects to the preserved route.
-- [ ] 3.4 Implement the `/change-password` page and the forced password-change redirect behavior.
-- [ ] 3.5 Implement one protected shell route with responsive mobile, tablet, and desktop layouts plus logout support.
+- [x] 3.1 Build the atomic-design auth UI layers using React Hook Form, Lucide icons, and MUI `Divider`.
+- [x] 3.2 Implement the `/login` page and form flow that posts credentials to `/api/auth/login` and resumes the first-party authorization flow.
+- [x] 3.3 Implement the `/auth/callback` route that finalizes auth state and redirects to the preserved route.
+- [x] 3.4 Implement the `/change-password` page and the forced password-change redirect behavior.
+- [x] 3.5 Implement one protected shell route with responsive mobile, tablet, and desktop layouts plus logout support.
 
 ## 4. Verification
 
-- [ ] 4.1 Add frontend tests for auth state, callback handling, refresh orchestration, and guarded-route redirects.
-- [ ] 4.2 Add end-to-end coverage for login success, redirect-back, forced password change, refresh-before-expiry, logout, and expired-token fallback.
-- [ ] 4.3 Document the FE development and same-host deployment workflow for the new client app.
+- [x] 4.1 Add frontend tests for auth state, callback handling, refresh orchestration, and guarded-route redirects.
+- [x] 4.2 Document the FE development and same-host deployment workflow for the new client app, and note that browser automation belongs in a separate follow-up project.

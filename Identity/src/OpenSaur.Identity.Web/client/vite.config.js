@@ -8,6 +8,10 @@ var backendTarget = process.env.ASPNETCORE_HTTPS_PORTS != null &&
         ? process.env.ASPNETCORE_URLS.split(";")[0]
         : "https://localhost:7017";
 export default defineConfig({
+    build: {
+        emptyOutDir: true,
+        outDir: "../wwwroot"
+    },
     plugins: [react()],
     server: {
         host: "0.0.0.0",

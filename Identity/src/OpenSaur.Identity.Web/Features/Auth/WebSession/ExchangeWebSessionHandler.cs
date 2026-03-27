@@ -9,8 +9,6 @@ namespace OpenSaur.Identity.Web.Features.Auth.WebSession;
 
 public static class ExchangeWebSessionHandler
 {
-    private const string RefreshCookieName = "opensaur.identity.refresh";
-
     public static async Task<IResult> HandleAsync(
         ExchangeWebSessionRequest request,
         IValidator<ExchangeWebSessionRequest> validator,
@@ -33,7 +31,7 @@ public static class ExchangeWebSessionHandler
         }
 
         httpContext.Response.Cookies.Append(
-            RefreshCookieName,
+            AuthCookieNames.Refresh,
             tokenResult.RefreshToken,
             new CookieOptions
             {

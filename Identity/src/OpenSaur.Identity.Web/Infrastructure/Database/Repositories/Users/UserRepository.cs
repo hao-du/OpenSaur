@@ -65,7 +65,9 @@ public class UserRepository(ApplicationDbContext dbContext)
             ? dbContext.Users.AsQueryable()
             : dbContext.Users.AsNoTracking();
 
-        var user = await query.SingleOrDefaultAsync(candidate => candidate.UserName == request.UserName, cancellationToken);
+        var user = await query.SingleOrDefaultAsync(
+            candidate => candidate.NormalizedUserName == request.NormalizedUserName,
+            cancellationToken);
 
         return user is null
             ? Result<GetUserByUserNameResponse>.NotFound(

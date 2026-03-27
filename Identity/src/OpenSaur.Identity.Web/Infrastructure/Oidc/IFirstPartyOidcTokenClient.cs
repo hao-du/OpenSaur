@@ -5,6 +5,10 @@ public interface IFirstPartyOidcTokenClient
     Task<FirstPartyOidcTokenResult?> ExchangeAuthorizationCodeAsync(
         string code,
         CancellationToken cancellationToken);
+
+    Task<FirstPartyOidcTokenResult?> RefreshAccessTokenAsync(
+        string refreshToken,
+        CancellationToken cancellationToken);
 }
 
 public sealed record FirstPartyOidcTokenResult(

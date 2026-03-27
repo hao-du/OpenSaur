@@ -1,18 +1,43 @@
-import { Stack, Typography } from "@mui/material";
+import { useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { AuthPageTemplate } from "../../components/templates";
+import { LoginForm } from "../../components/organisms";
+import { useLogin } from "../../features/auth/hooks";
+import { authSessionStore } from "../../features/auth/state/authSessionStore";
+import { startFirstPartyAuthorization } from "../../features/auth/utils/firstPartyOidc";
 
 export function LoginPage() {
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [searchParams] = useSearchParams();
+  const { isLoggingIn, login } = useLogin();
+
+  async function handleLogin(credentials: { password: string; userName: string; }) {
+    const returnUrl = searchParams.get("returnUrl");
+    setErrorMessage(null);
+
+    if (returnUrl) {
+      authSessionStore.rememberReturnUrl(returnUrl);
+    }
+
+    try {
+      await login(credentials);
+      startFirstPartyAuthorization();
+    } catch {
+      setErrorMessage("Sign in failed. Check your credentials and try again.");
+    }
+  }
+
   return (
     <AuthPageTemplate
-      description="Sign in to continue through the first-party identity shell."
+      description="Sign in to continue through the first-party identity shell and resume your protected route."
       eyebrow="Auth Shell"
       title="Sign in"
     >
-      <Stack spacing={1}>
-        <Typography color="text.secondary">
-          The login form and redirect flow will be added in the next auth slice.
-        </Typography>
-      </Stack>
+      <LoginForm
+        errorMessage={errorMessage}
+        isSubmitting={isLoggingIn}
+        onSubmit={handleLogin}
+      />
     </AuthPageTemplate>
   );
 }

@@ -2,7 +2,7 @@
 
 The backend identity foundation already supports first-party and third-party OpenIddict authorization code flow, JSON login/logout helpers, bootstrap password rotation, and same-host auth-server session reuse. What is missing is the first-party browser client that runs on the same host, drives the hosted login flow, completes the callback, holds the returned JWT access token, refreshes it before expiry, and redirects the user back to the page they originally requested.
 
-This FE phase must stay intentionally small. The user wants an auth-only slice first so the end-to-end flow can be tested and tracked without mixing in admin CRUD screens. The frontend stack is fixed for this phase:
+This FE phase must stay intentionally small. The user wants an auth-only slice first so the hosted auth flow can be tested and tracked without mixing in admin CRUD screens. The frontend stack is fixed for this phase:
 
 - React under `src/OpenSaur.Identity.Web/client`
 - Vite for frontend development
@@ -42,6 +42,7 @@ Security and UX constraints also matter:
 - Impersonation or advanced admin UX
 - Offline mode, background sync, or PWA behavior
 - Replacing OpenIddict with a custom first-party auth model
+- Browser automation implementation inside `src/OpenSaur.Identity.Web/client` or this OpenSpec change
 
 ## Decisions
 
@@ -170,6 +171,17 @@ Alternatives considered:
 
 The FE should not wrap every dependency in excessive abstraction during this phase; the goal is a clean, direct foundation.
 
+### 9. Keep browser automation in a separate project
+
+Frontend browser automation should not live inside the client app project. When hosted auth-flow automation is added, it should be created as a dedicated automation test project that targets the identity host from outside the app, instead of mixing Playwright or similar tooling into `src/OpenSaur.Identity.Web/client`.
+
+This keeps the app project focused on product code and lightweight FE tests, while leaving room for a fuller browser automation harness later.
+
+Alternatives considered:
+
+- Add Playwright directly to the client app now: rejected because the user wants automation isolated from the shipping app project.
+- Put browser automation in the existing backend test project: rejected because browser tooling and app-host orchestration should evolve independently from the xUnit host/integration suite.
+
 ## Risks / Trade-offs
 
 - [Vite development uses a separate FE dev server while production is same-host] -> Keep same-host deployment as the contract and document the dev/prod difference clearly.
@@ -186,12 +198,12 @@ The FE should not wrap every dependency in excessive abstraction during this pha
 3. Add first-party backend web-session endpoints for authorization-code exchange and refresh-cookie-backed token rotation.
 4. Implement shared auth infrastructure for callback completion, session bootstrap, refresh-before-expiry, and redirect-back.
 5. Implement the auth-only routes and responsive UI layers.
-6. Add automated frontend/e2e coverage for login, callback, password change, refresh, logout, and expired-session fallback.
-7. Validate same-host routing so `/api/*` remains backend-only and non-API routes are served by the FE.
+6. Validate same-host routing so `/api/*` remains backend-only and non-API routes are served by the FE.
+7. Defer hosted browser automation to a separate follow-up automation test project.
 
 Rollback can disable FE asset serving and remove the client integration without affecting the already-complete backend identity foundation.
 
 ## Open Questions
 
 - Whether the first protected route should be `/` or `/dashboard` in the initial FE slice.
-- Whether Playwright should be introduced in this phase or deferred to a follow-up FE hardening slice if existing test infrastructure is enough for the first pass.
+- Which separate automation project name/path should own hosted browser coverage in the follow-up change.

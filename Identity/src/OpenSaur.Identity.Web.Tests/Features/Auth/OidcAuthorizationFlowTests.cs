@@ -77,7 +77,7 @@ public sealed class OidcAuthorizationFlowTests : IClassFixture<OpenSaurWebApplic
         await ApiResponseReader.AssertNullSuccessDataAsync(loginResponse);
         Assert.Contains(
             loginResponse.Headers.GetValues("Set-Cookie"),
-            value => value.StartsWith("opensaur.identity.session=", StringComparison.Ordinal));
+            value => value.StartsWith("s=", StringComparison.Ordinal));
 
         var continuedAuthorizeResponse = await client.GetAsync(returnUrl);
 
@@ -270,7 +270,7 @@ public sealed class OidcAuthorizationFlowTests : IClassFixture<OpenSaurWebApplic
         await ApiResponseReader.AssertNullSuccessDataAsync(logoutResponse);
         Assert.Contains(
             logoutResponse.Headers.GetValues("Set-Cookie"),
-            value => value.StartsWith("opensaur.identity.session=", StringComparison.Ordinal)
+            value => value.StartsWith("s=", StringComparison.Ordinal)
                      && value.Contains("expires=", StringComparison.OrdinalIgnoreCase));
 
         var authorizeResponse = await client.GetAsync(

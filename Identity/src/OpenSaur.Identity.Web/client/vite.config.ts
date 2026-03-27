@@ -11,6 +11,10 @@ const backendTarget =
       : "https://localhost:7017";
 
 export default defineConfig({
+  build: {
+    emptyOutDir: true,
+    outDir: "../wwwroot"
+  },
   plugins: [react()],
   server: {
     host: "0.0.0.0",
