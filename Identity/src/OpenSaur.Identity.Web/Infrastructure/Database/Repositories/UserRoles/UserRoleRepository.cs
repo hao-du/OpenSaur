@@ -44,6 +44,23 @@ public sealed class UserRoleRepository(ApplicationDbContext dbContext)
         return Result<GetAccessibleRoleAssignmentsResponse>.Success(new GetAccessibleRoleAssignmentsResponse(userRoles));
     }
 
+    public async Task<Result<GetAccessibleUserAssignmentsResponse>> GetAccessibleUserAssignmentsAsync(
+        GetAccessibleUserAssignmentsRequest request,
+        CancellationToken cancellationToken)
+    {
+        var userRoles = await ApplyManagedScope(
+                dbContext.UserRoles
+                    .AsNoTracking()
+                    .Include(candidate => candidate.User)
+                    .Include(candidate => candidate.Role)
+                    .Where(candidate => candidate.UserId == request.UserId)
+                    .OrderBy(candidate => candidate.Role!.Name),
+                request.CurrentUserContext)
+            .ToListAsync(cancellationToken);
+
+        return Result<GetAccessibleUserAssignmentsResponse>.Success(new GetAccessibleUserAssignmentsResponse(userRoles));
+    }
+
     public async Task<Result<GetAccessibleUserRoleByIdResponse>> GetAccessibleUserRoleByIdAsync(
         GetAccessibleUserRoleByIdRequest request,
         CancellationToken cancellationToken)

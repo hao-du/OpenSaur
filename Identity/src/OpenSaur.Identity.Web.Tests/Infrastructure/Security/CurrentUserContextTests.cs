@@ -7,6 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 using OpenIddict.EntityFrameworkCore;
 using OpenSaur.Identity.Web.Domain.Identity;
 using OpenSaur.Identity.Web.Features.Auth.Me;
+using OpenSaur.Identity.Web.Infrastructure.Authorization.Services;
 using OpenSaur.Identity.Web.Infrastructure.Database;
 using OpenSaur.Identity.Web.Infrastructure.Security;
 
@@ -59,8 +60,14 @@ public sealed class CurrentUserContextTests
             .Select(workspace => workspace.Id)
             .SingleAsync();
         var principal = CreatePrincipal(SystemRoles.SuperAdministrator, workspaceId);
+        var permissionAuthorizationService = new PermissionAuthorizationService(dbContext);
+        var userAuthorizationService = new UserAuthorizationService(dbContext, permissionAuthorizationService);
 
-        var result = await GetCurrentUserHandler.Handle(principal, dbContext, CancellationToken.None);
+        var result = await GetCurrentUserHandler.Handle(
+            principal,
+            dbContext,
+            userAuthorizationService,
+            CancellationToken.None);
         var httpContext = new DefaultHttpContext
         {
             RequestServices = new ServiceCollection()
@@ -105,8 +112,14 @@ public sealed class CurrentUserContextTests
             .Select(workspace => workspace.Id)
             .SingleAsync();
         var principal = CreatePrincipal("SUPER ADMINISTRATOR", workspaceId);
+        var permissionAuthorizationService = new PermissionAuthorizationService(dbContext);
+        var userAuthorizationService = new UserAuthorizationService(dbContext, permissionAuthorizationService);
 
-        var result = await GetCurrentUserHandler.Handle(principal, dbContext, CancellationToken.None);
+        var result = await GetCurrentUserHandler.Handle(
+            principal,
+            dbContext,
+            userAuthorizationService,
+            CancellationToken.None);
         var httpContext = new DefaultHttpContext
         {
             RequestServices = new ServiceCollection()

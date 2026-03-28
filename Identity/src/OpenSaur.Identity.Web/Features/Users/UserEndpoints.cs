@@ -20,13 +20,18 @@ public static class UserEndpoints
             .RequirePermission(PermissionCode.Administrator_CanManage)
             .RequireWorkspaceAccess();
 
-        users.MapGet("/get", GetUsersHandler.HandleAsync);
-        users.MapGet("/getbyid/{id:guid}", GetUserByIdHandler.HandleAsync);
+        users.MapGet("/get", GetUsersHandler.HandleAsync)
+            .RequireUserManagementAccess();
+        users.MapGet("/getbyid/{id:guid}", GetUserByIdHandler.HandleAsync)
+            .RequireUserManagementAccess();
         users.MapPost("/create", CreateUserHandler.HandleAsync)
+            .RequireUserManagementAccess()
             .RequireIdempotency();
         users.MapPut("/edit", EditUserHandler.HandleAsync)
+            .RequireUserManagementAccess()
             .RequireIdempotency();
         users.MapPut("/changepassword", ChangeUserPasswordHandler.HandleAsync)
+            .RequireUserManagementAccess()
             .RequireIdempotency();
         users.MapPut("/change-workspace", ChangeUserWorkspaceHandler.HandleAsync)
             .RequireIdempotency()

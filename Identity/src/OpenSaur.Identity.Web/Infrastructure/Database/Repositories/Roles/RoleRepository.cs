@@ -47,4 +47,17 @@ public sealed class RoleRepository(ApplicationDbContext dbContext)
 
         return Result<GetActiveRolesByIdsResponse>.Success(new GetActiveRolesByIdsResponse(roles));
     }
+
+    public async Task<Result<GetActiveRolesResponse>> GetActiveRolesAsync(
+        GetActiveRolesRequest request,
+        CancellationToken cancellationToken)
+    {
+        var roles = await dbContext.Roles
+            .AsNoTracking()
+            .Where(role => role.IsActive)
+            .OrderBy(role => role.Name)
+            .ToListAsync(cancellationToken);
+
+        return Result<GetActiveRolesResponse>.Success(new GetActiveRolesResponse(roles));
+    }
 }

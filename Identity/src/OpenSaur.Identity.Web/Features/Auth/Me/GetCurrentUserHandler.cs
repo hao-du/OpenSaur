@@ -4,6 +4,7 @@ using OpenSaur.Identity.Web.Infrastructure.Database;
 using OpenSaur.Identity.Web.Infrastructure.Security;
 using OpenSaur.Identity.Web.Domain.Identity;
 using Microsoft.EntityFrameworkCore;
+using OpenSaur.Identity.Web.Infrastructure.Authorization.Services;
 
 namespace OpenSaur.Identity.Web.Features.Auth.Me;
 
@@ -12,17 +13,23 @@ public static class GetCurrentUserHandler
     public static async Task<IResult> Handle(
         ClaimsPrincipal user,
         ApplicationDbContext dbContext,
+        UserAuthorizationService userAuthorizationService,
         CancellationToken cancellationToken)
     {
         var roles = user.FindAll(ApplicationClaimTypes.Role)
             .Select(static claim => claim.Value)
             .ToArray();
         var isImpersonating = AuthPrincipalReader.IsImpersonating(user);
+        var currentUserContext = CurrentUserContext.Create(user);
         var workspaceName = await ResolveWorkspaceNameAsync(
             user,
             roles,
             dbContext,
             cancellationToken);
+        var canManageUsers = currentUserContext is not null
+                             && await userAuthorizationService.CanManageUsersAsync(
+                                 currentUserContext,
+                                 cancellationToken);
 
         return ApiResponses.Success(
             new AuthMeResponse(
@@ -31,7 +38,8 @@ public static class GetCurrentUserHandler
                 roles,
                 AuthPrincipalReader.GetRequirePasswordChange(user),
                 workspaceName,
-                isImpersonating));
+                isImpersonating,
+                canManageUsers));
     }
 
     private static async Task<string> ResolveWorkspaceNameAsync(

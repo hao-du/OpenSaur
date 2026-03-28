@@ -26,6 +26,7 @@ describe("protectedShellRoutes", () => {
     expect(isSuperAdministrator(["SUPER ADMINISTRATOR"])).toBe(true);
 
     const routes = getVisibleProtectedShellRoutes({
+      canManageUsers: false,
       isImpersonating: false,
       roles: ["SUPER ADMINISTRATOR"]
     });
@@ -33,8 +34,39 @@ describe("protectedShellRoutes", () => {
     expect(routes.some(route => route.path === "/workspaces")).toBe(true);
     expect(routes.some(route => route.path === "/roles")).toBe(true);
     expect(canAccessProtectedShellRoute("/workspaces", {
+      canManageUsers: false,
       isImpersonating: false,
       roles: ["SUPER ADMINISTRATOR"]
     })).toBe(true);
+  });
+
+  it("hides users when the session cannot manage users", () => {
+    const routes = getVisibleProtectedShellRoutes({
+      canManageUsers: false,
+      isImpersonating: false,
+      roles: ["SUPERADMINISTRATOR"]
+    } as any);
+
+    expect(routes.some(route => route.path === "/users")).toBe(false);
+    expect(canAccessProtectedShellRoute("/users", {
+      canManageUsers: false,
+      isImpersonating: false,
+      roles: ["SUPERADMINISTRATOR"]
+    } as any)).toBe(false);
+  });
+
+  it("shows users when the session can manage users inside a workspace", () => {
+    const routes = getVisibleProtectedShellRoutes({
+      canManageUsers: true,
+      isImpersonating: false,
+      roles: ["ADMINISTRATOR"]
+    } as any);
+
+    expect(routes.some(route => route.path === "/users")).toBe(true);
+    expect(canAccessProtectedShellRoute("/users", {
+      canManageUsers: true,
+      isImpersonating: false,
+      roles: ["ADMINISTRATOR"]
+    } as any)).toBe(true);
   });
 });

@@ -24,6 +24,7 @@ export type ProtectedShellRoute = {
   path: string;
   requiresImpersonation?: boolean;
   requiresSuperAdministrator?: boolean;
+  requiresUserManagement?: boolean;
 };
 
 export const protectedShellRoutes: ProtectedShellRoute[] = [
@@ -42,7 +43,8 @@ export const protectedShellRoutes: ProtectedShellRoute[] = [
   {
     icon: Users,
     label: "Users",
-    path: "/users"
+    path: "/users",
+    requiresUserManagement: true
   },
   {
     icon: ShieldUser,
@@ -65,6 +67,7 @@ export function isSuperAdministrator(roles: readonly string[]) {
 
 function matchesProtectedShellRoute(
   route: ProtectedShellRoute,
+  canManageUsers: boolean,
   roles: readonly string[],
   isImpersonating: boolean
 ) {
@@ -82,24 +85,34 @@ function matchesProtectedShellRoute(
     return false;
   }
 
+  if (route.requiresUserManagement && !canManageUsers) {
+    return false;
+  }
+
   return true;
 }
 
-export function getVisibleProtectedShellRoutes(currentUser: Pick<AuthMeResponse, "isImpersonating" | "roles"> | null | undefined) {
+export function getVisibleProtectedShellRoutes(currentUser: Pick<AuthMeResponse, "canManageUsers" | "isImpersonating" | "roles"> | null | undefined) {
+  const canManageUsers = currentUser?.canManageUsers ?? false;
   const roles = currentUser?.roles ?? [];
   const isImpersonating = currentUser?.isImpersonating ?? false;
 
-  return protectedShellRoutes.filter(route => matchesProtectedShellRoute(route, roles, isImpersonating));
+  return protectedShellRoutes.filter(route => matchesProtectedShellRoute(route, canManageUsers, roles, isImpersonating));
 }
 
 export function canAccessProtectedShellRoute(
   pathname: string,
-  currentUser: Pick<AuthMeResponse, "isImpersonating" | "roles"> | null | undefined
+  currentUser: Pick<AuthMeResponse, "canManageUsers" | "isImpersonating" | "roles"> | null | undefined
 ) {
   const route = protectedShellRoutes.find(candidate => candidate.path === pathname);
   if (!route) {
     return true;
   }
 
-  return matchesProtectedShellRoute(route, currentUser?.roles ?? [], currentUser?.isImpersonating ?? false);
+  return matchesProtectedShellRoute(
+    route,
+    currentUser?.canManageUsers ?? false,
+    currentUser?.roles ?? [],
+    currentUser?.isImpersonating ?? false
+  );
 }

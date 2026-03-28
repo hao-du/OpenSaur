@@ -14,6 +14,13 @@ const useRolesQueryMock = vi.fn();
 const useRoleAssignmentsQueryMock = vi.fn();
 const useAssignmentCandidatesQueryMock = vi.fn();
 const useSaveRoleAssignmentsMock = vi.fn();
+const useUsersQueryMock = vi.fn();
+const useUserQueryMock = vi.fn();
+const useCreateUserMock = vi.fn();
+const useEditUserMock = vi.fn();
+const useUserAssignmentsQueryMock = vi.fn();
+const useRoleCandidatesQueryMock = vi.fn();
+const useSaveUserAssignmentsMock = vi.fn();
 
 vi.mock("../../features/auth/api/authApi", async () => {
   const actual = await vi.importActual<typeof import("../../features/auth/api/authApi")>("../../features/auth/api/authApi");
@@ -49,6 +56,16 @@ vi.mock("../../features/role-assignments/hooks", () => ({
   useAssignmentCandidatesQuery: () => useAssignmentCandidatesQueryMock(),
   useRoleAssignmentsQuery: (...args: unknown[]) => useRoleAssignmentsQueryMock(...args),
   useSaveRoleAssignments: () => useSaveRoleAssignmentsMock()
+}));
+
+vi.mock("../../features/users/hooks", () => ({
+  useCreateUser: () => useCreateUserMock(),
+  useEditUser: () => useEditUserMock(),
+  useRoleCandidatesQuery: () => useRoleCandidatesQueryMock(),
+  useSaveUserAssignments: () => useSaveUserAssignmentsMock(),
+  useUserAssignmentsQuery: (...args: unknown[]) => useUserAssignmentsQueryMock(...args),
+  useUserQuery: (...args: unknown[]) => useUserQueryMock(...args),
+  useUsersQuery: () => useUsersQueryMock()
 }));
 
 function setDesktopMode(isDesktop: boolean) {
@@ -138,6 +155,51 @@ describe("AppRouter", () => {
       resetError: vi.fn(),
       saveRoleAssignments: vi.fn()
     });
+    useUsersQueryMock.mockReturnValue({
+      data: [
+        {
+          email: "alex@example.com",
+          id: "user-1",
+          isActive: true,
+          requirePasswordChange: false,
+          userName: "Alex",
+          workspaceId: "workspace-1"
+        }
+      ],
+      isError: false,
+      isLoading: false,
+      refetch: vi.fn()
+    });
+    useUserQueryMock.mockReturnValue({
+      data: null,
+      isLoading: false
+    });
+    useCreateUserMock.mockReturnValue({
+      createUser: vi.fn(),
+      errorMessage: null,
+      isCreating: false,
+      resetError: vi.fn()
+    });
+    useEditUserMock.mockReturnValue({
+      editUser: vi.fn(),
+      errorMessage: null,
+      isEditing: false,
+      resetError: vi.fn()
+    });
+    useUserAssignmentsQueryMock.mockReturnValue({
+      data: [],
+      isLoading: false
+    });
+    useRoleCandidatesQueryMock.mockReturnValue({
+      data: [],
+      isLoading: false
+    });
+    useSaveUserAssignmentsMock.mockReturnValue({
+      errorMessage: null,
+      isSaving: false,
+      resetError: vi.fn(),
+      saveUserAssignments: vi.fn()
+    });
   });
 
   function renderRouter(initialEntry: string) {
@@ -154,26 +216,50 @@ describe("AppRouter", () => {
     return router;
   }
 
-  it("renders the users placeholder page inside the protected shell", async () => {
+  it("redirects all-workspaces sessions away from the users route", async () => {
     authSessionStore.setAuthenticatedSession({
       accessToken: "access-token",
       expiresAt: createFutureExpiry()
     });
     vi.mocked(authApi.getCurrentUser).mockResolvedValue({
+      canManageUsers: false,
       id: "user-1",
       isImpersonating: false,
       requirePasswordChange: false,
-      roles: ["Administrator"],
-      userName: "workspace.admin",
-      workspaceName: "Protected workspace"
+      roles: ["SUPERADMINISTRATOR"],
+      userName: "systemadministrator",
+      workspaceName: "All workspaces"
     });
+    renderRouter("/users");
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { level: 1, name: /dashboard/i })).toBeDefined();
+    });
+
+    expect(screen.queryByRole("heading", { level: 1, name: /users/i })).toBeNull();
+  });
+
+  it("renders the users management page for workspace-scoped sessions that can manage users", async () => {
+    authSessionStore.setAuthenticatedSession({
+      accessToken: "access-token",
+      expiresAt: createFutureExpiry()
+    });
+    vi.mocked(authApi.getCurrentUser).mockResolvedValue({
+      canManageUsers: true,
+      id: "user-1",
+      isImpersonating: false,
+      requirePasswordChange: false,
+      roles: ["ADMINISTRATOR"],
+      userName: "workspace.admin",
+      workspaceName: "Operations"
+    } as any);
     renderRouter("/users");
 
     await waitFor(() => {
       expect(screen.getByRole("heading", { level: 1, name: /users/i })).toBeDefined();
     });
 
-    expect(screen.getByText(/coming soon/i)).toBeDefined();
+    expect(screen.getByRole("button", { name: /^create$/i })).toBeDefined();
     expect(screen.getByRole("link", { name: /^users$/i }).getAttribute("aria-current")).toBe("page");
   });
 
@@ -183,6 +269,7 @@ describe("AppRouter", () => {
       expiresAt: createFutureExpiry()
     });
     vi.mocked(authApi.getCurrentUser).mockResolvedValue({
+      canManageUsers: false,
       id: "user-2",
       isImpersonating: false,
       requirePasswordChange: false,
@@ -205,6 +292,7 @@ describe("AppRouter", () => {
       expiresAt: createFutureExpiry()
     });
     vi.mocked(authApi.getCurrentUser).mockResolvedValue({
+      canManageUsers: false,
       id: "user-2",
       isImpersonating: false,
       requirePasswordChange: false,
@@ -227,6 +315,7 @@ describe("AppRouter", () => {
       expiresAt: createFutureExpiry()
     });
     vi.mocked(authApi.getCurrentUser).mockResolvedValue({
+      canManageUsers: false,
       id: "user-3",
       isImpersonating: false,
       requirePasswordChange: false,
@@ -251,6 +340,7 @@ describe("AppRouter", () => {
       expiresAt: createFutureExpiry()
     });
     vi.mocked(authApi.getCurrentUser).mockResolvedValue({
+      canManageUsers: false,
       id: "user-4",
       isImpersonating: true,
       requirePasswordChange: false,
@@ -273,6 +363,7 @@ describe("AppRouter", () => {
       expiresAt: createFutureExpiry()
     });
     vi.mocked(authApi.getCurrentUser).mockResolvedValue({
+      canManageUsers: false,
       id: "user-5",
       isImpersonating: true,
       requirePasswordChange: false,

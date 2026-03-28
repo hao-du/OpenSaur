@@ -69,7 +69,9 @@ export const appRoutes: RouteObject[] = [
         path: "/users",
         element: (
           <ProtectedRoute>
-            <UsersPage />
+            <RequireProtectedShellAccess path="/users">
+              <UsersPage />
+            </RequireProtectedShellAccess>
           </ProtectedRoute>
         )
       },

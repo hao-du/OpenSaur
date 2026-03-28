@@ -11,6 +11,7 @@ export type ChangePasswordRequest = {
 };
 
 export type AuthMeResponse = {
+  canManageUsers?: boolean;
   id: string;
   isImpersonating: boolean;
   requirePasswordChange: boolean;

@@ -8,6 +8,7 @@ using OpenSaur.Identity.Web.Domain.Identity;
 using OpenSaur.Identity.Web.Features.UserRoles.CreateUserRole;
 using OpenSaur.Identity.Web.Features.UserRoles.EditUserRole;
 using OpenSaur.Identity.Web.Features.UserRoles.GetAssignmentCandidates;
+using OpenSaur.Identity.Web.Features.UserRoles.GetRoleCandidates;
 using OpenSaur.Identity.Web.Features.UserRoles.GetRoleAssignments;
 using OpenSaur.Identity.Web.Features.UserRoles.GetUserRoles;
 using OpenSaur.Identity.Web.Infrastructure.Database;
@@ -41,12 +42,13 @@ public sealed class UserRoleEndpointsTests : IClassFixture<OpenSaurWebApplicatio
         var sameWorkspaceUserCredentials = TestFakers.CreateUserCredentials();
         var otherWorkspaceUserCredentials = TestFakers.CreateUserCredentials();
 
-        await TestIdentitySeeder.SeedUserAsync(_factory, managerCredentials.UserName, managerCredentials.Password, [StandardRoleNames.Administrator]);
+        await TestIdentitySeeder.SeedUserAsync(_factory, managerCredentials.UserName, managerCredentials.Password, [StandardRoleNames.Administrator], workspaceName: "Operations");
         var sameWorkspaceUserId = await TestIdentitySeeder.SeedUserAsync(
             _factory,
             sameWorkspaceUserCredentials.UserName,
             sameWorkspaceUserCredentials.Password,
-            []);
+            [],
+            workspaceName: "Operations");
         var otherWorkspaceUserId = await TestIdentitySeeder.SeedUserAsync(
             _factory,
             otherWorkspaceUserCredentials.UserName,
@@ -237,13 +239,98 @@ public sealed class UserRoleEndpointsTests : IClassFixture<OpenSaurWebApplicatio
     }
 
     [Fact]
+    public async Task GetUserAssignments_WhenCallerCanManageWorkspace_ReturnsAssignmentsForManagedUser()
+    {
+        var managerCredentials = TestFakers.CreateUserCredentials();
+        var targetCredentials = TestFakers.CreateUserCredentials();
+        var otherWorkspaceUserCredentials = TestFakers.CreateUserCredentials();
+
+        await TestIdentitySeeder.SeedUserAsync(_factory, managerCredentials.UserName, managerCredentials.Password, [StandardRoleNames.Administrator], workspaceName: "Operations");
+        var targetUserId = await TestIdentitySeeder.SeedUserAsync(_factory, targetCredentials.UserName, targetCredentials.Password, [], workspaceName: "Operations");
+        var otherWorkspaceUserId = await TestIdentitySeeder.SeedUserAsync(
+            _factory,
+            otherWorkspaceUserCredentials.UserName,
+            otherWorkspaceUserCredentials.Password,
+            [],
+            workspaceName: "Finance");
+        var assignedRoleId = await TestIdentitySeeder.SeedRoleAsync(_factory, "OperationsManager");
+        var otherRoleId = await TestIdentitySeeder.SeedRoleAsync(_factory, "FinanceManager");
+        var targetAssignmentId = await TestIdentitySeeder.SeedUserRoleAsync(_factory, targetUserId, assignedRoleId);
+        await TestIdentitySeeder.SeedUserRoleAsync(_factory, otherWorkspaceUserId, otherRoleId);
+
+        using var client = FirstPartyApiTestClient.CreateClient(_factory);
+        var accessToken = await FirstPartyApiTestClient.GetAccessTokenAsync(client, managerCredentials.UserName, managerCredentials.Password);
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+        var response = await client.GetAsync($"/api/user-role/getbyuser/{targetUserId}");
+        var payload = await ApiResponseReader.ReadSuccessDataAsync<JsonElement>(response);
+
+        Assert.Equal(JsonValueKind.Array, payload.ValueKind);
+        Assert.Equal(1, payload.GetArrayLength());
+        Assert.Equal(targetAssignmentId, payload[0].GetProperty("id").GetGuid());
+        Assert.Equal(targetUserId, payload[0].GetProperty("userId").GetGuid());
+        Assert.Equal(assignedRoleId, payload[0].GetProperty("roleId").GetGuid());
+    }
+
+    [Fact]
+    public async Task GetUserAssignments_WhenCallerIsSuperAdministratorAtAllWorkspaces_ReturnsForbidden()
+    {
+        var targetUserId = await TestIdentitySeeder.SeedUserAsync(_factory, "TargetUser", TestFakers.CreatePassword(), []);
+
+        using var client = FirstPartyApiTestClient.CreateClient(_factory);
+        var accessToken = await FirstPartyApiTestClient.GetAccessTokenAsync(client, "SystemAdministrator", "Password1");
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+        var response = await client.GetAsync($"/api/user-role/getbyuser/{targetUserId}");
+
+        await ApiResponseReader.ReadFailureEnvelopeAsync(response, HttpStatusCode.Forbidden);
+    }
+
+    [Fact]
+    public async Task GetRoleCandidates_WhenCallerIsAdministratorInPersonalWorkspace_ReturnsForbidden()
+    {
+        var managerCredentials = TestFakers.CreateUserCredentials();
+        await TestIdentitySeeder.SeedUserAsync(_factory, managerCredentials.UserName, managerCredentials.Password, [StandardRoleNames.Administrator]);
+
+        using var client = FirstPartyApiTestClient.CreateClient(_factory);
+        var accessToken = await FirstPartyApiTestClient.GetAccessTokenAsync(client, managerCredentials.UserName, managerCredentials.Password);
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+        var response = await client.GetAsync("/api/user-role/getrolecandidates");
+
+        await ApiResponseReader.ReadFailureEnvelopeAsync(response, HttpStatusCode.Forbidden);
+    }
+
+    [Fact]
+    public async Task GetRoleCandidates_WhenCallerCanManageWorkspace_ExcludesSuperAdministratorRole()
+    {
+        var managerCredentials = TestFakers.CreateUserCredentials();
+        await TestIdentitySeeder.SeedUserAsync(
+            _factory,
+            managerCredentials.UserName,
+            managerCredentials.Password,
+            [StandardRoleNames.Administrator],
+            workspaceName: "Operations");
+
+        using var client = FirstPartyApiTestClient.CreateClient(_factory);
+        var accessToken = await FirstPartyApiTestClient.GetAccessTokenAsync(client, managerCredentials.UserName, managerCredentials.Password);
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+        var response = await client.GetAsync("/api/user-role/getrolecandidates");
+        var payload = await ApiResponseReader.ReadSuccessDataAsync<IReadOnlyList<GetRoleCandidatesResponse>>(response);
+
+        Assert.NotEmpty(payload);
+        Assert.DoesNotContain(payload, role => SystemRoles.IsSuperAdministratorValue(role.RoleNormalizedName));
+    }
+
+    [Fact]
     public async Task PostCreate_WhenCallerCanManageWorkspace_CreatesUserRoleAssignment()
     {
         var managerCredentials = TestFakers.CreateUserCredentials();
         var targetCredentials = TestFakers.CreateUserCredentials();
 
-        await TestIdentitySeeder.SeedUserAsync(_factory, managerCredentials.UserName, managerCredentials.Password, [StandardRoleNames.Administrator]);
-        var targetUserId = await TestIdentitySeeder.SeedUserAsync(_factory, targetCredentials.UserName, targetCredentials.Password, []);
+        await TestIdentitySeeder.SeedUserAsync(_factory, managerCredentials.UserName, managerCredentials.Password, [StandardRoleNames.Administrator], workspaceName: "Operations");
+        var targetUserId = await TestIdentitySeeder.SeedUserAsync(_factory, targetCredentials.UserName, targetCredentials.Password, [], workspaceName: "Operations");
         var roleId = await TestIdentitySeeder.SeedRoleAsync(_factory, TestFakers.CreateRoleName());
 
         using var client = FirstPartyApiTestClient.CreateClient(_factory);
@@ -270,7 +357,7 @@ public sealed class UserRoleEndpointsTests : IClassFixture<OpenSaurWebApplicatio
     public async Task PostCreate_WhenRequestShapeIsInvalid_ReturnsValidationEnvelope()
     {
         var managerCredentials = TestFakers.CreateUserCredentials();
-        await TestIdentitySeeder.SeedUserAsync(_factory, managerCredentials.UserName, managerCredentials.Password, [StandardRoleNames.Administrator]);
+        await TestIdentitySeeder.SeedUserAsync(_factory, managerCredentials.UserName, managerCredentials.Password, [StandardRoleNames.Administrator], workspaceName: "Operations");
 
         using var client = FirstPartyApiTestClient.CreateClient(_factory);
         var accessToken = await FirstPartyApiTestClient.GetAccessTokenAsync(client, managerCredentials.UserName, managerCredentials.Password);
@@ -293,8 +380,8 @@ public sealed class UserRoleEndpointsTests : IClassFixture<OpenSaurWebApplicatio
         var managerCredentials = TestFakers.CreateUserCredentials();
         var targetCredentials = TestFakers.CreateUserCredentials();
 
-        await TestIdentitySeeder.SeedUserAsync(_factory, managerCredentials.UserName, managerCredentials.Password, [StandardRoleNames.Administrator]);
-        var targetUserId = await TestIdentitySeeder.SeedUserAsync(_factory, targetCredentials.UserName, targetCredentials.Password, []);
+        await TestIdentitySeeder.SeedUserAsync(_factory, managerCredentials.UserName, managerCredentials.Password, [StandardRoleNames.Administrator], workspaceName: "Operations");
+        var targetUserId = await TestIdentitySeeder.SeedUserAsync(_factory, targetCredentials.UserName, targetCredentials.Password, [], workspaceName: "Operations");
         var originalRoleId = await TestIdentitySeeder.SeedRoleAsync(_factory, TestFakers.CreateRoleName());
         var replacementRoleId = await TestIdentitySeeder.SeedRoleAsync(_factory, TestFakers.CreateRoleName());
         var assignmentId = await TestIdentitySeeder.SeedUserRoleAsync(_factory, targetUserId, originalRoleId);
@@ -328,7 +415,7 @@ public sealed class UserRoleEndpointsTests : IClassFixture<OpenSaurWebApplicatio
         var managerCredentials = TestFakers.CreateUserCredentials();
         var targetCredentials = TestFakers.CreateUserCredentials();
 
-        await TestIdentitySeeder.SeedUserAsync(_factory, managerCredentials.UserName, managerCredentials.Password, [StandardRoleNames.Administrator]);
+        await TestIdentitySeeder.SeedUserAsync(_factory, managerCredentials.UserName, managerCredentials.Password, [StandardRoleNames.Administrator], workspaceName: "Operations");
         var targetUserId = await TestIdentitySeeder.SeedUserAsync(
             _factory,
             targetCredentials.UserName,

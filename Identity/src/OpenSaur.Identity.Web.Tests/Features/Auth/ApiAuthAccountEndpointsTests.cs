@@ -177,7 +177,8 @@ public sealed class ApiAuthAccountEndpointsTests : IClassFixture<OpenSaurWebAppl
         {
             var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
             var superAdministratorRole = await dbContext.Roles.SingleAsync(
-                role => role.NormalizedName == SystemRoles.NormalizedSuperAdministrator);
+                role => role.NormalizedName != null
+                        && role.NormalizedName.Replace(" ", string.Empty) == SystemRoles.NormalizedSuperAdministrator);
 
             superAdministratorRole.Name = "Super Administrator";
             superAdministratorRole.NormalizedName = "SUPER ADMINISTRATOR";
@@ -193,7 +194,70 @@ public sealed class ApiAuthAccountEndpointsTests : IClassFixture<OpenSaurWebAppl
 
         Assert.Equal("SystemAdministrator", payload.UserName);
         Assert.Equal("All workspaces", payload.WorkspaceName);
-        Assert.Contains("SUPER ADMINISTRATOR", payload.Roles);
+        Assert.Contains(payload.Roles, role => SystemRoles.IsSuperAdministratorValue(role));
+    }
+
+    [Fact]
+    public async Task GetMe_WhenCallerIsSuperAdministratorAtAllWorkspaces_ReturnsCanManageUsersFalse()
+    {
+        using var client = FirstPartyApiTestClient.CreateClient(_factory);
+        var accessToken = await FirstPartyApiTestClient.GetAccessTokenAsync(client, "SystemAdministrator", "Password1");
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+        var response = await client.GetAsync("/api/auth/me");
+        var payload = await ApiResponseReader.ReadSuccessDataAsync<JsonElement>(response);
+
+        Assert.False(payload.GetProperty("canManageUsers").GetBoolean());
+        Assert.Equal("All workspaces", payload.GetProperty("workspaceName").GetString());
+    }
+
+    [Fact]
+    public async Task GetMe_WhenCallerCanManageOrgWorkspace_ReturnsCanManageUsersTrue()
+    {
+        var managerCredentials = TestFakers.CreateUserCredentials();
+        await TestIdentitySeeder.SeedUserAsync(
+            _factory,
+            managerCredentials.UserName,
+            managerCredentials.Password,
+            [StandardRoleNames.Administrator],
+            workspaceName: "Operations");
+
+        using var client = FirstPartyApiTestClient.CreateClient(_factory);
+        var accessToken = await FirstPartyApiTestClient.GetAccessTokenAsync(
+            client,
+            managerCredentials.UserName,
+            managerCredentials.Password);
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+        var response = await client.GetAsync("/api/auth/me");
+        var payload = await ApiResponseReader.ReadSuccessDataAsync<JsonElement>(response);
+
+        Assert.True(payload.GetProperty("canManageUsers").GetBoolean());
+        Assert.Equal("Operations", payload.GetProperty("workspaceName").GetString());
+    }
+
+    [Fact]
+    public async Task GetMe_WhenCallerIsAdministratorInPersonalWorkspace_ReturnsCanManageUsersFalse()
+    {
+        var managerCredentials = TestFakers.CreateUserCredentials();
+        await TestIdentitySeeder.SeedUserAsync(
+            _factory,
+            managerCredentials.UserName,
+            managerCredentials.Password,
+            [StandardRoleNames.Administrator]);
+
+        using var client = FirstPartyApiTestClient.CreateClient(_factory);
+        var accessToken = await FirstPartyApiTestClient.GetAccessTokenAsync(
+            client,
+            managerCredentials.UserName,
+            managerCredentials.Password);
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+        var response = await client.GetAsync("/api/auth/me");
+        var payload = await ApiResponseReader.ReadSuccessDataAsync<JsonElement>(response);
+
+        Assert.False(payload.GetProperty("canManageUsers").GetBoolean());
+        Assert.Equal("Personal", payload.GetProperty("workspaceName").GetString());
     }
 
     [Fact]
@@ -399,7 +463,8 @@ public sealed class ApiAuthAccountEndpointsTests : IClassFixture<OpenSaurWebAppl
         {
             var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
             var superAdministratorRole = await dbContext.Roles.SingleAsync(
-                role => role.NormalizedName == SystemRoles.NormalizedSuperAdministrator);
+                role => role.NormalizedName != null
+                        && role.NormalizedName.Replace(" ", string.Empty) == SystemRoles.NormalizedSuperAdministrator);
 
             superAdministratorRole.Name = "Platform Owner";
             superAdministratorRole.NormalizedName = "SUPER ADMINISTRATOR";
@@ -494,7 +559,8 @@ public sealed class ApiAuthAccountEndpointsTests : IClassFixture<OpenSaurWebAppl
         {
             var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
             var superAdministratorRole = await dbContext.Roles.SingleAsync(
-                role => role.NormalizedName == SystemRoles.NormalizedSuperAdministrator);
+                role => role.NormalizedName != null
+                        && role.NormalizedName.Replace(" ", string.Empty) == SystemRoles.NormalizedSuperAdministrator);
 
             superAdministratorRole.Name = "Super Administrator";
             superAdministratorRole.NormalizedName = "SUPER ADMINISTRATOR";
@@ -578,7 +644,7 @@ public sealed class ApiAuthAccountEndpointsTests : IClassFixture<OpenSaurWebAppl
         Assert.False(mePayload.GetProperty("isImpersonating").GetBoolean());
         Assert.Contains(
             mePayload.GetProperty("roles").EnumerateArray().Select(static role => role.GetString()),
-            role => role == SystemRoles.NormalizedSuperAdministrator);
+            role => SystemRoles.IsSuperAdministratorValue(role));
     }
 }
 

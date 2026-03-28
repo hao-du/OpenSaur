@@ -79,6 +79,7 @@ describe("ProtectedShellTemplate", () => {
       expiresAt: "2026-03-28T00:00:00.000Z"
     });
     vi.mocked(authApi.getCurrentUser).mockResolvedValue({
+      canManageUsers: false,
       id: "user-1",
       isImpersonating: false,
       requirePasswordChange: false,
@@ -107,7 +108,7 @@ describe("ProtectedShellTemplate", () => {
     expect(screen.getByRole("link", { name: /^dashboard$/i })).toBeDefined();
     expect(screen.getByRole("navigation", { name: /primary navigation/i })).toBeDefined();
     expect(screen.getByRole("link", { name: /^workspace$/i })).toBeDefined();
-    expect(screen.getByRole("link", { name: /^users$/i })).toBeDefined();
+    expect(screen.queryByRole("link", { name: /^users$/i })).toBeNull();
     expect(screen.getByRole("link", { name: /^roles$/i })).toBeDefined();
     expect(screen.queryByRole("link", { name: /^role assignments$/i })).toBeNull();
     expect(screen.getByText(/all workspaces/i)).toBeDefined();
@@ -125,6 +126,7 @@ describe("ProtectedShellTemplate", () => {
       expiresAt: "2026-03-28T00:00:00.000Z"
     });
     vi.mocked(authApi.getCurrentUser).mockResolvedValue({
+      canManageUsers: true,
       id: "user-2",
       isImpersonating: false,
       requirePasswordChange: false,
@@ -147,7 +149,7 @@ describe("ProtectedShellTemplate", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByRole("link", { name: /^dashboard$/i })).toBeDefined();
+      expect(screen.getByRole("link", { name: /^users$/i })).toBeDefined();
     });
 
     expect(screen.getByRole("link", { name: /^users$/i })).toBeDefined();
@@ -162,6 +164,7 @@ describe("ProtectedShellTemplate", () => {
       expiresAt: "2026-03-28T00:00:00.000Z"
     });
     vi.mocked(authApi.getCurrentUser).mockResolvedValue({
+      canManageUsers: false,
       id: "user-1",
       isImpersonating: false,
       requirePasswordChange: false,
@@ -199,6 +202,7 @@ describe("ProtectedShellTemplate", () => {
       expiresAt: "2026-03-28T00:00:00.000Z"
     });
     vi.mocked(authApi.getCurrentUser).mockResolvedValue({
+      canManageUsers: true,
       id: "user-1",
       isImpersonating: true,
       requirePasswordChange: false,
@@ -241,6 +245,7 @@ describe("ProtectedShellTemplate", () => {
     });
     vi.mocked(authApi.getCurrentUser)
       .mockResolvedValueOnce({
+        canManageUsers: false,
         id: "user-1",
         isImpersonating: true,
         requirePasswordChange: false,
@@ -249,6 +254,7 @@ describe("ProtectedShellTemplate", () => {
         workspaceName: "Contoso Workspace"
       } as Awaited<ReturnType<typeof authApi.getCurrentUser>>)
       .mockResolvedValueOnce({
+        canManageUsers: false,
         id: "user-2",
         isImpersonating: false,
         requirePasswordChange: false,
@@ -282,6 +288,7 @@ describe("ProtectedShellTemplate", () => {
       expiresAt: "2026-03-28T00:00:00.000Z"
     });
     vi.mocked(authApi.getCurrentUser).mockResolvedValue({
+      canManageUsers: false,
       id: "user-1",
       isImpersonating: false,
       requirePasswordChange: false,
@@ -325,6 +332,7 @@ describe("ProtectedShellTemplate", () => {
       expiresAt: "2026-03-28T00:00:00.000Z"
     });
     vi.mocked(authApi.getCurrentUser).mockResolvedValue({
+      canManageUsers: true,
       id: "user-1",
       isImpersonating: false,
       requirePasswordChange: false,
@@ -370,6 +378,7 @@ describe("ProtectedShellTemplate", () => {
       expiresAt: "2026-03-28T00:00:00.000Z"
     });
     vi.mocked(authApi.getCurrentUser).mockResolvedValue({
+      canManageUsers: true,
       id: "user-1",
       isImpersonating: false,
       requirePasswordChange: false,

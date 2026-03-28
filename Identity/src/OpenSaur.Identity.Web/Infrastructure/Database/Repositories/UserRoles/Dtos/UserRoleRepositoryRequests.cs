@@ -9,6 +9,10 @@ public sealed record GetAccessibleRoleAssignmentsRequest(
     Guid RoleId,
     CurrentUserContext CurrentUserContext);
 
+public sealed record GetAccessibleUserAssignmentsRequest(
+    Guid UserId,
+    CurrentUserContext CurrentUserContext);
+
 public sealed record GetAccessibleUserRoleByIdRequest(
     Guid UserRoleId,
     CurrentUserContext CurrentUserContext,
@@ -24,6 +28,8 @@ public sealed record GetActiveNormalizedRoleNamesForUserRequest(Guid UserId);
 public sealed record GetAccessibleUserRolesResponse(IReadOnlyList<ApplicationUserRole> UserRoles);
 
 public sealed record GetAccessibleRoleAssignmentsResponse(IReadOnlyList<ApplicationUserRole> UserRoles);
+
+public sealed record GetAccessibleUserAssignmentsResponse(IReadOnlyList<ApplicationUserRole> UserRoles);
 
 public sealed record GetAccessibleUserRoleByIdResponse(ApplicationUserRole UserRole);
 

@@ -6,4 +6,5 @@ public sealed record AuthMeResponse(
     string[] Roles,
     bool RequirePasswordChange,
     string WorkspaceName,
-    bool IsImpersonating);
+    bool IsImpersonating,
+    bool CanManageUsers);
