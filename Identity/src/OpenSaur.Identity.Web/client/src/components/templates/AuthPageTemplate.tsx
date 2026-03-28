@@ -3,14 +3,12 @@ import { Box, Container, Divider, Paper, Stack, Typography } from "@mui/material
 import { BrandMark } from "../atoms";
 
 type AuthPageTemplateProps = PropsWithChildren<{
-  eyebrow: string;
   title: string;
   description: ReactNode;
 }>;
 
 export function AuthPageTemplate({
   children,
-  eyebrow,
   title,
   description
 }: AuthPageTemplateProps) {
@@ -32,17 +30,10 @@ export function AuthPageTemplate({
             border: "1px solid rgba(11,110,79,0.12)",
             p: { xs: 3, sm: 5 }
           }}
-        >
+          >
           <Stack spacing={2.5}>
             <BrandMark />
             <Stack spacing={1}>
-              <Typography
-                color="primary"
-                textTransform="uppercase"
-                variant="overline"
-              >
-                {eyebrow}
-              </Typography>
               <Typography variant="h3">{title}</Typography>
               <Typography color="text.secondary">{description}</Typography>
             </Stack>

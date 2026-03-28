@@ -32,7 +32,7 @@ describe("LoginPage", () => {
     vi.resetAllMocks();
   });
 
-  it("renders the sign in form for the auth shell", () => {
+  it("renders the sign in form with user-facing copy", () => {
     render(
       <AppProviders>
         <MemoryRouter initialEntries={["/login"]}>
@@ -42,9 +42,15 @@ describe("LoginPage", () => {
     );
 
     expect(screen.getByRole("heading", { level: 3, name: /^sign in$/i })).toBeDefined();
+    expect(
+      screen.getByText(/sign in to continue and pick up where you left off/i)
+    ).toBeDefined();
     expect(screen.getByLabelText(/username/i)).toBeDefined();
     expect(screen.getByLabelText(/^password$/i)).toBeDefined();
     expect(screen.getByRole("button", { name: /sign in/i })).toBeDefined();
+    expect(screen.queryByText(/hosted sign in/i)).toBeNull();
+    expect(screen.queryByText(/first-party identity shell/i)).toBeNull();
+    expect(screen.queryByText(/authorization flow/i)).toBeNull();
   });
 
   it("posts credentials and starts the first-party authorize flow", async () => {

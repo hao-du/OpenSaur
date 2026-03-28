@@ -1,8 +1,16 @@
 export {
+  ArrowLeft,
+  Building2,
   Eye,
   EyeOff,
   KeyRound,
+  LayoutDashboard,
   LogIn,
+  LogOut,
+  Menu,
+  Settings,
   ShieldCheck,
-  UserRound
+  ShieldUser,
+  UserRound,
+  Users
 } from "lucide-react";

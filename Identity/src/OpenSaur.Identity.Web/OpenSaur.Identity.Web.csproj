@@ -42,6 +42,11 @@
     <Exec WorkingDirectory="$(SpaRoot)" Command="npm install" />
   </Target>
 
+  <Target Name="ClearStaleCompressedClientAssets" BeforeTargets="Build">
+    <RemoveDir Condition="Exists('$(IntermediateOutputPath)compressed')" Directories="$(IntermediateOutputPath)compressed" />
+    <MakeDir Directories="$(IntermediateOutputPath)compressed" />
+  </Target>
+
   <Target Name="PublishClientApp" BeforeTargets="ComputeFilesToPublish">
     <Exec WorkingDirectory="$(SpaRoot)" Command="npm install" />
     <Exec WorkingDirectory="$(SpaRoot)" Command="npm run build" />

@@ -11,7 +11,10 @@ public static class FrontendAppRoutes
         "/",
         "/login",
         "/auth/callback",
-        "/change-password"
+        "/change-password",
+        "/users",
+        "/workspaces",
+        "/roles"
     ];
 
     public static bool IsShellRoute(PathString path)

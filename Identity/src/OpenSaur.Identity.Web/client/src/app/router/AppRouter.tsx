@@ -2,16 +2,43 @@ import {
   Navigate,
   Outlet,
   RouterProvider,
+  type RouteObject,
   createBrowserRouter
 } from "react-router-dom";
+import { useState, type ReactNode } from "react";
 import { AuthBootstrapBoundary } from "../../features/auth/components/AuthBootstrapBoundary";
 import { ProtectedRoute } from "../../features/auth/components/ProtectedRoute";
+import { useCurrentUserState } from "../../features/auth/hooks";
 import { AuthCallbackPage } from "../../pages/auth-callback/AuthCallbackPage";
 import { ChangePasswordPage } from "../../pages/change-password/ChangePasswordPage";
 import { HomePage } from "../../pages/home/HomePage";
 import { LoginPage } from "../../pages/login/LoginPage";
+import { RolesPage } from "../../pages/roles/RolesPage";
+import { UsersPage } from "../../pages/users/UsersPage";
+import { WorkspacesPage } from "../../pages/workspaces/WorkspacesPage";
+import { canAccessProtectedShellRoute } from "./protectedShellRoutes";
 
-const router = createBrowserRouter([
+function RequireProtectedShellAccess({
+  children,
+  path
+}: {
+  children: ReactNode;
+  path: string;
+}) {
+  const { data: currentUser, isPending } = useCurrentUserState();
+
+  if (isPending) {
+    return null;
+  }
+
+  if (!canAccessProtectedShellRoute(path, currentUser?.roles ?? [])) {
+    return <HomePage />;
+  }
+
+  return <>{children}</>;
+}
+
+export const appRoutes: RouteObject[] = [
   {
     element: (
       <AuthBootstrapBoundary>
@@ -24,6 +51,34 @@ const router = createBrowserRouter([
         element: (
           <ProtectedRoute>
             <HomePage />
+          </ProtectedRoute>
+        )
+      },
+      {
+        path: "/workspaces",
+        element: (
+          <ProtectedRoute>
+            <RequireProtectedShellAccess path="/workspaces">
+              <WorkspacesPage />
+            </RequireProtectedShellAccess>
+          </ProtectedRoute>
+        )
+      },
+      {
+        path: "/users",
+        element: (
+          <ProtectedRoute>
+            <UsersPage />
+          </ProtectedRoute>
+        )
+      },
+      {
+        path: "/roles",
+        element: (
+          <ProtectedRoute>
+            <RequireProtectedShellAccess path="/roles">
+              <RolesPage />
+            </RequireProtectedShellAccess>
           </ProtectedRoute>
         )
       },
@@ -49,8 +104,14 @@ const router = createBrowserRouter([
       }
     ]
   }
-]);
+];
+
+export function createAppRouter() {
+  return createBrowserRouter(appRoutes);
+}
 
 export function AppRouter() {
+  const [router] = useState(createAppRouter);
+
   return <RouterProvider router={router} />;
 }

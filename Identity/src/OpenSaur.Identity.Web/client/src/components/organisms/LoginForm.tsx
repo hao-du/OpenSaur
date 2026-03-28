@@ -1,4 +1,4 @@
-import { Alert, Button, CircularProgress, Stack, Typography } from "@mui/material";
+import { Alert, Button, CircularProgress, Stack } from "@mui/material";
 import { useForm } from "react-hook-form";
 import { LogIn, UserRound } from "../../shared/icons";
 import {
@@ -39,14 +39,6 @@ export function LoginForm({
       onSubmit={handleSubmit(onSubmit)}
       spacing={2.5}
     >
-      <Stack spacing={0.75}>
-        <Typography variant="h5">Hosted sign in</Typography>
-        <Typography color="text.secondary">
-          Enter your identity-service credentials, then continue through the
-          first-party authorization flow.
-        </Typography>
-      </Stack>
-
       {errorMessage ? (
         <Alert severity="error">{errorMessage}</Alert>
       ) : null}

@@ -4,7 +4,7 @@ import { AuthPageTemplate } from "../../components/templates";
 import { LoginForm } from "../../components/organisms";
 import { useLogin } from "../../features/auth/hooks";
 import { authSessionStore } from "../../features/auth/state/authSessionStore";
-import { startFirstPartyAuthorization } from "../../features/auth/utils/firstPartyOidc";
+import { normalizeAuthReturnUrl, startFirstPartyAuthorization } from "../../features/auth/utils";
 
 export function LoginPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -15,9 +15,7 @@ export function LoginPage() {
     const returnUrl = searchParams.get("returnUrl");
     setErrorMessage(null);
 
-    if (returnUrl) {
-      authSessionStore.rememberReturnUrl(returnUrl);
-    }
+    authSessionStore.rememberReturnUrl(normalizeAuthReturnUrl(returnUrl));
 
     try {
       await login(credentials);
@@ -29,8 +27,7 @@ export function LoginPage() {
 
   return (
     <AuthPageTemplate
-      description="Sign in to continue through the first-party identity shell and resume your protected route."
-      eyebrow="Auth Shell"
+      description="Sign in to continue and pick up where you left off."
       title="Sign in"
     >
       <LoginForm

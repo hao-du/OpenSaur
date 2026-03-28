@@ -1,4 +1,4 @@
-import { Alert, Button, CircularProgress, Stack, Typography } from "@mui/material";
+import { Alert, Button, CircularProgress, Stack } from "@mui/material";
 import { useForm } from "react-hook-form";
 import { ControlledPasswordField } from "../molecules";
 import { KeyRound } from "../../shared/icons";
@@ -39,13 +39,6 @@ export function ChangePasswordForm({
       onSubmit={handleSubmit(onSubmit)}
       spacing={2.5}
     >
-      <Stack spacing={0.75}>
-        <Typography variant="h5">Rotate your password</Typography>
-        <Typography color="text.secondary">
-          Update the bootstrap credential now, then sign in again with the new password.
-        </Typography>
-      </Stack>
-
       {errorMessage ? (
         <Alert severity="error">{errorMessage}</Alert>
       ) : null}

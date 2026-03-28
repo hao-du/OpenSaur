@@ -14,7 +14,7 @@ export const appTheme = createTheme({
     }
   },
   shape: {
-    borderRadius: 18
+    borderRadius: 5
   },
   typography: {
     fontFamily: '"Segoe UI", "Helvetica Neue", sans-serif',

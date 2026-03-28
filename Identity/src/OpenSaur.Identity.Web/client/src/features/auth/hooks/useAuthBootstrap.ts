@@ -5,6 +5,7 @@ import { useCurrentUserQuery } from "./useCurrentUserQuery";
 import { useRefreshWebSession } from "./useRefreshWebSession";
 import { authSessionStore } from "../state/authSessionStore";
 import { useAuthSession } from "../state/useAuthSession";
+import { normalizeAuthReturnUrl } from "../utils";
 
 const refreshLeadTimeInMilliseconds = 5 * 60 * 1000;
 const changePasswordRoute = "/change-password";
@@ -15,7 +16,7 @@ function buildReturnUrl(location: ReturnType<typeof useLocation>) {
 
 function resolvePostLoginReturnUrl(location: ReturnType<typeof useLocation>) {
   return location.pathname === changePasswordRoute
-    ? authSessionStore.getRememberedReturnUrl() ?? "/"
+    ? normalizeAuthReturnUrl(authSessionStore.getRememberedReturnUrl())
     : buildReturnUrl(location);
 }
 

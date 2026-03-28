@@ -1,23 +1,39 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Button, Stack } from "@mui/material";
+import { useLocation, useNavigate } from "react-router-dom";
 import { AuthPageTemplate } from "../../components/templates";
 import { ChangePasswordForm } from "../../components/organisms";
-import { useChangePassword, useCurrentUserQuery, useLogout } from "../../features/auth/hooks";
+import { useChangePassword, useCurrentUserQuery, useCurrentUserState, useLogout } from "../../features/auth/hooks";
 import { authSessionStore } from "../../features/auth/state/authSessionStore";
+import { normalizeAuthReturnUrl } from "../../features/auth/utils";
+import { ArrowLeft } from "../../shared/icons";
+import { getApiErrorMessage } from "../../shared/api";
+
+function resolveBackTarget(state: unknown) {
+  if (typeof state === "object" && state !== null && "from" in state && typeof state.from === "string") {
+    return state.from;
+  }
+
+  return "/";
+}
 
 export function ChangePasswordPage() {
+  const location = useLocation();
   const navigate = useNavigate();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const { changePassword, isChangingPassword } = useChangePassword();
+  const { data: currentUser } = useCurrentUserState();
   const { clearCurrentUser } = useCurrentUserQuery();
   const { isLoggingOut, logout } = useLogout();
+  const backTarget = resolveBackTarget(location.state);
+  const shouldShowBackNavigation = currentUser?.requirePasswordChange !== true;
 
   async function handleChangePassword(values: {
     confirmPassword: string;
     currentPassword: string;
     newPassword: string;
   }) {
-    const returnUrl = authSessionStore.getRememberedReturnUrl() ?? "/";
+    const returnUrl = normalizeAuthReturnUrl(authSessionStore.getRememberedReturnUrl());
     setErrorMessage(null);
 
     try {
@@ -25,8 +41,13 @@ export function ChangePasswordPage() {
         currentPassword: values.currentPassword,
         newPassword: values.newPassword
       });
-    } catch {
-      setErrorMessage("Password update failed. Check the current password and try again.");
+    } catch (error) {
+      setErrorMessage(
+        getApiErrorMessage(
+          error,
+          "Password update failed. Check the current password and try again."
+        )
+      );
       return;
     }
 
@@ -44,15 +65,28 @@ export function ChangePasswordPage() {
 
   return (
     <AuthPageTemplate
-      description="Complete the required password rotation before returning to the protected shell."
-      eyebrow="Security"
+      description="Update your password to continue."
       title="Change password"
     >
-      <ChangePasswordForm
-        errorMessage={errorMessage}
-        isSubmitting={isChangingPassword || isLoggingOut}
-        onSubmit={handleChangePassword}
-      />
+      <Stack spacing={2}>
+        {shouldShowBackNavigation ? (
+          <Button
+            onClick={() => {
+              navigate(backTarget);
+            }}
+            startIcon={<ArrowLeft size={18} />}
+            sx={{ alignSelf: "flex-start" }}
+            variant="text"
+          >
+            Back
+          </Button>
+        ) : null}
+        <ChangePasswordForm
+          errorMessage={errorMessage}
+          isSubmitting={isChangingPassword || isLoggingOut}
+          onSubmit={handleChangePassword}
+        />
+      </Stack>
     </AuthPageTemplate>
   );
 }

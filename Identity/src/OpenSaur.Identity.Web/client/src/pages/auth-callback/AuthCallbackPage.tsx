@@ -5,6 +5,7 @@ import { AuthPageTemplate } from "../../components/templates";
 import { useCurrentUserQuery } from "../../features/auth/hooks/useCurrentUserQuery";
 import { useExchangeWebSession } from "../../features/auth/hooks/useExchangeWebSession";
 import { authSessionStore } from "../../features/auth/state/authSessionStore";
+import { normalizeAuthReturnUrl } from "../../features/auth/utils";
 import type { ExchangeWebSessionResponse } from "../../features/auth/api/authApi";
 
 const exchangeRequestsByCode = new Map<string, Promise<ExchangeWebSessionResponse>>();
@@ -39,7 +40,7 @@ export function AuthCallbackPage() {
 
     async function completeSignIn() {
       const authorizationCode = searchParams.get("code");
-      const rememberedReturnUrl = authSessionStore.getRememberedReturnUrl() ?? "/";
+      const rememberedReturnUrl = normalizeAuthReturnUrl(authSessionStore.getRememberedReturnUrl());
       if (!authorizationCode) {
         authSessionStore.clearRememberedReturnUrl();
         navigate(`/login?returnUrl=${encodeURIComponent(rememberedReturnUrl)}`, {
@@ -87,9 +88,8 @@ export function AuthCallbackPage() {
 
   return (
     <AuthPageTemplate
-      description="The client will complete the authorization code flow here."
-      eyebrow="Callback"
-      title="Completing sign in"
+      description="Please wait while we sign you in."
+      title="Signing you in"
     >
       <Stack
         alignItems="center"
@@ -98,7 +98,7 @@ export function AuthCallbackPage() {
       >
         <CircularProgress size={24} />
         <Typography color="text.secondary">
-          Preparing your session...
+          Preparing your account...
         </Typography>
       </Stack>
     </AuthPageTemplate>

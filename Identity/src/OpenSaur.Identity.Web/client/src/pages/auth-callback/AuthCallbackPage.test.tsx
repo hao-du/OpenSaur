@@ -40,8 +40,28 @@ describe("AuthCallbackPage", () => {
     vi.resetAllMocks();
   });
 
+  it("renders neutral progress copy while sign-in is being completed", () => {
+    vi.mocked(authApi.exchangeWebSession).mockReturnValue(
+      new Promise(() => {}) as Awaited<ReturnType<typeof authApi.exchangeWebSession>>
+    );
+
+    render(
+      <AppProviders>
+        <MemoryRouter initialEntries={["/auth/callback?code=render-copy-code"]}>
+          <AuthCallbackPage />
+        </MemoryRouter>
+      </AppProviders>
+    );
+
+    expect(screen.getByRole("heading", { level: 3, name: /signing you in/i })).toBeDefined();
+    expect(screen.getByText(/please wait while we sign you in/i)).toBeDefined();
+    expect(screen.getByText(/preparing your account/i)).toBeDefined();
+    expect(screen.queryByText(/authorization code flow/i)).toBeNull();
+    expect(screen.queryByText(/^callback$/i)).toBeNull();
+  });
+
   it("exchanges the authorization code, bootstraps the current user, and redirects to the remembered route", async () => {
-    authSessionStore.rememberReturnUrl("/reports");
+    authSessionStore.rememberReturnUrl("/users");
     vi.mocked(authApi.exchangeWebSession).mockResolvedValue({
       accessToken: "header.payload.signature",
       expiresAt: "2026-03-28T00:00:00.000Z"
@@ -62,8 +82,8 @@ describe("AuthCallbackPage", () => {
               path="/auth/callback"
             />
             <Route
-              element={<div>Reports</div>}
-              path="/reports"
+              element={<div>Users</div>}
+              path="/users"
             />
             <Route
               element={<div>Login</div>}
@@ -76,7 +96,7 @@ describe("AuthCallbackPage", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByTestId("location").textContent).toBe("/reports");
+      expect(screen.getByTestId("location").textContent).toBe("/users");
     });
 
     expect(authSessionStore.getSnapshot()).toEqual({
@@ -129,5 +149,45 @@ describe("AuthCallbackPage", () => {
     });
 
     expect(authApi.exchangeWebSession).toHaveBeenCalledTimes(1);
+  });
+
+  it("falls back to the dashboard when the remembered return url points back to change-password", async () => {
+    authSessionStore.rememberReturnUrl("/change-password");
+    vi.mocked(authApi.exchangeWebSession).mockResolvedValue({
+      accessToken: "header.payload.signature",
+      expiresAt: "2026-03-28T00:00:00.000Z"
+    });
+    vi.mocked(authApi.getCurrentUser).mockResolvedValue({
+      id: "user-1",
+      requirePasswordChange: false,
+      roles: ["User"],
+      userName: "demo.user"
+    });
+
+    render(
+      <AppProviders>
+        <MemoryRouter initialEntries={["/auth/callback?code=test-code"]}>
+          <Routes>
+            <Route
+              element={<AuthCallbackPage />}
+              path="/auth/callback"
+            />
+            <Route
+              element={<div>Dashboard</div>}
+              path="/"
+            />
+            <Route
+              element={<div>Change password</div>}
+              path="/change-password"
+            />
+          </Routes>
+          <LocationProbe />
+        </MemoryRouter>
+      </AppProviders>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("location").textContent).toBe("/");
+    });
   });
 });
