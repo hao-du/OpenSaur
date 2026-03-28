@@ -4,8 +4,10 @@ using OpenSaur.Identity.Web.Domain.Identity;
 
 namespace OpenSaur.Identity.Web.Infrastructure.Security;
 
-public sealed record CurrentUserContext(Guid UserId, Guid WorkspaceId, bool IsSuperAdministrator)
+public sealed record CurrentUserContext(Guid UserId, Guid WorkspaceId, bool IsSuperAdministrator, bool IsImpersonating = false)
 {
+    public bool HasGlobalWorkspaceScope => IsSuperAdministrator && !IsImpersonating;
+
     public static CurrentUserContext? Create(ClaimsPrincipal principal)
     {
         var userId = principal.FindFirstValue(ApplicationClaimTypes.Subject)
@@ -21,7 +23,9 @@ public sealed record CurrentUserContext(Guid UserId, Guid WorkspaceId, bool IsSu
             parsedUserId,
             parsedWorkspaceId,
             principal.FindAll(ApplicationClaimTypes.Role)
-                .Any(claim => string.Equals(claim.Value, SystemRoles.SuperAdministrator, StringComparison.Ordinal)));
+                .Any(claim => SystemRoles.IsSuperAdministratorValue(claim.Value)),
+            bool.TryParse(principal.FindFirstValue(ApplicationClaimTypes.ImpersonationActive), out var isImpersonating)
+            && isImpersonating);
     }
 
     public static ValueTask<CurrentUserContext?> BindAsync(HttpContext httpContext, ParameterInfo _)

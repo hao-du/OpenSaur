@@ -4,4 +4,6 @@ public sealed record AuthMeResponse(
     string? Id,
     string? UserName,
     string[] Roles,
-    bool RequirePasswordChange);
+    bool RequirePasswordChange,
+    string WorkspaceName,
+    bool IsImpersonating);

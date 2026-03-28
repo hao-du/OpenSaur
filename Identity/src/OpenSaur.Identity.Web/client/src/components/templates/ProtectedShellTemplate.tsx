@@ -18,24 +18,24 @@ import {
 } from "@mui/material";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { getVisibleProtectedShellRoutes } from "../../app/router/protectedShellRoutes";
-import { useCurrentUserQuery, useCurrentUserState, useLogout } from "../../features/auth/hooks";
+import {
+  useCurrentUserQuery,
+  useCurrentUserState,
+  useExitImpersonation,
+  useLogout
+} from "../../features/auth/hooks";
 import { authSessionStore } from "../../features/auth/state/authSessionStore";
 import { BrandMark } from "../atoms";
 import { Menu } from "../../shared/icons";
 import { ShellAccountMenu } from "./ShellAccountMenu";
 
 type ProtectedShellTemplateProps = PropsWithChildren<{
-  impersonation?: {
-    onExit?: () => void;
-    workspaceName: string;
-  };
   subtitle?: string;
   title: string;
 }>;
 
 export function ProtectedShellTemplate({
   children,
-  impersonation,
   title,
   subtitle
 }: ProtectedShellTemplateProps) {
@@ -44,16 +44,15 @@ export function ProtectedShellTemplate({
   const navigate = useNavigate();
   const isDesktop = useMediaQuery(theme.breakpoints.up("lg"));
   const [isNavigationOpen, setIsNavigationOpen] = useState(false);
-  const { clearCurrentUser } = useCurrentUserQuery();
+  const { clearCurrentUser, fetchCurrentUser } = useCurrentUserQuery();
   const { data: currentUser } = useCurrentUserState();
   const { isLoggingOut, logout } = useLogout();
+  const { exitImpersonation, isExitingImpersonation } = useExitImpersonation();
   const visibleRoutes = useMemo(
-    () => getVisibleProtectedShellRoutes(currentUser?.roles ?? []),
-    [currentUser?.roles]
+    () => getVisibleProtectedShellRoutes(currentUser),
+    [currentUser]
   );
-  const isSuperAdministrator = (currentUser?.roles ?? []).includes("SuperAdministrator");
-  const workspaceName = impersonation?.workspaceName
-    ?? (isSuperAdministrator ? "All workspaces" : "Protected workspace");
+  const workspaceName = currentUser?.workspaceName ?? "Protected workspace";
   const currentYear = new Date().getFullYear();
 
   async function handleLogout() {
@@ -66,6 +65,7 @@ export function ProtectedShellTemplate({
     clearCurrentUser();
     authSessionStore.clearSession();
     authSessionStore.clearRememberedReturnUrl();
+    authSessionStore.broadcastSessionCleared();
     navigate("/login", { replace: true });
   }
 
@@ -75,6 +75,17 @@ export function ProtectedShellTemplate({
         from: `${location.pathname}${location.search}${location.hash}`
       }
     });
+  }
+
+  async function handleExitImpersonation() {
+    try {
+      const restoredSession = await exitImpersonation();
+      authSessionStore.setAuthenticatedSession(restoredSession);
+      await fetchCurrentUser();
+      authSessionStore.broadcastSessionRefresh();
+    } catch {
+      // Keep the current UI state if impersonation exit fails.
+    }
   }
 
   const navigation = (
@@ -243,13 +254,16 @@ export function ProtectedShellTemplate({
                   >
                     {workspaceName}
                   </Typography>
-                  {impersonation?.onExit ? (
+                  {currentUser?.isImpersonating ? (
                     <Button
-                      onClick={impersonation.onExit}
+                      disabled={isExitingImpersonation}
+                      onClick={() => {
+                        void handleExitImpersonation();
+                      }}
                       size="small"
                       variant="outlined"
                     >
-                      Exit impersonation
+                      {isExitingImpersonation ? "Exiting..." : "Exit impersonation"}
                     </Button>
                   ) : null}
                 </Stack>

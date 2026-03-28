@@ -51,10 +51,12 @@ describe("AuthBootstrapBoundary", () => {
     });
     vi.mocked(authApi.getCurrentUser).mockResolvedValue({
       id: "user-1",
+      isImpersonating: false,
       requirePasswordChange: false,
       roles: ["User"],
-      userName: "demo.user"
-    });
+      userName: "demo.user",
+      workspaceName: "Protected workspace"
+    } as Awaited<ReturnType<typeof authApi.getCurrentUser>>);
 
     render(
       <AppProviders queryClient={queryClient}>
@@ -93,9 +95,11 @@ describe("AuthBootstrapBoundary", () => {
     });
     expect(queryClient.getQueryData(authQueryKeys.currentUser())).toEqual({
       id: "user-1",
+      isImpersonating: false,
       requirePasswordChange: false,
       roles: ["User"],
-      userName: "demo.user"
+      userName: "demo.user",
+      workspaceName: "Protected workspace"
     });
   });
 
@@ -143,6 +147,14 @@ describe("AuthBootstrapBoundary", () => {
       accessToken: "new-access-token",
       expiresAt: "2026-03-28T00:00:00.000Z"
     });
+    vi.mocked(authApi.getCurrentUser).mockResolvedValue({
+      id: "user-1",
+      isImpersonating: false,
+      requirePasswordChange: false,
+      roles: ["User"],
+      userName: "demo.user",
+      workspaceName: "Protected workspace"
+    } as Awaited<ReturnType<typeof authApi.getCurrentUser>>);
 
     render(
       <AppProviders>
@@ -185,10 +197,12 @@ describe("AuthBootstrapBoundary", () => {
     });
     vi.mocked(authApi.getCurrentUser).mockResolvedValue({
       id: "user-1",
+      isImpersonating: false,
       requirePasswordChange: true,
       roles: ["User"],
-      userName: "demo.user"
-    });
+      userName: "demo.user",
+      workspaceName: "Protected workspace"
+    } as Awaited<ReturnType<typeof authApi.getCurrentUser>>);
 
     render(
       <AppProviders>
@@ -219,5 +233,67 @@ describe("AuthBootstrapBoundary", () => {
     });
 
     expect(authSessionStore.getRememberedReturnUrl()).toBe("/reports");
+  });
+
+  it("refreshes the authenticated session when another tab broadcasts a session change", async () => {
+    const queryClient = new QueryClient();
+
+    authSessionStore.setAuthenticatedSession({
+      accessToken: "old-access-token",
+      expiresAt: "2026-03-28T00:00:00.000Z"
+    });
+    vi.mocked(authApi.refreshWebSession).mockResolvedValue({
+      accessToken: "impersonated-access-token",
+      expiresAt: "2026-03-29T00:00:00.000Z"
+    });
+    vi.mocked(authApi.getCurrentUser).mockResolvedValue({
+      id: "user-2",
+      isImpersonating: true,
+      requirePasswordChange: false,
+      roles: ["Administrator"],
+      userName: "finance.admin",
+      workspaceName: "Finance"
+    } as Awaited<ReturnType<typeof authApi.getCurrentUser>>);
+
+    render(
+      <AppProviders queryClient={queryClient}>
+        <MemoryRouter initialEntries={["/reports"]}>
+          <AuthBootstrapBoundary>
+            <Routes>
+              <Route
+                element={(
+                  <ProtectedRoute>
+                    <div>Reports</div>
+                  </ProtectedRoute>
+                )}
+                path="/reports"
+              />
+            </Routes>
+          </AuthBootstrapBoundary>
+        </MemoryRouter>
+      </AppProviders>
+    );
+
+    window.dispatchEvent(new StorageEvent("storage", {
+      key: "opensaur.identity.session-sync",
+      newValue: JSON.stringify({ kind: "refresh" })
+    }));
+
+    await waitFor(() => {
+      expect(authSessionStore.getSnapshot()).toEqual({
+        accessToken: "impersonated-access-token",
+        expiresAt: "2026-03-29T00:00:00.000Z",
+        status: "authenticated"
+      });
+    });
+
+    expect(queryClient.getQueryData(authQueryKeys.currentUser())).toEqual({
+      id: "user-2",
+      isImpersonating: true,
+      requirePasswordChange: false,
+      roles: ["Administrator"],
+      userName: "finance.admin",
+      workspaceName: "Finance"
+    });
   });
 });

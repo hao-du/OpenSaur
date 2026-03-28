@@ -30,7 +30,7 @@ public sealed class PermissionScopeEndpointsTests : IClassFixture<OpenSaurWebApp
     public async Task GetPermissionScopes_WhenCallerCanManage_ReturnsSeededScopes()
     {
         var managerCredentials = TestFakers.CreateUserCredentials();
-        await TestIdentitySeeder.SeedUserAsync(_factory, managerCredentials.UserName, managerCredentials.Password, [SystemRoles.Administrator]);
+        await TestIdentitySeeder.SeedUserAsync(_factory, managerCredentials.UserName, managerCredentials.Password, [StandardRoleNames.Administrator]);
 
         using var client = FirstPartyApiTestClient.CreateClient(_factory);
         var accessToken = await FirstPartyApiTestClient.GetAccessTokenAsync(client, managerCredentials.UserName, managerCredentials.Password);
@@ -44,3 +44,4 @@ public sealed class PermissionScopeEndpointsTests : IClassFixture<OpenSaurWebApp
         Assert.False(string.IsNullOrWhiteSpace(administratorScope.Description));
     }
 }
+

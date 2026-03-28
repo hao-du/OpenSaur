@@ -11,6 +11,8 @@ import * as authApi from "../../features/auth/api/authApi";
 import { authSessionStore } from "../../features/auth/state/authSessionStore";
 import { ProtectedShellTemplate } from "./ProtectedShellTemplate";
 
+const useExitImpersonationMock = vi.fn();
+
 vi.mock("../../features/auth/api/authApi", async () => {
   const actual = await vi.importActual<typeof import("../../features/auth/api/authApi")>("../../features/auth/api/authApi");
 
@@ -18,6 +20,15 @@ vi.mock("../../features/auth/api/authApi", async () => {
     ...actual,
     getCurrentUser: vi.fn(),
     logout: vi.fn()
+  };
+});
+
+vi.mock("../../features/auth/hooks", async () => {
+  const actual = await vi.importActual<typeof import("../../features/auth/hooks")>("../../features/auth/hooks");
+
+  return {
+    ...actual,
+    useExitImpersonation: () => useExitImpersonationMock()
   };
 });
 
@@ -54,6 +65,11 @@ describe("ProtectedShellTemplate", () => {
     authSessionStore.clearSession();
     sessionStorage.clear();
     vi.resetAllMocks();
+    useExitImpersonationMock.mockReturnValue({
+      errorMessage: null,
+      exitImpersonation: vi.fn(),
+      isExitingImpersonation: false
+    });
   });
 
   it("shows the full desktop navigation for super administrators", async () => {
@@ -64,10 +80,12 @@ describe("ProtectedShellTemplate", () => {
     });
     vi.mocked(authApi.getCurrentUser).mockResolvedValue({
       id: "user-1",
+      isImpersonating: false,
       requirePasswordChange: false,
-      roles: ["SuperAdministrator"],
-      userName: "systemadministrator"
-    });
+      roles: ["SUPERADMINISTRATOR"],
+      userName: "systemadministrator",
+      workspaceName: "All workspaces"
+    } as Awaited<ReturnType<typeof authApi.getCurrentUser>>);
 
     render(
       <AppProviders>
@@ -91,6 +109,7 @@ describe("ProtectedShellTemplate", () => {
     expect(screen.getByRole("link", { name: /^workspace$/i })).toBeDefined();
     expect(screen.getByRole("link", { name: /^users$/i })).toBeDefined();
     expect(screen.getByRole("link", { name: /^roles$/i })).toBeDefined();
+    expect(screen.queryByRole("link", { name: /^role assignments$/i })).toBeNull();
     expect(screen.getByText(/all workspaces/i)).toBeDefined();
     expect(screen.getAllByText(/^workspace$/i)).toHaveLength(1);
     expect(screen.queryByText(/^navigation$/i)).toBeNull();
@@ -107,10 +126,12 @@ describe("ProtectedShellTemplate", () => {
     });
     vi.mocked(authApi.getCurrentUser).mockResolvedValue({
       id: "user-2",
+      isImpersonating: false,
       requirePasswordChange: false,
       roles: ["Administrator"],
-      userName: "workspace.admin"
-    });
+      userName: "workspace.admin",
+      workspaceName: "Protected workspace"
+    } as Awaited<ReturnType<typeof authApi.getCurrentUser>>);
 
     render(
       <AppProviders>
@@ -142,10 +163,12 @@ describe("ProtectedShellTemplate", () => {
     });
     vi.mocked(authApi.getCurrentUser).mockResolvedValue({
       id: "user-1",
+      isImpersonating: false,
       requirePasswordChange: false,
-      roles: ["SuperAdministrator"],
-      userName: "systemadministrator"
-    });
+      roles: ["SUPERADMINISTRATOR"],
+      userName: "systemadministrator",
+      workspaceName: "All workspaces"
+    } as Awaited<ReturnType<typeof authApi.getCurrentUser>>);
 
     render(
       <AppProviders>
@@ -169,9 +192,7 @@ describe("ProtectedShellTemplate", () => {
     expect(screen.getAllByText(/opensaur identity/i)).toHaveLength(1);
   });
 
-  it("shows impersonation workspace state and exposes an exit action when provided", async () => {
-    const onExitImpersonation = vi.fn();
-
+  it("shows impersonation workspace state from the authenticated user context", async () => {
     setDesktopMode(true);
     authSessionStore.setAuthenticatedSession({
       accessToken: "access-token",
@@ -179,21 +200,17 @@ describe("ProtectedShellTemplate", () => {
     });
     vi.mocked(authApi.getCurrentUser).mockResolvedValue({
       id: "user-1",
+      isImpersonating: true,
       requirePasswordChange: false,
-      roles: ["SuperAdministrator"],
-      userName: "System Administrator"
-    });
+      roles: ["SUPERADMINISTRATOR"],
+      userName: "System Administrator",
+      workspaceName: "Contoso Workspace"
+    } as Awaited<ReturnType<typeof authApi.getCurrentUser>>);
 
     render(
       <AppProviders>
         <MemoryRouter initialEntries={["/"]}>
-          <ProtectedShellTemplate
-            impersonation={{
-              onExit: onExitImpersonation,
-              workspaceName: "Contoso Workspace"
-            }}
-            title="Dashboard"
-          >
+          <ProtectedShellTemplate title="Dashboard">
             <div>Dashboard content</div>
           </ProtectedShellTemplate>
         </MemoryRouter>
@@ -201,10 +218,61 @@ describe("ProtectedShellTemplate", () => {
     );
 
     expect(await screen.findByText(/contoso workspace/i)).toBeDefined();
+    expect(screen.getByRole("button", { name: /exit impersonation/i })).toBeDefined();
+    expect(screen.getByRole("link", { name: /^role assignments$/i })).toBeDefined();
+    expect(screen.queryByRole("link", { name: /^workspace$/i })).toBeNull();
+  });
 
-    fireEvent.click(screen.getByRole("button", { name: /exit impersonation/i }));
+  it("exits impersonation and restores the super-administrator workspace state", async () => {
+    setDesktopMode(true);
+    const exitImpersonation = vi.fn().mockResolvedValue({
+      accessToken: "restored-access-token",
+      expiresAt: "2026-03-29T00:00:00.000Z"
+    });
 
-    expect(onExitImpersonation).toHaveBeenCalledOnce();
+    useExitImpersonationMock.mockReturnValue({
+      errorMessage: null,
+      exitImpersonation,
+      isExitingImpersonation: false
+    });
+    authSessionStore.setAuthenticatedSession({
+      accessToken: "impersonated-access-token",
+      expiresAt: "2026-03-28T00:00:00.000Z"
+    });
+    vi.mocked(authApi.getCurrentUser)
+      .mockResolvedValueOnce({
+        id: "user-1",
+        isImpersonating: true,
+        requirePasswordChange: false,
+        roles: ["Administrator"],
+        userName: "finance.admin",
+        workspaceName: "Contoso Workspace"
+      } as Awaited<ReturnType<typeof authApi.getCurrentUser>>)
+      .mockResolvedValueOnce({
+        id: "user-2",
+        isImpersonating: false,
+        requirePasswordChange: false,
+        roles: ["SUPERADMINISTRATOR"],
+        userName: "SystemAdministrator",
+        workspaceName: "All workspaces"
+      } as Awaited<ReturnType<typeof authApi.getCurrentUser>>);
+
+    render(
+      <AppProviders>
+        <MemoryRouter initialEntries={["/"]}>
+          <ProtectedShellTemplate title="Dashboard">
+            <div>Dashboard content</div>
+          </ProtectedShellTemplate>
+        </MemoryRouter>
+      </AppProviders>
+    );
+
+    fireEvent.click(await screen.findByRole("button", { name: /exit impersonation/i }));
+
+    await waitFor(() => {
+      expect(exitImpersonation).toHaveBeenCalledOnce();
+      expect(screen.getByText(/all workspaces/i)).toBeDefined();
+    });
   });
 
   it("opens the account menu from the avatar button", async () => {
@@ -215,10 +283,12 @@ describe("ProtectedShellTemplate", () => {
     });
     vi.mocked(authApi.getCurrentUser).mockResolvedValue({
       id: "user-1",
+      isImpersonating: false,
       requirePasswordChange: false,
-      roles: ["SuperAdministrator"],
-      userName: "Hao Du"
-    });
+      roles: ["SUPERADMINISTRATOR"],
+      userName: "Hao Du",
+      workspaceName: "All workspaces"
+    } as Awaited<ReturnType<typeof authApi.getCurrentUser>>);
 
     render(
       <AppProviders>
@@ -256,10 +326,12 @@ describe("ProtectedShellTemplate", () => {
     });
     vi.mocked(authApi.getCurrentUser).mockResolvedValue({
       id: "user-1",
+      isImpersonating: false,
       requirePasswordChange: false,
       roles: ["Administrator"],
-      userName: "workspace.admin"
-    });
+      userName: "workspace.admin",
+      workspaceName: "Protected workspace"
+    } as Awaited<ReturnType<typeof authApi.getCurrentUser>>);
 
     render(
       <AppProviders>
@@ -299,10 +371,12 @@ describe("ProtectedShellTemplate", () => {
     });
     vi.mocked(authApi.getCurrentUser).mockResolvedValue({
       id: "user-1",
+      isImpersonating: false,
       requirePasswordChange: false,
       roles: ["Administrator"],
-      userName: "workspace.admin"
-    });
+      userName: "workspace.admin",
+      workspaceName: "Protected workspace"
+    } as Awaited<ReturnType<typeof authApi.getCurrentUser>>);
     vi.mocked(authApi.logout).mockResolvedValue({
       data: { data: null, errors: [], success: true }
     } as Awaited<ReturnType<typeof authApi.logout>>);

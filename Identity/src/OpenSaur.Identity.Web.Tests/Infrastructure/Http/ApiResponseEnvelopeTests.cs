@@ -38,7 +38,7 @@ public sealed class ApiResponseEnvelopeTests : IClassFixture<OpenSaurWebApplicat
     public async Task PostLogin_WhenCredentialsAreValid_ReturnsCommonSuccessEnvelope()
     {
         var credentials = TestFakers.CreateUserCredentials();
-        await TestIdentitySeeder.SeedUserAsync(_factory, credentials.UserName, credentials.Password, [SystemRoles.User]);
+        await TestIdentitySeeder.SeedUserAsync(_factory, credentials.UserName, credentials.Password, [StandardRoleNames.User]);
         using var client = FirstPartyApiTestClient.CreateClient(_factory);
 
         var response = await client.PostAsJsonAsync(
@@ -56,7 +56,7 @@ public sealed class ApiResponseEnvelopeTests : IClassFixture<OpenSaurWebApplicat
     public async Task GetMe_WhenOidcAccessTokenIsValid_ReturnsPayloadInsideCommonSuccessEnvelope()
     {
         var credentials = TestFakers.CreateUserCredentials();
-        await TestIdentitySeeder.SeedUserAsync(_factory, credentials.UserName, credentials.Password, [SystemRoles.Administrator]);
+        await TestIdentitySeeder.SeedUserAsync(_factory, credentials.UserName, credentials.Password, [StandardRoleNames.Administrator]);
         using var client = FirstPartyApiTestClient.CreateClient(_factory);
         var accessToken = await FirstPartyApiTestClient.GetAccessTokenAsync(client, credentials.UserName, credentials.Password);
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
@@ -70,7 +70,7 @@ public sealed class ApiResponseEnvelopeTests : IClassFixture<OpenSaurWebApplicat
         Assert.NotNull(payload.Data);
         Assert.Empty(payload.Errors);
         Assert.Equal(credentials.UserName, payload.Data!.UserName);
-        Assert.Contains(SystemRoles.Administrator, payload.Data.Roles);
+        Assert.Contains(StandardRoleNames.Administrator.ToUpperInvariant(), payload.Data.Roles);
     }
 
     [Fact]
@@ -96,12 +96,12 @@ public sealed class ApiResponseEnvelopeTests : IClassFixture<OpenSaurWebApplicat
         var managerCredentials = TestFakers.CreateUserCredentials();
         var otherWorkspaceUserCredentials = TestFakers.CreateUserCredentials();
 
-        await TestIdentitySeeder.SeedUserAsync(_factory, managerCredentials.UserName, managerCredentials.Password, [SystemRoles.Administrator]);
+        await TestIdentitySeeder.SeedUserAsync(_factory, managerCredentials.UserName, managerCredentials.Password, [StandardRoleNames.Administrator]);
         var otherWorkspaceUserId = await TestIdentitySeeder.SeedUserAsync(
             _factory,
             otherWorkspaceUserCredentials.UserName,
             otherWorkspaceUserCredentials.Password,
-            [SystemRoles.User],
+            [StandardRoleNames.User],
             workspaceName: TestFakers.CreateWorkspaceName());
 
         using var client = FirstPartyApiTestClient.CreateClient(_factory);
@@ -222,3 +222,4 @@ public sealed class ApiResponseEnvelopeTests : IClassFixture<OpenSaurWebApplicat
         }
     }
 }
+

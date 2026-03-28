@@ -13,6 +13,7 @@ import { AuthCallbackPage } from "../../pages/auth-callback/AuthCallbackPage";
 import { ChangePasswordPage } from "../../pages/change-password/ChangePasswordPage";
 import { HomePage } from "../../pages/home/HomePage";
 import { LoginPage } from "../../pages/login/LoginPage";
+import { RoleAssignmentsPage } from "../../pages/role-assignments/RoleAssignmentsPage";
 import { RolesPage } from "../../pages/roles/RolesPage";
 import { UsersPage } from "../../pages/users/UsersPage";
 import { WorkspacesPage } from "../../pages/workspaces/WorkspacesPage";
@@ -31,7 +32,7 @@ function RequireProtectedShellAccess({
     return null;
   }
 
-  if (!canAccessProtectedShellRoute(path, currentUser?.roles ?? [])) {
+  if (!canAccessProtectedShellRoute(path, currentUser)) {
     return <HomePage />;
   }
 
@@ -78,6 +79,16 @@ export const appRoutes: RouteObject[] = [
           <ProtectedRoute>
             <RequireProtectedShellAccess path="/roles">
               <RolesPage />
+            </RequireProtectedShellAccess>
+          </ProtectedRoute>
+        )
+      },
+      {
+        path: "/role-assignments",
+        element: (
+          <ProtectedRoute>
+            <RequireProtectedShellAccess path="/role-assignments">
+              <RoleAssignmentsPage />
             </RequireProtectedShellAccess>
           </ProtectedRoute>
         )

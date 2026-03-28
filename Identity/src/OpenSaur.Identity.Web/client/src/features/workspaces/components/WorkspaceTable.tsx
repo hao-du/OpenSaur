@@ -19,6 +19,7 @@ type WorkspaceTableProps = {
   isError: boolean;
   isLoading: boolean;
   onEditWorkspace: (workspaceId: string) => void;
+  onLoginAsWorkspace: (workspaceId: string) => void;
   onRetry?: () => void;
   workspaces: WorkspaceSummary[];
 };
@@ -27,6 +28,7 @@ export function WorkspaceTable({
   isError,
   isLoading,
   onEditWorkspace,
+  onLoginAsWorkspace,
   onRetry,
   workspaces
 }: WorkspaceTableProps) {
@@ -143,11 +145,13 @@ export function WorkspaceTable({
                       Edit
                     </Button>
                     <Button
-                      disabled
+                      onClick={() => {
+                        onLoginAsWorkspace(workspace.id);
+                      }}
                       size="small"
                       variant="text"
                     >
-                      Impersonate soon
+                      Login as
                     </Button>
                   </Stack>
                 </TableCell>

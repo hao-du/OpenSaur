@@ -17,6 +17,7 @@ public static class GetRolesHandler
                 static role => new GetRolesResponse(
                     role.Id,
                     role.Name ?? string.Empty,
+                    role.NormalizedName ?? string.Empty,
                     role.Description,
                     role.IsActive))
                 .ToList());

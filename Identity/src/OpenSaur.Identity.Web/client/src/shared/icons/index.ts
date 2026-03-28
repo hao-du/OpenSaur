@@ -12,5 +12,6 @@ export {
   ShieldCheck,
   ShieldUser,
   UserRound,
-  Users
+  Users,
+  X
 } from "lucide-react";

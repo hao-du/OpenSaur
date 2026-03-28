@@ -1,9 +1,9 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { isPublicAuthRoute } from "../constants/publicAuthRoutes";
 import { useCurrentUserQuery } from "./useCurrentUserQuery";
 import { useRefreshWebSession } from "./useRefreshWebSession";
-import { authSessionStore } from "../state/authSessionStore";
+import { authSessionStore, sessionSyncStorageKey } from "../state/authSessionStore";
 import { useAuthSession } from "../state/useAuthSession";
 import { normalizeAuthReturnUrl } from "../utils";
 
@@ -30,8 +30,14 @@ export function useAuthBootstrap() {
     () => session.status !== "authenticated" && !isPublicAuthRoute(location.pathname)
   );
 
+  const refreshAuthenticatedUser = useCallback(async () => {
+    const refreshedSession = await refreshSession();
+    authSessionStore.setAuthenticatedSession(refreshedSession);
+    return await fetchCurrentUser();
+  }, [fetchCurrentUser, refreshSession]);
+
   useEffect(() => {
-    if (session.status === "authenticated" || isPublicAuthRoute(location.pathname)) {
+    if (authSessionStore.getSnapshot().status === "authenticated" || isPublicAuthRoute(location.pathname)) {
       setIsBootstrapping(false);
       return;
     }
@@ -41,14 +47,7 @@ export function useAuthBootstrap() {
 
     async function bootstrapProtectedRoute() {
       try {
-        const refreshedSession = await refreshSession();
-        if (isCancelled) {
-          return;
-        }
-
-        authSessionStore.setAuthenticatedSession(refreshedSession);
-
-        const currentUser = await fetchCurrentUser();
+        const currentUser = await refreshAuthenticatedUser();
         if (isCancelled) {
           return;
         }
@@ -88,7 +87,7 @@ export function useAuthBootstrap() {
     return () => {
       isCancelled = true;
     };
-  }, [clearCurrentUser, fetchCurrentUser, location, navigate, refreshSession]);
+  }, [clearCurrentUser, location, navigate, refreshAuthenticatedUser]);
 
   useEffect(() => {
     if (session.status !== "authenticated" || !session.expiresAt) {
@@ -96,7 +95,7 @@ export function useAuthBootstrap() {
     }
 
     const expiresAt = Date.parse(session.expiresAt);
-    if (Number.isNaN(expiresAt)) {
+    if (Number.isNaN(expiresAt) || expiresAt <= Date.now()) {
       return;
     }
 
@@ -108,12 +107,16 @@ export function useAuthBootstrap() {
     let isCancelled = false;
     const timeoutId = window.setTimeout(async () => {
       try {
-        const refreshedSession = await refreshSession();
+        const currentUser = await refreshAuthenticatedUser();
         if (isCancelled) {
           return;
         }
 
-        authSessionStore.setAuthenticatedSession(refreshedSession);
+        if (currentUser.requirePasswordChange && location.pathname !== changePasswordRoute) {
+          const returnUrl = resolvePostLoginReturnUrl(location);
+          authSessionStore.rememberReturnUrl(returnUrl);
+          navigate(changePasswordRoute, { replace: true });
+        }
       } catch {
         if (isCancelled) {
           return;
@@ -136,7 +139,68 @@ export function useAuthBootstrap() {
       isCancelled = true;
       window.clearTimeout(timeoutId);
     };
-  }, [clearCurrentUser, location, navigate, refreshSession, session.expiresAt, session.status]);
+  }, [clearCurrentUser, location, navigate, refreshAuthenticatedUser, session.expiresAt, session.status]);
+
+  useEffect(() => {
+    async function handleStorageEvent(event: StorageEvent) {
+      if (event.key !== sessionSyncStorageKey || !event.newValue) {
+        return;
+      }
+
+      let payload: { kind?: "clear" | "refresh"; } | null = null;
+      try {
+        payload = JSON.parse(event.newValue) as { kind?: "clear" | "refresh"; };
+      } catch {
+        return;
+      }
+
+      if (payload?.kind === "clear") {
+        clearCurrentUser();
+        authSessionStore.clearSession();
+
+        if (!isPublicAuthRoute(location.pathname)) {
+          const returnUrl = resolvePostLoginReturnUrl(location);
+          authSessionStore.rememberReturnUrl(returnUrl);
+          navigate(`/login?returnUrl=${encodeURIComponent(returnUrl)}`, {
+            replace: true
+          });
+        }
+
+        return;
+      }
+
+      if (payload?.kind !== "refresh") {
+        return;
+      }
+
+      try {
+        const currentUser = await refreshAuthenticatedUser();
+
+        if (currentUser.requirePasswordChange && location.pathname !== changePasswordRoute) {
+          const returnUrl = resolvePostLoginReturnUrl(location);
+          authSessionStore.rememberReturnUrl(returnUrl);
+          navigate(changePasswordRoute, { replace: true });
+        }
+      } catch {
+        clearCurrentUser();
+        authSessionStore.clearSession();
+
+        if (!isPublicAuthRoute(location.pathname)) {
+          const returnUrl = resolvePostLoginReturnUrl(location);
+          authSessionStore.rememberReturnUrl(returnUrl);
+          navigate(`/login?returnUrl=${encodeURIComponent(returnUrl)}`, {
+            replace: true
+          });
+        }
+      }
+    }
+
+    window.addEventListener("storage", handleStorageEvent);
+
+    return () => {
+      window.removeEventListener("storage", handleStorageEvent);
+    };
+  }, [clearCurrentUser, location, navigate, refreshAuthenticatedUser]);
 
   return {
     isBootstrapping,

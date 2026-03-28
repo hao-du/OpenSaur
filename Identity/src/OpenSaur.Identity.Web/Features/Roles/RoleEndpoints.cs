@@ -20,9 +20,15 @@ public static class RoleEndpoints
         roles.MapGet("/get", GetRolesHandler.HandleAsync);
         roles.MapGet("/getbyid/{id:guid}", GetRoleByIdHandler.HandleAsync);
         roles.MapPost("/create", CreateRoleHandler.HandleAsync)
-            .RequireIdempotency();
+            .RequireIdempotency()
+            .RequireWorkspaceAccess(
+                restrictToSuperAdministrator: true,
+                allowImpersonatedSuperAdministrator: true);
         roles.MapPut("/edit", EditRoleHandler.HandleAsync)
-            .RequireIdempotency();
+            .RequireIdempotency()
+            .RequireWorkspaceAccess(
+                restrictToSuperAdministrator: true,
+                allowImpersonatedSuperAdministrator: true);
 
         return app;
     }

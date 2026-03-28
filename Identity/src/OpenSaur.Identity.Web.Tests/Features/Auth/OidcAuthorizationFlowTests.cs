@@ -57,7 +57,7 @@ public sealed class OidcAuthorizationFlowTests : IClassFixture<OpenSaurWebApplic
         const string redirectUri = "https://client.test.opensaur/signin-oidc";
         var credentials = TestFakers.CreateUserCredentials();
         await _factory.SeedOidcClientAsync(clientId, redirectUri, ClientSecret);
-        await TestIdentitySeeder.SeedUserAsync(_factory, credentials.UserName, credentials.Password, [SystemRoles.User]);
+        await TestIdentitySeeder.SeedUserAsync(_factory, credentials.UserName, credentials.Password, [StandardRoleNames.User]);
         using var client = FirstPartyApiTestClient.CreateClient(_factory);
 
         var authorizeResponse = await client.GetAsync(
@@ -101,7 +101,7 @@ public sealed class OidcAuthorizationFlowTests : IClassFixture<OpenSaurWebApplic
 
         await _factory.SeedOidcClientAsync(clientIdOne, redirectUriOne, ClientSecret);
         await _factory.SeedOidcClientAsync(clientIdTwo, redirectUriTwo, ClientSecret);
-        await TestIdentitySeeder.SeedUserAsync(_factory, credentials.UserName, credentials.Password, [SystemRoles.User]);
+        await TestIdentitySeeder.SeedUserAsync(_factory, credentials.UserName, credentials.Password, [StandardRoleNames.User]);
         using var client = FirstPartyApiTestClient.CreateClient(_factory);
 
         await OidcTestClient.CompleteApiLoginAsync(client, clientIdOne, redirectUriOne, credentials.UserName, credentials.Password);
@@ -125,7 +125,7 @@ public sealed class OidcAuthorizationFlowTests : IClassFixture<OpenSaurWebApplic
         const string redirectUri = "https://client.test.opensaur/signin-oidc";
         var credentials = TestFakers.CreateUserCredentials();
         await _factory.SeedOidcClientAsync(clientId, redirectUri, ClientSecret);
-        await TestIdentitySeeder.SeedUserAsync(_factory, credentials.UserName, credentials.Password, [SystemRoles.User]);
+        await TestIdentitySeeder.SeedUserAsync(_factory, credentials.UserName, credentials.Password, [StandardRoleNames.User]);
         using var client = FirstPartyApiTestClient.CreateClient(_factory);
 
         var authorizeResponse = await client.GetAsync(
@@ -158,7 +158,7 @@ public sealed class OidcAuthorizationFlowTests : IClassFixture<OpenSaurWebApplic
             _factory,
             credentials.UserName,
             credentials.Password,
-            [SystemRoles.User],
+            [StandardRoleNames.User],
             isActive: true,
             workspaceIsActive: false);
         using var client = FirstPartyApiTestClient.CreateClient(_factory);
@@ -185,7 +185,7 @@ public sealed class OidcAuthorizationFlowTests : IClassFixture<OpenSaurWebApplic
         var credentials = TestFakers.CreateUserCredentials();
 
         await _factory.SeedOidcClientAsync(clientId, redirectUri, ClientSecret);
-        await TestIdentitySeeder.SeedUserAsync(_factory, credentials.UserName, credentials.Password, [SystemRoles.User]);
+        await TestIdentitySeeder.SeedUserAsync(_factory, credentials.UserName, credentials.Password, [StandardRoleNames.User]);
         using var client = FirstPartyApiTestClient.CreateClient(_factory);
 
         var authorizationCode = await OidcTestClient.AuthorizeAsync(client, clientId, redirectUri, credentials.UserName, credentials.Password);
@@ -252,7 +252,7 @@ public sealed class OidcAuthorizationFlowTests : IClassFixture<OpenSaurWebApplic
         var credentials = TestFakers.CreateUserCredentials();
 
         await _factory.SeedOidcClientAsync(clientId, redirectUri, ClientSecret);
-        await TestIdentitySeeder.SeedUserAsync(_factory, credentials.UserName, credentials.Password, [SystemRoles.User]);
+        await TestIdentitySeeder.SeedUserAsync(_factory, credentials.UserName, credentials.Password, [StandardRoleNames.User]);
         using var client = FirstPartyApiTestClient.CreateClient(_factory);
 
         var accessToken = await FirstPartyApiTestClient.GetAccessTokenAsync(
@@ -282,3 +282,4 @@ public sealed class OidcAuthorizationFlowTests : IClassFixture<OpenSaurWebApplic
     }
 
 }
+

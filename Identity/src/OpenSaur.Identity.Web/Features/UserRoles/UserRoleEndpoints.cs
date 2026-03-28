@@ -1,6 +1,8 @@
 using OpenSaur.Identity.Web.Domain.Permissions;
 using OpenSaur.Identity.Web.Features.UserRoles.CreateUserRole;
 using OpenSaur.Identity.Web.Features.UserRoles.EditUserRole;
+using OpenSaur.Identity.Web.Features.UserRoles.GetAssignmentCandidates;
+using OpenSaur.Identity.Web.Features.UserRoles.GetRoleAssignments;
 using OpenSaur.Identity.Web.Features.UserRoles.GetUserRoles;
 using OpenSaur.Identity.Web.Infrastructure.Authorization;
 using OpenSaur.Identity.Web.Infrastructure.Authorization.Builders;
@@ -18,6 +20,8 @@ public static class UserRoleEndpoints
             .RequireWorkspaceAccess();
 
         userRoles.MapGet("/get", GetUserRolesHandler.HandleAsync);
+        userRoles.MapGet("/getbyrole/{roleId:guid}", GetRoleAssignmentsHandler.HandleAsync);
+        userRoles.MapGet("/getcandidates", GetAssignmentCandidatesHandler.HandleAsync);
         userRoles.MapPost("/create", CreateUserRoleHandler.HandleAsync)
             .RequireIdempotency();
         userRoles.MapPut("/edit", EditUserRoleHandler.HandleAsync)

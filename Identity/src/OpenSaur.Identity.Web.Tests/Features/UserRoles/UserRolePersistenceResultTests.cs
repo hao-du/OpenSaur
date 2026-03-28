@@ -12,6 +12,7 @@ using OpenSaur.Identity.Web.Infrastructure.Database;
 using OpenSaur.Identity.Web.Infrastructure.Database.Outbox;
 using OpenSaur.Identity.Web.Infrastructure.Database.Repositories.Roles;
 using OpenSaur.Identity.Web.Infrastructure.Database.Repositories.UserRoles;
+using OpenSaur.Identity.Web.Infrastructure.Database.Repositories.UserRoles.Dtos;
 using OpenSaur.Identity.Web.Infrastructure.Database.Repositories.Users;
 using OpenSaur.Identity.Web.Infrastructure.Http.Responses;
 using OpenSaur.Identity.Web.Infrastructure.Security;
@@ -20,6 +21,136 @@ namespace OpenSaur.Identity.Web.Tests.Features.UserRoles;
 
 public sealed class UserRolePersistenceResultTests
 {
+    [Fact]
+    public async Task GetActiveNormalizedRoleNamesForUserAsync_WhenUserHasMixedAssignments_ReturnsDistinctActiveNormalizedNames()
+    {
+        await using var connection = new SqliteConnection("DataSource=:memory:");
+        await connection.OpenAsync();
+
+        var options = CreateOptions(connection);
+
+        Guid userId;
+
+        await using (var setupContext = new ApplicationDbContext(options))
+        {
+            await setupContext.Database.EnsureCreatedAsync();
+
+            var workspaceId = await setupContext.Workspaces
+                .Select(workspace => workspace.Id)
+                .SingleAsync();
+
+            var user = new ApplicationUser
+            {
+                Id = Guid.CreateVersion7(),
+                UserName = "normalized-role-user",
+                NormalizedUserName = "NORMALIZED-ROLE-USER",
+                Email = "normalized-role-user@opensaur.test",
+                NormalizedEmail = "NORMALIZED-ROLE-USER@OPENSAUR.TEST",
+                WorkspaceId = workspaceId,
+                IsActive = true,
+                RequirePasswordChange = false,
+                CreatedBy = Guid.CreateVersion7()
+            };
+
+            var activeRole = new ApplicationRole
+            {
+                Id = Guid.CreateVersion7(),
+                Name = "Platform Owner",
+                NormalizedName = "PLATFORM_OWNER",
+                IsActive = true,
+                CreatedBy = Guid.CreateVersion7(),
+                ConcurrencyStamp = Guid.NewGuid().ToString("N")
+            };
+
+            var administratorRole = new ApplicationRole
+            {
+                Id = Guid.CreateVersion7(),
+                Name = "Workspace Admin",
+                NormalizedName = "WORKSPACE_ADMIN",
+                IsActive = true,
+                CreatedBy = Guid.CreateVersion7(),
+                ConcurrencyStamp = Guid.NewGuid().ToString("N")
+            };
+
+            var inactiveRole = new ApplicationRole
+            {
+                Id = Guid.CreateVersion7(),
+                Name = "Inactive Role",
+                NormalizedName = "INACTIVE",
+                IsActive = false,
+                CreatedBy = Guid.CreateVersion7(),
+                ConcurrencyStamp = Guid.NewGuid().ToString("N")
+            };
+
+            var inactiveAssignmentRole = new ApplicationRole
+            {
+                Id = Guid.CreateVersion7(),
+                Name = "Inactive Assignment Role",
+                NormalizedName = "INACTIVE_ASSIGNMENT",
+                IsActive = true,
+                CreatedBy = Guid.CreateVersion7(),
+                ConcurrencyStamp = Guid.NewGuid().ToString("N")
+            };
+
+            setupContext.Users.Add(user);
+            setupContext.Roles.AddRange(activeRole, administratorRole, inactiveRole, inactiveAssignmentRole);
+            setupContext.UserRoles.AddRange(
+                new ApplicationUserRole
+                {
+                    Id = Guid.CreateVersion7(),
+                    UserId = user.Id,
+                    RoleId = activeRole.Id,
+                    Description = "active super administrator assignment",
+                    IsActive = true,
+                    CreatedBy = Guid.CreateVersion7()
+                },
+                new ApplicationUserRole
+                {
+                    Id = Guid.CreateVersion7(),
+                    UserId = user.Id,
+                    RoleId = administratorRole.Id,
+                    Description = "active administrator assignment",
+                    IsActive = true,
+                    CreatedBy = Guid.CreateVersion7()
+                },
+                new ApplicationUserRole
+                {
+                    Id = Guid.CreateVersion7(),
+                    UserId = user.Id,
+                    RoleId = inactiveAssignmentRole.Id,
+                    Description = "inactive assignment",
+                    IsActive = false,
+                    CreatedBy = Guid.CreateVersion7()
+                },
+                new ApplicationUserRole
+                {
+                    Id = Guid.CreateVersion7(),
+                    UserId = user.Id,
+                    RoleId = inactiveRole.Id,
+                    Description = "assignment to inactive role",
+                    IsActive = true,
+                    CreatedBy = Guid.CreateVersion7()
+                });
+
+            await setupContext.SaveChangesAsync();
+
+            userId = user.Id;
+        }
+
+        await using var repositoryContext = new ApplicationDbContext(options);
+        var repository = new UserRoleRepository(repositoryContext);
+
+        var result = await repository.GetActiveNormalizedRoleNamesForUserAsync(
+            new GetActiveNormalizedRoleNamesForUserRequest(userId),
+            CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(
+            ["PLATFORM_OWNER", "WORKSPACE_ADMIN"],
+            result.Value!.NormalizedRoleNames.OrderBy(static role => role).ToArray());
+        Assert.DoesNotContain("INACTIVE", result.Value.NormalizedRoleNames);
+    }
+
     [Fact]
     public async Task CreateUserRole_WhenDatabaseRejectsDuplicateAssignment_ReturnsValidationEnvelope()
     {

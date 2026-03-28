@@ -2,11 +2,14 @@ using System.Security.Claims;
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using OpenIddict.Abstractions;
 using OpenIddict.Server.AspNetCore;
 using OpenSaur.Identity.Web.Domain.Identity;
 using OpenSaur.Identity.Web.Infrastructure.Database;
+using OpenSaur.Identity.Web.Infrastructure.Database.Repositories.UserRoles;
+using OpenSaur.Identity.Web.Infrastructure.Database.Repositories.UserRoles.Dtos;
 using OpenSaur.Identity.Web.Infrastructure.Http.Metadata;
 using OpenSaur.Identity.Web.Infrastructure.Http.RateLimiting;
 using OpenSaur.Identity.Web.Infrastructure.Security;
@@ -23,6 +26,7 @@ public static class OidcEndpoints
             async Task<IResult>(
                 HttpContext httpContext,
                 ApplicationDbContext dbContext,
+                UserRoleRepository userRoleRepository,
                 UserManager<ApplicationUser> userManager) =>
             {
                 var request = httpContext.GetOpenIddictServerRequest()
@@ -65,7 +69,9 @@ public static class OidcEndpoints
                         [IdentityConstants.ApplicationScheme]);
                 }
 
-                var workspace = await dbContext.Workspaces.FindAsync(user.WorkspaceId);
+                var effectiveWorkspaceId = AuthPrincipalReader.GetImpersonationWorkspaceId(authenticationResult.Principal)
+                    ?? user.WorkspaceId;
+                var workspace = await dbContext.Workspaces.FindAsync(effectiveWorkspaceId);
                 if (workspace is null || !workspace.IsActive)
                 {
                     await httpContext.SignOutAsync(IdentityConstants.ApplicationScheme);
@@ -78,8 +84,16 @@ public static class OidcEndpoints
                         [IdentityConstants.ApplicationScheme]);
                 }
 
-                var roles = await userManager.GetRolesAsync(user);
-                var principal = CreatePrincipal(user, roles, request);
+                var rolesResult = await userRoleRepository.GetActiveNormalizedRoleNamesForUserAsync(
+                    new GetActiveNormalizedRoleNamesForUserRequest(user.Id),
+                    httpContext.RequestAborted);
+                var principal = AuthSessionPrincipalFactory.Create(
+                    user,
+                    rolesResult.Value?.NormalizedRoleNames ?? [],
+                    request.GetScopes(),
+                    workspaceOverrideId: effectiveWorkspaceId,
+                    isImpersonating: AuthPrincipalReader.IsImpersonating(authenticationResult.Principal),
+                    impersonationOriginalUserId: AuthPrincipalReader.GetImpersonationOriginalUserId(authenticationResult.Principal));
 
                 return Results.SignIn(
                     principal,
@@ -89,63 +103,6 @@ public static class OidcEndpoints
             .WithResilienceScope(EndpointResiliencePolicyScope.Token);
 
         return app;
-    }
-
-    private static ClaimsPrincipal CreatePrincipal(
-        ApplicationUser user,
-        IEnumerable<string> roles,
-        OpenIddictRequest request)
-    {
-        var identity = new ClaimsIdentity(
-            TokenValidationParameters.DefaultAuthenticationType,
-            ApplicationClaimTypes.Name,
-            ApplicationClaimTypes.Role);
-
-        identity.AddClaim(new Claim(ApplicationClaimTypes.Subject, user.Id.ToString()));
-        identity.AddClaim(new Claim(ApplicationClaimTypes.Name, user.UserName ?? string.Empty));
-        identity.AddClaim(new Claim(ApplicationClaimTypes.PreferredUserName, user.UserName ?? string.Empty));
-        identity.AddClaim(new Claim(ApplicationClaimTypes.WorkspaceId, user.WorkspaceId.ToString()));
-        identity.AddClaim(new Claim(ApplicationClaimTypes.RequirePasswordChange, user.RequirePasswordChange.ToString().ToLowerInvariant()));
-
-        if (!string.IsNullOrWhiteSpace(user.Email))
-        {
-            identity.AddClaim(new Claim(OpenIddictConstants.Claims.Email, user.Email));
-        }
-
-        foreach (var role in roles)
-        {
-            identity.AddClaim(new Claim(ApplicationClaimTypes.Role, role));
-        }
-
-        var principal = new ClaimsPrincipal(identity);
-        principal.SetScopes(request.GetScopes());
-
-        if (request.GetScopes().Contains("api", StringComparer.Ordinal))
-        {
-            principal.SetResources("api");
-        }
-
-        principal.SetDestinations(static claim => claim.Type switch
-        {
-            ApplicationClaimTypes.Subject => [OpenIddictConstants.Destinations.AccessToken, OpenIddictConstants.Destinations.IdentityToken],
-            ApplicationClaimTypes.Name or ApplicationClaimTypes.PreferredUserName
-                when claim.Subject is ClaimsIdentity profileIdentity
-                     && profileIdentity.HasScope(OpenIddictConstants.Scopes.Profile)
-                => [OpenIddictConstants.Destinations.AccessToken, OpenIddictConstants.Destinations.IdentityToken],
-            OpenIddictConstants.Claims.Email
-                when claim.Subject is ClaimsIdentity emailIdentity
-                     && emailIdentity.HasScope(OpenIddictConstants.Scopes.Email)
-                => [OpenIddictConstants.Destinations.AccessToken, OpenIddictConstants.Destinations.IdentityToken],
-            ApplicationClaimTypes.Role
-                when claim.Subject is ClaimsIdentity roleIdentity
-                     && roleIdentity.HasScope(OpenIddictConstants.Scopes.Roles)
-                => [OpenIddictConstants.Destinations.AccessToken, OpenIddictConstants.Destinations.IdentityToken],
-            ApplicationClaimTypes.WorkspaceId or ApplicationClaimTypes.RequirePasswordChange
-                => [OpenIddictConstants.Destinations.AccessToken],
-            _ => []
-        });
-
-        return principal;
     }
 
     private static string BuildCurrentRequestPathAndQuery(HttpContext httpContext)

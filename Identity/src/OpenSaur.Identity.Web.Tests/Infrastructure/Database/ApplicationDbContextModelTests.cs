@@ -59,9 +59,9 @@ public sealed class ApplicationDbContextModelTests
         var permissionSeeds = designTimeModel.FindEntityType(typeof(Permission))!.GetSeedData();
         var rolePermissionSeeds = designTimeModel.FindEntityType(typeof(RolePermission))!.GetSeedData();
 
-        Assert.Contains(roleSeeds, seed => string.Equals(seed[nameof(ApplicationRole.Name)] as string, SystemRoles.Administrator, StringComparison.Ordinal));
+        Assert.Contains(roleSeeds, seed => string.Equals(seed[nameof(ApplicationRole.Name)] as string, StandardRoleNames.Administrator, StringComparison.Ordinal));
         Assert.Contains(roleSeeds, seed => string.Equals(seed[nameof(ApplicationRole.Name)] as string, SystemRoles.SuperAdministrator, StringComparison.Ordinal));
-        Assert.Contains(roleSeeds, seed => string.Equals(seed[nameof(ApplicationRole.Name)] as string, SystemRoles.User, StringComparison.Ordinal));
+        Assert.Contains(roleSeeds, seed => string.Equals(seed[nameof(ApplicationRole.Name)] as string, StandardRoleNames.User, StringComparison.Ordinal));
 
         var systemAdministratorSeed = userSeeds.Single(
             seed => string.Equals(seed[nameof(ApplicationUser.UserName)] as string, "SystemAdministrator", StringComparison.Ordinal));
@@ -103,7 +103,7 @@ public sealed class ApplicationDbContextModelTests
                     && Equals(seed[nameof(Permission.PermissionScopeId)], PermissionScopeCatalog.AdministratorPermissionScopeId));
 
         var administratorRoleSeed = roleSeeds.Single(
-            seed => string.Equals(seed[nameof(ApplicationRole.Name)] as string, SystemRoles.Administrator, StringComparison.Ordinal));
+            seed => string.Equals(seed[nameof(ApplicationRole.Name)] as string, StandardRoleNames.Administrator, StringComparison.Ordinal));
         var administratorPermissionSeed = permissionSeeds.Single(
             seed => Equals(seed[nameof(Permission.CodeId)], (int)PermissionCode.Administrator_CanManage));
 
@@ -122,3 +122,4 @@ public sealed class ApplicationDbContextModelTests
         return new ApplicationDbContext(options);
     }
 }
+

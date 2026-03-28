@@ -33,7 +33,7 @@ public sealed class PermissionEndpointsTests : IClassFixture<OpenSaurWebApplicat
     public async Task GetPermissions_WhenCallerCanManage_ReturnsDisplayMetadata()
     {
         var managerCredentials = TestFakers.CreateUserCredentials();
-        await TestIdentitySeeder.SeedUserAsync(_factory, managerCredentials.UserName, managerCredentials.Password, [SystemRoles.Administrator]);
+        await TestIdentitySeeder.SeedUserAsync(_factory, managerCredentials.UserName, managerCredentials.Password, [StandardRoleNames.Administrator]);
 
         using var client = FirstPartyApiTestClient.CreateClient(_factory);
         var accessToken = await FirstPartyApiTestClient.GetAccessTokenAsync(client, managerCredentials.UserName, managerCredentials.Password);
@@ -56,7 +56,7 @@ public sealed class PermissionEndpointsTests : IClassFixture<OpenSaurWebApplicat
     public async Task GetPermissionById_WhenPermissionExists_ReturnsSelectionPayload()
     {
         var managerCredentials = TestFakers.CreateUserCredentials();
-        await TestIdentitySeeder.SeedUserAsync(_factory, managerCredentials.UserName, managerCredentials.Password, [SystemRoles.Administrator]);
+        await TestIdentitySeeder.SeedUserAsync(_factory, managerCredentials.UserName, managerCredentials.Password, [StandardRoleNames.Administrator]);
 
         int codeId;
         using (var scope = _factory.Services.CreateScope())
@@ -84,7 +84,7 @@ public sealed class PermissionEndpointsTests : IClassFixture<OpenSaurWebApplicat
     public async Task GetPermissionById_WhenPermissionCodeChangesInDatabase_ReturnsDatabaseCode()
     {
         var managerCredentials = TestFakers.CreateUserCredentials();
-        await TestIdentitySeeder.SeedUserAsync(_factory, managerCredentials.UserName, managerCredentials.Password, [SystemRoles.Administrator]);
+        await TestIdentitySeeder.SeedUserAsync(_factory, managerCredentials.UserName, managerCredentials.Password, [StandardRoleNames.Administrator]);
 
         int codeId;
         using (var scope = _factory.Services.CreateScope())
@@ -107,3 +107,4 @@ public sealed class PermissionEndpointsTests : IClassFixture<OpenSaurWebApplicat
         Assert.Equal("Administrator.CustomManage", payload.Code);
     }
 }
+

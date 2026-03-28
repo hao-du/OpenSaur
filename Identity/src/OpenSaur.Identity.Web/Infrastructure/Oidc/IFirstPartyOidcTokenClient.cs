@@ -1,9 +1,15 @@
+using System.Security.Claims;
+
 namespace OpenSaur.Identity.Web.Infrastructure.Oidc;
 
 public interface IFirstPartyOidcTokenClient
 {
     Task<FirstPartyOidcTokenResult?> ExchangeAuthorizationCodeAsync(
         string code,
+        CancellationToken cancellationToken);
+
+    Task<FirstPartyOidcTokenResult?> IssueTokensAsync(
+        ClaimsPrincipal principal,
         CancellationToken cancellationToken);
 
     Task<FirstPartyOidcTokenResult?> RefreshAccessTokenAsync(

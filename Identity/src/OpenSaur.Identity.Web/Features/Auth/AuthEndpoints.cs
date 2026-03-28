@@ -2,8 +2,10 @@ using OpenSaur.Identity.Web.Features.Auth.ChangePassword;
 using OpenSaur.Identity.Web.Features.Auth.Login;
 using OpenSaur.Identity.Web.Features.Auth.Logout;
 using OpenSaur.Identity.Web.Features.Auth.Me;
+using OpenSaur.Identity.Web.Features.Auth.Impersonation;
 using OpenSaur.Identity.Web.Features.Auth.WebSession;
 using OpenSaur.Identity.Web.Infrastructure.Authorization;
+using OpenSaur.Identity.Web.Infrastructure.Authorization.Builders;
 using OpenSaur.Identity.Web.Infrastructure.Http.Metadata;
 using OpenSaur.Identity.Web.Infrastructure.Http.RateLimiting;
 
@@ -29,6 +31,19 @@ public static class AuthEndpoints
 
         auth.MapGet("/me", GetCurrentUserHandler.Handle)
             .RequireAuthorization(AuthorizationPolicies.Api);
+
+        auth.MapGet("/impersonation/options/{workspaceId:guid}", GetImpersonationOptionsHandler.HandleAsync)
+            .RequireAuthorization(AuthorizationPolicies.Api)
+            .RequireWorkspaceAccess(restrictToSuperAdministrator: true);
+
+        auth.MapPost("/impersonation/start", StartImpersonationHandler.HandleAsync)
+            .RequireAuthorization(AuthorizationPolicies.Api)
+            .RequireWorkspaceAccess(restrictToSuperAdministrator: true)
+            .WithResilienceScope(EndpointResiliencePolicyScope.Auth);
+
+        auth.MapPost("/impersonation/exit", ExitImpersonationHandler.HandleAsync)
+            .RequireAuthorization(AuthorizationPolicies.Api)
+            .WithResilienceScope(EndpointResiliencePolicyScope.Auth);
 
         auth.MapPost("/web-session/exchange", ExchangeWebSessionHandler.HandleAsync)
             .AllowAnonymous()

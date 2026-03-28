@@ -5,6 +5,10 @@ namespace OpenSaur.Identity.Web.Infrastructure.Database.Repositories.UserRoles.D
 
 public sealed record GetAccessibleUserRolesRequest(CurrentUserContext CurrentUserContext);
 
+public sealed record GetAccessibleRoleAssignmentsRequest(
+    Guid RoleId,
+    CurrentUserContext CurrentUserContext);
+
 public sealed record GetAccessibleUserRoleByIdRequest(
     Guid UserRoleId,
     CurrentUserContext CurrentUserContext,
@@ -15,8 +19,14 @@ public sealed record GetUserRolesByUserAndRoleRequest(
     Guid RoleId,
     Guid? ExcludedUserRoleId = null);
 
+public sealed record GetActiveNormalizedRoleNamesForUserRequest(Guid UserId);
+
 public sealed record GetAccessibleUserRolesResponse(IReadOnlyList<ApplicationUserRole> UserRoles);
+
+public sealed record GetAccessibleRoleAssignmentsResponse(IReadOnlyList<ApplicationUserRole> UserRoles);
 
 public sealed record GetAccessibleUserRoleByIdResponse(ApplicationUserRole UserRole);
 
 public sealed record GetUserRolesByUserAndRoleResponse(IReadOnlyList<ApplicationUserRole> UserRoles);
+
+public sealed record GetActiveNormalizedRoleNamesForUserResponse(IReadOnlyList<string> NormalizedRoleNames);

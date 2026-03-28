@@ -15,6 +15,12 @@ public static class ApplicationClaimTypes
 
     public const string RequirePasswordChange = "require_password_change";
 
+    public const string ImpersonationActive = "impersonation_active";
+
+    public const string ImpersonationOriginalUserId = "impersonation_original_user_id";
+
+    public const string ImpersonationWorkspaceId = "impersonation_workspace_id";
+
     public const string WorkspaceId = "workspace_id";
 
     public const string Subject = JwtRegisteredClaimNames.Sub;

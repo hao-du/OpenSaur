@@ -24,4 +24,6 @@ public sealed class FirstPartyWebOidcOptions
     public string ClientSecret { get; set; } = string.Empty;
 
     public string RedirectUri { get; set; } = string.Empty;
+
+    public string Scope { get; set; } = "openid profile email roles offline_access api";
 }

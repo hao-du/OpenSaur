@@ -8,16 +8,25 @@ import {
   WorkspaceFiltersDrawer,
   type WorkspaceFilterValues,
   WorkspaceFormDrawer,
+  WorkspaceImpersonationDialog,
   WorkspaceTable
 } from "../../features/workspaces/components";
+import {
+  useCurrentUserQuery,
+  useImpersonationOptionsQuery,
+  useStartImpersonation
+} from "../../features/auth/hooks";
 import {
   useCreateWorkspace,
   useEditWorkspace,
   useWorkspaceQuery,
   useWorkspacesQuery
 } from "../../features/workspaces/hooks";
+import { authSessionStore } from "../../features/auth/state/authSessionStore";
+import { useNavigate } from "react-router-dom";
 
 export function WorkspacesPage() {
+  const navigate = useNavigate();
   const [filters, setFilters] = useState<WorkspaceFilterValues>({
     search: "",
     status: "active"
@@ -25,12 +34,19 @@ export function WorkspacesPage() {
   const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
   const [isCreateDrawerOpen, setIsCreateDrawerOpen] = useState(false);
   const [selectedWorkspaceId, setSelectedWorkspaceId] = useState<string | null>(null);
+  const [impersonationWorkspaceId, setImpersonationWorkspaceId] = useState<string | null>(null);
+  const { fetchCurrentUser } = useCurrentUserQuery();
   const {
     data: workspaces = [],
     isError,
     isLoading,
     refetch
   } = useWorkspacesQuery();
+  const {
+    data: impersonationOptions,
+    isError: isImpersonationOptionsError,
+    isLoading: isImpersonationOptionsLoading
+  } = useImpersonationOptionsQuery(impersonationWorkspaceId);
   const {
     createWorkspace,
     errorMessage: createErrorMessage,
@@ -43,6 +59,12 @@ export function WorkspacesPage() {
     isEditing,
     resetError: resetEditError
   } = useEditWorkspace();
+  const {
+    errorMessage: startImpersonationErrorMessage,
+    isStartingImpersonation,
+    resetError: resetStartImpersonationError,
+    startImpersonation
+  } = useStartImpersonation();
   const {
     data: selectedWorkspace,
     isLoading: isSelectedWorkspaceLoading
@@ -79,6 +101,15 @@ export function WorkspacesPage() {
       name: values.name
     });
     setSelectedWorkspaceId(null);
+  }
+
+  async function handleStartImpersonation(values: { userId: string | null; workspaceId: string; }) {
+    const session = await startImpersonation(values);
+    authSessionStore.setAuthenticatedSession(session);
+    await fetchCurrentUser();
+    authSessionStore.broadcastSessionRefresh();
+    setImpersonationWorkspaceId(null);
+    navigate("/", { replace: true });
   }
 
   return (
@@ -122,6 +153,10 @@ export function WorkspacesPage() {
             resetEditError();
             setSelectedWorkspaceId(workspaceId);
           }}
+          onLoginAsWorkspace={workspaceId => {
+            resetStartImpersonationError();
+            setImpersonationWorkspaceId(workspaceId);
+          }}
           onRetry={() => {
             void refetch();
           }}
@@ -162,6 +197,21 @@ export function WorkspacesPage() {
           setSelectedWorkspaceId(null);
         }}
         onSubmit={handleEditWorkspace}
+      />
+      <WorkspaceImpersonationDialog
+        errorMessage={
+          isImpersonationOptionsError
+            ? "We couldn't load the workspace users right now."
+            : startImpersonationErrorMessage
+        }
+        isLoading={isImpersonationOptionsLoading}
+        isOpen={impersonationWorkspaceId !== null}
+        isSubmitting={isStartingImpersonation}
+        onClose={() => {
+          setImpersonationWorkspaceId(null);
+        }}
+        onSubmit={handleStartImpersonation}
+        options={impersonationOptions ?? null}
       />
     </ProtectedShellTemplate>
   );

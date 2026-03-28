@@ -22,6 +22,22 @@ public class UserRepository(ApplicationDbContext dbContext)
         return Result<GetManagedUsersResponse>.Success(new GetManagedUsersResponse(users));
     }
 
+    public virtual async Task<Result<GetManagedActiveUsersResponse>> GetManagedActiveUsersAsync(
+        GetManagedActiveUsersRequest request,
+        CancellationToken cancellationToken)
+    {
+        var users = await ApplyManagedScope(
+                dbContext.Users
+                    .AsNoTracking()
+                    .Include(user => user.Workspace)
+                    .Where(user => user.IsActive)
+                    .OrderBy(user => user.UserName),
+                request.CurrentUserContext)
+            .ToListAsync(cancellationToken);
+
+        return Result<GetManagedActiveUsersResponse>.Success(new GetManagedActiveUsersResponse(users));
+    }
+
     public virtual async Task<Result<GetManagedUserByIdResponse>> GetManagedUserByIdAsync(
         GetManagedUserByIdRequest request,
         CancellationToken cancellationToken)
@@ -80,7 +96,7 @@ public class UserRepository(ApplicationDbContext dbContext)
         IQueryable<ApplicationUser> query,
         CurrentUserContext currentUserContext)
     {
-        return currentUserContext.IsSuperAdministrator
+        return currentUserContext.HasGlobalWorkspaceScope
             ? query
             : query.Where(candidate => candidate.WorkspaceId == currentUserContext.WorkspaceId);
     }

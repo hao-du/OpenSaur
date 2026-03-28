@@ -6,6 +6,15 @@ import * as authApi from "../../features/auth/api/authApi";
 import { authSessionStore } from "../../features/auth/state/authSessionStore";
 import { appRoutes } from "./AppRouter";
 
+const useWorkspacesQueryMock = vi.fn();
+const useWorkspaceQueryMock = vi.fn();
+const useCreateWorkspaceMock = vi.fn();
+const useEditWorkspaceMock = vi.fn();
+const useRolesQueryMock = vi.fn();
+const useRoleAssignmentsQueryMock = vi.fn();
+const useAssignmentCandidatesQueryMock = vi.fn();
+const useSaveRoleAssignmentsMock = vi.fn();
+
 vi.mock("../../features/auth/api/authApi", async () => {
   const actual = await vi.importActual<typeof import("../../features/auth/api/authApi")>("../../features/auth/api/authApi");
 
@@ -14,6 +23,33 @@ vi.mock("../../features/auth/api/authApi", async () => {
     getCurrentUser: vi.fn()
   };
 });
+
+vi.mock("../../features/workspaces/hooks", () => ({
+  useCreateWorkspace: () => useCreateWorkspaceMock(),
+  useEditWorkspace: () => useEditWorkspaceMock(),
+  useWorkspaceQuery: (...args: unknown[]) => useWorkspaceQueryMock(...args),
+  useWorkspacesQuery: () => useWorkspacesQueryMock()
+}));
+
+vi.mock("../../features/roles/hooks", () => ({
+  useCreateRole: vi.fn(),
+  useEditRole: vi.fn(),
+  usePermissionsQuery: vi.fn(() => ({
+    data: [],
+    isLoading: false
+  })),
+  useRoleQuery: vi.fn(() => ({
+    data: null,
+    isLoading: false
+  })),
+  useRolesQuery: () => useRolesQueryMock()
+}));
+
+vi.mock("../../features/role-assignments/hooks", () => ({
+  useAssignmentCandidatesQuery: () => useAssignmentCandidatesQueryMock(),
+  useRoleAssignmentsQuery: (...args: unknown[]) => useRoleAssignmentsQueryMock(...args),
+  useSaveRoleAssignments: () => useSaveRoleAssignmentsMock()
+}));
 
 function setDesktopMode(isDesktop: boolean) {
   Object.defineProperty(window, "matchMedia", {
@@ -43,6 +79,65 @@ describe("AppRouter", () => {
     vi.resetAllMocks();
     window.history.replaceState({}, "", "/");
     setDesktopMode(true);
+    useWorkspacesQueryMock.mockReturnValue({
+      data: [
+        {
+          description: "Primary staff workspace",
+          id: "workspace-1",
+          isActive: true,
+          name: "Operations"
+        }
+      ],
+      isError: false,
+      isLoading: false,
+      refetch: vi.fn()
+    });
+    useWorkspaceQueryMock.mockReturnValue({
+      data: null,
+      isLoading: false
+    });
+    useCreateWorkspaceMock.mockReturnValue({
+      createWorkspace: vi.fn(),
+      errorMessage: null,
+      isCreating: false,
+      resetError: vi.fn()
+    });
+    useEditWorkspaceMock.mockReturnValue({
+      editWorkspace: vi.fn(),
+      errorMessage: null,
+      isEditing: false,
+      resetError: vi.fn()
+    });
+    useRolesQueryMock.mockReturnValue({
+      data: [
+        {
+          description: "Administrators manage identity configuration.",
+          id: "role-1",
+          isActive: true,
+          name: "Administrator",
+          normalizedName: "ADMINISTRATOR"
+        }
+      ],
+      isError: false,
+      isLoading: false,
+      refetch: vi.fn()
+    });
+    useRoleAssignmentsQueryMock.mockReturnValue({
+      data: [],
+      isError: false,
+      isLoading: false
+    });
+    useAssignmentCandidatesQueryMock.mockReturnValue({
+      data: [],
+      isError: false,
+      isLoading: false
+    });
+    useSaveRoleAssignmentsMock.mockReturnValue({
+      errorMessage: null,
+      isSaving: false,
+      resetError: vi.fn(),
+      saveRoleAssignments: vi.fn()
+    });
   });
 
   function renderRouter(initialEntry: string) {
@@ -66,9 +161,11 @@ describe("AppRouter", () => {
     });
     vi.mocked(authApi.getCurrentUser).mockResolvedValue({
       id: "user-1",
+      isImpersonating: false,
       requirePasswordChange: false,
       roles: ["Administrator"],
-      userName: "workspace.admin"
+      userName: "workspace.admin",
+      workspaceName: "Protected workspace"
     });
     renderRouter("/users");
 
@@ -87,9 +184,11 @@ describe("AppRouter", () => {
     });
     vi.mocked(authApi.getCurrentUser).mockResolvedValue({
       id: "user-2",
+      isImpersonating: false,
       requirePasswordChange: false,
       roles: ["Administrator"],
-      userName: "workspace.admin"
+      userName: "workspace.admin",
+      workspaceName: "Protected workspace"
     });
     renderRouter("/roles");
 
@@ -100,16 +199,40 @@ describe("AppRouter", () => {
     expect(screen.queryByRole("heading", { level: 1, name: /roles/i })).toBeNull();
   });
 
-  it("renders the workspace placeholder page for super administrators", async () => {
+  it("redirects non-super-administrators away from the role-assignments route", async () => {
+    authSessionStore.setAuthenticatedSession({
+      accessToken: "access-token",
+      expiresAt: createFutureExpiry()
+    });
+    vi.mocked(authApi.getCurrentUser).mockResolvedValue({
+      id: "user-2",
+      isImpersonating: false,
+      requirePasswordChange: false,
+      roles: ["Administrator"],
+      userName: "workspace.admin",
+      workspaceName: "Protected workspace"
+    });
+    renderRouter("/role-assignments");
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { level: 1, name: /dashboard/i })).toBeDefined();
+    });
+
+    expect(screen.queryByRole("heading", { level: 1, name: /role assignments/i })).toBeNull();
+  });
+
+  it("renders the workspace management page for super administrators", async () => {
     authSessionStore.setAuthenticatedSession({
       accessToken: "access-token",
       expiresAt: createFutureExpiry()
     });
     vi.mocked(authApi.getCurrentUser).mockResolvedValue({
       id: "user-3",
+      isImpersonating: false,
       requirePasswordChange: false,
-      roles: ["SuperAdministrator"],
-      userName: "systemadministrator"
+      roles: ["SUPERADMINISTRATOR"],
+      userName: "systemadministrator",
+      workspaceName: "All workspaces"
     });
     renderRouter("/workspaces");
 
@@ -117,7 +240,53 @@ describe("AppRouter", () => {
       expect(screen.getByRole("heading", { level: 1, name: /workspace/i })).toBeDefined();
     });
 
-    expect(screen.getByText(/coming soon/i)).toBeDefined();
+    expect(screen.getByRole("button", { name: /^create$/i })).toBeDefined();
+    expect(screen.getByRole("cell", { name: /operations/i })).toBeDefined();
     expect(screen.getByRole("link", { name: /^workspace$/i }).getAttribute("aria-current")).toBe("page");
+  });
+
+  it("redirects impersonated super administrators away from the workspace route", async () => {
+    authSessionStore.setAuthenticatedSession({
+      accessToken: "access-token",
+      expiresAt: createFutureExpiry()
+    });
+    vi.mocked(authApi.getCurrentUser).mockResolvedValue({
+      id: "user-4",
+      isImpersonating: true,
+      requirePasswordChange: false,
+      roles: ["SUPERADMINISTRATOR"],
+      userName: "finance.superadmin",
+      workspaceName: "Finance"
+    });
+    renderRouter("/workspaces");
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { level: 1, name: /dashboard/i })).toBeDefined();
+    });
+
+    expect(screen.queryByRole("heading", { level: 1, name: /workspace/i })).toBeNull();
+  });
+
+  it("renders the role assignments page for impersonated super administrators", async () => {
+    authSessionStore.setAuthenticatedSession({
+      accessToken: "access-token",
+      expiresAt: createFutureExpiry()
+    });
+    vi.mocked(authApi.getCurrentUser).mockResolvedValue({
+      id: "user-5",
+      isImpersonating: true,
+      requirePasswordChange: false,
+      roles: ["SUPERADMINISTRATOR"],
+      userName: "finance.superadmin",
+      workspaceName: "Finance"
+    });
+    renderRouter("/role-assignments");
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { level: 1, name: /role assignments/i })).toBeDefined();
+    });
+
+    expect(screen.getByRole("button", { name: /edit assignments/i })).toBeDefined();
+    expect(screen.getByRole("link", { name: /^role assignments$/i }).getAttribute("aria-current")).toBe("page");
   });
 });

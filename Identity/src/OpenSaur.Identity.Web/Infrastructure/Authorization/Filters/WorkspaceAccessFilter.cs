@@ -5,7 +5,9 @@ using OpenSaur.Identity.Web.Infrastructure.Security;
 
 namespace OpenSaur.Identity.Web.Infrastructure.Authorization.Filters;
 
-public sealed class WorkspaceAccessFilter(bool restrictToSuperAdministrator) : IEndpointFilter
+public sealed class WorkspaceAccessFilter(
+    bool restrictToSuperAdministrator,
+    bool allowImpersonatedSuperAdministrator = false) : IEndpointFilter
 {
     public async ValueTask<object?> InvokeAsync(
         EndpointFilterInvocationContext context,
@@ -24,6 +26,7 @@ public sealed class WorkspaceAccessFilter(bool restrictToSuperAdministrator) : I
         var hasWorkspaceAccess = await userAuthorizationService.HasWorkspaceAccessAsync(
             currentUserContext,
             restrictToSuperAdministrator,
+            allowImpersonatedSuperAdministrator,
             context.HttpContext.RequestAborted);
         if (!hasWorkspaceAccess)
         {

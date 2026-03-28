@@ -6,7 +6,8 @@ public static class WorkspaceEndpointConventionBuilderExtensions
 {
     public static TBuilder RequireWorkspaceAccess<TBuilder>(
         this TBuilder builder,
-        bool restrictToSuperAdministrator = false)
+        bool restrictToSuperAdministrator = false,
+        bool allowImpersonatedSuperAdministrator = false)
         where TBuilder : IEndpointConventionBuilder
     {
         ArgumentNullException.ThrowIfNull(builder);
@@ -14,7 +15,9 @@ public static class WorkspaceEndpointConventionBuilderExtensions
         builder.AddEndpointFilterFactory(
             (_, next) =>
             {
-                var filter = new WorkspaceAccessFilter(restrictToSuperAdministrator);
+                var filter = new WorkspaceAccessFilter(
+                    restrictToSuperAdministrator,
+                    allowImpersonatedSuperAdministrator);
                 return invocationContext => filter.InvokeAsync(invocationContext, next);
             });
 

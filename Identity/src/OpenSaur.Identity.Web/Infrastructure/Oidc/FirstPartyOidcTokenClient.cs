@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Options;
 using OpenIddict.Abstractions;
 using OpenIddict.Server;
+using System.Security.Claims;
 using static OpenIddict.Abstractions.OpenIddictConstants;
 
 namespace OpenSaur.Identity.Web.Infrastructure.Oidc;
@@ -67,23 +68,31 @@ public sealed class FirstPartyOidcTokenClient : IFirstPartyOidcTokenClient
             cancellationToken);
     }
 
+    public async Task<FirstPartyOidcTokenResult?> IssueTokensAsync(
+        ClaimsPrincipal principal,
+        CancellationToken cancellationToken)
+    {
+        var firstPartyWeb = _oidcOptions.Value.FirstPartyWeb;
+        if (string.IsNullOrWhiteSpace(firstPartyWeb.ClientId))
+        {
+            throw new InvalidOperationException("OIDC first-party web client configuration is required.");
+        }
+
+        var transaction = await CreateTransactionAsync(
+            new OpenIddictRequest
+            {
+                ClientId = firstPartyWeb.ClientId
+            },
+            cancellationToken);
+
+        return await ProcessSignInAsync(transaction, transaction.Request!, principal);
+    }
+
     private async Task<FirstPartyOidcTokenResult?> ProcessTokenRequestAsync(
         OpenIddictRequest request,
         CancellationToken cancellationToken)
     {
-        var issuer = _oidcOptions.Value.Issuer;
-        if (!Uri.TryCreate(issuer, UriKind.Absolute, out var issuerUri))
-        {
-            throw new InvalidOperationException("OIDC issuer configuration is invalid.");
-        }
-
-        var transaction = await _factory.CreateTransactionAsync();
-        transaction.CancellationToken = cancellationToken;
-        transaction.EndpointType = OpenIddictServerEndpointType.Token;
-        transaction.BaseUri = issuerUri;
-        transaction.RequestUri = new Uri(issuerUri, "/connect/token");
-        transaction.Request = request;
-        transaction.Properties[InternalFirstPartyTokenResponseHandler.TransactionPropertyName] = true;
+        var transaction = await CreateTransactionAsync(request, cancellationToken);
 
         var validateContext = new OpenIddictServerEvents.ValidateTokenRequestContext(transaction)
         {
@@ -103,6 +112,34 @@ public sealed class FirstPartyOidcTokenClient : IFirstPartyOidcTokenClient
             return null;
         }
 
+        return await ProcessSignInAsync(transaction, request, principal);
+    }
+
+    private async Task<OpenIddictServerTransaction> CreateTransactionAsync(
+        OpenIddictRequest request,
+        CancellationToken cancellationToken)
+    {
+        var issuer = _oidcOptions.Value.Issuer;
+        if (!Uri.TryCreate(issuer, UriKind.Absolute, out var issuerUri))
+        {
+            throw new InvalidOperationException("OIDC issuer configuration is invalid.");
+        }
+
+        var transaction = await _factory.CreateTransactionAsync();
+        transaction.CancellationToken = cancellationToken;
+        transaction.EndpointType = OpenIddictServerEndpointType.Token;
+        transaction.BaseUri = issuerUri;
+        transaction.RequestUri = new Uri(issuerUri, "/connect/token");
+        transaction.Request = request;
+        transaction.Properties[InternalFirstPartyTokenResponseHandler.TransactionPropertyName] = true;
+        return transaction;
+    }
+
+    private async Task<FirstPartyOidcTokenResult?> ProcessSignInAsync(
+        OpenIddictServerTransaction transaction,
+        OpenIddictRequest request,
+        ClaimsPrincipal principal)
+    {
         var signInContext = new OpenIddictServerEvents.ProcessSignInContext(transaction)
         {
             Request = request,

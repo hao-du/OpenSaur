@@ -35,7 +35,7 @@ public sealed class WorkspaceEndpointsTests : IClassFixture<OpenSaurWebApplicati
     public async Task GetWorkspaces_WhenCallerIsAdministrator_ReturnsOnlyCurrentWorkspace()
     {
         var administratorCredentials = TestFakers.CreateUserCredentials();
-        await TestIdentitySeeder.SeedUserAsync(_factory, administratorCredentials.UserName, administratorCredentials.Password, [SystemRoles.Administrator]);
+        await TestIdentitySeeder.SeedUserAsync(_factory, administratorCredentials.UserName, administratorCredentials.Password, [StandardRoleNames.Administrator]);
         var otherWorkspaceId = await TestIdentitySeeder.SeedWorkspaceAsync(_factory, TestFakers.CreateWorkspaceName());
 
         using var client = FirstPartyApiTestClient.CreateClient(_factory);
@@ -52,7 +52,7 @@ public sealed class WorkspaceEndpointsTests : IClassFixture<OpenSaurWebApplicati
     public async Task GetWorkspaceById_WhenAdministratorTargetsDifferentWorkspace_ReturnsNotFound()
     {
         var administratorCredentials = TestFakers.CreateUserCredentials();
-        await TestIdentitySeeder.SeedUserAsync(_factory, administratorCredentials.UserName, administratorCredentials.Password, [SystemRoles.Administrator]);
+        await TestIdentitySeeder.SeedUserAsync(_factory, administratorCredentials.UserName, administratorCredentials.Password, [StandardRoleNames.Administrator]);
         var otherWorkspaceId = await TestIdentitySeeder.SeedWorkspaceAsync(_factory, TestFakers.CreateWorkspaceName());
 
         using var client = FirstPartyApiTestClient.CreateClient(_factory);
@@ -67,7 +67,7 @@ public sealed class WorkspaceEndpointsTests : IClassFixture<OpenSaurWebApplicati
     public async Task PostCreate_WhenCallerIsAdministrator_ReturnsForbidden()
     {
         var administratorCredentials = TestFakers.CreateUserCredentials();
-        await TestIdentitySeeder.SeedUserAsync(_factory, administratorCredentials.UserName, administratorCredentials.Password, [SystemRoles.Administrator]);
+        await TestIdentitySeeder.SeedUserAsync(_factory, administratorCredentials.UserName, administratorCredentials.Password, [StandardRoleNames.Administrator]);
 
         using var client = FirstPartyApiTestClient.CreateClient(_factory);
         var accessToken = await FirstPartyApiTestClient.GetAccessTokenAsync(client, administratorCredentials.UserName, administratorCredentials.Password);
@@ -132,3 +132,4 @@ public sealed class WorkspaceEndpointsTests : IClassFixture<OpenSaurWebApplicati
         Assert.False(workspace.IsActive);
     }
 }
+

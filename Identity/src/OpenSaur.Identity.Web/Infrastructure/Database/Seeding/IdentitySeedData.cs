@@ -31,9 +31,9 @@ internal static class IdentitySeedData
 
     internal static IEnumerable<ApplicationRole> GetRoles()
     {
-        yield return CreateRole(AdministratorRoleId, SystemRoles.Administrator, "Default workspace-scoped administrator role.");
+        yield return CreateRole(AdministratorRoleId, StandardRoleNames.Administrator, "Default workspace-scoped administrator role.");
         yield return CreateRole(SuperAdministratorRoleId, SystemRoles.SuperAdministrator, "Default cross-workspace super administrator role.");
-        yield return CreateRole(UserRoleId, SystemRoles.User, "Default base user role.");
+        yield return CreateRole(UserRoleId, StandardRoleNames.User, "Default base user role.");
     }
 
     internal static IEnumerable<ApplicationUser> GetUsers()

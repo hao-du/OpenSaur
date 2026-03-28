@@ -9,6 +9,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using System.Text.Json;
+using System.Security.Claims;
 using OpenIddict.Abstractions;
 using OpenSaur.Identity.Web.Infrastructure.Database;
 using OpenSaur.Identity.Web.Infrastructure.Oidc;
@@ -261,6 +262,19 @@ public sealed class OpenSaurWebApplicationFactory : WebApplicationFactory<Progra
                 accessToken,
                 refreshToken,
                 DateTimeOffset.UtcNow.AddSeconds(expiresInSeconds));
+        }
+
+        public async Task<FirstPartyOidcTokenResult?> IssueTokensAsync(
+            ClaimsPrincipal principal,
+            CancellationToken cancellationToken)
+        {
+            using var scope = _factory.Services.CreateScope();
+            var dispatcher = scope.ServiceProvider.GetRequiredService<OpenIddict.Server.IOpenIddictServerDispatcher>();
+            var factory = scope.ServiceProvider.GetRequiredService<OpenIddict.Server.IOpenIddictServerFactory>();
+            var oidcOptions = scope.ServiceProvider.GetRequiredService<Microsoft.Extensions.Options.IOptions<OidcOptions>>();
+            var realClient = new FirstPartyOidcTokenClient(dispatcher, factory, oidcOptions);
+
+            return await realClient.IssueTokensAsync(principal, cancellationToken);
         }
 
         public async Task<FirstPartyOidcTokenResult?> RefreshAccessTokenAsync(

@@ -42,13 +42,13 @@ public sealed class UserEndpointsTests : IClassFixture<OpenSaurWebApplicationFac
         var sameWorkspaceUserCredentials = TestFakers.CreateUserCredentials();
         var otherWorkspaceUserCredentials = TestFakers.CreateUserCredentials();
 
-        await TestIdentitySeeder.SeedUserAsync(_factory, managerCredentials.UserName, managerCredentials.Password, [SystemRoles.Administrator]);
-        await TestIdentitySeeder.SeedUserAsync(_factory, sameWorkspaceUserCredentials.UserName, sameWorkspaceUserCredentials.Password, [SystemRoles.User]);
+        await TestIdentitySeeder.SeedUserAsync(_factory, managerCredentials.UserName, managerCredentials.Password, [StandardRoleNames.Administrator]);
+        await TestIdentitySeeder.SeedUserAsync(_factory, sameWorkspaceUserCredentials.UserName, sameWorkspaceUserCredentials.Password, [StandardRoleNames.User]);
         await TestIdentitySeeder.SeedUserAsync(
             _factory,
             otherWorkspaceUserCredentials.UserName,
             otherWorkspaceUserCredentials.Password,
-            [SystemRoles.User],
+            [StandardRoleNames.User],
             workspaceName: TestFakers.CreateWorkspaceName());
 
         using var client = FirstPartyApiTestClient.CreateClient(_factory);
@@ -67,12 +67,12 @@ public sealed class UserEndpointsTests : IClassFixture<OpenSaurWebApplicationFac
         var managerCredentials = TestFakers.CreateUserCredentials();
         var otherWorkspaceUserCredentials = TestFakers.CreateUserCredentials();
 
-        await TestIdentitySeeder.SeedUserAsync(_factory, managerCredentials.UserName, managerCredentials.Password, [SystemRoles.Administrator]);
+        await TestIdentitySeeder.SeedUserAsync(_factory, managerCredentials.UserName, managerCredentials.Password, [StandardRoleNames.Administrator]);
         var otherWorkspaceUserId = await TestIdentitySeeder.SeedUserAsync(
             _factory,
             otherWorkspaceUserCredentials.UserName,
             otherWorkspaceUserCredentials.Password,
-            [SystemRoles.User],
+            [StandardRoleNames.User],
             workspaceName: TestFakers.CreateWorkspaceName());
 
         using var client = FirstPartyApiTestClient.CreateClient(_factory);
@@ -91,7 +91,7 @@ public sealed class UserEndpointsTests : IClassFixture<OpenSaurWebApplicationFac
             _factory,
             otherWorkspaceUserCredentials.UserName,
             otherWorkspaceUserCredentials.Password,
-            [SystemRoles.User],
+            [StandardRoleNames.User],
             workspaceName: TestFakers.CreateWorkspaceName());
 
         using var client = FirstPartyApiTestClient.CreateClient(_factory);
@@ -109,7 +109,7 @@ public sealed class UserEndpointsTests : IClassFixture<OpenSaurWebApplicationFac
         var managerCredentials = TestFakers.CreateUserCredentials();
         var newUserCredentials = TestFakers.CreateUserCredentials();
 
-        await TestIdentitySeeder.SeedUserAsync(_factory, managerCredentials.UserName, managerCredentials.Password, [SystemRoles.Administrator]);
+        await TestIdentitySeeder.SeedUserAsync(_factory, managerCredentials.UserName, managerCredentials.Password, [StandardRoleNames.Administrator]);
 
         using var client = FirstPartyApiTestClient.CreateClient(_factory);
         var accessToken = await FirstPartyApiTestClient.GetAccessTokenAsync(client, managerCredentials.UserName, managerCredentials.Password);
@@ -143,8 +143,8 @@ public sealed class UserEndpointsTests : IClassFixture<OpenSaurWebApplicationFac
         var managerCredentials = TestFakers.CreateUserCredentials();
         var targetCredentials = TestFakers.CreateUserCredentials();
 
-        await TestIdentitySeeder.SeedUserAsync(_factory, managerCredentials.UserName, managerCredentials.Password, [SystemRoles.Administrator]);
-        var targetUserId = await TestIdentitySeeder.SeedUserAsync(_factory, targetCredentials.UserName, targetCredentials.Password, [SystemRoles.User]);
+        await TestIdentitySeeder.SeedUserAsync(_factory, managerCredentials.UserName, managerCredentials.Password, [StandardRoleNames.Administrator]);
+        var targetUserId = await TestIdentitySeeder.SeedUserAsync(_factory, targetCredentials.UserName, targetCredentials.Password, [StandardRoleNames.User]);
 
         using var client = FirstPartyApiTestClient.CreateClient(_factory);
         var accessToken = await FirstPartyApiTestClient.GetAccessTokenAsync(client, managerCredentials.UserName, managerCredentials.Password);
@@ -177,12 +177,12 @@ public sealed class UserEndpointsTests : IClassFixture<OpenSaurWebApplicationFac
         var managerCredentials = TestFakers.CreateUserCredentials();
         var targetCredentials = TestFakers.CreateUserCredentials();
 
-        await TestIdentitySeeder.SeedUserAsync(_factory, managerCredentials.UserName, managerCredentials.Password, [SystemRoles.Administrator]);
+        await TestIdentitySeeder.SeedUserAsync(_factory, managerCredentials.UserName, managerCredentials.Password, [StandardRoleNames.Administrator]);
         var targetUserId = await TestIdentitySeeder.SeedUserAsync(
             _factory,
             targetCredentials.UserName,
             targetCredentials.Password,
-            [SystemRoles.User],
+            [StandardRoleNames.User],
             workspaceName: TestFakers.CreateWorkspaceName());
 
         using var client = FirstPartyApiTestClient.CreateClient(_factory);
@@ -210,8 +210,8 @@ public sealed class UserEndpointsTests : IClassFixture<OpenSaurWebApplicationFac
         var targetCredentials = TestFakers.CreateUserCredentials();
         var resetPassword = TestFakers.CreateDifferentPassword(targetCredentials.Password);
 
-        await TestIdentitySeeder.SeedUserAsync(_factory, managerCredentials.UserName, managerCredentials.Password, [SystemRoles.Administrator]);
-        var targetUserId = await TestIdentitySeeder.SeedUserAsync(_factory, targetCredentials.UserName, targetCredentials.Password, [SystemRoles.User]);
+        await TestIdentitySeeder.SeedUserAsync(_factory, managerCredentials.UserName, managerCredentials.Password, [StandardRoleNames.Administrator]);
+        var targetUserId = await TestIdentitySeeder.SeedUserAsync(_factory, targetCredentials.UserName, targetCredentials.Password, [StandardRoleNames.User]);
 
         using var client = FirstPartyApiTestClient.CreateClient(_factory);
         var accessToken = await FirstPartyApiTestClient.GetAccessTokenAsync(client, managerCredentials.UserName, managerCredentials.Password);
@@ -249,12 +249,12 @@ public sealed class UserEndpointsTests : IClassFixture<OpenSaurWebApplicationFac
         var managerCredentials = TestFakers.CreateUserCredentials();
         var targetCredentials = TestFakers.CreateUserCredentials();
 
-        await TestIdentitySeeder.SeedUserAsync(_factory, managerCredentials.UserName, managerCredentials.Password, [SystemRoles.Administrator]);
+        await TestIdentitySeeder.SeedUserAsync(_factory, managerCredentials.UserName, managerCredentials.Password, [StandardRoleNames.Administrator]);
         var targetUserId = await TestIdentitySeeder.SeedUserAsync(
             _factory,
             targetCredentials.UserName,
             targetCredentials.Password,
-            [SystemRoles.User],
+            [StandardRoleNames.User],
             workspaceName: TestFakers.CreateWorkspaceName());
 
         using var client = FirstPartyApiTestClient.CreateClient(_factory);
@@ -274,9 +274,9 @@ public sealed class UserEndpointsTests : IClassFixture<OpenSaurWebApplicationFac
     {
         var administratorCredentials = TestFakers.CreateUserCredentials();
         var targetCredentials = TestFakers.CreateUserCredentials();
-        var targetUserId = await TestIdentitySeeder.SeedUserAsync(_factory, targetCredentials.UserName, targetCredentials.Password, [SystemRoles.User]);
+        var targetUserId = await TestIdentitySeeder.SeedUserAsync(_factory, targetCredentials.UserName, targetCredentials.Password, [StandardRoleNames.User]);
         var targetWorkspaceId = await TestIdentitySeeder.SeedWorkspaceAsync(_factory, TestFakers.CreateWorkspaceName());
-        await TestIdentitySeeder.SeedUserAsync(_factory, administratorCredentials.UserName, administratorCredentials.Password, [SystemRoles.Administrator]);
+        await TestIdentitySeeder.SeedUserAsync(_factory, administratorCredentials.UserName, administratorCredentials.Password, [StandardRoleNames.Administrator]);
 
         using var client = FirstPartyApiTestClient.CreateClient(_factory);
         var accessToken = await FirstPartyApiTestClient.GetAccessTokenAsync(client, administratorCredentials.UserName, administratorCredentials.Password);
@@ -294,7 +294,7 @@ public sealed class UserEndpointsTests : IClassFixture<OpenSaurWebApplicationFac
     public async Task PutChangeWorkspace_WhenCallerIsSuperAdministrator_MovesUserToTargetWorkspace()
     {
         var targetCredentials = TestFakers.CreateUserCredentials();
-        var targetUserId = await TestIdentitySeeder.SeedUserAsync(_factory, targetCredentials.UserName, targetCredentials.Password, [SystemRoles.User]);
+        var targetUserId = await TestIdentitySeeder.SeedUserAsync(_factory, targetCredentials.UserName, targetCredentials.Password, [StandardRoleNames.User]);
         var targetWorkspaceId = await TestIdentitySeeder.SeedWorkspaceAsync(_factory, TestFakers.CreateWorkspaceName());
 
         using var client = FirstPartyApiTestClient.CreateClient(_factory);
@@ -319,7 +319,7 @@ public sealed class UserEndpointsTests : IClassFixture<OpenSaurWebApplicationFac
     public async Task PutChangeWorkspace_WhenTargetWorkspaceIsInactive_ReturnsValidationProblem()
     {
         var targetCredentials = TestFakers.CreateUserCredentials();
-        var targetUserId = await TestIdentitySeeder.SeedUserAsync(_factory, targetCredentials.UserName, targetCredentials.Password, [SystemRoles.User]);
+        var targetUserId = await TestIdentitySeeder.SeedUserAsync(_factory, targetCredentials.UserName, targetCredentials.Password, [StandardRoleNames.User]);
         var targetWorkspaceId = await TestIdentitySeeder.SeedWorkspaceAsync(_factory, TestFakers.CreateWorkspaceName(), isActive: false);
 
         using var client = FirstPartyApiTestClient.CreateClient(_factory);
@@ -334,3 +334,4 @@ public sealed class UserEndpointsTests : IClassFixture<OpenSaurWebApplicationFac
         await ApiResponseReader.ReadFailureEnvelopeAsync(response, HttpStatusCode.BadRequest);
     }
 }
+

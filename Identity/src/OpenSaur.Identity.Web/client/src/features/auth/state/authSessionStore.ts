@@ -10,6 +10,7 @@ type AuthenticatedSession = {
 };
 
 const returnUrlStorageKey = "opensaur.identity.return-url";
+export const sessionSyncStorageKey = "opensaur.identity.session-sync";
 
 let snapshot: AuthSessionSnapshot = {
   accessToken: null,
@@ -31,6 +32,26 @@ function getSessionStorage(): Storage | null {
   }
 
   return window.sessionStorage;
+}
+
+function getLocalStorage(): Storage | null {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  return window.localStorage;
+}
+
+function broadcastSessionChange(kind: "clear" | "refresh") {
+  const storage = getLocalStorage();
+  if (!storage || typeof storage.setItem !== "function") {
+    return;
+  }
+
+  storage.setItem(sessionSyncStorageKey, JSON.stringify({
+    kind,
+    timestamp: Date.now()
+  }));
 }
 
 export const authSessionStore = {
@@ -71,6 +92,14 @@ export const authSessionStore = {
 
   rememberReturnUrl(returnUrl: string) {
     getSessionStorage()?.setItem(returnUrlStorageKey, returnUrl);
+  },
+
+  broadcastSessionCleared() {
+    broadcastSessionChange("clear");
+  },
+
+  broadcastSessionRefresh() {
+    broadcastSessionChange("refresh");
   },
 
   setAuthenticatedSession(session: AuthenticatedSession) {

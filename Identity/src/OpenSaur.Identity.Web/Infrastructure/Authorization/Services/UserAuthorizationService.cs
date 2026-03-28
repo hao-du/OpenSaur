@@ -9,16 +9,22 @@ public sealed class UserAuthorizationService(ApplicationDbContext dbContext)
     public async Task<bool> HasWorkspaceAccessAsync(
         CurrentUserContext currentUserContext,
         bool restrictToSuperAdministrator,
+        bool allowImpersonatedSuperAdministrator = false,
         CancellationToken cancellationToken = default)
     {
-        if (currentUserContext.IsSuperAdministrator)
-        {
-            return true;
-        }
-
         if (restrictToSuperAdministrator)
         {
-            return false;
+            if (allowImpersonatedSuperAdministrator)
+            {
+                return currentUserContext.IsSuperAdministrator;
+            }
+
+            return currentUserContext.HasGlobalWorkspaceScope;
+        }
+
+        if (currentUserContext.HasGlobalWorkspaceScope)
+        {
+            return true;
         }
 
         return await dbContext.Workspaces

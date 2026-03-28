@@ -12,9 +12,11 @@ export type ChangePasswordRequest = {
 
 export type AuthMeResponse = {
   id: string;
+  isImpersonating: boolean;
   requirePasswordChange: boolean;
   roles: string[];
   userName: string;
+  workspaceName: string;
 };
 
 export type ExchangeWebSessionRequest = {
@@ -24,6 +26,23 @@ export type ExchangeWebSessionRequest = {
 export type ExchangeWebSessionResponse = {
   accessToken: string;
   expiresAt: string;
+};
+
+export type ImpersonationOptionsResponse = {
+  users: ImpersonationOptionsUser[];
+  workspaceId: string;
+  workspaceName: string;
+};
+
+export type ImpersonationOptionsUser = {
+  email: string;
+  id: string;
+  userName: string;
+};
+
+export type StartImpersonationRequest = {
+  userId: string | null;
+  workspaceId: string;
 };
 
 type ApiEnvelope<TData> = {
@@ -70,5 +89,23 @@ export async function exchangeWebSession(request: ExchangeWebSessionRequest) {
 export async function refreshWebSession() {
   return await unwrapData<ExchangeWebSessionResponse>(
     httpClient.post("/api/auth/web-session/refresh")
+  );
+}
+
+export async function getImpersonationOptions(workspaceId: string) {
+  return await unwrapData<ImpersonationOptionsResponse>(
+    httpClient.get(`/api/auth/impersonation/options/${workspaceId}`)
+  );
+}
+
+export async function startImpersonation(request: StartImpersonationRequest) {
+  return await unwrapData<ExchangeWebSessionResponse>(
+    httpClient.post("/api/auth/impersonation/start", request)
+  );
+}
+
+export async function exitImpersonation() {
+  return await unwrapData<ExchangeWebSessionResponse>(
+    httpClient.post("/api/auth/impersonation/exit")
   );
 }

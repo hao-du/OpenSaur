@@ -26,7 +26,7 @@ public sealed class PermissionAuthorizationServiceTests
         dbContext.UserRoles.Add(new ApplicationUserRole
         {
             UserId = user.Id,
-            RoleId = await GetRoleIdAsync(dbContext, SystemRoles.Administrator)
+            RoleId = await GetRoleIdAsync(dbContext, StandardRoleNames.Administrator)
         });
         await dbContext.SaveChangesAsync();
 
@@ -50,7 +50,7 @@ public sealed class PermissionAuthorizationServiceTests
         dbContext.UserRoles.Add(new ApplicationUserRole
         {
             UserId = user.Id,
-            RoleId = await GetRoleIdAsync(dbContext, SystemRoles.Administrator)
+            RoleId = await GetRoleIdAsync(dbContext, StandardRoleNames.Administrator)
         });
         await dbContext.SaveChangesAsync();
 
@@ -75,7 +75,7 @@ public sealed class PermissionAuthorizationServiceTests
         dbContext.UserRoles.Add(new ApplicationUserRole
         {
             UserId = user.Id,
-            RoleId = await GetRoleIdAsync(dbContext, SystemRoles.Administrator)
+            RoleId = await GetRoleIdAsync(dbContext, StandardRoleNames.Administrator)
         });
         await dbContext.SaveChangesAsync();
 
@@ -99,7 +99,7 @@ public sealed class PermissionAuthorizationServiceTests
         dbContext.UserRoles.Add(new ApplicationUserRole
         {
             UserId = user.Id,
-            RoleId = await GetRoleIdAsync(dbContext, SystemRoles.Administrator)
+            RoleId = await GetRoleIdAsync(dbContext, StandardRoleNames.Administrator)
         });
         await dbContext.SaveChangesAsync();
 
@@ -123,7 +123,7 @@ public sealed class PermissionAuthorizationServiceTests
         dbContext.UserRoles.Add(new ApplicationUserRole
         {
             UserId = user.Id,
-            RoleId = await GetRoleIdAsync(dbContext, SystemRoles.Administrator)
+            RoleId = await GetRoleIdAsync(dbContext, StandardRoleNames.Administrator)
         });
         await dbContext.SaveChangesAsync();
 
@@ -184,7 +184,7 @@ public sealed class PermissionAuthorizationServiceTests
         var dbContext = testDbContext.DbContext;
         var workspace = await dbContext.Workspaces.SingleAsync();
         var user = await CreateUserAsync(dbContext, workspace.Id);
-        var administratorRoleId = await GetRoleIdAsync(dbContext, SystemRoles.Administrator);
+        var administratorRoleId = await GetRoleIdAsync(dbContext, StandardRoleNames.Administrator);
 
         dbContext.UserRoles.Add(new ApplicationUserRole
         {
@@ -214,7 +214,7 @@ public sealed class PermissionAuthorizationServiceTests
         var dbContext = testDbContext.DbContext;
         var workspace = await dbContext.Workspaces.SingleAsync();
         var user = await CreateUserAsync(dbContext, workspace.Id);
-        var administratorRoleId = await GetRoleIdAsync(dbContext, SystemRoles.Administrator);
+        var administratorRoleId = await GetRoleIdAsync(dbContext, StandardRoleNames.Administrator);
 
         dbContext.UserRoles.Add(new ApplicationUserRole
         {
@@ -244,7 +244,7 @@ public sealed class PermissionAuthorizationServiceTests
         var dbContext = testDbContext.DbContext;
         var workspace = await dbContext.Workspaces.SingleAsync();
         var user = await CreateUserAsync(dbContext, workspace.Id);
-        var administratorRoleId = await GetRoleIdAsync(dbContext, SystemRoles.Administrator);
+        var administratorRoleId = await GetRoleIdAsync(dbContext, StandardRoleNames.Administrator);
         var newScope = new PermissionScope
         {
             Id = Guid.CreateVersion7(),
@@ -286,7 +286,7 @@ public sealed class PermissionAuthorizationServiceTests
         var dbContext = testDbContext.DbContext;
         var workspace = await dbContext.Workspaces.SingleAsync();
         var user = await CreateUserAsync(dbContext, workspace.Id);
-        var administratorRoleId = await GetRoleIdAsync(dbContext, SystemRoles.Administrator);
+        var administratorRoleId = await GetRoleIdAsync(dbContext, StandardRoleNames.Administrator);
 
         dbContext.UserRoles.Add(new ApplicationUserRole
         {
@@ -336,14 +336,14 @@ public sealed class PermissionAuthorizationServiceTests
         dbContext.UserRoles.Add(new ApplicationUserRole
         {
             UserId = user.Id,
-            RoleId = await GetRoleIdAsync(dbContext, SystemRoles.Administrator)
+            RoleId = await GetRoleIdAsync(dbContext, StandardRoleNames.Administrator)
         });
         await dbContext.SaveChangesAsync();
 
         var service = new PermissionAuthorizationService(dbContext);
 
         var isAuthorized = await service.CanManageWorkspaceAsync(
-            CreatePrincipal(user, workspace.Id, [SystemRoles.Administrator]),
+            CreatePrincipal(user, workspace.Id, [StandardRoleNames.Administrator]),
             otherWorkspace.Id,
             (int)PermissionCode.Administrator_CanManage);
 
@@ -504,7 +504,7 @@ public sealed class PermissionAuthorizationServiceTests
         dbContext.UserRoles.Add(new ApplicationUserRole
         {
             UserId = user.Id,
-            RoleId = await GetRoleIdAsync(dbContext, SystemRoles.Administrator)
+            RoleId = await GetRoleIdAsync(dbContext, StandardRoleNames.Administrator)
         });
         await dbContext.SaveChangesAsync();
 
@@ -639,3 +639,4 @@ public sealed class PermissionAuthorizationServiceTests
         }
     }
 }
+

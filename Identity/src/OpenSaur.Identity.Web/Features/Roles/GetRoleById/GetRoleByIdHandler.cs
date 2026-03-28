@@ -28,6 +28,7 @@ public static class GetRoleByIdHandler
             new GetRoleByIdResponse(
                 roleResult.Value.Role.Id,
                 roleResult.Value.Role.Name ?? string.Empty,
+                roleResult.Value.Role.NormalizedName ?? string.Empty,
                 roleResult.Value.Role.Description,
                 roleResult.Value.Role.IsActive,
                 permissionsResult.Value?.Permissions.Select(permission => permission.CodeId).OrderBy(codeId => codeId).ToArray() ?? []));

@@ -125,7 +125,7 @@ public sealed class PermissionAuthorizationService
                 (userRole, role) => new
                 {
                     RoleId = role.Id,
-                    RoleName = role.Name ?? string.Empty
+                    RoleNormalizedName = role.NormalizedName ?? string.Empty
                 })
             .SelectMany(
                 role => _dbContext.RolePermissions
@@ -143,7 +143,7 @@ public sealed class PermissionAuthorizationService
                         })
                     .DefaultIfEmpty(),
                 (role, permission) => new PermissionRow(
-                    role.RoleName,
+                    role.RoleNormalizedName,
                     permission == null
                     || !permission.CodeId.HasValue
                     || !permission.PermissionScopeId.HasValue
@@ -160,7 +160,7 @@ public sealed class PermissionAuthorizationService
             return PermissionSnapshot.Empty;
         }
 
-        if (permissionRows.Any(role => role.RoleName == SystemRoles.SuperAdministrator))
+        if (permissionRows.Any(role => SystemRoles.IsSuperAdministratorValue(role.RoleNormalizedName)))
         {
             return PermissionSnapshot.SuperAdministrator;
         }
@@ -202,7 +202,7 @@ public sealed class PermissionAuthorizationService
         return new PermissionSnapshot(false, grantedCodeIds);
     }
 
-    private sealed record PermissionRow(string RoleName, PermissionMetadata? Permission);
+    private sealed record PermissionRow(string RoleNormalizedName, PermissionMetadata? Permission);
 
     private sealed record PermissionMetadata(int CodeId, Guid PermissionScopeId, int Rank);
 

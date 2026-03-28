@@ -99,7 +99,7 @@ public sealed class WorkspaceRepository(ApplicationDbContext dbContext)
         IQueryable<Workspace> query,
         CurrentUserContext currentUserContext)
     {
-        return currentUserContext.IsSuperAdministrator
+        return currentUserContext.HasGlobalWorkspaceScope
             ? query
             : query.Where(candidate => candidate.Id == currentUserContext.WorkspaceId);
     }

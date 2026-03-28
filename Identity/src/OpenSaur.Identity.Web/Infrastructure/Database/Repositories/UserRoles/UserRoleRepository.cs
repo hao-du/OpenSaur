@@ -25,6 +25,25 @@ public sealed class UserRoleRepository(ApplicationDbContext dbContext)
         return Result<GetAccessibleUserRolesResponse>.Success(new GetAccessibleUserRolesResponse(userRoles));
     }
 
+    public async Task<Result<GetAccessibleRoleAssignmentsResponse>> GetAccessibleRoleAssignmentsAsync(
+        GetAccessibleRoleAssignmentsRequest request,
+        CancellationToken cancellationToken)
+    {
+        var userRoles = await ApplyManagedScope(
+                dbContext.UserRoles
+                    .AsNoTracking()
+                    .Include(candidate => candidate.User)
+                    .ThenInclude(user => user!.Workspace)
+                    .Where(candidate => candidate.RoleId == request.RoleId)
+                    .Where(candidate => candidate.IsActive)
+                    .Where(candidate => candidate.User != null && candidate.User.IsActive)
+                    .OrderBy(candidate => candidate.User!.UserName),
+                request.CurrentUserContext)
+            .ToListAsync(cancellationToken);
+
+        return Result<GetAccessibleRoleAssignmentsResponse>.Success(new GetAccessibleRoleAssignmentsResponse(userRoles));
+    }
+
     public async Task<Result<GetAccessibleUserRoleByIdResponse>> GetAccessibleUserRoleByIdAsync(
         GetAccessibleUserRoleByIdRequest request,
         CancellationToken cancellationToken)
@@ -66,11 +85,31 @@ public sealed class UserRoleRepository(ApplicationDbContext dbContext)
         return Result<GetUserRolesByUserAndRoleResponse>.Success(new GetUserRolesByUserAndRoleResponse(userRoles));
     }
 
+    public async Task<Result<GetActiveNormalizedRoleNamesForUserResponse>> GetActiveNormalizedRoleNamesForUserAsync(
+        GetActiveNormalizedRoleNamesForUserRequest request,
+        CancellationToken cancellationToken)
+    {
+        var normalizedRoleNames = await dbContext.UserRoles
+            .AsNoTracking()
+            .Where(userRole => userRole.UserId == request.UserId && userRole.IsActive)
+            .Join(
+                dbContext.Roles.AsNoTracking().Where(role => role.IsActive),
+                userRole => userRole.RoleId,
+                role => role.Id,
+                (_, role) => role.NormalizedName ?? string.Empty)
+            .Where(static role => !string.IsNullOrWhiteSpace(role))
+            .Distinct()
+            .ToListAsync(cancellationToken);
+
+        return Result<GetActiveNormalizedRoleNamesForUserResponse>.Success(
+            new GetActiveNormalizedRoleNamesForUserResponse(normalizedRoleNames));
+    }
+
     private static IQueryable<ApplicationUserRole> ApplyManagedScope(
         IQueryable<ApplicationUserRole> query,
         CurrentUserContext currentUserContext)
     {
-        return currentUserContext.IsSuperAdministrator
+        return currentUserContext.HasGlobalWorkspaceScope
             ? query
             : query.Where(
                 candidate => candidate.User != null && candidate.User.WorkspaceId == currentUserContext.WorkspaceId);

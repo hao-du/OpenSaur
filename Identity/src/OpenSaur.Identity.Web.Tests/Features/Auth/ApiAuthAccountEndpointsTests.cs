@@ -2,9 +2,12 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using OpenSaur.Identity.Web.Features.Auth.ChangePassword;
 using OpenSaur.Identity.Web.Features.Auth.Me;
 using OpenSaur.Identity.Web.Domain.Identity;
+using OpenSaur.Identity.Web.Infrastructure.Database;
 using OpenSaur.Identity.Web.Tests.Support;
 
 namespace OpenSaur.Identity.Web.Tests.Features.Auth;
@@ -32,7 +35,7 @@ public sealed class ApiAuthAccountEndpointsTests : IClassFixture<OpenSaurWebAppl
     public async Task PostLogin_WhenCredentialsAreValid_EstablishesHostedSessionAndReturnsNoContent()
     {
         var credentials = TestFakers.CreateUserCredentials();
-        await TestIdentitySeeder.SeedUserAsync(_factory, credentials.UserName, credentials.Password, [SystemRoles.User]);
+        await TestIdentitySeeder.SeedUserAsync(_factory, credentials.UserName, credentials.Password, [StandardRoleNames.User]);
         using var client = FirstPartyApiTestClient.CreateClient(_factory);
 
         var response = await client.PostAsJsonAsync(
@@ -50,7 +53,7 @@ public sealed class ApiAuthAccountEndpointsTests : IClassFixture<OpenSaurWebAppl
     {
         var userName = "CaseSensitiveUser";
         var password = TestFakers.CreatePassword();
-        await TestIdentitySeeder.SeedUserAsync(_factory, userName, password, [SystemRoles.User]);
+        await TestIdentitySeeder.SeedUserAsync(_factory, userName, password, [StandardRoleNames.User]);
         using var client = FirstPartyApiTestClient.CreateClient(_factory);
 
         var response = await client.PostAsJsonAsync(
@@ -85,7 +88,7 @@ public sealed class ApiAuthAccountEndpointsTests : IClassFixture<OpenSaurWebAppl
     public async Task PostLogin_WhenCredentialsAreInvalid_ReturnsUnauthorized()
     {
         var credentials = TestFakers.CreateUserCredentials();
-        await TestIdentitySeeder.SeedUserAsync(_factory, credentials.UserName, credentials.Password, [SystemRoles.User]);
+        await TestIdentitySeeder.SeedUserAsync(_factory, credentials.UserName, credentials.Password, [StandardRoleNames.User]);
         using var client = FirstPartyApiTestClient.CreateClient(_factory);
 
         var response = await client.PostAsJsonAsync(
@@ -118,7 +121,7 @@ public sealed class ApiAuthAccountEndpointsTests : IClassFixture<OpenSaurWebAppl
     public async Task PostLogout_WhenHostedSessionExistsAndApiCallerIsAuthorized_ClearsSessionAndReturnsNoContent()
     {
         var credentials = TestFakers.CreateUserCredentials();
-        await TestIdentitySeeder.SeedUserAsync(_factory, credentials.UserName, credentials.Password, [SystemRoles.User]);
+        await TestIdentitySeeder.SeedUserAsync(_factory, credentials.UserName, credentials.Password, [StandardRoleNames.User]);
         using var client = FirstPartyApiTestClient.CreateClient(_factory);
         var accessToken = await FirstPartyApiTestClient.GetAccessTokenAsync(client, credentials.UserName, credentials.Password);
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
@@ -136,7 +139,7 @@ public sealed class ApiAuthAccountEndpointsTests : IClassFixture<OpenSaurWebAppl
     public async Task PostLogout_WhenApiCallerIsAnonymous_ReturnsUnauthorized()
     {
         var credentials = TestFakers.CreateUserCredentials();
-        await TestIdentitySeeder.SeedUserAsync(_factory, credentials.UserName, credentials.Password, [SystemRoles.User]);
+        await TestIdentitySeeder.SeedUserAsync(_factory, credentials.UserName, credentials.Password, [StandardRoleNames.User]);
         using var client = FirstPartyApiTestClient.CreateClient(_factory);
         await client.PostAsJsonAsync(
             "/api/auth/login",
@@ -151,7 +154,7 @@ public sealed class ApiAuthAccountEndpointsTests : IClassFixture<OpenSaurWebAppl
     public async Task GetMe_WhenOidcAccessTokenIsValid_ReturnsCurrentUserContext()
     {
         var credentials = TestFakers.CreateUserCredentials();
-        await TestIdentitySeeder.SeedUserAsync(_factory, credentials.UserName, credentials.Password, [SystemRoles.Administrator]);
+        await TestIdentitySeeder.SeedUserAsync(_factory, credentials.UserName, credentials.Password, [StandardRoleNames.Administrator]);
         using var client = FirstPartyApiTestClient.CreateClient(_factory);
         var accessToken = await FirstPartyApiTestClient.GetAccessTokenAsync(client, credentials.UserName, credentials.Password);
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
@@ -161,7 +164,36 @@ public sealed class ApiAuthAccountEndpointsTests : IClassFixture<OpenSaurWebAppl
 
         Assert.Equal(credentials.UserName, payload.UserName);
         Assert.False(payload.RequirePasswordChange);
-        Assert.Contains(SystemRoles.Administrator, payload.Roles);
+        Assert.Contains(StandardRoleNames.Administrator.ToUpperInvariant(), payload.Roles);
+    }
+
+    [Fact]
+    public async Task GetMe_WhenSuperAdministratorRoleUsesSpacedNormalizedValue_ReturnsAllWorkspaces()
+    {
+        using var factory = new OpenSaurWebApplicationFactory();
+        await FirstPartyApiTestClient.InitializeFactoryAsync(factory);
+
+        using (var scope = factory.Services.CreateScope())
+        {
+            var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            var superAdministratorRole = await dbContext.Roles.SingleAsync(
+                role => role.NormalizedName == SystemRoles.NormalizedSuperAdministrator);
+
+            superAdministratorRole.Name = "Super Administrator";
+            superAdministratorRole.NormalizedName = "SUPER ADMINISTRATOR";
+            await dbContext.SaveChangesAsync();
+        }
+
+        using var client = FirstPartyApiTestClient.CreateClient(factory);
+        var accessToken = await FirstPartyApiTestClient.GetAccessTokenAsync(client, "SystemAdministrator", "Password1");
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+        var response = await client.GetAsync("/api/auth/me");
+        var payload = await ApiResponseReader.ReadSuccessDataAsync<AuthMeResponse>(response);
+
+        Assert.Equal("SystemAdministrator", payload.UserName);
+        Assert.Equal("All workspaces", payload.WorkspaceName);
+        Assert.Contains("SUPER ADMINISTRATOR", payload.Roles);
     }
 
     [Fact]
@@ -204,7 +236,7 @@ public sealed class ApiAuthAccountEndpointsTests : IClassFixture<OpenSaurWebAppl
     public async Task PostWebSessionExchange_WhenFirstPartyAuthorizationCodeIsValid_ReturnsAccessTokenAndRefreshCookie()
     {
         var credentials = TestFakers.CreateUserCredentials();
-        await TestIdentitySeeder.SeedUserAsync(_factory, credentials.UserName, credentials.Password, [SystemRoles.User]);
+        await TestIdentitySeeder.SeedUserAsync(_factory, credentials.UserName, credentials.Password, [StandardRoleNames.User]);
         using var client = FirstPartyApiTestClient.CreateClient(_factory);
 
         var authorizationCode = await OidcTestClient.AuthorizeAsync(
@@ -234,7 +266,7 @@ public sealed class ApiAuthAccountEndpointsTests : IClassFixture<OpenSaurWebAppl
         await FirstPartyApiTestClient.InitializeFactoryAsync(factory);
 
         var credentials = TestFakers.CreateUserCredentials();
-        await TestIdentitySeeder.SeedUserAsync(factory, credentials.UserName, credentials.Password, [SystemRoles.User]);
+        await TestIdentitySeeder.SeedUserAsync(factory, credentials.UserName, credentials.Password, [StandardRoleNames.User]);
         using var client = FirstPartyApiTestClient.CreateClient(factory);
 
         var authorizationCode = await OidcTestClient.AuthorizeAsync(
@@ -261,7 +293,7 @@ public sealed class ApiAuthAccountEndpointsTests : IClassFixture<OpenSaurWebAppl
     public async Task PostWebSessionRefresh_WhenRefreshCookieIsValid_ReturnsReplacementAccessTokenAndRotatesRefreshCookie()
     {
         var credentials = TestFakers.CreateUserCredentials();
-        await TestIdentitySeeder.SeedUserAsync(_factory, credentials.UserName, credentials.Password, [SystemRoles.User]);
+        await TestIdentitySeeder.SeedUserAsync(_factory, credentials.UserName, credentials.Password, [StandardRoleNames.User]);
         using var client = FirstPartyApiTestClient.CreateClient(_factory);
 
         var authorizationCode = await OidcTestClient.AuthorizeAsync(
@@ -296,7 +328,7 @@ public sealed class ApiAuthAccountEndpointsTests : IClassFixture<OpenSaurWebAppl
         await FirstPartyApiTestClient.InitializeFactoryAsync(factory);
 
         var credentials = TestFakers.CreateUserCredentials();
-        await TestIdentitySeeder.SeedUserAsync(factory, credentials.UserName, credentials.Password, [SystemRoles.User]);
+        await TestIdentitySeeder.SeedUserAsync(factory, credentials.UserName, credentials.Password, [StandardRoleNames.User]);
         using var client = FirstPartyApiTestClient.CreateClient(factory);
 
         var authorizationCode = await OidcTestClient.AuthorizeAsync(
@@ -323,4 +355,230 @@ public sealed class ApiAuthAccountEndpointsTests : IClassFixture<OpenSaurWebAppl
         Assert.False(string.IsNullOrWhiteSpace(payload.GetProperty("expiresAt").GetString()));
         Assert.NotEqual(initialRefreshCookie, rotatedRefreshCookie);
     }
+
+    [Fact]
+    public async Task GetImpersonationOptions_WhenSuperAdministratorRequestsWorkspace_ReturnsWorkspaceUsersAndActiveSuperAdministrators()
+    {
+        using var factory = new OpenSaurWebApplicationFactory();
+        await FirstPartyApiTestClient.InitializeFactoryAsync(factory);
+
+        var workspaceId = await TestIdentitySeeder.SeedWorkspaceAsync(factory, "Finance");
+        await TestIdentitySeeder.SeedUserAsync(
+            factory,
+            "FinanceAdmin",
+            TestFakers.CreatePassword(),
+            [StandardRoleNames.Administrator],
+            workspaceName: "Finance");
+        await TestIdentitySeeder.SeedUserAsync(
+            factory,
+            "FinanceSuperAdministrator",
+            TestFakers.CreatePassword(),
+            [SystemRoles.SuperAdministrator],
+            workspaceName: "Finance");
+        await TestIdentitySeeder.SeedUserAsync(
+            factory,
+            "GlobalSuperAdministrator",
+            TestFakers.CreatePassword(),
+            [SystemRoles.SuperAdministrator],
+            workspaceName: "Leadership");
+        await TestIdentitySeeder.SeedUserAsync(
+            factory,
+            "InactiveFinanceUser",
+            TestFakers.CreatePassword(),
+            [StandardRoleNames.User],
+            workspaceName: "Finance",
+            isActive: false);
+        await TestIdentitySeeder.SeedUserAsync(
+            factory,
+            "InactiveSuperAdministrator",
+            TestFakers.CreatePassword(),
+            [SystemRoles.SuperAdministrator],
+            workspaceName: "Leadership",
+            isActive: false);
+        using (var scope = factory.Services.CreateScope())
+        {
+            var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            var superAdministratorRole = await dbContext.Roles.SingleAsync(
+                role => role.NormalizedName == SystemRoles.NormalizedSuperAdministrator);
+
+            superAdministratorRole.Name = "Platform Owner";
+            superAdministratorRole.NormalizedName = "SUPER ADMINISTRATOR";
+            await dbContext.SaveChangesAsync();
+        }
+
+        using var client = FirstPartyApiTestClient.CreateClient(factory);
+        var accessToken = await FirstPartyApiTestClient.GetAccessTokenAsync(client, "SystemAdministrator", "Password1");
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+        var response = await client.GetAsync($"/api/auth/impersonation/options/{workspaceId}");
+        var payload = await ApiResponseReader.ReadSuccessDataAsync<JsonElement>(response);
+        var users = payload.GetProperty("users").EnumerateArray().ToList();
+        var userIds = users
+            .Select(static user => user.GetProperty("id").GetGuid())
+            .ToList();
+
+        Assert.Equal("Finance", payload.GetProperty("workspaceName").GetString());
+        Assert.Contains(users, user => user.GetProperty("userName").GetString() == "FinanceAdmin");
+        Assert.Contains(users, user => user.GetProperty("userName").GetString() == "FinanceSuperAdministrator");
+        Assert.Contains(users, user => user.GetProperty("userName").GetString() == "GlobalSuperAdministrator");
+        Assert.Contains(users, user => user.GetProperty("userName").GetString() == "SystemAdministrator");
+        Assert.DoesNotContain(users, user => user.GetProperty("userName").GetString() == "InactiveFinanceUser");
+        Assert.DoesNotContain(users, user => user.GetProperty("userName").GetString() == "InactiveSuperAdministrator");
+        Assert.Equal(userIds.Count, userIds.Distinct().Count());
+    }
+
+    [Fact]
+    public async Task PostImpersonationStart_WhenSuperAdministratorTargetsWorkspaceUser_ReplacesCurrentUserContext()
+    {
+        var workspaceName = "Finance";
+        var workspaceId = await TestIdentitySeeder.SeedWorkspaceAsync(_factory, workspaceName);
+        var userPassword = TestFakers.CreatePassword();
+        var userId = await TestIdentitySeeder.SeedUserAsync(
+            _factory,
+            "FinanceAdmin",
+            userPassword,
+            [StandardRoleNames.Administrator],
+            workspaceName: workspaceName);
+        using var client = FirstPartyApiTestClient.CreateClient(_factory);
+        var superAdministratorAccessToken = await FirstPartyApiTestClient.GetAccessTokenAsync(
+            client,
+            "SystemAdministrator",
+            "Password1");
+        client.DefaultRequestHeaders.Authorization =
+            new AuthenticationHeaderValue("Bearer", superAdministratorAccessToken);
+
+        var startResponse = await client.PostAsJsonAsync(
+            "/api/auth/impersonation/start",
+            new
+            {
+                WorkspaceId = workspaceId,
+                UserId = userId
+            });
+        var startPayload = await ApiResponseReader.ReadSuccessDataAsync<JsonElement>(startResponse);
+        var impersonatedAccessToken = startPayload.GetProperty("accessToken").GetString();
+
+        Assert.False(string.IsNullOrWhiteSpace(impersonatedAccessToken));
+        Assert.Contains(
+            startResponse.Headers.GetValues("Set-Cookie"),
+            value => value.StartsWith("r=", StringComparison.Ordinal));
+
+        client.DefaultRequestHeaders.Authorization =
+            new AuthenticationHeaderValue("Bearer", impersonatedAccessToken);
+
+        var meResponse = await client.GetAsync("/api/auth/me");
+        var mePayload = await ApiResponseReader.ReadSuccessDataAsync<JsonElement>(meResponse);
+
+        Assert.Equal("FinanceAdmin", mePayload.GetProperty("userName").GetString());
+        Assert.Equal(workspaceName, mePayload.GetProperty("workspaceName").GetString());
+        Assert.True(mePayload.GetProperty("isImpersonating").GetBoolean());
+        Assert.Contains(
+            mePayload.GetProperty("roles").EnumerateArray().Select(static role => role.GetString()),
+            role => role == StandardRoleNames.Administrator.ToUpperInvariant());
+    }
+
+    [Fact]
+    public async Task PostImpersonationStart_WhenSuperAdministratorTargetsAnotherSuperAdministrator_UsesSelectedWorkspaceContext()
+    {
+        using var factory = new OpenSaurWebApplicationFactory();
+        await FirstPartyApiTestClient.InitializeFactoryAsync(factory);
+
+        var workspaceName = "Finance";
+        var workspaceId = await TestIdentitySeeder.SeedWorkspaceAsync(factory, workspaceName);
+        var superAdministratorId = await TestIdentitySeeder.SeedUserAsync(
+            factory,
+            "RegionalSuperAdministrator",
+            TestFakers.CreatePassword(),
+            [SystemRoles.SuperAdministrator],
+            workspaceName: "Leadership");
+        using (var scope = factory.Services.CreateScope())
+        {
+            var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            var superAdministratorRole = await dbContext.Roles.SingleAsync(
+                role => role.NormalizedName == SystemRoles.NormalizedSuperAdministrator);
+
+            superAdministratorRole.Name = "Super Administrator";
+            superAdministratorRole.NormalizedName = "SUPER ADMINISTRATOR";
+            await dbContext.SaveChangesAsync();
+        }
+        using var client = FirstPartyApiTestClient.CreateClient(factory);
+        var accessToken = await FirstPartyApiTestClient.GetAccessTokenAsync(client, "SystemAdministrator", "Password1");
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+        var startResponse = await client.PostAsJsonAsync(
+            "/api/auth/impersonation/start",
+            new
+            {
+                WorkspaceId = workspaceId,
+                UserId = superAdministratorId
+            });
+        var startPayload = await ApiResponseReader.ReadSuccessDataAsync<JsonElement>(startResponse);
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
+            "Bearer",
+            startPayload.GetProperty("accessToken").GetString());
+
+        var meResponse = await client.GetAsync("/api/auth/me");
+        var mePayload = await ApiResponseReader.ReadSuccessDataAsync<JsonElement>(meResponse);
+
+        Assert.Equal("RegionalSuperAdministrator", mePayload.GetProperty("userName").GetString());
+        Assert.Equal(workspaceName, mePayload.GetProperty("workspaceName").GetString());
+        Assert.True(mePayload.GetProperty("isImpersonating").GetBoolean());
+        Assert.Contains(
+            mePayload.GetProperty("roles").EnumerateArray().Select(static role => role.GetString()),
+            role => SystemRoles.IsSuperAdministratorValue(role));
+    }
+
+    [Fact]
+    public async Task PostImpersonationExit_WhenSessionIsImpersonating_RestoresSuperAdministrator()
+    {
+        var workspaceName = "Finance";
+        var workspaceId = await TestIdentitySeeder.SeedWorkspaceAsync(_factory, workspaceName);
+        var userId = await TestIdentitySeeder.SeedUserAsync(
+            _factory,
+            "FinanceAdmin",
+            TestFakers.CreatePassword(),
+            [StandardRoleNames.Administrator],
+            workspaceName: workspaceName);
+        using var client = FirstPartyApiTestClient.CreateClient(_factory);
+        var superAdministratorAccessToken = await FirstPartyApiTestClient.GetAccessTokenAsync(
+            client,
+            "SystemAdministrator",
+            "Password1");
+        client.DefaultRequestHeaders.Authorization =
+            new AuthenticationHeaderValue("Bearer", superAdministratorAccessToken);
+
+        var startResponse = await client.PostAsJsonAsync(
+            "/api/auth/impersonation/start",
+            new
+            {
+                WorkspaceId = workspaceId,
+                UserId = userId
+            });
+        var impersonatedPayload = await ApiResponseReader.ReadSuccessDataAsync<JsonElement>(startResponse);
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(
+            "Bearer",
+            impersonatedPayload.GetProperty("accessToken").GetString());
+
+        var exitResponse = await client.PostAsync("/api/auth/impersonation/exit", content: null);
+        var exitPayload = await ApiResponseReader.ReadSuccessDataAsync<JsonElement>(exitResponse);
+        var restoredAccessToken = exitPayload.GetProperty("accessToken").GetString();
+
+        Assert.False(string.IsNullOrWhiteSpace(restoredAccessToken));
+        Assert.Contains(
+            exitResponse.Headers.GetValues("Set-Cookie"),
+            value => value.StartsWith("r=", StringComparison.Ordinal));
+
+        client.DefaultRequestHeaders.Authorization =
+            new AuthenticationHeaderValue("Bearer", restoredAccessToken);
+
+        var meResponse = await client.GetAsync("/api/auth/me");
+        var mePayload = await ApiResponseReader.ReadSuccessDataAsync<JsonElement>(meResponse);
+
+        Assert.Equal("SystemAdministrator", mePayload.GetProperty("userName").GetString());
+        Assert.Equal("All workspaces", mePayload.GetProperty("workspaceName").GetString());
+        Assert.False(mePayload.GetProperty("isImpersonating").GetBoolean());
+        Assert.Contains(
+            mePayload.GetProperty("roles").EnumerateArray().Select(static role => role.GetString()),
+            role => role == SystemRoles.NormalizedSuperAdministrator);
+    }
 }
+

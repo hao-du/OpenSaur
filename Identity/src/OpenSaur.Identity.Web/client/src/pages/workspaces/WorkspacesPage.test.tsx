@@ -2,6 +2,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 import { AppProviders } from "../../app/providers/AppProviders";
+import { authSessionStore } from "../../features/auth/state/authSessionStore";
 import { WorkspacesPage } from "./WorkspacesPage";
 import type { WorkspaceSummary } from "../../features/workspaces/types";
 
@@ -9,6 +10,11 @@ const useWorkspacesQueryMock = vi.fn();
 const useCreateWorkspaceMock = vi.fn();
 const useEditWorkspaceMock = vi.fn();
 const useWorkspaceQueryMock = vi.fn();
+const useCurrentUserStateMock = vi.fn();
+const useCurrentUserQueryMock = vi.fn();
+const useLogoutMock = vi.fn();
+const useImpersonationOptionsQueryMock = vi.fn();
+const useStartImpersonationMock = vi.fn();
 
 vi.mock("../../features/workspaces/hooks", () => ({
   useCreateWorkspace: () => useCreateWorkspaceMock(),
@@ -16,6 +22,19 @@ vi.mock("../../features/workspaces/hooks", () => ({
   useWorkspaceQuery: (...args: unknown[]) => useWorkspaceQueryMock(...args),
   useWorkspacesQuery: () => useWorkspacesQueryMock()
 }));
+
+vi.mock("../../features/auth/hooks", async () => {
+  const actual = await vi.importActual<typeof import("../../features/auth/hooks")>("../../features/auth/hooks");
+
+  return {
+    ...actual,
+    useCurrentUserQuery: () => useCurrentUserQueryMock(),
+    useCurrentUserState: () => useCurrentUserStateMock(),
+    useImpersonationOptionsQuery: (...args: unknown[]) => useImpersonationOptionsQueryMock(...args),
+    useLogout: () => useLogoutMock(),
+    useStartImpersonation: () => useStartImpersonationMock()
+  };
+});
 
 const workspaces: WorkspaceSummary[] = [
   {
@@ -44,8 +63,46 @@ function renderPage() {
 
 describe("WorkspacesPage", () => {
   beforeEach(() => {
+    authSessionStore.clearSession();
     vi.resetAllMocks();
 
+    useCurrentUserStateMock.mockReturnValue({
+      data: {
+        id: "user-1",
+        isImpersonating: false,
+        requirePasswordChange: false,
+        roles: ["SUPERADMINISTRATOR"],
+        userName: "SystemAdministrator",
+        workspaceName: "All workspaces"
+      },
+      isPending: false
+    });
+    useCurrentUserQueryMock.mockReturnValue({
+      clearCurrentUser: vi.fn(),
+      fetchCurrentUser: vi.fn().mockResolvedValue({
+        id: "user-1",
+        isImpersonating: false,
+        requirePasswordChange: false,
+        roles: ["SUPERADMINISTRATOR"],
+        userName: "SystemAdministrator",
+        workspaceName: "All workspaces"
+      })
+    });
+    useLogoutMock.mockReturnValue({
+      isLoggingOut: false,
+      logout: vi.fn()
+    });
+    useImpersonationOptionsQueryMock.mockReturnValue({
+      data: null,
+      isError: false,
+      isLoading: false
+    });
+    useStartImpersonationMock.mockReturnValue({
+      errorMessage: null,
+      isStartingImpersonation: false,
+      resetError: vi.fn(),
+      startImpersonation: vi.fn()
+    });
     useWorkspacesQueryMock.mockReturnValue({
       data: workspaces,
       error: null,
@@ -233,5 +290,63 @@ describe("WorkspacesPage", () => {
 
     expect(screen.getByText(/couldn't load the workspace list/i)).toBeDefined();
     expect(screen.getByRole("button", { name: /retry/i })).toBeDefined();
+  });
+
+  it("shows workspace users and super administrators in a searchable login-as picker", async () => {
+    const startImpersonation = vi.fn().mockResolvedValue({
+      accessToken: "impersonated-access-token",
+      expiresAt: "2026-03-28T00:00:00.000Z"
+    });
+
+    useImpersonationOptionsQueryMock.mockReturnValue({
+      data: {
+        users: [
+          {
+            email: "system.administrator@example.com",
+            id: "user-1",
+            userName: "SystemAdministrator"
+          },
+          {
+            email: "finance.admin@example.com",
+            id: "user-99",
+            userName: "FinanceAdmin"
+          }
+        ],
+        workspaceId: "workspace-1",
+        workspaceName: "Operations"
+      },
+      isError: false,
+      isLoading: false
+    });
+    useStartImpersonationMock.mockReturnValue({
+      errorMessage: null,
+      isStartingImpersonation: false,
+      resetError: vi.fn(),
+      startImpersonation
+    });
+
+    renderPage();
+
+    fireEvent.click(screen.getByRole("button", { name: /login as/i }));
+
+    expect(screen.getByRole("heading", { level: 2, name: /login as/i })).toBeDefined();
+    const userInput = screen.getByPlaceholderText(/search users/i);
+
+    fireEvent.mouseDown(userInput);
+    expect(screen.getByRole("option", { name: /systemadministrator/i })).toBeDefined();
+    expect(screen.getByRole("option", { name: /financeadmin/i })).toBeDefined();
+
+    fireEvent.input(userInput, { target: { value: "finance" } });
+    expect(screen.getByRole("option", { name: /financeadmin/i })).toBeDefined();
+
+    fireEvent.click(screen.getByRole("option", { name: /financeadmin/i }));
+    fireEvent.click(screen.getByRole("button", { name: /continue/i }));
+
+    await waitFor(() => {
+      expect(startImpersonation).toHaveBeenCalledWith({
+        userId: "user-99",
+        workspaceId: "workspace-1"
+      });
+    });
   });
 });
