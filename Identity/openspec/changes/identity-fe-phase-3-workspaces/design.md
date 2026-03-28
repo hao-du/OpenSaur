@@ -40,11 +40,15 @@ The main content area contains a management table with:
 
 Search and status filtering are client-side against the fetched list for this slice. The filter UX lives in a dedicated drawer so future filters can be added without crowding the page header.
 
+The initial status filter should default to `Active` instead of `All`. For this slice, `Active` is the baseline operational view, while `All` and `Inactive` remain available in the filter drawer.
+
+Applied filters should survive successful create and edit saves. When the list refetches after a mutation, the page should continue rendering through the current filter state instead of resetting to an unfiltered view.
+
 Create and edit actions open right-side drawers instead of full-page navigation or modal dialogs. This preserves list context, keeps the workflow fast, and leaves room for future fields or actions without overcrowding a modal.
 
 Activation status is edited inside the edit form rather than inline from the table. That keeps the interaction deliberate and avoids accidental status changes.
 
-New workspaces always start active, so create mode shows that state as informational copy rather than an editable checkbox.
+New workspaces always start active, so create mode should keep that behavior implicit instead of exposing an activation toggle.
 
 Primary actions with network work should show inline busy indicators that match the login flow pattern.
 
@@ -66,6 +70,9 @@ Frontend behavior:
 - Create and edit mutations invalidate or refetch workspace queries after success.
 - Workspace create and edit requests opt into a shared Axios idempotency policy that injects an `Idempotency-Key` header.
 - Local component state only tracks UI concerns such as active filters, drawer mode, and selected workspace id.
+- The active filters remain the source of truth after query invalidation and refetch.
+
+This filter-default and filter-persistence behavior should become the standard list-management pattern for future `Users` and `Roles` frontend slices so those pages behave consistently with `Workspace`.
 
 ## Frontend Structure
 

@@ -27,7 +27,7 @@ type WorkspaceFiltersDrawerProps = {
 
 const defaultFilterValues: WorkspaceFilterValues = {
   search: "",
-  status: "all"
+  status: "active"
 };
 
 export function WorkspaceFiltersDrawer({

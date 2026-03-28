@@ -69,11 +69,7 @@ export function WorkspaceForm({
           label="Workspace is active"
           name="isActive"
         />
-      ) : (
-        <Alert severity="info">
-          New workspaces start in the active state.
-        </Alert>
-      )}
+      ) : null}
       <Stack
         direction="row"
         justifyContent="flex-end"
@@ -88,9 +84,7 @@ export function WorkspaceForm({
           type="submit"
           variant="contained"
         >
-          {isSubmitting
-            ? (isEditMode ? "Saving workspace..." : "Creating workspace...")
-            : (isEditMode ? "Save workspace" : "Create workspace")}
+          {isSubmitting ? "Saving..." : "Save"}
         </Button>
       </Stack>
     </Stack>

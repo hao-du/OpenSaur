@@ -1,10 +1,8 @@
-import { useMemo, useState, type MouseEvent, type PropsWithChildren } from "react";
+import { useMemo, useState, type PropsWithChildren } from "react";
 import {
   AppBar,
-  Avatar,
   Box,
   Button,
-  CircularProgress,
   Divider,
   Drawer,
   IconButton,
@@ -12,8 +10,6 @@ import {
   ListItemButton,
   ListItemIcon,
   ListItemText,
-  Menu as MaterialMenu,
-  MenuItem,
   Stack,
   Toolbar,
   Typography,
@@ -25,13 +21,8 @@ import { getVisibleProtectedShellRoutes } from "../../app/router/protectedShellR
 import { useCurrentUserQuery, useCurrentUserState, useLogout } from "../../features/auth/hooks";
 import { authSessionStore } from "../../features/auth/state/authSessionStore";
 import { BrandMark } from "../atoms";
-import {
-  KeyRound,
-  LogOut,
-  Menu,
-  Settings,
-  UserRound
-} from "../../shared/icons";
+import { Menu } from "../../shared/icons";
+import { ShellAccountMenu } from "./ShellAccountMenu";
 
 type ProtectedShellTemplateProps = PropsWithChildren<{
   impersonation?: {
@@ -41,27 +32,6 @@ type ProtectedShellTemplateProps = PropsWithChildren<{
   subtitle?: string;
   title: string;
 }>;
-
-function getUserInitials(userName?: string) {
-  if (!userName) {
-    return "CU";
-  }
-
-  const segments = userName
-    .replace(/([a-z])([A-Z])/g, "$1 $2")
-    .split(/[\s._-]+/)
-    .filter(Boolean);
-
-  if (segments.length === 1) {
-    return segments[0].slice(0, 2).toUpperCase();
-  }
-
-  return segments
-    .slice(0, 2)
-    .map(segment => segment[0])
-    .join("")
-    .toUpperCase();
-}
 
 export function ProtectedShellTemplate({
   children,
@@ -74,7 +44,6 @@ export function ProtectedShellTemplate({
   const navigate = useNavigate();
   const isDesktop = useMediaQuery(theme.breakpoints.up("lg"));
   const [isNavigationOpen, setIsNavigationOpen] = useState(false);
-  const [accountMenuAnchor, setAccountMenuAnchor] = useState<HTMLElement | null>(null);
   const { clearCurrentUser } = useCurrentUserQuery();
   const { data: currentUser } = useCurrentUserState();
   const { isLoggingOut, logout } = useLogout();
@@ -85,12 +54,9 @@ export function ProtectedShellTemplate({
   const isSuperAdministrator = (currentUser?.roles ?? []).includes("SuperAdministrator");
   const workspaceName = impersonation?.workspaceName
     ?? (isSuperAdministrator ? "All workspaces" : "Protected workspace");
-  const accountInitials = getUserInitials(currentUser?.userName);
   const currentYear = new Date().getFullYear();
 
   async function handleLogout() {
-    setAccountMenuAnchor(null);
-
     try {
       await logout();
     } catch {
@@ -103,16 +69,7 @@ export function ProtectedShellTemplate({
     navigate("/login", { replace: true });
   }
 
-  function handleOpenAccountMenu(event: MouseEvent<HTMLElement>) {
-    setAccountMenuAnchor(event.currentTarget);
-  }
-
-  function handleCloseAccountMenu() {
-    setAccountMenuAnchor(null);
-  }
-
   function handleNavigateToChangePassword() {
-    setAccountMenuAnchor(null);
     navigate("/change-password", {
       state: {
         from: `${location.pathname}${location.search}${location.hash}`
@@ -303,74 +260,14 @@ export function ProtectedShellTemplate({
               direction="row"
               spacing={1.5}
             >
-              <IconButton
-                aria-label="Open account menu"
-                onClick={handleOpenAccountMenu}
-                size="small"
-              >
-                <Avatar
-                  sx={{
-                    bgcolor: "primary.main",
-                    color: "primary.contrastText",
-                    height: 40,
-                    width: 40
-                  }}
-                >
-                  {accountInitials}
-                </Avatar>
-              </IconButton>
-              <MaterialMenu
-                anchorEl={accountMenuAnchor}
-                onClose={handleCloseAccountMenu}
-                open={accountMenuAnchor !== null}
-              >
-                <MenuItem disabled>
-                  <Stack
-                    alignItems="center"
-                    direction="row"
-                    spacing={1}
-                  >
-                    <UserRound size={16} />
-                    <span>My Profile</span>
-                  </Stack>
-                </MenuItem>
-                <MenuItem onClick={handleNavigateToChangePassword}>
-                  <Stack
-                    alignItems="center"
-                    direction="row"
-                    spacing={1}
-                  >
-                    <KeyRound size={16} />
-                    <span>Change password</span>
-                  </Stack>
-                </MenuItem>
-                <MenuItem disabled>
-                  <Stack
-                    alignItems="center"
-                    direction="row"
-                    spacing={1}
-                  >
-                    <Settings size={16} />
-                    <span>Settings</span>
-                  </Stack>
-                </MenuItem>
-                <Divider />
-                <MenuItem
-                  disabled={isLoggingOut}
-                  onClick={() => {
-                    void handleLogout();
-                  }}
-                >
-                  <Stack
-                    alignItems="center"
-                    direction="row"
-                    spacing={1}
-                  >
-                    {isLoggingOut ? <CircularProgress color="inherit" size={16} /> : <LogOut size={16} />}
-                    <span>{isLoggingOut ? "Signing out..." : "Logout"}</span>
-                  </Stack>
-                </MenuItem>
-              </MaterialMenu>
+              <ShellAccountMenu
+                isLoggingOut={isLoggingOut}
+                onChangePassword={handleNavigateToChangePassword}
+                onLogout={() => {
+                  void handleLogout();
+                }}
+                userName={currentUser?.userName}
+              />
             </Stack>
           </Toolbar>
         </AppBar>

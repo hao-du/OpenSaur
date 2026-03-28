@@ -20,7 +20,7 @@ import {
 export function WorkspacesPage() {
   const [filters, setFilters] = useState<WorkspaceFilterValues>({
     search: "",
-    status: "all"
+    status: "active"
   });
   const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
   const [isCreateDrawerOpen, setIsCreateDrawerOpen] = useState(false);
@@ -112,7 +112,7 @@ export function WorkspacesPage() {
             }}
             variant="contained"
           >
-            Create workspace
+            Create
           </Button>
         </Stack>
         <WorkspaceTable

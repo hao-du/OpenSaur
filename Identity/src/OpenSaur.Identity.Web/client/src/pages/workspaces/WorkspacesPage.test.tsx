@@ -72,24 +72,25 @@ describe("WorkspacesPage", () => {
     });
   });
 
-  it("renders backend-backed workspaces in a management table", () => {
+  it("defaults the workspace list to active workspaces", () => {
     renderPage();
 
     expect(screen.getByRole("heading", { level: 1, name: /workspace/i })).toBeDefined();
-    expect(screen.getByRole("button", { name: /create workspace/i })).toBeDefined();
+    expect(screen.getByRole("button", { name: /^create$/i })).toBeDefined();
     expect(screen.getByRole("button", { name: /filter/i })).toBeDefined();
     expect(screen.getByRole("cell", { name: /operations/i })).toBeDefined();
-    expect(screen.getByRole("cell", { name: /partners/i })).toBeDefined();
+    expect(screen.queryByRole("cell", { name: /partners/i })).toBeNull();
     expect(screen.getByText(/primary staff workspace/i)).toBeDefined();
-    expect(screen.getByText(/archived partner workspace/i)).toBeDefined();
     expect(screen.getAllByText(/^active$/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/^inactive$/i).length).toBeGreaterThan(0);
+    expect(screen.queryByText(/^inactive$/i)).toBeNull();
   });
 
   it("filters the rendered workspace list from the filter drawer", () => {
     renderPage();
 
     fireEvent.click(screen.getByRole("button", { name: /filter/i }));
+    fireEvent.mouseDown(screen.getByLabelText(/workspace status/i));
+    fireEvent.click(screen.getByRole("option", { name: /^all$/i }));
     fireEvent.change(screen.getByRole("textbox", { name: /search workspaces/i }), {
       target: { value: "part" }
     });
@@ -104,12 +105,14 @@ describe("WorkspacesPage", () => {
   it("opens the create drawer from the primary action", () => {
     renderPage();
 
-    fireEvent.click(screen.getByRole("button", { name: /create workspace/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^create$/i }));
 
     expect(screen.getByRole("heading", { level: 2, name: /create workspace/i })).toBeDefined();
     expect(screen.getByRole("textbox", { name: /workspace name/i })).toBeDefined();
     expect(screen.getByRole("textbox", { name: /description/i })).toBeDefined();
     expect(screen.queryByRole("checkbox", { name: /workspace is active/i })).toBeNull();
+    expect(screen.queryByText(/new workspaces start in the active state/i)).toBeNull();
+    expect(screen.getByRole("button", { name: /^save$/i })).toBeDefined();
   });
 
   it("shows a busy create action while creating a workspace", () => {
@@ -122,9 +125,9 @@ describe("WorkspacesPage", () => {
 
     renderPage();
 
-    fireEvent.click(screen.getByRole("button", { name: /create workspace/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^create$/i }));
 
-    const submitButton = screen.getByRole("button", { name: /creating workspace/i });
+    const submitButton = screen.getByRole("button", { name: /^saving\.\.\.$/i });
 
     expect((submitButton as HTMLButtonElement).disabled).toBe(true);
     expect(submitButton.getAttribute("aria-busy")).toBe("true");
@@ -145,6 +148,7 @@ describe("WorkspacesPage", () => {
     expect(screen.getByRole("heading", { level: 2, name: /edit workspace/i })).toBeDefined();
     expect((screen.getByRole("textbox", { name: /workspace name/i }) as HTMLInputElement).value).toBe("Operations");
     expect((screen.getByRole("checkbox", { name: /workspace is active/i }) as HTMLInputElement).checked).toBe(true);
+    expect(screen.getByRole("button", { name: /^save$/i })).toBeDefined();
   });
 
   it("renders an intentional empty state when no workspaces are returned", () => {
@@ -172,6 +176,47 @@ describe("WorkspacesPage", () => {
     return waitFor(() => {
       expect(screen.getByRole("cell", { name: /operations/i })).toBeDefined();
       expect(screen.queryByRole("cell", { name: /partners/i })).toBeNull();
+    });
+  });
+
+  it("keeps the selected filter after saving workspace changes", async () => {
+    const editWorkspace = vi.fn().mockResolvedValue(undefined);
+
+    useEditWorkspaceMock.mockReturnValue({
+      editWorkspace,
+      errorMessage: null,
+      isEditing: false,
+      resetError: vi.fn()
+    });
+    useWorkspaceQueryMock.mockReturnValue({
+      data: workspaces[1],
+      error: null,
+      isError: false,
+      isLoading: false
+    });
+
+    renderPage();
+
+    fireEvent.click(screen.getByRole("button", { name: /filter/i }));
+    fireEvent.mouseDown(screen.getByLabelText(/workspace status/i));
+    fireEvent.click(screen.getByRole("option", { name: /^inactive$/i }));
+    fireEvent.click(screen.getByRole("button", { name: /apply filters/i }));
+
+    await waitFor(() => {
+      expect(screen.queryByRole("cell", { name: /operations/i })).toBeNull();
+      expect(screen.getByRole("cell", { name: /partners/i })).toBeDefined();
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: /edit workspace/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^save$/i }));
+
+    await waitFor(() => {
+      expect(editWorkspace).toHaveBeenCalledTimes(1);
+    });
+
+    await waitFor(() => {
+      expect(screen.queryByRole("cell", { name: /operations/i })).toBeNull();
+      expect(screen.getByRole("cell", { name: /partners/i })).toBeDefined();
     });
   });
 

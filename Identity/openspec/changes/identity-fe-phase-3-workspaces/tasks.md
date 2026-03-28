@@ -138,7 +138,7 @@
 
 - [x] Run `npm test` or the targeted Vitest command for the new workspace page coverage.
 - [x] Run `npm run build` in `src/OpenSaur.Identity.Web/client`.
-- [ ] Run the hosted app path if needed to sanity-check the `Workspaces` route in the real shell.
+- [x] Run the hosted app path if needed to sanity-check the `Workspaces` route in the real shell.
 - [x] Record any verification-only fixes directly in the touched feature files.
 
 ## Notes

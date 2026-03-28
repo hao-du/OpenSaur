@@ -230,7 +230,13 @@ describe("ProtectedShellTemplate", () => {
       </AppProviders>
     );
 
-    fireEvent.click(await screen.findByRole("button", { name: /open account menu/i }));
+    const accountMenuButton = await screen.findByRole("button", { name: /open account menu/i });
+
+    await waitFor(() => {
+      expect(accountMenuButton.textContent).toMatch(/^hd$/i);
+    });
+
+    fireEvent.click(accountMenuButton);
 
     expect(screen.getByRole("menuitem", { name: /my profile/i })).toBeDefined();
     expect(screen.getByRole("menuitem", { name: /my profile/i }).querySelector("svg")).not.toBeNull();
@@ -240,7 +246,6 @@ describe("ProtectedShellTemplate", () => {
     expect(screen.getByRole("menuitem", { name: /settings/i }).querySelector("svg")).not.toBeNull();
     expect(screen.getByRole("menuitem", { name: /logout/i })).toBeDefined();
     expect(screen.getByRole("menuitem", { name: /logout/i }).querySelector("svg")).not.toBeNull();
-    expect(screen.getByText(/^hd$/i)).toBeDefined();
   });
 
   it("navigates to the change-password page from the account menu", async () => {
