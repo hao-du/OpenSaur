@@ -39,14 +39,14 @@ The system SHALL support the first-party web client as an OpenIddict client that
 - **THEN** the system returns an authentication failure that allows the client to redirect the user back to login
 
 ### Requirement: Bootstrap administrator login SHALL force password rotation
-The system SHALL seed a deterministic bootstrap `SystemAdministrator` account for first-time environment access, SHALL return a `RequirePasswordChange` indicator after successful login for that account until its password is rotated, and SHALL clear that indicator only after the user completes a successful self-service password change.
+The system SHALL seed a deterministic bootstrap `SystemAdministrator` account for first-time environment access with the initial password `P@ssword1`, SHALL return a `RequirePasswordChange` indicator after successful login for that account until its password is rotated, and SHALL clear that indicator only after the user completes a successful self-service password change.
 
 #### Scenario: Bootstrap administrator signs in before rotating password
-- **WHEN** the seeded `SystemAdministrator` account signs in with the bootstrap password and the account/workspace are active
+- **WHEN** the seeded `SystemAdministrator` account signs in with the bootstrap password `P@ssword1` and the account/workspace are active
 - **THEN** the system authenticates the user and the issued access token includes `RequirePasswordChange = true`
 
 #### Scenario: Bootstrap administrator changes password successfully
-- **WHEN** the authenticated bootstrap administrator calls the dedicated password change endpoint with the current bootstrap password and a valid new password
+- **WHEN** the authenticated bootstrap administrator calls the dedicated password change endpoint with the current bootstrap password `P@ssword1` and a valid new password
 - **THEN** the system updates the stored password, clears `RequirePasswordChange`, and requires the client to re-authenticate to obtain updated token claims
 
 ### Requirement: Third-party clients SHALL use OpenIddict authorization code flow

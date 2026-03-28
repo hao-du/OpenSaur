@@ -123,7 +123,7 @@ Alternatives considered:
 
 ### 9. Seed a bootstrap administrator account that must rotate its password
 
-Phase 1 seeds a deterministic `SystemAdministrator` account so a new environment can be accessed immediately after the reviewed SQL is applied. The seeded account starts with `RequirePasswordChange = true`, and the self-service password change endpoint clears that flag. After the password is changed, the client must re-authenticate through the normal OpenIddict flow to receive updated token claims.
+Phase 1 seeds a deterministic `SystemAdministrator` account with the initial password `P@ssword1` so a new environment can be accessed immediately after the reviewed SQL is applied. The seeded account starts with `RequirePasswordChange = true`, and the self-service password change endpoint clears that flag. After the password is changed, the client must re-authenticate through the normal OpenIddict flow to receive updated token claims.
 
 Alternatives considered:
 
