@@ -1,0 +1,192 @@
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { MemoryRouter } from "react-router-dom";
+import { AppProviders } from "../../app/providers/AppProviders";
+import { WorkspacesPage } from "./WorkspacesPage";
+import type { WorkspaceSummary } from "../../features/workspaces/types";
+
+const useWorkspacesQueryMock = vi.fn();
+const useCreateWorkspaceMock = vi.fn();
+const useEditWorkspaceMock = vi.fn();
+const useWorkspaceQueryMock = vi.fn();
+
+vi.mock("../../features/workspaces/hooks", () => ({
+  useCreateWorkspace: () => useCreateWorkspaceMock(),
+  useEditWorkspace: () => useEditWorkspaceMock(),
+  useWorkspaceQuery: (...args: unknown[]) => useWorkspaceQueryMock(...args),
+  useWorkspacesQuery: () => useWorkspacesQueryMock()
+}));
+
+const workspaces: WorkspaceSummary[] = [
+  {
+    description: "Primary staff workspace",
+    id: "workspace-1",
+    isActive: true,
+    name: "Operations"
+  },
+  {
+    description: "Archived partner workspace",
+    id: "workspace-2",
+    isActive: false,
+    name: "Partners"
+  }
+];
+
+function renderPage() {
+  return render(
+    <AppProviders>
+      <MemoryRouter initialEntries={["/workspaces"]}>
+        <WorkspacesPage />
+      </MemoryRouter>
+    </AppProviders>
+  );
+}
+
+describe("WorkspacesPage", () => {
+  beforeEach(() => {
+    vi.resetAllMocks();
+
+    useWorkspacesQueryMock.mockReturnValue({
+      data: workspaces,
+      error: null,
+      isError: false,
+      isLoading: false
+    });
+    useWorkspaceQueryMock.mockReturnValue({
+      data: null,
+      error: null,
+      isError: false,
+      isLoading: false
+    });
+    useCreateWorkspaceMock.mockReturnValue({
+      createWorkspace: vi.fn(),
+      errorMessage: null,
+      isCreating: false,
+      resetError: vi.fn()
+    });
+    useEditWorkspaceMock.mockReturnValue({
+      editWorkspace: vi.fn(),
+      errorMessage: null,
+      isEditing: false,
+      resetError: vi.fn()
+    });
+  });
+
+  it("renders backend-backed workspaces in a management table", () => {
+    renderPage();
+
+    expect(screen.getByRole("heading", { level: 1, name: /workspace/i })).toBeDefined();
+    expect(screen.getByRole("button", { name: /create workspace/i })).toBeDefined();
+    expect(screen.getByRole("button", { name: /filter/i })).toBeDefined();
+    expect(screen.getByRole("cell", { name: /operations/i })).toBeDefined();
+    expect(screen.getByRole("cell", { name: /partners/i })).toBeDefined();
+    expect(screen.getByText(/primary staff workspace/i)).toBeDefined();
+    expect(screen.getByText(/archived partner workspace/i)).toBeDefined();
+    expect(screen.getAllByText(/^active$/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/^inactive$/i).length).toBeGreaterThan(0);
+  });
+
+  it("filters the rendered workspace list from the filter drawer", () => {
+    renderPage();
+
+    fireEvent.click(screen.getByRole("button", { name: /filter/i }));
+    fireEvent.change(screen.getByRole("textbox", { name: /search workspaces/i }), {
+      target: { value: "part" }
+    });
+    fireEvent.click(screen.getByRole("button", { name: /apply filters/i }));
+
+    return waitFor(() => {
+      expect(screen.queryByRole("cell", { name: /operations/i })).toBeNull();
+      expect(screen.getByRole("cell", { name: /partners/i })).toBeDefined();
+    });
+  });
+
+  it("opens the create drawer from the primary action", () => {
+    renderPage();
+
+    fireEvent.click(screen.getByRole("button", { name: /create workspace/i }));
+
+    expect(screen.getByRole("heading", { level: 2, name: /create workspace/i })).toBeDefined();
+    expect(screen.getByRole("textbox", { name: /workspace name/i })).toBeDefined();
+    expect(screen.getByRole("textbox", { name: /description/i })).toBeDefined();
+    expect(screen.queryByRole("checkbox", { name: /workspace is active/i })).toBeNull();
+  });
+
+  it("shows a busy create action while creating a workspace", () => {
+    useCreateWorkspaceMock.mockReturnValue({
+      createWorkspace: vi.fn(),
+      errorMessage: null,
+      isCreating: true,
+      resetError: vi.fn()
+    });
+
+    renderPage();
+
+    fireEvent.click(screen.getByRole("button", { name: /create workspace/i }));
+
+    const submitButton = screen.getByRole("button", { name: /creating workspace/i });
+
+    expect((submitButton as HTMLButtonElement).disabled).toBe(true);
+    expect(submitButton.getAttribute("aria-busy")).toBe("true");
+  });
+
+  it("opens the edit drawer for the selected workspace row", () => {
+    useWorkspaceQueryMock.mockReturnValue({
+      data: workspaces[0],
+      error: null,
+      isError: false,
+      isLoading: false
+    });
+
+    renderPage();
+
+    fireEvent.click(screen.getAllByRole("button", { name: /edit workspace/i })[0]);
+
+    expect(screen.getByRole("heading", { level: 2, name: /edit workspace/i })).toBeDefined();
+    expect((screen.getByRole("textbox", { name: /workspace name/i }) as HTMLInputElement).value).toBe("Operations");
+    expect((screen.getByRole("checkbox", { name: /workspace is active/i }) as HTMLInputElement).checked).toBe(true);
+  });
+
+  it("renders an intentional empty state when no workspaces are returned", () => {
+    useWorkspacesQueryMock.mockReturnValue({
+      data: [],
+      error: null,
+      isError: false,
+      isLoading: false
+    });
+
+    renderPage();
+
+    expect(screen.getByText(/no workspaces yet/i)).toBeDefined();
+    expect(screen.getByText(/create the first workspace/i)).toBeDefined();
+  });
+
+  it("filters the rendered workspace list by active state", () => {
+    renderPage();
+
+    fireEvent.click(screen.getByRole("button", { name: /filter/i }));
+    fireEvent.mouseDown(screen.getByLabelText(/workspace status/i));
+    fireEvent.click(screen.getByRole("option", { name: /^active$/i }));
+    fireEvent.click(screen.getByRole("button", { name: /apply filters/i }));
+
+    return waitFor(() => {
+      expect(screen.getByRole("cell", { name: /operations/i })).toBeDefined();
+      expect(screen.queryByRole("cell", { name: /partners/i })).toBeNull();
+    });
+  });
+
+  it("renders a retryable error state when the workspace query fails", () => {
+    useWorkspacesQueryMock.mockReturnValue({
+      data: [],
+      error: new Error("boom"),
+      isError: true,
+      isLoading: false,
+      refetch: vi.fn()
+    });
+
+    renderPage();
+
+    expect(screen.getByText(/couldn't load the workspace list/i)).toBeDefined();
+    expect(screen.getByRole("button", { name: /retry/i })).toBeDefined();
+  });
+});

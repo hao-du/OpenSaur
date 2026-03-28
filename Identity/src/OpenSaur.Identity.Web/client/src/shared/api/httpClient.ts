@@ -1,7 +1,15 @@
 import axios, { type InternalAxiosRequestConfig } from "axios";
 import { authSessionStore } from "../../features/auth/state/authSessionStore";
 
-export async function applyAccessToken(config: InternalAxiosRequestConfig) {
+export type OpenSaurRequestConfig = InternalAxiosRequestConfig & {
+  idempotent?: boolean;
+};
+
+export async function applyRequestPolicies(config: OpenSaurRequestConfig) {
+  if (config.idempotent) {
+    config.headers.set("Idempotency-Key", crypto.randomUUID());
+  }
+
   const accessToken = authSessionStore.getAccessToken();
   if (!accessToken) {
     return config;
@@ -16,4 +24,4 @@ export const httpClient = axios.create({
   withCredentials: true
 });
 
-httpClient.interceptors.request.use(applyAccessToken);
+httpClient.interceptors.request.use(applyRequestPolicies);
