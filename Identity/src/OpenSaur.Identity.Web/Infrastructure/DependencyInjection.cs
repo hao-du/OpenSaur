@@ -2,6 +2,7 @@ using FluentValidation;
 using System.Security.Cryptography.X509Certificates;
 using System.Security.Claims;
 using System.Threading.RateLimiting;
+using System.Diagnostics;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -353,18 +354,37 @@ public static class DependencyInjection
             return;
         }
 
-        if (string.IsNullOrWhiteSpace(oidcOptions.SigningCertificatePath)
-            || string.IsNullOrWhiteSpace(oidcOptions.EncryptionCertificatePath))
+        var signingCertificateConfigured = !string.IsNullOrWhiteSpace(oidcOptions.SigningCertificatePath);
+        var encryptionCertificateConfigured = !string.IsNullOrWhiteSpace(oidcOptions.EncryptionCertificatePath);
+
+        if (signingCertificateConfigured != encryptionCertificateConfigured)
         {
             throw new InvalidOperationException(
-                "OIDC durable signing and encryption certificates are required outside the Development environment.");
+                "Both OIDC signing and encryption certificate paths must be configured together outside the Development environment.");
+        }
+
+        if (!signingCertificateConfigured && !encryptionCertificateConfigured)
+        {
+            if (!oidcOptions.AllowEphemeralKeysInProduction)
+            {
+                throw new InvalidOperationException(
+                    "OIDC durable signing and encryption certificates are required outside the Development environment.");
+            }
+
+            Trace.TraceWarning(
+                "OIDC durable certificates are not configured outside Development. Falling back to ephemeral signing and encryption keys because Oidc:AllowEphemeralKeysInProduction is enabled. Refresh tokens and sessions will be invalidated on application restart.");
+
+            builder.AddEphemeralEncryptionKey()
+                .AddEphemeralSigningKey();
+
+            return;
         }
 
         var signingCertificate = LoadCertificate(
-            oidcOptions.SigningCertificatePath,
+            oidcOptions.SigningCertificatePath!,
             oidcOptions.SigningCertificatePassword);
         var encryptionCertificate = LoadCertificate(
-            oidcOptions.EncryptionCertificatePath,
+            oidcOptions.EncryptionCertificatePath!,
             oidcOptions.EncryptionCertificatePassword);
 
         builder.AddSigningCertificate(signingCertificate)

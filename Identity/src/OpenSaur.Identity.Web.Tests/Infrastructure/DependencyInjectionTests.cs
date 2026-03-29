@@ -45,6 +45,38 @@ public sealed class DependencyInjectionTests
     }
 
     [Fact]
+    public void AddOpenSaurInfrastructure_WhenProductionFallbackFlagIsEnabled_AllowsEphemeralKeys()
+    {
+        var services = new ServiceCollection();
+        var configuration = CreateConfiguration(
+            new Dictionary<string, string?>
+            {
+                ["Oidc:AllowEphemeralKeysInProduction"] = "true"
+            });
+        var environment = new TestHostEnvironment(Environments.Production);
+
+        services.AddOpenSaurInfrastructure(configuration, environment);
+    }
+
+    [Fact]
+    public void AddOpenSaurInfrastructure_WhenOnlyOneProductionCertificatePathIsConfigured_Throws()
+    {
+        var services = new ServiceCollection();
+        var configuration = CreateConfiguration(
+            new Dictionary<string, string?>
+            {
+                ["Oidc:AllowEphemeralKeysInProduction"] = "true",
+                ["Oidc:SigningCertificatePath"] = "signing-only.pfx"
+            });
+        var environment = new TestHostEnvironment(Environments.Production);
+
+        var exception = Assert.Throws<InvalidOperationException>(
+            () => services.AddOpenSaurInfrastructure(configuration, environment));
+
+        Assert.Contains("Both OIDC signing and encryption certificate paths must be configured together", exception.Message);
+    }
+
+    [Fact]
     public void AddOpenSaurInfrastructure_WhenRedisConnectionStringIsConfigured_RegistersDistributedRedisCache()
     {
         var services = new ServiceCollection();

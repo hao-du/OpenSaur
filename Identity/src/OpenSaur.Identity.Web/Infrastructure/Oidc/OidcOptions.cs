@@ -15,6 +15,8 @@ public sealed class OidcOptions
     public string? EncryptionCertificatePath { get; set; }
 
     public string? EncryptionCertificatePassword { get; set; }
+
+    public bool AllowEphemeralKeysInProduction { get; set; }
 }
 
 public sealed class FirstPartyWebOidcOptions
