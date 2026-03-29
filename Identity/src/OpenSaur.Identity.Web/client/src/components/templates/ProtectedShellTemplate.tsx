@@ -1,7 +1,9 @@
 import { useMemo, useState, type PropsWithChildren } from "react";
 import {
+  Alert,
   AppBar,
   Box,
+  Button,
   Divider,
   Drawer,
   IconButton,
@@ -12,7 +14,6 @@ import {
   Stack,
   Toolbar,
   Typography,
-  Tooltip,
   useMediaQuery,
   useTheme
 } from "@mui/material";
@@ -27,7 +28,7 @@ import {
 import { authSessionStore } from "../../features/auth/state/authSessionStore";
 import { useSyncAuthenticatedPreferences } from "../../features/preferences/hooks";
 import { BrandMark } from "../atoms";
-import { ArrowLeft, Menu } from "../../shared/icons";
+import { Menu } from "../../shared/icons";
 import { ShellAccountMenu } from "./ShellAccountMenu";
 
 type ProtectedShellTemplateProps = PropsWithChildren<{
@@ -55,6 +56,10 @@ export function ProtectedShellTemplate({
     [currentUser]
   );
   const workspaceName = currentUser?.workspaceName ?? "Protected workspace";
+  const impersonatedDisplayName = useMemo(() => {
+    const fullName = `${currentUser?.firstName ?? ""} ${currentUser?.lastName ?? ""}`.trim();
+    return fullName || currentUser?.userName || "this user";
+  }, [currentUser?.firstName, currentUser?.lastName, currentUser?.userName]);
   const currentYear = new Date().getFullYear();
 
   async function handleLogout() {
@@ -265,22 +270,6 @@ export function ProtectedShellTemplate({
                   >
                     {workspaceName}
                   </Typography>
-                  {currentUser?.isImpersonating ? (
-                    <Tooltip title="Exit impersonation">
-                      <span>
-                        <IconButton
-                          aria-label="Exit impersonation"
-                          disabled={isExitingImpersonation}
-                          onClick={() => {
-                            void handleExitImpersonation();
-                          }}
-                          size="small"
-                        >
-                          <ArrowLeft size={18} />
-                        </IconButton>
-                      </span>
-                    </Tooltip>
-                  ) : null}
                 </Stack>
               </Stack>
             </Stack>
@@ -305,6 +294,33 @@ export function ProtectedShellTemplate({
             </Stack>
           </Toolbar>
         </AppBar>
+        {currentUser?.isImpersonating ? (
+          <Alert
+            action={(
+              <Button
+                aria-label="Exit impersonation"
+                color="inherit"
+                disabled={isExitingImpersonation}
+                onClick={() => {
+                  void handleExitImpersonation();
+                }}
+                size="small"
+              >
+                Exit impersonation
+              </Button>
+            )}
+            role="alert"
+            severity="success"
+            sx={{
+              borderRadius: 0
+            }}
+          >
+            <>
+              You are currently impersonating <strong>{impersonatedDisplayName}</strong> in{" "}
+              <strong>{workspaceName}</strong>.
+            </>
+          </Alert>
+        ) : null}
         <Box
           component="main"
           sx={{

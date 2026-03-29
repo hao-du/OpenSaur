@@ -67,8 +67,9 @@ describe("HomePage", () => {
     expect(screen.getByText(/active users/i)).toBeDefined();
     expect(screen.getByText("15")).toBeDefined();
     expect(screen.getByText(/roles/i)).toBeDefined();
-    expect(screen.queryByText(/quick actions/i)).toBeNull();
-    expect(screen.queryByRole("button", { name: /open workspaces/i })).toBeNull();
+    expect(screen.getByText(/quick actions/i)).toBeDefined();
+    expect(screen.getByRole("button", { name: /open workspaces/i })).toBeDefined();
+    expect(screen.getByRole("button", { name: /manage role catalog/i })).toBeDefined();
   });
 
   it("renders workspace summary blocks with capacity usage for workspace-scoped sessions", () => {

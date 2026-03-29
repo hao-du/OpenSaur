@@ -1,6 +1,5 @@
 import { useMemo, useState, type MouseEvent } from "react";
 import {
-  Button,
   Chip,
   Popover,
   Stack,
@@ -23,7 +22,7 @@ export function RolePreviewList({
   maxVisible = 2,
   roles
 }: RolePreviewListProps) {
-  const [anchorEl, setAnchorEl] = useState<HTMLButtonElement | null>(null);
+  const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const visibleRoles = useMemo(() => roles.slice(0, maxVisible), [maxVisible, roles]);
   const overflowRoles = useMemo(() => roles.slice(maxVisible), [maxVisible, roles]);
   const overflowCount = overflowRoles.length;
@@ -40,6 +39,7 @@ export function RolePreviewList({
   return (
     <>
       <Stack
+        alignItems="center"
         direction="row"
         flexWrap="wrap"
         gap={0.75}
@@ -53,17 +53,18 @@ export function RolePreviewList({
           />
         ))}
         {overflowCount > 0 ? (
-          <Button
+          <Chip
             aria-label={overflowLabel}
-            onClick={(event: MouseEvent<HTMLButtonElement>) => {
+            clickable
+            component="button"
+            label={`+${overflowCount}`}
+            onClick={(event: MouseEvent<HTMLElement>) => {
               setAnchorEl(event.currentTarget);
             }}
             size="small"
-            sx={{ minWidth: "auto", px: 1 }}
-            variant="text"
-          >
-            +{overflowCount}
-          </Button>
+            sx={{ fontWeight: 600 }}
+            variant="outlined"
+          />
         ) : null}
       </Stack>
       <Popover

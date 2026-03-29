@@ -1,7 +1,6 @@
 import { renderHook } from "@testing-library/react";
-import { QueryClient } from "@tanstack/react-query";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { AppProviders } from "../../../app/providers/AppProviders";
+import { AppProviders, createAppQueryClient } from "../../../app/providers/AppProviders";
 import * as authApi from "../api/authApi";
 import { authQueryKeys } from "../queries/authQueryKeys";
 import { useCurrentUserQuery } from "./useCurrentUserQuery";
@@ -21,7 +20,7 @@ describe("useCurrentUserQuery", () => {
   });
 
   it("fetches and clears the current user query", async () => {
-    const queryClient = new QueryClient();
+    const queryClient = createAppQueryClient();
     vi.mocked(authApi.getCurrentUser).mockResolvedValue({
       id: "user-1",
       requirePasswordChange: false,
@@ -48,5 +47,37 @@ describe("useCurrentUserQuery", () => {
     result.current.clearCurrentUser();
 
     expect(queryClient.getQueryData(authQueryKeys.currentUser())).toBeUndefined();
+  });
+
+  it("forces a fresh current-user fetch even when cached data is still fresh", async () => {
+    const queryClient = createAppQueryClient();
+    queryClient.setQueryData(authQueryKeys.currentUser(), {
+      id: "user-1",
+      requirePasswordChange: false,
+      roles: ["Administrator"],
+      userName: "cached.user"
+    });
+    vi.mocked(authApi.getCurrentUser).mockResolvedValue({
+      id: "user-2",
+      requirePasswordChange: false,
+      roles: ["SUPERADMINISTRATOR"],
+      userName: "fresh.user"
+    });
+
+    const { result } = renderHook(() => useCurrentUserQuery(), {
+      wrapper: ({ children }) => (
+        <AppProviders queryClient={queryClient}>{children}</AppProviders>
+      )
+    });
+
+    const currentUser = await result.current.fetchCurrentUser();
+
+    expect(authApi.getCurrentUser).toHaveBeenCalledOnce();
+    expect(currentUser).toEqual({
+      id: "user-2",
+      requirePasswordChange: false,
+      roles: ["SUPERADMINISTRATOR"],
+      userName: "fresh.user"
+    });
   });
 });

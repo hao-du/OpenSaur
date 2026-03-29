@@ -4,7 +4,8 @@ import {
   createUserRoleAssignment,
   editUserRoleAssignment
 } from "../../role-assignments/api";
-import { roleAssignmentQueryKeys } from "../../role-assignments/queries/roleAssignmentQueryKeys";
+import { authQueryKeys } from "../../auth/queries/authQueryKeys";
+import { getCachedCurrentUserId } from "../../auth/queries/currentUserCache";
 import { userQueryKeys } from "../queries/userQueryKeys";
 import type { SaveUserAssignmentsRequest } from "../types";
 
@@ -45,21 +46,29 @@ async function saveUserAssignments(request: SaveUserAssignmentsRequest) {
     }));
 
   if (createRequests.length === 0 && reactivateRequests.length === 0 && deactivateRequests.length === 0) {
-    return;
+    return { hasChanges: false };
   }
 
   await Promise.all([...createRequests, ...reactivateRequests, ...deactivateRequests]);
+
+  return { hasChanges: true };
 }
 
 export function useSaveUserAssignments() {
   const queryClient = useQueryClient();
   const mutation = useMutation({
     mutationFn: saveUserAssignments,
-    onSuccess: async (_, variables) => {
-      await queryClient.invalidateQueries({ queryKey: userQueryKeys.all() });
-      await queryClient.invalidateQueries({ queryKey: userQueryKeys.detail(variables.userId) });
-      await queryClient.invalidateQueries({ queryKey: userQueryKeys.userAssignments(variables.userId) });
-      await queryClient.invalidateQueries({ queryKey: roleAssignmentQueryKeys.all() });
+    onSuccess: async (result, variables) => {
+      if (!result.hasChanges) {
+        return;
+      }
+
+      await queryClient.invalidateQueries({ exact: true, queryKey: userQueryKeys.list() });
+      await queryClient.invalidateQueries({ exact: true, queryKey: userQueryKeys.userAssignments(variables.userId) });
+
+      if (getCachedCurrentUserId(queryClient) === variables.userId) {
+        await queryClient.invalidateQueries({ exact: true, queryKey: authQueryKeys.currentUser() });
+      }
     }
   });
 

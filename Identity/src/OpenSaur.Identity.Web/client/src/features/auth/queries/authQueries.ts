@@ -1,6 +1,7 @@
 import { queryOptions } from "@tanstack/react-query";
 import { getCurrentUser, getDashboardSummary } from "../api/authApi";
 import { authQueryKeys } from "./authQueryKeys";
+import type { CurrentUserScope } from "./currentUserScope";
 
 export function currentUserQueryOptions() {
   return queryOptions({
@@ -9,9 +10,9 @@ export function currentUserQueryOptions() {
   });
 }
 
-export function dashboardSummaryQueryOptions() {
+export function dashboardSummaryQueryOptions(scope?: CurrentUserScope) {
   return queryOptions({
-    queryKey: authQueryKeys.dashboardSummary(),
+    queryKey: authQueryKeys.dashboardSummary(scope),
     queryFn: getDashboardSummary
   });
 }

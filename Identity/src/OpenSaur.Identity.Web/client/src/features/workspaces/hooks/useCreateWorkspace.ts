@@ -1,5 +1,8 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { getApiErrorMessage } from "../../../shared/api";
+import { authQueryKeys } from "../../auth/queries/authQueryKeys";
+import { roleAssignmentQueryKeys } from "../../role-assignments/queries/roleAssignmentQueryKeys";
+import { userQueryKeys } from "../../users/queries/userQueryKeys";
 import { createWorkspace } from "../api";
 import { workspaceQueryKeys } from "../queries/workspaceQueryKeys";
 import type { CreateWorkspaceRequest } from "../types";
@@ -9,7 +12,10 @@ export function useCreateWorkspace() {
   const mutation = useMutation({
     mutationFn: createWorkspace,
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: workspaceQueryKeys.all() });
+      await queryClient.invalidateQueries({ exact: true, queryKey: workspaceQueryKeys.list() });
+      await queryClient.invalidateQueries({ queryKey: authQueryKeys.dashboardSummary() });
+      await queryClient.invalidateQueries({ queryKey: userQueryKeys.roleCandidates() });
+      await queryClient.invalidateQueries({ queryKey: roleAssignmentQueryKeys.availableRoles() });
     }
   });
 

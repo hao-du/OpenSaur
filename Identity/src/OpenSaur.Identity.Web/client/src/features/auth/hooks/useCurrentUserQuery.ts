@@ -7,7 +7,10 @@ export function useCurrentUserQuery() {
   const queryClient = useQueryClient();
 
   const fetchCurrentUser = useCallback(() => {
-    return queryClient.fetchQuery(currentUserQueryOptions());
+    return queryClient.fetchQuery({
+      ...currentUserQueryOptions(),
+      staleTime: 0
+    });
   }, [queryClient]);
 
   const clearCurrentUser = useCallback(() => {

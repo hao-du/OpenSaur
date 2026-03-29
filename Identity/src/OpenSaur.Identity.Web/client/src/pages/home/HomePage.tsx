@@ -7,6 +7,7 @@ import {
   Typography
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
+import { isSuperAdministrator } from "../../app/router/protectedShellRoutes";
 import { ProtectedShellTemplate } from "../../components/templates";
 import {
   useCurrentUserState,
@@ -17,7 +18,8 @@ export function HomePage() {
   const navigate = useNavigate();
   const { data: currentUser } = useCurrentUserState();
   const { data: summary, isError, isLoading } = useDashboardSummaryQuery();
-  const shouldShowQuickActions = currentUser?.canManageUsers === true;
+  const shouldShowQuickActions = currentUser?.canManageUsers === true
+    || isSuperAdministrator(currentUser?.roles ?? []);
 
   function renderMetricCard(title: string, value: string | number, subtitle?: string) {
     return (

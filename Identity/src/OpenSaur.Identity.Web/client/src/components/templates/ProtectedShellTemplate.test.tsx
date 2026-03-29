@@ -211,8 +211,10 @@ describe("ProtectedShellTemplate", () => {
     });
     vi.mocked(authApi.getCurrentUser).mockResolvedValue({
       canManageUsers: true,
+      firstName: "Finance",
       id: "user-1",
       isImpersonating: true,
+      lastName: "Admin",
       requirePasswordChange: false,
       roles: ["SUPERADMINISTRATOR"],
       userName: "System Administrator",
@@ -229,9 +231,16 @@ describe("ProtectedShellTemplate", () => {
       </AppProviders>
     );
 
-    expect(await screen.findByText(/contoso workspace/i)).toBeDefined();
-    expect(screen.getByRole("button", { name: /exit impersonation/i })).toBeDefined();
-    expect(screen.queryByText(/^exit impersonation$/i)).toBeNull();
+    expect(await screen.findAllByText(/contoso workspace/i)).toHaveLength(2);
+    const impersonationAlert = screen.getByRole("alert");
+    expect(impersonationAlert.textContent).toMatch(
+      /you are currently impersonating finance admin in contoso workspace\./i
+    );
+    expect(impersonationAlert.querySelectorAll("strong")).toHaveLength(2);
+    expect(screen.getByText("Finance Admin", { selector: "strong" })).toBeDefined();
+    expect(screen.getByText("Contoso Workspace", { selector: "strong" })).toBeDefined();
+    const exitImpersonationButton = screen.getByRole("button", { name: /exit impersonation/i });
+    expect(exitImpersonationButton).toBeDefined();
     expect(screen.getByRole("link", { name: /^role assignments$/i })).toBeDefined();
     expect(screen.queryByRole("link", { name: /^workspace$/i })).toBeNull();
   });

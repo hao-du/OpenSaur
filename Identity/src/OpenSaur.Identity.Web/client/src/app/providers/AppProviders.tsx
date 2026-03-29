@@ -4,6 +4,8 @@ import { CssBaseline, ThemeProvider } from "@mui/material";
 import { appTheme } from "../theme/theme";
 import { PreferenceProvider } from "../../features/preferences/PreferenceProvider";
 
+const defaultQueryStaleTimeInMilliseconds = 5 * 60 * 1000;
+
 type AppProvidersProps = PropsWithChildren<{
   queryClient?: QueryClient;
 }>;
@@ -15,7 +17,10 @@ export function createAppQueryClient() {
         retry: false
       },
       queries: {
-        retry: false
+        retry: false,
+        staleTime: defaultQueryStaleTimeInMilliseconds,
+        refetchOnWindowFocus: false,
+        refetchOnReconnect: false
       }
     }
   });
