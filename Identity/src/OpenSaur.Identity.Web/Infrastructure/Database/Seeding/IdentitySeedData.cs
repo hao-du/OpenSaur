@@ -169,7 +169,7 @@ internal static class IdentitySeedData
         {
             Id = id,
             Name = name,
-            NormalizedName = name.ToUpperInvariant(),
+            NormalizedName = SystemRoles.Normalize(name),
             Description = description,
             IsActive = true,
             CreatedBy = SystemActorId,

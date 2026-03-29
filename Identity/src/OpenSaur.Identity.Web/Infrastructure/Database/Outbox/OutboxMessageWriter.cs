@@ -1,6 +1,7 @@
 using System.Text.Json;
 using OpenSaur.Identity.Web.Domain.Identity;
 using OpenSaur.Identity.Web.Domain.Outbox;
+using OpenSaur.Identity.Web.Domain.Workspaces;
 
 namespace OpenSaur.Identity.Web.Infrastructure.Database.Outbox;
 
@@ -73,6 +74,44 @@ public sealed class OutboxMessageWriter(ApplicationDbContext dbContext)
                 role.Name ?? string.Empty,
                 role.IsActive,
                 permissionCodeIds.ToArray()),
+            changedByUserId);
+    }
+
+    public void EnqueueWorkspaceCreated(
+        Workspace workspace,
+        IReadOnlyCollection<Guid> assignedRoleIds,
+        Guid changedByUserId)
+    {
+        Enqueue(
+            OutboxEventNames.WorkspaceCreated,
+            OutboxAggregateTypes.Workspace,
+            workspace.Id,
+            $"{OutboxEventNames.WorkspaceCreated} event for {OutboxAggregateTypes.Workspace} {workspace.Id}.",
+            new WorkspaceEventPayload(
+                workspace.Id,
+                workspace.Name,
+                workspace.Description,
+                workspace.IsActive,
+                assignedRoleIds.Order().ToArray()),
+            changedByUserId);
+    }
+
+    public void EnqueueWorkspaceUpdated(
+        Workspace workspace,
+        IReadOnlyCollection<Guid> assignedRoleIds,
+        Guid changedByUserId)
+    {
+        Enqueue(
+            OutboxEventNames.WorkspaceUpdated,
+            OutboxAggregateTypes.Workspace,
+            workspace.Id,
+            $"{OutboxEventNames.WorkspaceUpdated} event for {OutboxAggregateTypes.Workspace} {workspace.Id}.",
+            new WorkspaceEventPayload(
+                workspace.Id,
+                workspace.Name,
+                workspace.Description,
+                workspace.IsActive,
+                assignedRoleIds.Order().ToArray()),
             changedByUserId);
     }
 

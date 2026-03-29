@@ -20,6 +20,7 @@ vi.mock("../api/authApi", async () => {
   return {
     ...actual,
     getCurrentUser: vi.fn(),
+    getCurrentUserSettings: vi.fn(),
     refreshWebSession: vi.fn()
   };
 });
@@ -38,8 +39,13 @@ function LocationProbe() {
 describe("AuthBootstrapBoundary", () => {
   beforeEach(() => {
     authSessionStore.clearSession();
+    window.localStorage?.clear?.();
     sessionStorage.clear();
     vi.resetAllMocks();
+    vi.mocked(authApi.getCurrentUserSettings).mockResolvedValue({
+      locale: null,
+      timeZone: null
+    });
   });
 
   it("bootstraps a protected route from the backend refresh session", async () => {

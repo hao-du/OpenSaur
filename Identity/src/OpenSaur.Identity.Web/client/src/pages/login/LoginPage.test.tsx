@@ -7,6 +7,29 @@ import { authSessionStore } from "../../features/auth/state/authSessionStore";
 import * as firstPartyOidc from "../../features/auth/utils/firstPartyOidc";
 import { LoginPage } from "./LoginPage";
 
+function ensureLocalStorage() {
+  const store = new Map<string, string>();
+  const storage = {
+    clear: vi.fn(() => {
+      store.clear();
+    }),
+    getItem: vi.fn((key: string) => store.get(key) ?? null),
+    key: vi.fn(),
+    length: 0,
+    removeItem: vi.fn((key: string) => {
+      store.delete(key);
+    }),
+    setItem: vi.fn((key: string, value: string) => {
+      store.set(key, value);
+    })
+  } satisfies Partial<Storage>;
+
+  Object.defineProperty(window, "localStorage", {
+    configurable: true,
+    value: storage
+  });
+}
+
 vi.mock("../../features/auth/api/authApi", async () => {
   const actual = await vi.importActual<typeof import("../../features/auth/api/authApi")>("../../features/auth/api/authApi");
 
@@ -28,6 +51,8 @@ vi.mock("../../features/auth/utils/firstPartyOidc", async () => {
 describe("LoginPage", () => {
   beforeEach(() => {
     authSessionStore.clearSession();
+    ensureLocalStorage();
+    window.localStorage.clear();
     sessionStorage.clear();
     vi.resetAllMocks();
   });
@@ -134,5 +159,23 @@ describe("LoginPage", () => {
       expect(screen.getByRole("button", { name: /signing in/i })).toBeDefined();
       expect(screen.getByRole("progressbar")).toBeDefined();
     });
+  });
+
+  it("restores Vietnamese locale from local storage before authentication", () => {
+    window.localStorage.setItem("opensaur.identity.preferences", JSON.stringify({
+      locale: "vi",
+      timeZone: "Asia/Saigon"
+    }));
+
+    render(
+      <AppProviders>
+        <MemoryRouter initialEntries={["/login"]}>
+          <LoginPage />
+        </MemoryRouter>
+      </AppProviders>
+    );
+
+    expect(screen.getByRole("heading", { level: 3, name: /đăng nhập/i })).toBeDefined();
+    expect(screen.getByRole("button", { name: /^đăng nhập$/i })).toBeDefined();
   });
 });

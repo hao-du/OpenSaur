@@ -18,7 +18,8 @@ vi.mock("../../features/auth/api/authApi", async () => {
   return {
     ...actual,
     exchangeWebSession: vi.fn(),
-    getCurrentUser: vi.fn()
+    getCurrentUser: vi.fn(),
+    getCurrentUserSettings: vi.fn()
   };
 });
 
@@ -36,8 +37,13 @@ function LocationProbe() {
 describe("AuthCallbackPage", () => {
   beforeEach(() => {
     authSessionStore.clearSession();
+    window.localStorage?.clear?.();
     sessionStorage.clear();
     vi.resetAllMocks();
+    vi.mocked(authApi.getCurrentUserSettings).mockResolvedValue({
+      locale: null,
+      timeZone: null
+    });
   });
 
   it("renders neutral progress copy while sign-in is being completed", () => {
@@ -61,7 +67,7 @@ describe("AuthCallbackPage", () => {
   });
 
   it("exchanges the authorization code, bootstraps the current user, and redirects to the remembered route", async () => {
-    authSessionStore.rememberReturnUrl("/users");
+    vi.spyOn(authSessionStore, "getRememberedReturnUrl").mockReturnValue("/users");
     vi.mocked(authApi.exchangeWebSession).mockResolvedValue({
       accessToken: "header.payload.signature",
       expiresAt: "2026-03-28T00:00:00.000Z"
@@ -112,7 +118,7 @@ describe("AuthCallbackPage", () => {
   });
 
   it("exchanges the authorization code only once in StrictMode", async () => {
-    authSessionStore.rememberReturnUrl("/");
+    vi.spyOn(authSessionStore, "getRememberedReturnUrl").mockReturnValue("/");
     vi.mocked(authApi.exchangeWebSession).mockResolvedValue({
       accessToken: "header.payload.signature",
       expiresAt: "2026-03-28T00:00:00.000Z"
@@ -152,7 +158,7 @@ describe("AuthCallbackPage", () => {
   });
 
   it("falls back to the dashboard when the remembered return url points back to change-password", async () => {
-    authSessionStore.rememberReturnUrl("/change-password");
+    vi.spyOn(authSessionStore, "getRememberedReturnUrl").mockReturnValue("/change-password");
     vi.mocked(authApi.exchangeWebSession).mockResolvedValue({
       accessToken: "header.payload.signature",
       expiresAt: "2026-03-28T00:00:00.000Z"

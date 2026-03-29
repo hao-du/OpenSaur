@@ -155,7 +155,7 @@ public sealed class FirstPartyOidcTokenClient : IFirstPartyOidcTokenClient
         }
 
         var expiresAt = signInContext.AccessTokenPrincipal?.GetExpirationDate()
-            ?? DateTimeOffset.UtcNow.AddHours(1);
+            ?? DateTimeOffset.UtcNow.Add(OidcDefaults.AccessTokenLifetime);
 
         return new FirstPartyOidcTokenResult(
             signInContext.AccessToken,

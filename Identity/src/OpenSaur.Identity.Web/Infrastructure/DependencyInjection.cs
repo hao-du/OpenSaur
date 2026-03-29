@@ -194,6 +194,7 @@ public static class DependencyInjection
                 options.User.RequireUniqueEmail = true;
                 options.Password.RequireDigit = true;
                 options.Password.RequireLowercase = true;
+                options.Password.RequireNonAlphanumeric = true;
                 options.Password.RequireUppercase = true;
                 options.Password.RequiredLength = 8;
             })
@@ -313,8 +314,8 @@ public static class DependencyInjection
                     OpenIddictConstants.Scopes.OfflineAccess,
                     OpenIddictConstants.Scopes.Roles,
                     "api");
-                options.SetAccessTokenLifetime(TimeSpan.FromHours(1));
-                options.SetRefreshTokenLifetime(TimeSpan.FromDays(14));
+                options.SetAccessTokenLifetime(OidcDefaults.AccessTokenLifetime);
+                options.SetRefreshTokenLifetime(OidcDefaults.RefreshTokenLifetime);
                 options.SetRefreshTokenReuseLeeway(TimeSpan.Zero);
 
                 // Access tokens are validated as plain JWTs by resource servers using

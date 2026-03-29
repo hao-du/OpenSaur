@@ -284,5 +284,84 @@ public sealed class OutboxMessageRecordingTests : IClassFixture<OpenSaurWebAppli
         Assert.Empty(payload.RootElement.GetProperty("PermissionCodeIds").EnumerateArray());
     }
 
+    [Fact]
+    public async Task PostCreateWorkspace_WritesWorkspaceCreatedOutboxMessage()
+    {
+        var roleId = await TestIdentitySeeder.SeedRoleAsync(_factory, "Content Writer");
+        var workspaceName = TestFakers.CreateWorkspaceName();
+
+        using var client = FirstPartyApiTestClient.CreateClient(_factory);
+        var accessToken = await FirstPartyApiTestClient.GetAccessTokenAsync(client, "SystemAdministrator", "Password1");
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+        var response = await FirstPartyApiTestClient.SendJsonWithIdempotencyAsync(
+            client,
+            HttpMethod.Post,
+            "/api/workspace/create",
+            new
+            {
+                Name = workspaceName,
+                Description = TestFakers.CreateDescription(),
+                AssignedRoleIds = new[] { roleId }
+            });
+
+        await ApiResponseReader.ReadSuccessDataAsync<JsonElement>(response);
+
+        using var scope = _factory.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var workspace = await dbContext.Workspaces.SingleAsync(candidate => candidate.Name == workspaceName);
+        var outboxMessage = await dbContext.OutboxMessages.SingleOrDefaultAsync(
+            message => message.EventName == OutboxEventNames.WorkspaceCreated && message.AggregateId == workspace.Id);
+
+        Assert.NotNull(outboxMessage);
+        Assert.Equal(OutboxAggregateTypes.Workspace, outboxMessage!.AggregateType);
+
+        using var payload = JsonDocument.Parse(outboxMessage.Payload);
+        Assert.Equal(workspace.Id, payload.RootElement.GetProperty("WorkspaceId").GetGuid());
+        Assert.Equal(workspaceName, payload.RootElement.GetProperty("Name").GetString());
+        Assert.True(payload.RootElement.GetProperty("IsActive").GetBoolean());
+        Assert.Equal(roleId, payload.RootElement.GetProperty("AssignedRoleIds")[0].GetGuid());
+    }
+
+    [Fact]
+    public async Task PutEditWorkspace_WritesWorkspaceUpdatedOutboxMessage()
+    {
+        var workspaceId = await TestIdentitySeeder.SeedWorkspaceAsync(_factory, TestFakers.CreateWorkspaceName());
+        var retainedRoleId = await TestIdentitySeeder.SeedRoleAsync(_factory, "Operations Manager");
+
+        using var client = FirstPartyApiTestClient.CreateClient(_factory);
+        var accessToken = await FirstPartyApiTestClient.GetAccessTokenAsync(client, "SystemAdministrator", "Password1");
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+        var response = await FirstPartyApiTestClient.SendJsonWithIdempotencyAsync(
+            client,
+            HttpMethod.Put,
+            "/api/workspace/edit",
+            new
+            {
+                Id = workspaceId,
+                Name = "Updated Operations",
+                Description = TestFakers.CreateDescription(),
+                IsActive = false,
+                AssignedRoleIds = new[] { retainedRoleId }
+            });
+
+        await ApiResponseReader.AssertNullSuccessDataAsync(response);
+
+        using var scope = _factory.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var outboxMessage = await dbContext.OutboxMessages.SingleOrDefaultAsync(
+            message => message.EventName == OutboxEventNames.WorkspaceUpdated && message.AggregateId == workspaceId);
+
+        Assert.NotNull(outboxMessage);
+        Assert.Equal(OutboxAggregateTypes.Workspace, outboxMessage!.AggregateType);
+
+        using var payload = JsonDocument.Parse(outboxMessage.Payload);
+        Assert.Equal(workspaceId, payload.RootElement.GetProperty("WorkspaceId").GetGuid());
+        Assert.Equal("Updated Operations", payload.RootElement.GetProperty("Name").GetString());
+        Assert.False(payload.RootElement.GetProperty("IsActive").GetBoolean());
+        Assert.Equal(retainedRoleId, payload.RootElement.GetProperty("AssignedRoleIds")[0].GetGuid());
+    }
+
 }
 

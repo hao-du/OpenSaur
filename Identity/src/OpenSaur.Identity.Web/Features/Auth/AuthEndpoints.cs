@@ -2,6 +2,7 @@ using OpenSaur.Identity.Web.Features.Auth.ChangePassword;
 using OpenSaur.Identity.Web.Features.Auth.Login;
 using OpenSaur.Identity.Web.Features.Auth.Logout;
 using OpenSaur.Identity.Web.Features.Auth.Me;
+using OpenSaur.Identity.Web.Features.Auth.Settings;
 using OpenSaur.Identity.Web.Features.Auth.Impersonation;
 using OpenSaur.Identity.Web.Features.Auth.WebSession;
 using OpenSaur.Identity.Web.Infrastructure.Authorization;
@@ -31,6 +32,13 @@ public static class AuthEndpoints
 
         auth.MapGet("/me", GetCurrentUserHandler.Handle)
             .RequireAuthorization(AuthorizationPolicies.Api);
+
+        auth.MapGet("/settings", GetCurrentUserSettingsHandler.HandleAsync)
+            .RequireAuthorization(AuthorizationPolicies.Api);
+
+        auth.MapPut("/settings", UpdateCurrentUserSettingsHandler.HandleAsync)
+            .RequireAuthorization(AuthorizationPolicies.Api)
+            .WithResilienceScope(EndpointResiliencePolicyScope.Auth);
 
         auth.MapGet("/impersonation/options/{workspaceId:guid}", GetImpersonationOptionsHandler.HandleAsync)
             .RequireAuthorization(AuthorizationPolicies.Api)

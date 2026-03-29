@@ -1,6 +1,6 @@
 namespace OpenSaur.Identity.Web.Domain.Common;
 
-public abstract class AuditedEntity
+public abstract class AuditedEntity : IAuditedRecord
 {
     public Guid Id { get; set; }
 

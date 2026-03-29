@@ -2,6 +2,7 @@ using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using OpenSaur.Identity.Web.Domain.Identity;
 using OpenSaur.Identity.Web.Infrastructure.Database;
+using OpenSaur.Identity.Web.Infrastructure.Database.Outbox;
 using OpenSaur.Identity.Web.Infrastructure.Http.Responses;
 using OpenSaur.Identity.Web.Infrastructure.Results;
 using OpenSaur.Identity.Web.Infrastructure.Security;
@@ -16,6 +17,7 @@ public static class EditWorkspaceHandler
         IValidator<EditWorkspaceRequest> validator,
         CurrentUserContext currentUserContext,
         ApplicationDbContext dbContext,
+        OutboxMessageWriter outboxMessageWriter,
         CancellationToken cancellationToken)
     {
         if (await validator.ValidateRequestAsync(request, cancellationToken) is { } validationFailure)
@@ -44,6 +46,8 @@ public static class EditWorkspaceHandler
         {
             return Result.Validation(WorkspaceValidationProblems.ForDuplicateName()).ToApiErrorResult();
         }
+
+        await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
 
         workspace.Name = name;
         workspace.Description = request.Description;
@@ -110,7 +114,9 @@ public static class EditWorkspaceHandler
             }
         }
 
+        outboxMessageWriter.EnqueueWorkspaceUpdated(workspace, selectedActiveRoleIds, currentUserContext.UserId);
         await dbContext.SaveChangesAsync(cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
 
         return Result.Success().ToApiResult();
     }

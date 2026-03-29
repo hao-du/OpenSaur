@@ -17,6 +17,7 @@ import {
   useStartImpersonation
 } from "../../features/auth/hooks";
 import { useRolesQuery } from "../../features/roles/hooks";
+import { useSyncAuthenticatedPreferences } from "../../features/preferences/hooks";
 import {
   useCreateWorkspace,
   useEditWorkspace,
@@ -37,6 +38,7 @@ export function WorkspacesPage() {
   const [selectedWorkspaceId, setSelectedWorkspaceId] = useState<string | null>(null);
   const [impersonationWorkspaceId, setImpersonationWorkspaceId] = useState<string | null>(null);
   const { fetchCurrentUser } = useCurrentUserQuery();
+  const syncAuthenticatedPreferences = useSyncAuthenticatedPreferences();
   const { data: roles = [], isLoading: isRolesLoading } = useRolesQuery();
   const {
     data: workspaces = [],
@@ -127,6 +129,7 @@ export function WorkspacesPage() {
     const session = await startImpersonation(values);
     authSessionStore.setAuthenticatedSession(session);
     await fetchCurrentUser();
+    await syncAuthenticatedPreferences();
     authSessionStore.broadcastSessionRefresh();
     setImpersonationWorkspaceId(null);
     navigate("/", { replace: true });

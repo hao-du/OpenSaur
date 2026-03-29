@@ -1,8 +1,9 @@
 using Microsoft.AspNetCore.Identity;
+using OpenSaur.Identity.Web.Domain.Common;
 
 namespace OpenSaur.Identity.Web.Domain.Identity;
 
-public class ApplicationUserRole : IdentityUserRole<Guid>
+public class ApplicationUserRole : IdentityUserRole<Guid>, IAuditedRecord
 {
     public Guid Id { get; set; }
 

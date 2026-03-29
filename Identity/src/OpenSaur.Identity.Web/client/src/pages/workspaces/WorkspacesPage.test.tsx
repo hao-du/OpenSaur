@@ -17,6 +17,7 @@ const useCurrentUserQueryMock = vi.fn();
 const useLogoutMock = vi.fn();
 const useImpersonationOptionsQueryMock = vi.fn();
 const useStartImpersonationMock = vi.fn();
+const useSyncAuthenticatedPreferencesMock = vi.fn();
 
 vi.mock("../../features/workspaces/hooks", () => ({
   useCreateWorkspace: () => useCreateWorkspaceMock(),
@@ -40,6 +41,10 @@ vi.mock("../../features/auth/hooks", async () => {
 
 vi.mock("../../features/roles/hooks", () => ({
   useRolesQuery: () => useRolesQueryMock()
+}));
+
+vi.mock("../../features/preferences/hooks", () => ({
+  useSyncAuthenticatedPreferences: () => useSyncAuthenticatedPreferencesMock()
 }));
 
 const workspaces: WorkspaceSummary[] = [
@@ -134,6 +139,7 @@ describe("WorkspacesPage", () => {
       isError: false,
       isLoading: false
     });
+    useSyncAuthenticatedPreferencesMock.mockReturnValue(vi.fn().mockResolvedValue(null));
     useStartImpersonationMock.mockReturnValue({
       errorMessage: null,
       isStartingImpersonation: false,

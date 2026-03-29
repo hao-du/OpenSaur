@@ -1,9 +1,10 @@
 using Microsoft.AspNetCore.Identity;
+using OpenSaur.Identity.Web.Domain.Common;
 using OpenSaur.Identity.Web.Domain.Workspaces;
 
 namespace OpenSaur.Identity.Web.Domain.Identity;
 
-public class ApplicationRole : IdentityRole<Guid>
+public class ApplicationRole : IdentityRole<Guid>, IAuditedRecord
 {
     public string Description { get; set; } = string.Empty;
 

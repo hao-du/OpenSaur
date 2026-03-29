@@ -28,7 +28,8 @@ vi.mock("../../features/auth/api/authApi", async () => {
 
   return {
     ...actual,
-    getCurrentUser: vi.fn()
+    getCurrentUser: vi.fn(),
+    getCurrentUserSettings: vi.fn()
   };
 });
 
@@ -94,10 +95,15 @@ describe("AppRouter", () => {
 
   beforeEach(() => {
     authSessionStore.clearSession();
+    window.localStorage?.clear?.();
     sessionStorage.clear();
     vi.resetAllMocks();
     window.history.replaceState({}, "", "/");
     setDesktopMode(true);
+    vi.mocked(authApi.getCurrentUserSettings).mockResolvedValue({
+      locale: null,
+      timeZone: null
+    });
     useWorkspacesQueryMock.mockReturnValue({
       data: [
         {
@@ -277,6 +283,53 @@ describe("AppRouter", () => {
 
     expect(screen.getByRole("button", { name: /^create$/i })).toBeDefined();
     expect(screen.getByRole("link", { name: /^users$/i }).getAttribute("aria-current")).toBe("page");
+  });
+
+  it("renders the profile page for authenticated users", async () => {
+    authSessionStore.setAuthenticatedSession({
+      accessToken: "access-token",
+      expiresAt: createFutureExpiry()
+    });
+    vi.mocked(authApi.getCurrentUser).mockResolvedValue({
+      email: "workspace.admin@opensaur.test",
+      id: "user-1",
+      isImpersonating: false,
+      requirePasswordChange: false,
+      roles: ["ADMINISTRATOR"],
+      userName: "workspace.admin",
+      workspaceName: "Operations"
+    });
+    renderRouter("/profile");
+
+    await waitFor(() => {
+      expect(screen.getByText("workspace.admin@opensaur.test")).toBeDefined();
+    });
+
+    expect(screen.getByRole("heading", { level: 1, name: /my profile/i })).toBeDefined();
+    expect(screen.getByText("workspace.admin@opensaur.test")).toBeDefined();
+  });
+
+  it("renders the settings page for authenticated users", async () => {
+    authSessionStore.setAuthenticatedSession({
+      accessToken: "access-token",
+      expiresAt: createFutureExpiry()
+    });
+    vi.mocked(authApi.getCurrentUser).mockResolvedValue({
+      email: "workspace.admin@opensaur.test",
+      id: "user-1",
+      isImpersonating: false,
+      requirePasswordChange: false,
+      roles: ["ADMINISTRATOR"],
+      userName: "workspace.admin",
+      workspaceName: "Operations"
+    });
+    renderRouter("/settings");
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { level: 1, name: /settings/i })).toBeDefined();
+    });
+
+    expect(screen.getByRole("button", { name: /^save$/i })).toBeDefined();
   });
 
   it("redirects non-super-administrators away from the roles route", async () => {

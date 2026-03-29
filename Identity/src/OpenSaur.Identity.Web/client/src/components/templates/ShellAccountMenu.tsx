@@ -14,10 +14,13 @@ import {
   Settings,
   UserRound
 } from "../../shared/icons";
+import { usePreferences } from "../../features/preferences/PreferenceProvider";
 
 type ShellAccountMenuProps = {
   isLoggingOut: boolean;
   onChangePassword: () => void;
+  onOpenProfile: () => void;
+  onOpenSettings: () => void;
   onLogout: () => void;
   userName?: string;
 };
@@ -46,11 +49,14 @@ function getUserInitials(userName?: string) {
 export function ShellAccountMenu({
   isLoggingOut,
   onChangePassword,
+  onOpenProfile,
+  onOpenSettings,
   onLogout,
   userName
 }: ShellAccountMenuProps) {
   const [anchor, setAnchor] = useState<HTMLElement | null>(null);
   const accountInitials = getUserInitials(userName);
+  const { t } = usePreferences();
 
   function handleOpenMenu(event: MouseEvent<HTMLElement>) {
     setAnchor(event.currentTarget);
@@ -65,6 +71,16 @@ export function ShellAccountMenu({
     onChangePassword();
   }
 
+  function handleOpenProfile() {
+    handleCloseMenu();
+    onOpenProfile();
+  }
+
+  function handleOpenSettings() {
+    handleCloseMenu();
+    onOpenSettings();
+  }
+
   function handleLogout() {
     handleCloseMenu();
     onLogout();
@@ -73,7 +89,7 @@ export function ShellAccountMenu({
   return (
     <>
       <IconButton
-        aria-label="Open account menu"
+        aria-label={t("account.openMenu")}
         onClick={handleOpenMenu}
         size="small"
       >
@@ -93,14 +109,14 @@ export function ShellAccountMenu({
         onClose={handleCloseMenu}
         open={anchor !== null}
       >
-        <MenuItem disabled>
+        <MenuItem onClick={handleOpenProfile}>
           <Stack
             alignItems="center"
             direction="row"
             spacing={1}
           >
             <UserRound size={16} />
-            <span>My Profile</span>
+            <span>{t("account.myProfile")}</span>
           </Stack>
         </MenuItem>
         <MenuItem onClick={handleChangePassword}>
@@ -110,17 +126,17 @@ export function ShellAccountMenu({
             spacing={1}
           >
             <KeyRound size={16} />
-            <span>Change password</span>
+            <span>{t("account.changePassword")}</span>
           </Stack>
         </MenuItem>
-        <MenuItem disabled>
+        <MenuItem onClick={handleOpenSettings}>
           <Stack
             alignItems="center"
             direction="row"
             spacing={1}
           >
             <Settings size={16} />
-            <span>Settings</span>
+            <span>{t("account.settings")}</span>
           </Stack>
         </MenuItem>
         <Divider />
@@ -134,7 +150,7 @@ export function ShellAccountMenu({
             spacing={1}
           >
             {isLoggingOut ? <CircularProgress color="inherit" size={16} /> : <LogOut size={16} />}
-            <span>{isLoggingOut ? "Signing out..." : "Logout"}</span>
+            <span>{isLoggingOut ? t("account.signingOut") : t("account.logout")}</span>
           </Stack>
         </MenuItem>
       </MaterialMenu>

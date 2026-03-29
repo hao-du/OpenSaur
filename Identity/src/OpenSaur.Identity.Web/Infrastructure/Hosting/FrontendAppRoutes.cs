@@ -12,6 +12,8 @@ public static class FrontendAppRoutes
         "/login",
         "/auth/callback",
         "/change-password",
+        "/profile",
+        "/settings",
         "/users",
         "/workspaces",
         "/roles",

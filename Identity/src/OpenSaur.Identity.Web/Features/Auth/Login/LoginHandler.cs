@@ -30,7 +30,7 @@ public static class LoginHandler
 
         var normalizedUserName = userManager.NormalizeName(request.UserName);
         var userResult = await userRepository.GetUserByUserNameAsync(
-            new GetUserByUserNameRequest(normalizedUserName, TrackChanges: true),
+            new GetUserByUserNameRequest(normalizedUserName, TrackChanges: false),
             cancellationToken);
         if (!userResult.IsSuccess || userResult.Value is null || !userResult.Value.User.IsActive)
         {

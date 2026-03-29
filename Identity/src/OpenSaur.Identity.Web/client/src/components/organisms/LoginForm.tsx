@@ -5,6 +5,7 @@ import {
   ControlledAuthTextField,
   ControlledPasswordField
 } from "../molecules";
+import { usePreferences } from "../../features/preferences/PreferenceProvider";
 
 type LoginFormValues = {
   password: string;
@@ -22,6 +23,7 @@ export function LoginForm({
   isSubmitting = false,
   onSubmit
 }: LoginFormProps) {
+  const { t } = usePreferences();
   const {
     control,
     handleSubmit
@@ -48,10 +50,10 @@ export function LoginForm({
         control={control}
         disabled={isSubmitting}
         icon={<UserRound size={18} />}
-        label="Username"
+        label={t("login.userNameLabel")}
         name="userName"
         rules={{
-          required: "Username is required."
+          required: t("login.userNameRequired")
         }}
       />
 
@@ -59,10 +61,10 @@ export function LoginForm({
         autoComplete="current-password"
         control={control}
         disabled={isSubmitting}
-        label="Password"
+        label={t("login.passwordLabel")}
         name="password"
         rules={{
-          required: "Password is required."
+          required: t("login.passwordRequired")
         }}
       />
 
@@ -76,7 +78,7 @@ export function LoginForm({
         type="submit"
         variant="contained"
       >
-        {isSubmitting ? "Signing in..." : "Sign in"}
+        {isSubmitting ? t("login.submitting") : t("login.submit")}
       </Button>
     </Stack>
   );

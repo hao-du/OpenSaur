@@ -13,6 +13,8 @@ public sealed class FrontendAppRoutesTests
     [InlineData("/login", true)]
     [InlineData("/auth/callback", true)]
     [InlineData("/change-password", true)]
+    [InlineData("/profile", true)]
+    [InlineData("/settings", true)]
     [InlineData("/users", true)]
     [InlineData("/workspaces", true)]
     [InlineData("/roles", true)]

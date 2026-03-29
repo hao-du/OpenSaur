@@ -76,8 +76,7 @@ public static class StartImpersonationHandler
                                      assignment => assignment.IsActive
                                                    && assignment.Role != null
                                                    && assignment.Role.IsActive
-                                                   && assignment.Role.NormalizedName != null
-                                                   && assignment.Role.NormalizedName.Replace(" ", string.Empty) == SystemRoles.NormalizedSuperAdministrator)),
+                                                   && SystemRoles.IsSuperAdministratorValue(assignment.Role.NormalizedName))),
                 cancellationToken)
             : originalUser;
         if (effectiveUser is null)
@@ -103,7 +102,7 @@ public static class StartImpersonationHandler
         var tokenPrincipal = AuthSessionPrincipalFactory.Create(
             effectiveUser,
             effectiveRolesResult.Value?.NormalizedRoleNames ?? [],
-            GetFirstPartyScopes(oidcOptions),
+            oidcOptions.Value.GetFirstPartyScopes(),
             workspaceOverrideId: request.WorkspaceId,
             isImpersonating: true,
             impersonationOriginalUserId: currentUserContext.UserId);
@@ -132,11 +131,5 @@ public static class StartImpersonationHandler
         return Result<ExchangeWebSessionResponse>.Success(
                 new ExchangeWebSessionResponse(tokenResult.AccessToken, tokenResult.ExpiresAt))
             .ToApiResult();
-    }
-
-    private static string[] GetFirstPartyScopes(IOptions<OidcOptions> oidcOptions)
-    {
-        return oidcOptions.Value.FirstPartyWeb.Scope
-            .Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
     }
 }

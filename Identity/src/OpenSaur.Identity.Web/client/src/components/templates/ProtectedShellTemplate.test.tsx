@@ -12,6 +12,7 @@ import { authSessionStore } from "../../features/auth/state/authSessionStore";
 import { ProtectedShellTemplate } from "./ProtectedShellTemplate";
 
 const useExitImpersonationMock = vi.fn();
+const useSyncAuthenticatedPreferencesMock = vi.fn();
 
 vi.mock("../../features/auth/api/authApi", async () => {
   const actual = await vi.importActual<typeof import("../../features/auth/api/authApi")>("../../features/auth/api/authApi");
@@ -31,6 +32,10 @@ vi.mock("../../features/auth/hooks", async () => {
     useExitImpersonation: () => useExitImpersonationMock()
   };
 });
+
+vi.mock("../../features/preferences/hooks", () => ({
+  useSyncAuthenticatedPreferences: () => useSyncAuthenticatedPreferencesMock()
+}));
 
 function setDesktopMode(isDesktop: boolean) {
   Object.defineProperty(window, "matchMedia", {
@@ -63,8 +68,10 @@ function LocationProbe() {
 describe("ProtectedShellTemplate", () => {
   beforeEach(() => {
     authSessionStore.clearSession();
+    window.localStorage?.clear?.();
     sessionStorage.clear();
     vi.resetAllMocks();
+    useSyncAuthenticatedPreferencesMock.mockReturnValue(vi.fn().mockResolvedValue(null));
     useExitImpersonationMock.mockReturnValue({
       errorMessage: null,
       exitImpersonation: vi.fn(),
@@ -368,6 +375,100 @@ describe("ProtectedShellTemplate", () => {
 
     await waitFor(() => {
       expect(screen.getByTestId("location").textContent).toBe("/change-password");
+    });
+  });
+
+  it("navigates to the profile page from the account menu", async () => {
+    setDesktopMode(true);
+    authSessionStore.setAuthenticatedSession({
+      accessToken: "access-token",
+      expiresAt: "2026-03-28T00:00:00.000Z"
+    });
+    vi.mocked(authApi.getCurrentUser).mockResolvedValue({
+      canManageUsers: true,
+      email: "workspace.admin@opensaur.test",
+      id: "user-1",
+      isImpersonating: false,
+      requirePasswordChange: false,
+      roles: ["Administrator"],
+      userName: "workspace.admin",
+      workspaceName: "Protected workspace"
+    } as Awaited<ReturnType<typeof authApi.getCurrentUser>>);
+
+    render(
+      <AppProviders>
+        <MemoryRouter initialEntries={["/"]}>
+          <Routes>
+            <Route
+              element={(
+                <ProtectedShellTemplate title="Dashboard">
+                  <div>Dashboard content</div>
+                </ProtectedShellTemplate>
+              )}
+              path="/"
+            />
+            <Route
+              element={<div>Profile</div>}
+              path="/profile"
+            />
+          </Routes>
+          <LocationProbe />
+        </MemoryRouter>
+      </AppProviders>
+    );
+
+    fireEvent.click(await screen.findByRole("button", { name: /open account menu/i }));
+    fireEvent.click(screen.getByRole("menuitem", { name: /my profile/i }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId("location").textContent).toBe("/profile");
+    });
+  });
+
+  it("navigates to the settings page from the account menu", async () => {
+    setDesktopMode(true);
+    authSessionStore.setAuthenticatedSession({
+      accessToken: "access-token",
+      expiresAt: "2026-03-28T00:00:00.000Z"
+    });
+    vi.mocked(authApi.getCurrentUser).mockResolvedValue({
+      canManageUsers: true,
+      email: "workspace.admin@opensaur.test",
+      id: "user-1",
+      isImpersonating: false,
+      requirePasswordChange: false,
+      roles: ["Administrator"],
+      userName: "workspace.admin",
+      workspaceName: "Protected workspace"
+    } as Awaited<ReturnType<typeof authApi.getCurrentUser>>);
+
+    render(
+      <AppProviders>
+        <MemoryRouter initialEntries={["/"]}>
+          <Routes>
+            <Route
+              element={(
+                <ProtectedShellTemplate title="Dashboard">
+                  <div>Dashboard content</div>
+                </ProtectedShellTemplate>
+              )}
+              path="/"
+            />
+            <Route
+              element={<div>Settings</div>}
+              path="/settings"
+            />
+          </Routes>
+          <LocationProbe />
+        </MemoryRouter>
+      </AppProviders>
+    );
+
+    fireEvent.click(await screen.findByRole("button", { name: /open account menu/i }));
+    fireEvent.click(screen.getByRole("menuitem", { name: /settings/i }));
+
+    await waitFor(() => {
+      expect(screen.getByTestId("location").textContent).toBe("/settings");
     });
   });
 

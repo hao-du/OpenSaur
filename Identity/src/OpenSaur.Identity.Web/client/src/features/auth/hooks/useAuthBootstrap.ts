@@ -6,6 +6,7 @@ import { useRefreshWebSession } from "./useRefreshWebSession";
 import { authSessionStore, sessionSyncStorageKey } from "../state/authSessionStore";
 import { useAuthSession } from "../state/useAuthSession";
 import { normalizeAuthReturnUrl } from "../utils";
+import { useSyncAuthenticatedPreferences } from "../../preferences/hooks";
 
 const refreshLeadTimeInMilliseconds = 5 * 60 * 1000;
 const changePasswordRoute = "/change-password";
@@ -26,6 +27,7 @@ export function useAuthBootstrap() {
   const session = useAuthSession();
   const { clearCurrentUser, fetchCurrentUser } = useCurrentUserQuery();
   const { refreshSession } = useRefreshWebSession();
+  const syncAuthenticatedPreferences = useSyncAuthenticatedPreferences();
   const [isBootstrapping, setIsBootstrapping] = useState(
     () => session.status !== "authenticated" && !isPublicAuthRoute(location.pathname)
   );
@@ -33,8 +35,10 @@ export function useAuthBootstrap() {
   const refreshAuthenticatedUser = useCallback(async () => {
     const refreshedSession = await refreshSession();
     authSessionStore.setAuthenticatedSession(refreshedSession);
-    return await fetchCurrentUser();
-  }, [fetchCurrentUser, refreshSession]);
+    const currentUser = await fetchCurrentUser();
+    await syncAuthenticatedPreferences();
+    return currentUser;
+  }, [fetchCurrentUser, refreshSession, syncAuthenticatedPreferences]);
 
   useEffect(() => {
     if (authSessionStore.getSnapshot().status === "authenticated" || isPublicAuthRoute(location.pathname)) {

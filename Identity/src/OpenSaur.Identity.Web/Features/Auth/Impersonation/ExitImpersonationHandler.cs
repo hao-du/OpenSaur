@@ -54,7 +54,7 @@ public static class ExitImpersonationHandler
         var tokenPrincipal = AuthSessionPrincipalFactory.Create(
             originalUser,
             originalRolesResult.Value?.NormalizedRoleNames ?? [],
-            GetFirstPartyScopes(oidcOptions));
+            oidcOptions.Value.GetFirstPartyScopes());
         var tokenResult = await tokenClient.IssueTokensAsync(tokenPrincipal, cancellationToken);
         if (tokenResult is null)
         {
@@ -80,11 +80,5 @@ public static class ExitImpersonationHandler
         return Result<ExchangeWebSessionResponse>.Success(
                 new ExchangeWebSessionResponse(tokenResult.AccessToken, tokenResult.ExpiresAt))
             .ToApiResult();
-    }
-
-    private static string[] GetFirstPartyScopes(IOptions<OidcOptions> oidcOptions)
-    {
-        return oidcOptions.Value.FirstPartyWeb.Scope
-            .Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
     }
 }

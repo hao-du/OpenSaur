@@ -163,8 +163,112 @@ public sealed class ApiAuthAccountEndpointsTests : IClassFixture<OpenSaurWebAppl
         var payload = await ApiResponseReader.ReadSuccessDataAsync<AuthMeResponse>(response);
 
         Assert.Equal(credentials.UserName, payload.UserName);
+        Assert.Equal(credentials.Email, payload.Email);
         Assert.False(payload.RequirePasswordChange);
         Assert.Contains(StandardRoleNames.Administrator.ToUpperInvariant(), payload.Roles);
+    }
+
+    [Fact]
+    public async Task GetSettings_WhenCurrentUserHasPersistedPreferences_ReturnsStoredLocaleAndTimeZone()
+    {
+        var credentials = TestFakers.CreateUserCredentials();
+        var userId = await TestIdentitySeeder.SeedUserAsync(
+            _factory,
+            credentials.UserName,
+            credentials.Password,
+            [StandardRoleNames.User]);
+
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            var user = await dbContext.Users.SingleAsync(candidate => candidate.Id == userId);
+            user.UserSettings = "{\"theme\":\"dark\",\"locale\":\"vi\",\"timeZone\":\"Asia/Saigon\"}";
+            await dbContext.SaveChangesAsync();
+        }
+
+        using var client = FirstPartyApiTestClient.CreateClient(_factory);
+        var accessToken = await FirstPartyApiTestClient.GetAccessTokenAsync(client, credentials.UserName, credentials.Password);
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+        var response = await client.GetAsync("/api/auth/settings");
+        var payload = await ApiResponseReader.ReadSuccessDataAsync<JsonElement>(response);
+
+        Assert.Equal("vi", payload.GetProperty("locale").GetString());
+        Assert.Equal("Asia/Saigon", payload.GetProperty("timeZone").GetString());
+    }
+
+    [Fact]
+    public async Task PutSettings_WhenValuesAreValid_PersistsMergedPreferencesAndKeepsUpdatedOnUtc()
+    {
+        var credentials = TestFakers.CreateUserCredentials();
+        var userId = await TestIdentitySeeder.SeedUserAsync(
+            _factory,
+            credentials.UserName,
+            credentials.Password,
+            [StandardRoleNames.User]);
+
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            var user = await dbContext.Users.SingleAsync(candidate => candidate.Id == userId);
+            user.UserSettings = "{\"theme\":\"dark\"}";
+            await dbContext.SaveChangesAsync();
+        }
+
+        using var client = FirstPartyApiTestClient.CreateClient(_factory);
+        var accessToken = await FirstPartyApiTestClient.GetAccessTokenAsync(client, credentials.UserName, credentials.Password);
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+        var requestStartedAtUtc = DateTime.UtcNow;
+
+        var response = await client.PutAsJsonAsync(
+            "/api/auth/settings",
+            new
+            {
+                Locale = "vi",
+                TimeZone = "Asia/Saigon"
+            });
+        var payload = await ApiResponseReader.ReadSuccessDataAsync<JsonElement>(response);
+
+        Assert.Equal("vi", payload.GetProperty("locale").GetString());
+        Assert.Equal("Asia/Saigon", payload.GetProperty("timeZone").GetString());
+
+        using var verificationScope = _factory.Services.CreateScope();
+        var verificationDbContext = verificationScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var updatedUser = await verificationDbContext.Users.SingleAsync(candidate => candidate.Id == userId);
+        using var settingsDocument = JsonDocument.Parse(updatedUser.UserSettings);
+
+        Assert.Equal("dark", settingsDocument.RootElement.GetProperty("theme").GetString());
+        Assert.Equal("vi", settingsDocument.RootElement.GetProperty("locale").GetString());
+        Assert.Equal("Asia/Saigon", settingsDocument.RootElement.GetProperty("timeZone").GetString());
+        Assert.Equal(userId, updatedUser.UpdatedBy);
+        Assert.NotNull(updatedUser.UpdatedOn);
+        Assert.InRange(
+            DateTime.SpecifyKind(updatedUser.UpdatedOn!.Value, DateTimeKind.Utc),
+            requestStartedAtUtc.AddMinutes(-1),
+            DateTime.UtcNow.AddMinutes(1));
+    }
+
+    [Fact]
+    public async Task PutSettings_WhenValuesAreInvalid_ReturnsValidationEnvelope()
+    {
+        var credentials = TestFakers.CreateUserCredentials();
+        await TestIdentitySeeder.SeedUserAsync(_factory, credentials.UserName, credentials.Password, [StandardRoleNames.User]);
+        using var client = FirstPartyApiTestClient.CreateClient(_factory);
+        var accessToken = await FirstPartyApiTestClient.GetAccessTokenAsync(client, credentials.UserName, credentials.Password);
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+        var response = await client.PutAsJsonAsync(
+            "/api/auth/settings",
+            new
+            {
+                Locale = "fr",
+                TimeZone = "Invalid/Timezone"
+            });
+        var payload = await ApiResponseReader.ReadFailureEnvelopeAsync(response, HttpStatusCode.BadRequest);
+
+        Assert.All(payload.Errors, static error => Assert.Equal("validation_error", error.Code));
+        Assert.Contains(payload.Errors, error => error.Detail.Contains("Locale", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(payload.Errors, error => error.Detail.Contains("time zone", StringComparison.OrdinalIgnoreCase));
     }
 
     [Fact]

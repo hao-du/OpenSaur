@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using System.Text.Json;
 using System.Security.Claims;
 using OpenIddict.Abstractions;
@@ -51,6 +52,10 @@ public sealed class OpenSaurWebApplicationFactory : WebApplicationFactory<Progra
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment(Environments.Development);
+        builder.ConfigureLogging(logging =>
+        {
+            logging.ClearProviders();
+        });
         builder.UseSetting("ConnectionStrings:IdentityDb", IdentityDbConnectionString);
         builder.UseSetting("Oidc:Issuer", Issuer);
         builder.UseSetting("Oidc:FirstPartyWeb:ClientId", FirstPartyApiTestClient.ClientId);

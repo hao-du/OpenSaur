@@ -12,12 +12,23 @@ export type ChangePasswordRequest = {
 
 export type AuthMeResponse = {
   canManageUsers?: boolean;
+  email?: string;
   id: string;
   isImpersonating: boolean;
   requirePasswordChange: boolean;
   roles: string[];
   userName: string;
   workspaceName: string;
+};
+
+export type CurrentUserSettingsResponse = {
+  locale: string | null;
+  timeZone: string | null;
+};
+
+export type UpdateCurrentUserSettingsRequest = {
+  locale: "en" | "vi";
+  timeZone: string;
 };
 
 export type ExchangeWebSessionRequest = {
@@ -81,6 +92,10 @@ export async function getCurrentUser() {
   return await unwrapData<AuthMeResponse>(httpClient.get("/api/auth/me"));
 }
 
+export async function getCurrentUserSettings() {
+  return await unwrapData<CurrentUserSettingsResponse>(httpClient.get("/api/auth/settings"));
+}
+
 export async function exchangeWebSession(request: ExchangeWebSessionRequest) {
   return await unwrapData<ExchangeWebSessionResponse>(
     httpClient.post("/api/auth/web-session/exchange", request)
@@ -108,5 +123,11 @@ export async function startImpersonation(request: StartImpersonationRequest) {
 export async function exitImpersonation() {
   return await unwrapData<ExchangeWebSessionResponse>(
     httpClient.post("/api/auth/impersonation/exit")
+  );
+}
+
+export async function updateCurrentUserSettings(request: UpdateCurrentUserSettingsRequest) {
+  return await unwrapData<CurrentUserSettingsResponse>(
+    httpClient.put("/api/auth/settings", request)
   );
 }

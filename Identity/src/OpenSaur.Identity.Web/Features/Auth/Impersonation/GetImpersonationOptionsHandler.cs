@@ -39,8 +39,7 @@ public static class GetImpersonationOptionsHandler
                     assignment => assignment.IsActive
                                   && assignment.Role != null
                                   && assignment.Role.IsActive
-                                  && assignment.Role.NormalizedName != null
-                                  && assignment.Role.NormalizedName.Replace(" ", string.Empty) == SystemRoles.NormalizedSuperAdministrator))
+                                  && SystemRoles.IsSuperAdministratorValue(assignment.Role.NormalizedName)))
             .OrderBy(candidate => candidate.UserName)
             .Select(candidate => new ImpersonationUserResponse(
                 candidate.Id,

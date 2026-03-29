@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using OpenIddict.Abstractions;
 using OpenSaur.Identity.Web.Infrastructure.Http.Responses;
 using OpenSaur.Identity.Web.Infrastructure.Database;
 using OpenSaur.Identity.Web.Infrastructure.Security;
@@ -35,6 +36,7 @@ public static class GetCurrentUserHandler
             new AuthMeResponse(
                 AuthPrincipalReader.GetUserId(user),
                 user.Identity?.Name,
+                user.FindFirstValue(OpenIddictConstants.Claims.Email),
                 roles,
                 AuthPrincipalReader.GetRequirePasswordChange(user),
                 workspaceName,

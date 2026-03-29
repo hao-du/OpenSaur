@@ -5,6 +5,7 @@ using System.Text.Json;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using OpenSaur.Identity.Web.Domain.Identity;
+using OpenSaur.Identity.Web.Features.Auth.Login;
 using OpenSaur.Identity.Web.Features.Auth.Me;
 using OpenSaur.Identity.Web.Features.Workspaces.CreateWorkspace;
 using OpenSaur.Identity.Web.Infrastructure.Database;
@@ -50,6 +51,36 @@ public sealed class ApiResponseEnvelopeTests : IClassFixture<OpenSaurWebApplicat
         Assert.True(payload.Success);
         AssertNullData(payload);
         Assert.Empty(payload.Errors);
+    }
+
+    [Fact]
+    public async Task PostLogin_WhenCredentialsAreValid_LoadsUserWithoutTracking()
+    {
+        var probe = new LoginTrackChangesProbe();
+        using var trackingFactory = new OpenSaurWebApplicationFactory(
+            configureWebHost: builder =>
+                builder.ConfigureServices(
+                    services =>
+                    {
+                        services.RemoveAll<UserRepository>();
+                        services.AddSingleton(probe);
+                        services.AddScoped<UserRepository, TrackingUserRepository>();
+                    }));
+        await FirstPartyApiTestClient.InitializeFactoryAsync(trackingFactory);
+
+        var credentials = TestFakers.CreateUserCredentials();
+        await TestIdentitySeeder.SeedUserAsync(trackingFactory, credentials.UserName, credentials.Password, [StandardRoleNames.User]);
+        using var client = FirstPartyApiTestClient.CreateClient(trackingFactory);
+
+        var response = await client.PostAsJsonAsync(
+            "/api/auth/login",
+            new LoginRequest(credentials.UserName, credentials.Password));
+        var payload = await ReadEnvelopeAsync(response);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.True(payload.Success);
+        Assert.True(probe.TrackChanges.HasValue);
+        Assert.False(probe.TrackChanges!.Value);
     }
 
     [Fact]
@@ -220,6 +251,22 @@ public sealed class ApiResponseEnvelopeTests : IClassFixture<OpenSaurWebApplicat
         {
             throw new InvalidOperationException("Simulated user repository failure for envelope tests.");
         }
+    }
+
+    private sealed class TrackingUserRepository(ApplicationDbContext dbContext, LoginTrackChangesProbe probe) : UserRepository(dbContext)
+    {
+        public override Task<Result<GetUserByUserNameResponse>> GetUserByUserNameAsync(
+            GetUserByUserNameRequest request,
+            CancellationToken cancellationToken)
+        {
+            probe.TrackChanges = request.TrackChanges;
+            return base.GetUserByUserNameAsync(request, cancellationToken);
+        }
+    }
+
+    private sealed class LoginTrackChangesProbe
+    {
+        public bool? TrackChanges { get; set; }
     }
 }
 

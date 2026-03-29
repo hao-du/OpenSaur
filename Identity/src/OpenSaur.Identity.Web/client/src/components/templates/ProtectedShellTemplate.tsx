@@ -25,6 +25,7 @@ import {
   useLogout
 } from "../../features/auth/hooks";
 import { authSessionStore } from "../../features/auth/state/authSessionStore";
+import { useSyncAuthenticatedPreferences } from "../../features/preferences/hooks";
 import { BrandMark } from "../atoms";
 import { Menu } from "../../shared/icons";
 import { ShellAccountMenu } from "./ShellAccountMenu";
@@ -48,6 +49,7 @@ export function ProtectedShellTemplate({
   const { data: currentUser } = useCurrentUserState();
   const { isLoggingOut, logout } = useLogout();
   const { exitImpersonation, isExitingImpersonation } = useExitImpersonation();
+  const syncAuthenticatedPreferences = useSyncAuthenticatedPreferences();
   const visibleRoutes = useMemo(
     () => getVisibleProtectedShellRoutes(currentUser),
     [currentUser]
@@ -82,10 +84,19 @@ export function ProtectedShellTemplate({
       const restoredSession = await exitImpersonation();
       authSessionStore.setAuthenticatedSession(restoredSession);
       await fetchCurrentUser();
+      await syncAuthenticatedPreferences();
       authSessionStore.broadcastSessionRefresh();
     } catch {
       // Keep the current UI state if impersonation exit fails.
     }
+  }
+
+  function handleNavigateToProfile() {
+    navigate("/profile");
+  }
+
+  function handleNavigateToSettings() {
+    navigate("/settings");
   }
 
   const navigation = (
@@ -277,6 +288,8 @@ export function ProtectedShellTemplate({
               <ShellAccountMenu
                 isLoggingOut={isLoggingOut}
                 onChangePassword={handleNavigateToChangePassword}
+                onOpenProfile={handleNavigateToProfile}
+                onOpenSettings={handleNavigateToSettings}
                 onLogout={() => {
                   void handleLogout();
                 }}

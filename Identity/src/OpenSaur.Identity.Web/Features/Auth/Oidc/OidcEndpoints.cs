@@ -43,7 +43,7 @@ public static class OidcEndpoints
                         [IdentityConstants.ApplicationScheme]);
                 }
 
-                var userId = GetUserId(authenticationResult.Principal);
+                var userId = AuthPrincipalReader.GetUserId(authenticationResult.Principal);
                 if (string.IsNullOrWhiteSpace(userId))
                 {
                     await httpContext.SignOutAsync(IdentityConstants.ApplicationScheme);
@@ -108,11 +108,5 @@ public static class OidcEndpoints
     private static string BuildCurrentRequestPathAndQuery(HttpContext httpContext)
     {
         return $"{httpContext.Request.PathBase}{httpContext.Request.Path}{httpContext.Request.QueryString}";
-    }
-
-    private static string? GetUserId(ClaimsPrincipal principal)
-    {
-        return principal.FindFirstValue(ApplicationClaimTypes.Subject)
-               ?? principal.FindFirstValue(ApplicationClaimTypes.NameIdentifier);
     }
 }

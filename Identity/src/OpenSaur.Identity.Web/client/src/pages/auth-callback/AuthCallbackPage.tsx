@@ -7,6 +7,7 @@ import { useExchangeWebSession } from "../../features/auth/hooks/useExchangeWebS
 import { authSessionStore } from "../../features/auth/state/authSessionStore";
 import { normalizeAuthReturnUrl } from "../../features/auth/utils";
 import type { ExchangeWebSessionResponse } from "../../features/auth/api/authApi";
+import { useSyncAuthenticatedPreferences } from "../../features/preferences/hooks";
 
 const exchangeRequestsByCode = new Map<string, Promise<ExchangeWebSessionResponse>>();
 
@@ -32,14 +33,15 @@ function exchangeSessionOnce(
 export function AuthCallbackPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const authorizationCode = searchParams.get("code");
   const { clearCurrentUser, fetchCurrentUser } = useCurrentUserQuery();
   const { exchangeSession } = useExchangeWebSession();
+  const syncAuthenticatedPreferences = useSyncAuthenticatedPreferences();
 
   useEffect(() => {
     let isCancelled = false;
 
     async function completeSignIn() {
-      const authorizationCode = searchParams.get("code");
       const rememberedReturnUrl = normalizeAuthReturnUrl(authSessionStore.getRememberedReturnUrl());
       if (!authorizationCode) {
         authSessionStore.clearRememberedReturnUrl();
@@ -58,6 +60,7 @@ export function AuthCallbackPage() {
         authSessionStore.setAuthenticatedSession(session);
 
         const currentUser = await fetchCurrentUser();
+        await syncAuthenticatedPreferences();
         if (isCancelled) {
           return;
         }
@@ -84,7 +87,7 @@ export function AuthCallbackPage() {
     return () => {
       isCancelled = true;
     };
-  }, [clearCurrentUser, exchangeSession, fetchCurrentUser, navigate, searchParams]);
+  }, [authorizationCode, clearCurrentUser, exchangeSession, fetchCurrentUser, navigate, syncAuthenticatedPreferences]);
 
   return (
     <AuthPageTemplate

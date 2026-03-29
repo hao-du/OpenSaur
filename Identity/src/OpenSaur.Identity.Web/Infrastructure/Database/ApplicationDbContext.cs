@@ -94,54 +94,15 @@ public sealed class ApplicationDbContext
     {
         switch (entity)
         {
-            case AuditedEntity auditedEntity:
-                if (auditedEntity.Id == Guid.Empty)
+            case IAuditedRecord auditedRecord:
+                if (auditedRecord.Id == Guid.Empty)
                 {
-                    auditedEntity.Id = Guid.CreateVersion7();
+                    auditedRecord.Id = Guid.CreateVersion7();
                 }
 
-                if (auditedEntity.CreatedOn == default)
+                if (auditedRecord.CreatedOn == default)
                 {
-                    auditedEntity.CreatedOn = utcNow;
-                }
-
-                break;
-
-            case ApplicationUser user:
-                if (user.Id == Guid.Empty)
-                {
-                    user.Id = Guid.CreateVersion7();
-                }
-
-                if (user.CreatedOn == default)
-                {
-                    user.CreatedOn = utcNow;
-                }
-
-                break;
-
-            case ApplicationRole role:
-                if (role.Id == Guid.Empty)
-                {
-                    role.Id = Guid.CreateVersion7();
-                }
-
-                if (role.CreatedOn == default)
-                {
-                    role.CreatedOn = utcNow;
-                }
-
-                break;
-
-            case ApplicationUserRole userRole:
-                if (userRole.Id == Guid.Empty)
-                {
-                    userRole.Id = Guid.CreateVersion7();
-                }
-
-                if (userRole.CreatedOn == default)
-                {
-                    userRole.CreatedOn = utcNow;
+                    auditedRecord.CreatedOn = utcNow;
                 }
 
                 break;
@@ -152,35 +113,11 @@ public sealed class ApplicationDbContext
     {
         switch (entity)
         {
-            case AuditedEntity auditedEntity:
-                auditedEntity.UpdatedOn = utcNow;
+            case IAuditedRecord auditedRecord:
+                auditedRecord.UpdatedOn = utcNow;
                 if (currentUserId.HasValue)
                 {
-                    auditedEntity.UpdatedBy = currentUserId.Value;
-                }
-                break;
-
-            case ApplicationUser user:
-                user.UpdatedOn = utcNow;
-                if (currentUserId.HasValue)
-                {
-                    user.UpdatedBy = currentUserId.Value;
-                }
-                break;
-
-            case ApplicationRole role:
-                role.UpdatedOn = utcNow;
-                if (currentUserId.HasValue)
-                {
-                    role.UpdatedBy = currentUserId.Value;
-                }
-                break;
-
-            case ApplicationUserRole userRole:
-                userRole.UpdatedOn = utcNow;
-                if (currentUserId.HasValue)
-                {
-                    userRole.UpdatedBy = currentUserId.Value;
+                    auditedRecord.UpdatedBy = currentUserId.Value;
                 }
                 break;
         }

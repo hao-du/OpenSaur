@@ -5,11 +5,13 @@ import { LoginForm } from "../../components/organisms";
 import { useLogin } from "../../features/auth/hooks";
 import { authSessionStore } from "../../features/auth/state/authSessionStore";
 import { normalizeAuthReturnUrl, startFirstPartyAuthorization } from "../../features/auth/utils";
+import { usePreferences } from "../../features/preferences/PreferenceProvider";
 
 export function LoginPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [searchParams] = useSearchParams();
   const { isLoggingIn, login } = useLogin();
+  const { t } = usePreferences();
 
   async function handleLogin(credentials: { password: string; userName: string; }) {
     const returnUrl = searchParams.get("returnUrl");
@@ -21,14 +23,14 @@ export function LoginPage() {
       await login(credentials);
       startFirstPartyAuthorization();
     } catch {
-      setErrorMessage("Sign in failed. Check your credentials and try again.");
+      setErrorMessage(t("login.error"));
     }
   }
 
   return (
     <AuthPageTemplate
-      description="Sign in to continue and pick up where you left off."
-      title="Sign in"
+      description={t("login.description")}
+      title={t("login.title")}
     >
       <LoginForm
         errorMessage={errorMessage}

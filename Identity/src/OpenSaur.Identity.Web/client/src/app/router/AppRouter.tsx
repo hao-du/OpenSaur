@@ -13,8 +13,10 @@ import { AuthCallbackPage } from "../../pages/auth-callback/AuthCallbackPage";
 import { ChangePasswordPage } from "../../pages/change-password/ChangePasswordPage";
 import { HomePage } from "../../pages/home/HomePage";
 import { LoginPage } from "../../pages/login/LoginPage";
+import { ProfilePage } from "../../pages/profile/ProfilePage";
 import { RoleAssignmentsPage } from "../../pages/role-assignments/RoleAssignmentsPage";
 import { RolesPage } from "../../pages/roles/RolesPage";
+import { SettingsPage } from "../../pages/settings/SettingsPage";
 import { UsersPage } from "../../pages/users/UsersPage";
 import { WorkspacesPage } from "../../pages/workspaces/WorkspacesPage";
 import { canAccessProtectedShellRoute } from "./protectedShellRoutes";
@@ -62,6 +64,22 @@ export const appRoutes: RouteObject[] = [
             <RequireProtectedShellAccess path="/workspaces">
               <WorkspacesPage />
             </RequireProtectedShellAccess>
+          </ProtectedRoute>
+        )
+      },
+      {
+        path: "/profile",
+        element: (
+          <ProtectedRoute>
+            <ProfilePage />
+          </ProtectedRoute>
+        )
+      },
+      {
+        path: "/settings",
+        element: (
+          <ProtectedRoute>
+            <SettingsPage />
           </ProtectedRoute>
         )
       },
