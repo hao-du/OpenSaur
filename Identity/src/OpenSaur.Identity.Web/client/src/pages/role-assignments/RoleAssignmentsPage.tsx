@@ -5,6 +5,7 @@ import {
   Stack
 } from "@mui/material";
 import { useCurrentUserState } from "../../features/auth/hooks";
+import { usePreferences } from "../../features/preferences/PreferenceProvider";
 import {
   RoleAssignmentsEditorDrawer,
   RoleAssignmentsTable
@@ -28,6 +29,7 @@ export function RoleAssignmentsPage() {
   const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
   const [selectedRoleId, setSelectedRoleId] = useState<string | null>(null);
   const { data: currentUser } = useCurrentUserState();
+  const { t } = usePreferences();
   const {
     data: roles = [],
     isError: isRolesError,
@@ -66,8 +68,10 @@ export function RoleAssignmentsPage() {
 
   return (
     <ProtectedShellTemplate
-      subtitle={`Manage assigned users for roles in ${currentUser?.workspaceName ?? "the current workspace"}.`}
-      title="Role Assignments"
+      subtitle={t("roleAssignments.subtitle", {
+        workspaceName: currentUser?.workspaceName ?? t("common.currentWorkspace")
+      })}
+      title={t("roleAssignments.title")}
     >
       <Stack spacing={3}>
         <Stack
@@ -82,7 +86,7 @@ export function RoleAssignmentsPage() {
               }}
               variant="outlined"
             >
-              Filter
+              {t("common.filter")}
             </Button>
           </Stack>
         </Stack>

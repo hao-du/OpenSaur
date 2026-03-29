@@ -17,6 +17,7 @@ import {
   ControlledTextField
 } from "../../../components/molecules/controlled";
 import type { PermissionSummary } from "../types";
+import { usePreferences } from "../../preferences/PreferenceProvider";
 
 type RoleFormValues = {
   description: string;
@@ -42,6 +43,7 @@ export function RoleForm({
   permissions,
   onSubmit
 }: RoleFormProps) {
+  const { t } = usePreferences();
   const {
     control,
     handleSubmit,
@@ -84,40 +86,40 @@ export function RoleForm({
     >
       {errorMessage ? <Alert severity="error">{errorMessage}</Alert> : null}
       <Stack spacing={2}>
-        <Typography variant="h6">Role</Typography>
+        <Typography variant="h6">{t("roles.form.role")}</Typography>
         <ControlledTextField
           control={control}
           disabled={isSubmitting}
-          label="Role name"
+          label={t("roles.form.name")}
           name="name"
           rules={{
-            required: "Role name is required."
+            required: t("roles.form.nameRequired")
           }}
         />
         <ControlledTextArea
           control={control}
           disabled={isSubmitting}
-          label="Description"
+          label={t("roles.form.description")}
           name="description"
         />
         {isEditMode ? (
           <ControlledCheckbox
             control={control}
             disabled={isSubmitting}
-            inputProps={{ "aria-label": "Role is active" }}
-            label="Role is active"
+            inputProps={{ "aria-label": t("roles.form.activeAriaLabel") }}
+            label={t("roles.form.activeLabel")}
             name="isActive"
           />
         ) : null}
       </Stack>
       <Divider />
       <Stack spacing={2}>
-        <Typography variant="h6">Permissions</Typography>
+        <Typography variant="h6">{t("roles.form.permissions")}</Typography>
         <Stack spacing={2}>
           {groupedPermissions.map(([scopeName, scopedPermissions]) => (
             <Stack key={scopeName} spacing={1.25}>
               <Typography color="text.secondary" variant="body2">
-                {scopeName}
+                {t("roles.form.permissionScope")}: {scopeName}
               </Typography>
               <Box
                 sx={{
@@ -165,7 +167,7 @@ export function RoleForm({
           type="submit"
           variant="contained"
         >
-          {isSubmitting ? "Saving..." : "Save"}
+          {isSubmitting ? t("common.saving") : t("common.save")}
         </Button>
       </Stack>
     </Stack>

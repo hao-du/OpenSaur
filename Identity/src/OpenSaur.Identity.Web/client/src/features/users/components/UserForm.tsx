@@ -17,6 +17,7 @@ import {
 } from "../../../components/molecules/controlled";
 import type { RoleCandidateSummary } from "../types";
 import { isSuperAdministrator } from "../../../app/router/protectedShellRoutes";
+import { usePreferences } from "../../preferences/PreferenceProvider";
 
 type UserFormValues = {
   description: string;
@@ -46,6 +47,7 @@ export function UserForm({
   onSubmit,
   roleCandidates
 }: UserFormProps) {
+  const { t } = usePreferences();
   const {
     control,
     handleSubmit,
@@ -75,35 +77,35 @@ export function UserForm({
     >
       {errorMessage ? <Alert severity="error">{errorMessage}</Alert> : null}
       <Stack spacing={2}>
-        <Typography variant="h6">User</Typography>
+        <Typography variant="h6">{t("users.form.user")}</Typography>
         <ControlledTextField
           control={control}
           disabled={isSubmitting}
-          label="User name"
+          label={t("users.form.userName")}
           name="userName"
           rules={{
-            required: "User name is required."
+            required: t("users.form.userNameRequired")
           }}
         />
         <ControlledTextField
           control={control}
           disabled={isSubmitting}
-          label="First name"
+          label={t("users.form.firstName")}
           name="firstName"
         />
         <ControlledTextField
           control={control}
           disabled={isSubmitting}
-          label="Last name"
+          label={t("users.form.lastName")}
           name="lastName"
         />
         <ControlledTextField
           control={control}
           disabled={isSubmitting}
-          label="Email"
+          label={t("users.form.email")}
           name="email"
           rules={{
-            required: "Email is required."
+            required: t("users.form.emailRequired")
           }}
           type="email"
         />
@@ -111,10 +113,10 @@ export function UserForm({
           <ControlledTextField
             control={control}
             disabled={isSubmitting}
-            label="Temporary password"
+            label={t("users.form.temporaryPassword")}
             name="password"
             rules={{
-              required: "Temporary password is required."
+              required: t("users.form.temporaryPasswordRequired")
             }}
             type="password"
           />
@@ -122,22 +124,22 @@ export function UserForm({
         <ControlledTextArea
           control={control}
           disabled={isSubmitting}
-          label="Description"
+          label={t("users.form.description")}
           name="description"
         />
         {isEditMode ? (
           <ControlledCheckbox
             control={control}
             disabled={isSubmitting}
-            inputProps={{ "aria-label": "User is active" }}
-            label="User is active"
+            inputProps={{ "aria-label": t("users.form.activeAriaLabel") }}
+            label={t("users.form.activeLabel")}
             name="isActive"
           />
         ) : null}
       </Stack>
       <Divider />
       <Stack spacing={2}>
-        <Typography variant="h6">Assigned Roles</Typography>
+        <Typography variant="h6">{t("users.form.assignedRoles")}</Typography>
         <Autocomplete
           disableCloseOnSelect
           disabled={isSubmitting}
@@ -155,8 +157,8 @@ export function UserForm({
           renderInput={params => (
             <TextField
               {...params}
-              label="Role"
-              placeholder="Search active roles"
+              label={t("users.form.role")}
+              placeholder={t("common.searchActiveRoles")}
             />
           )}
           renderOption={(props, option) => (
@@ -182,7 +184,7 @@ export function UserForm({
           type="submit"
           variant="contained"
         >
-          {isSubmitting ? "Saving..." : "Save"}
+          {isSubmitting ? t("common.saving") : t("common.save")}
         </Button>
       </Stack>
     </Stack>

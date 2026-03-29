@@ -10,6 +10,7 @@ import {
 import { X } from "../../../shared/icons";
 import { RoleForm } from "./RoleForm";
 import type { PermissionSummary, RoleDetails } from "../types";
+import { usePreferences } from "../../preferences/PreferenceProvider";
 
 type RoleFormDrawerProps = {
   errorMessage: string | null;
@@ -39,7 +40,8 @@ export function RoleFormDrawer({
   onSubmit,
   permissions
 }: RoleFormDrawerProps) {
-  const title = isEditMode ? "Edit role" : "Create role";
+  const { t } = usePreferences();
+  const title = isEditMode ? t("roles.form.editTitle") : t("roles.form.createTitle");
 
   return (
     <Drawer
@@ -58,7 +60,7 @@ export function RoleFormDrawer({
           <Typography component="h2" variant="h5">
             {title}
           </Typography>
-          <IconButton aria-label="Close role form" onClick={onClose}>
+          <IconButton aria-label={t("roles.form.close")} onClick={onClose}>
             <X size={18} />
           </IconButton>
         </Stack>
@@ -67,7 +69,7 @@ export function RoleFormDrawer({
           <Stack alignItems="center" justifyContent="center" spacing={2} sx={{ flex: 1 }}>
             <CircularProgress size={28} />
             <Typography color="text.secondary">
-              Loading role...
+              {t("roles.form.loading")}
             </Typography>
           </Stack>
         ) : (

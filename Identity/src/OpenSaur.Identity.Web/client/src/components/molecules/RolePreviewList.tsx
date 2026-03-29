@@ -5,6 +5,7 @@ import {
   Stack,
   Typography
 } from "@mui/material";
+import { usePreferences } from "../../features/preferences/PreferenceProvider";
 
 type RolePreviewItem = {
   id: string;
@@ -22,11 +23,15 @@ export function RolePreviewList({
   maxVisible = 2,
   roles
 }: RolePreviewListProps) {
+  const { t } = usePreferences();
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const visibleRoles = useMemo(() => roles.slice(0, maxVisible), [maxVisible, roles]);
   const overflowRoles = useMemo(() => roles.slice(maxVisible), [maxVisible, roles]);
   const overflowCount = overflowRoles.length;
-  const overflowLabel = `Show ${overflowCount} more role${overflowCount === 1 ? "" : "s"}`;
+  const overflowLabel = t("rolePreview.moreRolesAriaLabel", {
+    count: overflowCount,
+    roleLabel: overflowCount === 1 ? t("rolePreview.role") : t("rolePreview.roles")
+  });
 
   if (roles.length === 0) {
     return (

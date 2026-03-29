@@ -17,6 +17,7 @@ import {
   useMediaQuery,
   useTheme
 } from "@mui/material";
+import { Trans } from "react-i18next";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { getVisibleProtectedShellRoutes } from "../../app/router/protectedShellRoutes";
 import {
@@ -30,6 +31,7 @@ import { useSyncAuthenticatedPreferences } from "../../features/preferences/hook
 import { BrandMark } from "../atoms";
 import { Menu } from "../../shared/icons";
 import { ShellAccountMenu } from "./ShellAccountMenu";
+import { usePreferences } from "../../features/preferences/PreferenceProvider";
 
 type ProtectedShellTemplateProps = PropsWithChildren<{
   subtitle?: string;
@@ -51,15 +53,16 @@ export function ProtectedShellTemplate({
   const { isLoggingOut, logout } = useLogout();
   const { exitImpersonation, isExitingImpersonation } = useExitImpersonation();
   const syncAuthenticatedPreferences = useSyncAuthenticatedPreferences();
+  const { t } = usePreferences();
   const visibleRoutes = useMemo(
     () => getVisibleProtectedShellRoutes(currentUser),
     [currentUser]
   );
-  const workspaceName = currentUser?.workspaceName ?? "Protected workspace";
+  const workspaceName = currentUser?.workspaceName ?? t("shell.protectedWorkspace");
   const impersonatedDisplayName = useMemo(() => {
     const fullName = `${currentUser?.firstName ?? ""} ${currentUser?.lastName ?? ""}`.trim();
-    return fullName || currentUser?.userName || "this user";
-  }, [currentUser?.firstName, currentUser?.lastName, currentUser?.userName]);
+    return fullName || currentUser?.userName || t("shell.impersonationFallbackUser");
+  }, [currentUser?.firstName, currentUser?.lastName, currentUser?.userName, t]);
   const currentYear = new Date().getFullYear();
 
   async function handleLogout() {
@@ -115,7 +118,7 @@ export function ProtectedShellTemplate({
       <BrandMark />
       <Divider sx={{ my: 3 }} />
       <List
-        aria-label="Primary navigation"
+        aria-label={t("shell.primaryNavigation")}
         component="nav"
         sx={{ p: 0 }}
       >
@@ -151,7 +154,7 @@ export function ProtectedShellTemplate({
               >
                 <Icon size={18} />
               </ListItemIcon>
-              <ListItemText primary={route.label} />
+              <ListItemText primary={route.labelKey ? t(route.labelKey) : route.label} />
             </ListItemButton>
           );
         })}
@@ -162,7 +165,7 @@ export function ProtectedShellTemplate({
         color="text.secondary"
         variant="body2"
       >
-        Copyright (c) {currentYear}
+        {t("shell.copyright", { year: currentYear })}
       </Typography>
     </Box>
   );
@@ -240,7 +243,7 @@ export function ProtectedShellTemplate({
             >
               {!isDesktop ? (
                 <IconButton
-                  aria-label="Open navigation"
+                  aria-label={t("shell.openNavigation")}
                   edge="start"
                   onClick={() => {
                     setIsNavigationOpen(true);
@@ -298,7 +301,7 @@ export function ProtectedShellTemplate({
           <Alert
             action={(
               <Button
-                aria-label="Exit impersonation"
+                aria-label={t("shell.exitImpersonation")}
                 color="inherit"
                 disabled={isExitingImpersonation}
                 onClick={() => {
@@ -306,7 +309,7 @@ export function ProtectedShellTemplate({
                 }}
                 size="small"
               >
-                Exit impersonation
+                {t("shell.exitImpersonation")}
               </Button>
             )}
             role="alert"
@@ -315,10 +318,14 @@ export function ProtectedShellTemplate({
               borderRadius: 0
             }}
           >
-            <>
-              You are currently impersonating <strong>{impersonatedDisplayName}</strong> in{" "}
-              <strong>{workspaceName}</strong>.
-            </>
+            <Trans
+              components={{ strong: <strong /> }}
+              i18nKey="shell.impersonationBanner"
+              values={{
+                userName: impersonatedDisplayName,
+                workspaceName
+              }}
+            />
           </Alert>
         ) : null}
         <Box

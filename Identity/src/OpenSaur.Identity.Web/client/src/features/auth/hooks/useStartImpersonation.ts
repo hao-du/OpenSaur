@@ -1,5 +1,6 @@
 import { useMutation } from "@tanstack/react-query";
 import { getApiErrorMessage } from "../../../shared/api";
+import { i18n } from "../../localization/i18n";
 import {
   startImpersonation,
   type StartImpersonationRequest
@@ -12,7 +13,7 @@ export function useStartImpersonation() {
 
   return {
     errorMessage: mutation.error
-      ? getApiErrorMessage(mutation.error, "We couldn't start impersonation. Please try again.")
+      ? getApiErrorMessage(mutation.error, i18n.t("workspaces.impersonation.error"))
       : null,
     isStartingImpersonation: mutation.isPending,
     resetError: mutation.reset,

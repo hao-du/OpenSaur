@@ -19,6 +19,7 @@ import type {
   AssignmentCandidate,
   RoleAssignmentSummary
 } from "../types";
+import { usePreferences } from "../../preferences/PreferenceProvider";
 
 type RoleAssignmentsEditorDrawerProps = {
   assignmentCandidates: AssignmentCandidate[];
@@ -45,6 +46,7 @@ export function RoleAssignmentsEditorDrawer({
   onSubmit,
   role
 }: RoleAssignmentsEditorDrawerProps) {
+  const { t } = usePreferences();
   const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
 
   useEffect(() => {
@@ -90,9 +92,9 @@ export function RoleAssignmentsEditorDrawer({
       <Stack spacing={3} sx={{ height: "100%" }}>
         <Stack alignItems="center" direction="row" justifyContent="space-between">
           <Typography component="h2" variant="h5">
-            Assigned Users
+            {t("roleAssignments.drawer.assignedUsers")}
           </Typography>
-          <IconButton aria-label="Close role assignments form" onClick={onClose}>
+          <IconButton aria-label={t("roleAssignments.drawer.close")} onClick={onClose}>
             <X size={18} />
           </IconButton>
         </Stack>
@@ -101,7 +103,7 @@ export function RoleAssignmentsEditorDrawer({
           <Stack alignItems="center" justifyContent="center" spacing={2} sx={{ flex: 1 }}>
             <CircularProgress size={28} />
             <Typography color="text.secondary">
-              Loading role assignments...
+              {t("roleAssignments.drawer.loading")}
             </Typography>
           </Stack>
         ) : (
@@ -128,7 +130,7 @@ export function RoleAssignmentsEditorDrawer({
               fullWidth
               getOptionLabel={option => option.userName}
               isOptionEqualToValue={(option, value) => option.userId === value.userId}
-              noOptionsText="No matching active users."
+              noOptionsText={t("roleAssignments.drawer.noMatchingUsers")}
               onChange={(_, value) => {
                 if (!value) {
                   return;
@@ -141,8 +143,8 @@ export function RoleAssignmentsEditorDrawer({
               renderInput={params => (
                 <TextField
                   {...params}
-                  label="User"
-                  placeholder="Search active users"
+                  label={t("roleAssignments.drawer.user")}
+                  placeholder={t("roleAssignments.drawer.searchUsers")}
                 />
               )}
               renderOption={(props, option) => (
@@ -189,7 +191,7 @@ export function RoleAssignmentsEditorDrawer({
                         </Typography>
                       </Stack>
                       <Chip
-                        label="Remove"
+                        label={t("roleAssignments.drawer.remove")}
                         onDelete={() => {
                           setSelectedUserIds(current => current.filter(candidateId => candidateId !== user.userId));
                         }}
@@ -210,7 +212,7 @@ export function RoleAssignmentsEditorDrawer({
                 }}
                 variant="contained"
               >
-                {isSaving ? "Saving..." : "Save"}
+                {isSaving ? t("common.saving") : t("common.save")}
               </Button>
             </Stack>
           </Stack>

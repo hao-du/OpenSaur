@@ -1,9 +1,11 @@
 import type { PropsWithChildren } from "react";
 import { CircularProgress, Stack, Typography } from "@mui/material";
 import { useAuthBootstrap } from "../hooks/useAuthBootstrap";
+import { usePreferences } from "../../preferences/PreferenceProvider";
 
 export function AuthBootstrapBoundary({ children }: PropsWithChildren) {
   const { isBootstrapping } = useAuthBootstrap();
+  const { t } = usePreferences();
 
   if (isBootstrapping) {
     return (
@@ -15,7 +17,7 @@ export function AuthBootstrapBoundary({ children }: PropsWithChildren) {
       >
         <CircularProgress size={28} />
         <Typography color="text.secondary">
-          Preparing your session...
+          {t("auth.preparingSession")}
         </Typography>
       </Stack>
     );

@@ -6,6 +6,7 @@ import {
 } from "../../role-assignments/api";
 import { authQueryKeys } from "../../auth/queries/authQueryKeys";
 import { getCachedCurrentUserId } from "../../auth/queries/currentUserCache";
+import { i18n } from "../../localization/i18n";
 import { userQueryKeys } from "../queries/userQueryKeys";
 import type { SaveUserAssignmentsRequest } from "../types";
 
@@ -74,7 +75,7 @@ export function useSaveUserAssignments() {
 
   return {
     errorMessage: mutation.error
-      ? getApiErrorMessage(mutation.error, "We couldn't save the user role assignments. Please try again.")
+      ? getApiErrorMessage(mutation.error, i18n.t("users.roleAssignmentsError"))
       : null,
     isSaving: mutation.isPending,
     resetError: mutation.reset,

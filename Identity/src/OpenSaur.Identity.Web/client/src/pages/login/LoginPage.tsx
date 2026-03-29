@@ -6,6 +6,7 @@ import { useLogin } from "../../features/auth/hooks";
 import { authSessionStore } from "../../features/auth/state/authSessionStore";
 import { normalizeAuthReturnUrl, startFirstPartyAuthorization } from "../../features/auth/utils";
 import { usePreferences } from "../../features/preferences/PreferenceProvider";
+import { getApiErrorMessage } from "../../shared/api";
 
 export function LoginPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -22,8 +23,8 @@ export function LoginPage() {
     try {
       await login(credentials);
       startFirstPartyAuthorization();
-    } catch {
-      setErrorMessage(t("login.error"));
+    } catch (error) {
+      setErrorMessage(getApiErrorMessage(error, t("login.error")));
     }
   }
 

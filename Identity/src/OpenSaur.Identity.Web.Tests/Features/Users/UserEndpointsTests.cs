@@ -251,6 +251,7 @@ public sealed class UserEndpointsTests : IClassFixture<OpenSaurWebApplicationFac
                 "{}"));
         var payload = await ApiResponseReader.ReadFailureEnvelopeAsync(response, HttpStatusCode.BadRequest);
 
+        Assert.Contains(payload.Errors, error => error.Code == "user_workspace_capacity_reached");
         Assert.Contains(payload.Errors, error => error.Detail.Contains("maximum of 2 active users", StringComparison.OrdinalIgnoreCase));
     }
 

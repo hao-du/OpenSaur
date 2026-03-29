@@ -17,6 +17,7 @@ import {
   useStartImpersonation
 } from "../../features/auth/hooks";
 import { useRolesQuery } from "../../features/roles/hooks";
+import { usePreferences } from "../../features/preferences/PreferenceProvider";
 import { useSyncAuthenticatedPreferences } from "../../features/preferences/hooks";
 import {
   useCreateWorkspace,
@@ -38,6 +39,7 @@ export function WorkspacesPage() {
   const [selectedWorkspaceId, setSelectedWorkspaceId] = useState<string | null>(null);
   const [impersonationWorkspaceId, setImpersonationWorkspaceId] = useState<string | null>(null);
   const { fetchCurrentUser } = useCurrentUserQuery();
+  const { t } = usePreferences();
   const syncAuthenticatedPreferences = useSyncAuthenticatedPreferences();
   const { data: roles = [], isLoading: isRolesLoading } = useRolesQuery();
   const {
@@ -151,8 +153,8 @@ export function WorkspacesPage() {
 
   return (
     <ProtectedShellTemplate
-      subtitle="Manage workspace access surfaces, activation state, and future administration flows from one place."
-      title="Workspace"
+      subtitle={t("workspaces.description")}
+      title={t("workspaces.title")}
     >
       <Stack spacing={3}>
         <Stack
@@ -170,7 +172,7 @@ export function WorkspacesPage() {
               }}
               variant="outlined"
             >
-              Filter
+              {t("common.filter")}
             </Button>
           </Stack>
           <Button
@@ -180,7 +182,7 @@ export function WorkspacesPage() {
             }}
             variant="contained"
           >
-            Create
+            {t("common.create")}
           </Button>
         </Stack>
         <WorkspaceTable
@@ -243,7 +245,7 @@ export function WorkspacesPage() {
       <WorkspaceImpersonationDialog
         errorMessage={
           isImpersonationOptionsError
-            ? "We couldn't load the workspace users right now."
+            ? t("workspaces.impersonation.loadError")
             : startImpersonationErrorMessage
         }
         isLoading={isImpersonationOptionsLoading}

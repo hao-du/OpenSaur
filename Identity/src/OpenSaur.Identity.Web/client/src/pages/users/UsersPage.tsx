@@ -5,6 +5,7 @@ import {
 import { useMemo, useState } from "react";
 import { ProtectedShellTemplate } from "../../components/templates";
 import { useCurrentUserState } from "../../features/auth/hooks";
+import { usePreferences } from "../../features/preferences/PreferenceProvider";
 import {
   UserFiltersDrawer,
   type UserFilterValues,
@@ -30,6 +31,7 @@ export function UsersPage() {
   const [isCreateDrawerOpen, setIsCreateDrawerOpen] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const { data: currentUser } = useCurrentUserState();
+  const { t } = usePreferences();
   const {
     data: users = [],
     isError,
@@ -141,8 +143,10 @@ export function UsersPage() {
 
   return (
     <ProtectedShellTemplate
-      subtitle={`Manage users and assigned roles in ${currentUser?.workspaceName ?? "the current workspace"}.`}
-      title="Users"
+      subtitle={t("users.description", {
+        workspaceName: currentUser?.workspaceName ?? t("common.currentWorkspace")
+      })}
+      title={t("users.title")}
     >
       <Stack spacing={3}>
         <Stack
@@ -157,7 +161,7 @@ export function UsersPage() {
               }}
               variant="outlined"
             >
-              Filter
+              {t("common.filter")}
             </Button>
           </Stack>
           <Button
@@ -168,7 +172,7 @@ export function UsersPage() {
             }}
             variant="contained"
           >
-            Create
+            {t("common.create")}
           </Button>
         </Stack>
         <UsersTable

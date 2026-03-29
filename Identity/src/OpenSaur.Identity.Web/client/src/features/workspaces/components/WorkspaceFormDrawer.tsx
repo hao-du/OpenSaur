@@ -11,6 +11,7 @@ import { X } from "lucide-react";
 import { WorkspaceForm } from "./WorkspaceForm";
 import type { WorkspaceDetails } from "../types";
 import type { RoleSummary } from "../../roles/types";
+import { usePreferences } from "../../preferences/PreferenceProvider";
 
 type WorkspaceFormDrawerProps = {
   availableRoles: RoleSummary[];
@@ -43,7 +44,8 @@ export function WorkspaceFormDrawer({
   onClose,
   onSubmit
 }: WorkspaceFormDrawerProps) {
-  const title = isEditMode ? "Edit workspace" : "Create workspace";
+  const { t } = usePreferences();
+  const title = isEditMode ? t("workspaces.form.editTitle") : t("workspaces.form.createTitle");
 
   return (
     <Drawer
@@ -73,7 +75,7 @@ export function WorkspaceFormDrawer({
             {title}
           </Typography>
           <IconButton
-            aria-label="Close workspace form"
+            aria-label={t("workspaces.form.close")}
             onClick={onClose}
           >
             <X size={18} />
@@ -89,7 +91,7 @@ export function WorkspaceFormDrawer({
           >
             <CircularProgress size={28} />
             <Typography color="text.secondary">
-              Loading workspace...
+              {t("workspaces.form.loading")}
             </Typography>
           </Stack>
         ) : (

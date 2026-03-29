@@ -12,6 +12,7 @@ import {
 } from "@mui/material";
 import { X } from "lucide-react";
 import { ControlledTextField } from "../../../components/molecules/controlled";
+import { usePreferences } from "../../preferences/PreferenceProvider";
 
 export type RoleFilterValues = {
   search: string;
@@ -36,6 +37,7 @@ export function RoleFiltersDrawer({
   onApply,
   onClose
 }: RoleFiltersDrawerProps) {
+  const { t } = usePreferences();
   const {
     control,
     handleSubmit,
@@ -64,10 +66,10 @@ export function RoleFiltersDrawer({
           justifyContent="space-between"
         >
           <Typography component="h2" variant="h5">
-            Filter roles
+            {t("roles.filters.title")}
           </Typography>
           <IconButton
-            aria-label="Close role filters"
+            aria-label={t("roles.filters.close")}
             onClick={onClose}
           >
             <X size={18} />
@@ -93,18 +95,18 @@ export function RoleFiltersDrawer({
         >
           <ControlledTextField
             control={control}
-            label="Search roles"
+            label={t("roles.filters.search")}
             name="search"
           />
           <ControlledTextField
             control={control}
-            label="Role status"
+            label={t("roles.filters.status")}
             name="status"
             select
           >
-            <MenuItem value="all">All</MenuItem>
-            <MenuItem value="active">Active</MenuItem>
-            <MenuItem value="inactive">Inactive</MenuItem>
+            <MenuItem value="all">{t("common.all")}</MenuItem>
+            <MenuItem value="active">{t("common.active")}</MenuItem>
+            <MenuItem value="inactive">{t("common.inactive")}</MenuItem>
           </ControlledTextField>
           <Stack
             direction="row"
@@ -119,7 +121,7 @@ export function RoleFiltersDrawer({
               type="button"
               variant="text"
             >
-              Reset filters
+              {t("common.resetFilters")}
             </Button>
             <Button
               aria-busy={isApplying}
@@ -130,7 +132,7 @@ export function RoleFiltersDrawer({
               type="submit"
               variant="contained"
             >
-              {isApplying ? "Applying filters..." : "Apply filters"}
+              {isApplying ? t("common.applyingFilters") : t("common.applyFilters")}
             </Button>
           </Stack>
         </Stack>

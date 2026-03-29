@@ -1,5 +1,6 @@
 import { useMutation } from "@tanstack/react-query";
 import { getApiErrorMessage } from "../../../shared/api";
+import { i18n } from "../../localization/i18n";
 import { exitImpersonation } from "../api/authApi";
 
 export function useExitImpersonation() {
@@ -9,7 +10,7 @@ export function useExitImpersonation() {
 
   return {
     errorMessage: mutation.error
-      ? getApiErrorMessage(mutation.error, "We couldn't exit impersonation. Please try again.")
+      ? getApiErrorMessage(mutation.error, i18n.t("shell.exitImpersonationError"))
       : null,
     exitImpersonation: () => mutation.mutateAsync(),
     isExitingImpersonation: mutation.isPending,

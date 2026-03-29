@@ -13,11 +13,13 @@ import {
   useCurrentUserState,
   useDashboardSummaryQuery
 } from "../../features/auth/hooks";
+import { usePreferences } from "../../features/preferences/PreferenceProvider";
 
 export function HomePage() {
   const navigate = useNavigate();
   const { data: currentUser } = useCurrentUserState();
   const { data: summary, isError, isLoading } = useDashboardSummaryQuery();
+  const { t } = usePreferences();
   const shouldShowQuickActions = currentUser?.canManageUsers === true
     || isSuperAdministrator(currentUser?.roles ?? []);
 
@@ -64,7 +66,7 @@ export function HomePage() {
         <Stack alignItems="center" spacing={2}>
           <CircularProgress size={28} />
           <Typography color="text.secondary">
-            Loading dashboard summary...
+            {t("home.loadingSummary")}
           </Typography>
         </Stack>
       </Paper>
@@ -73,9 +75,9 @@ export function HomePage() {
     content = (
       <Paper elevation={0} sx={{ border: "1px solid rgba(11,110,79,0.12)", p: 4 }}>
         <Stack spacing={1}>
-          <Typography variant="h6">Dashboard unavailable</Typography>
+          <Typography variant="h6">{t("home.dashboardUnavailable")}</Typography>
           <Typography color="text.secondary">
-            The dashboard summary could not be loaded right now.
+            {t("home.dashboardUnavailableDetail")}
           </Typography>
         </Stack>
       </Paper>
@@ -84,10 +86,10 @@ export function HomePage() {
     content = (
       <Stack spacing={3}>
         <Grid container spacing={2}>
-          {renderMetricCard("Total workspaces", summary.workspaceCount)}
-          {renderMetricCard("Active workspaces", summary.activeWorkspaceCount)}
-          {renderMetricCard("Active users", summary.activeUserCount)}
-          {renderMetricCard("Role catalog", summary.availableRoleCount)}
+          {renderMetricCard(t("home.totalWorkspaces"), summary.workspaceCount)}
+          {renderMetricCard(t("home.activeWorkspaces"), summary.activeWorkspaceCount)}
+          {renderMetricCard(t("home.activeUsers"), summary.activeUserCount)}
+          {renderMetricCard(t("home.roleCatalog"), summary.availableRoleCount)}
         </Grid>
         {shouldShowQuickActions ? (
           <Paper elevation={0} sx={{ border: "1px solid rgba(11,110,79,0.12)", p: 3 }}>
@@ -97,9 +99,9 @@ export function HomePage() {
               spacing={2}
             >
               <Stack spacing={1}>
-                <Typography variant="h6">Quick actions</Typography>
+                <Typography variant="h6">{t("home.quickActions")}</Typography>
                 <Typography color="text.secondary">
-                  Open the global administration surfaces for workspace, role, and user operations.
+                  {t("home.quickActions.globalDescription")}
                 </Typography>
               </Stack>
               <Stack direction={{ sm: "row", xs: "column" }} spacing={1.5}>
@@ -109,7 +111,7 @@ export function HomePage() {
                   }}
                   variant="contained"
                 >
-                  Open workspaces
+                  {t("home.quickActions.openWorkspaces")}
                 </Button>
                 <Button
                   onClick={() => {
@@ -117,7 +119,7 @@ export function HomePage() {
                   }}
                   variant="outlined"
                 >
-                  Manage role catalog
+                  {t("home.quickActions.roleCatalog")}
                 </Button>
               </Stack>
             </Stack>
@@ -127,16 +129,16 @@ export function HomePage() {
     );
   } else {
     const licenseUsage = summary.maxActiveUsers === null
-      ? `${summary.activeUserCount} / Unlimited`
+      ? `${summary.activeUserCount} / ${t("home.unlimited")}`
       : `${summary.activeUserCount} / ${summary.maxActiveUsers}`;
 
     content = (
       <Stack spacing={3}>
         <Grid container spacing={2}>
-          {renderMetricCard("Available roles", summary.availableRoleCount)}
-          {renderMetricCard("License usage", licenseUsage)}
-          {renderMetricCard("Inactive users", summary.inactiveUserCount)}
-          {renderMetricCard("Active users", summary.activeUserCount)}
+          {renderMetricCard(t("home.availableRoles"), summary.availableRoleCount)}
+          {renderMetricCard(t("home.licenseUsage"), licenseUsage)}
+          {renderMetricCard(t("home.inactiveUsers"), summary.inactiveUserCount)}
+          {renderMetricCard(t("home.activeUsers"), summary.activeUserCount)}
         </Grid>
         {shouldShowQuickActions ? (
           <Paper elevation={0} sx={{ border: "1px solid rgba(11,110,79,0.12)", p: 3 }}>
@@ -146,9 +148,9 @@ export function HomePage() {
               spacing={2}
             >
               <Stack spacing={1}>
-                <Typography variant="h6">Quick actions</Typography>
+                <Typography variant="h6">{t("home.quickActions")}</Typography>
                 <Typography color="text.secondary">
-                  Manage users and roles for the current workspace.
+                  {t("home.quickActions.workspaceDescription")}
                 </Typography>
               </Stack>
               <Stack direction={{ sm: "row", xs: "column" }} spacing={1.5}>
@@ -158,7 +160,7 @@ export function HomePage() {
                   }}
                   variant="contained"
                 >
-                  Open users
+                  {t("home.quickActions.openUsers")}
                 </Button>
                 <Button
                   onClick={() => {
@@ -166,7 +168,7 @@ export function HomePage() {
                   }}
                   variant="outlined"
                 >
-                  Open role assignments
+                  {t("home.quickActions.openRoleAssignments")}
                 </Button>
               </Stack>
             </Stack>
@@ -177,7 +179,7 @@ export function HomePage() {
   }
 
   return (
-    <ProtectedShellTemplate title="Dashboard">
+    <ProtectedShellTemplate title={t("home.title")}>
       {content}
     </ProtectedShellTemplate>
   );

@@ -16,10 +16,13 @@
     "@mui/material": "^7.3.2",
     "@tanstack/react-query": "^5.80.7",
     "axios": "^1.10.0",
+    "i18next": "^25.4.2",
     "lucide-react": "^0.525.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-hook-form": "^7.60.0",
+    "react-i18next": "^15.7.3",
+    "react-intl": "^7.1.14",
     "react-router-dom": "^7.6.3"
   },
   "devDependencies": {

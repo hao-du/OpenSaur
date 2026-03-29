@@ -14,6 +14,7 @@ import type {
   UserAssignmentSummary,
   UserDetails
 } from "../types";
+import { usePreferences } from "../../preferences/PreferenceProvider";
 
 type UserFormDrawerProps = {
   errorMessage: string | null;
@@ -49,7 +50,8 @@ export function UserFormDrawer({
   roleCandidates,
   userAssignments
 }: UserFormDrawerProps) {
-  const title = isEditMode ? "Edit user" : "Create user";
+  const { t } = usePreferences();
+  const title = isEditMode ? t("users.form.editTitle") : t("users.form.createTitle");
 
   return (
     <Drawer
@@ -68,7 +70,7 @@ export function UserFormDrawer({
           <Typography component="h2" variant="h5">
             {title}
           </Typography>
-          <IconButton aria-label="Close user form" onClick={onClose}>
+          <IconButton aria-label={t("users.form.close")} onClick={onClose}>
             <X size={18} />
           </IconButton>
         </Stack>
@@ -77,7 +79,7 @@ export function UserFormDrawer({
           <Stack alignItems="center" justifyContent="center" spacing={2} sx={{ flex: 1 }}>
             <CircularProgress size={28} />
             <Typography color="text.secondary">
-              Loading user...
+              {t("users.form.loading")}
             </Typography>
           </Stack>
         ) : (

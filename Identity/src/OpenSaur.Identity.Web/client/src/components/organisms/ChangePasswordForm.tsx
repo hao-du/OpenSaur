@@ -2,6 +2,7 @@ import { Alert, Button, CircularProgress, Stack } from "@mui/material";
 import { useForm } from "react-hook-form";
 import { ControlledPasswordField } from "../molecules";
 import { KeyRound } from "../../shared/icons";
+import { usePreferences } from "../../features/preferences/PreferenceProvider";
 
 type ChangePasswordFormValues = {
   confirmPassword: string;
@@ -20,6 +21,7 @@ export function ChangePasswordForm({
   isSubmitting = false,
   onSubmit
 }: ChangePasswordFormProps) {
+  const { t } = usePreferences();
   const {
     control,
     getValues,
@@ -47,10 +49,10 @@ export function ChangePasswordForm({
         autoComplete="current-password"
         control={control}
         disabled={isSubmitting}
-        label="Current password"
+        label={t("changePassword.currentPassword")}
         name="currentPassword"
         rules={{
-          required: "Current password is required."
+          required: t("changePassword.currentPasswordRequired")
         }}
       />
 
@@ -58,10 +60,10 @@ export function ChangePasswordForm({
         autoComplete="new-password"
         control={control}
         disabled={isSubmitting}
-        label="New password"
+        label={t("changePassword.newPassword")}
         name="newPassword"
         rules={{
-          required: "New password is required."
+          required: t("changePassword.newPasswordRequired")
         }}
       />
 
@@ -69,11 +71,11 @@ export function ChangePasswordForm({
         autoComplete="new-password"
         control={control}
         disabled={isSubmitting}
-        label="Confirm new password"
+        label={t("changePassword.confirmPassword")}
         name="confirmPassword"
         rules={{
-          required: "Please confirm your new password.",
-          validate: value => value === getValues("newPassword") || "Passwords must match."
+          required: t("changePassword.confirmPasswordRequired"),
+          validate: value => value === getValues("newPassword") || t("changePassword.passwordsMustMatch")
         }}
       />
 
@@ -87,7 +89,7 @@ export function ChangePasswordForm({
         type="submit"
         variant="contained"
       >
-        {isSubmitting ? "Updating password..." : "Update password"}
+        {isSubmitting ? t("changePassword.submitting") : t("changePassword.submit")}
       </Button>
     </Stack>
   );

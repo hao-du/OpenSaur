@@ -7,6 +7,7 @@ import { useExchangeWebSession } from "../../features/auth/hooks/useExchangeWebS
 import { authSessionStore } from "../../features/auth/state/authSessionStore";
 import { normalizeAuthReturnUrl, shouldEnforcePasswordChange } from "../../features/auth/utils";
 import type { ExchangeWebSessionResponse } from "../../features/auth/api/authApi";
+import { usePreferences } from "../../features/preferences/PreferenceProvider";
 import { useSyncAuthenticatedPreferences } from "../../features/preferences/hooks";
 
 const exchangeRequestsByCode = new Map<string, Promise<ExchangeWebSessionResponse>>();
@@ -37,6 +38,7 @@ export function AuthCallbackPage() {
   const { clearCurrentUser, fetchCurrentUser } = useCurrentUserQuery();
   const { exchangeSession } = useExchangeWebSession();
   const syncAuthenticatedPreferences = useSyncAuthenticatedPreferences();
+  const { t } = usePreferences();
 
   useEffect(() => {
     let isCancelled = false;
@@ -91,8 +93,8 @@ export function AuthCallbackPage() {
 
   return (
     <AuthPageTemplate
-      description="Please wait while we sign you in."
-      title="Signing you in"
+      description={t("auth.signingInDescription")}
+      title={t("auth.signingInTitle")}
     >
       <Stack
         alignItems="center"
@@ -101,7 +103,7 @@ export function AuthCallbackPage() {
       >
         <CircularProgress size={24} />
         <Typography color="text.secondary">
-          Preparing your account...
+          {t("auth.preparingAccount")}
         </Typography>
       </Stack>
     </AuthPageTemplate>

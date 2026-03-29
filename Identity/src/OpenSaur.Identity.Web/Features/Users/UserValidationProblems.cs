@@ -19,6 +19,7 @@ internal static class UserValidationProblems
         return
         [
             ResultErrors.Validation(
+                ApiErrorCodes.UserWorkspaceCapacityReached,
                 "Workspace active-user limit reached.",
                 $"This workspace has reached its maximum of {maxActiveUsers} active users.")
         ];

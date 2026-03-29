@@ -99,7 +99,10 @@ public sealed class ApiAuthAccountEndpointsTests : IClassFixture<OpenSaurWebAppl
                 Password = TestFakers.CreateDifferentPassword(credentials.Password)
             });
 
-        await ApiResponseReader.ReadFailureEnvelopeAsync(response, HttpStatusCode.Unauthorized);
+        var payload = await ApiResponseReader.ReadFailureEnvelopeAsync(response, HttpStatusCode.Unauthorized);
+
+        Assert.Single(payload.Errors);
+        Assert.Equal("auth_invalid_credentials", payload.Errors[0].Code);
     }
 
     [Fact]

@@ -12,6 +12,7 @@ import {
 } from "@mui/material";
 import { ControlledTextField } from "../../../components/molecules/controlled";
 import { X } from "../../../shared/icons";
+import { usePreferences } from "../../preferences/PreferenceProvider";
 
 export type UserFilterValues = {
   search: string;
@@ -36,6 +37,7 @@ export function UserFiltersDrawer({
   onApply,
   onClose
 }: UserFiltersDrawerProps) {
+  const { t } = usePreferences();
   const {
     control,
     handleSubmit,
@@ -60,9 +62,9 @@ export function UserFiltersDrawer({
       <Stack spacing={3} sx={{ height: "100%" }}>
         <Stack alignItems="center" direction="row" justifyContent="space-between">
           <Typography component="h2" variant="h5">
-            Filter users
+            {t("users.filters.title")}
           </Typography>
-          <IconButton aria-label="Close user filters" onClick={onClose}>
+          <IconButton aria-label={t("users.filters.close")} onClick={onClose}>
             <X size={18} />
           </IconButton>
         </Stack>
@@ -86,18 +88,18 @@ export function UserFiltersDrawer({
         >
           <ControlledTextField
             control={control}
-            label="Search users"
+            label={t("users.filters.search")}
             name="search"
           />
           <ControlledTextField
             control={control}
-            label="User status"
+            label={t("users.filters.status")}
             name="status"
             select
           >
-            <MenuItem value="all">All</MenuItem>
-            <MenuItem value="active">Active</MenuItem>
-            <MenuItem value="inactive">Inactive</MenuItem>
+            <MenuItem value="all">{t("common.all")}</MenuItem>
+            <MenuItem value="active">{t("common.active")}</MenuItem>
+            <MenuItem value="inactive">{t("common.inactive")}</MenuItem>
           </ControlledTextField>
           <Stack
             direction="row"
@@ -112,7 +114,7 @@ export function UserFiltersDrawer({
               type="button"
               variant="text"
             >
-              Reset filters
+              {t("common.resetFilters")}
             </Button>
             <Button
               aria-busy={isApplying}
@@ -123,7 +125,7 @@ export function UserFiltersDrawer({
               type="submit"
               variant="contained"
             >
-              {isApplying ? "Applying filters..." : "Apply filters"}
+              {isApplying ? t("common.applyingFilters") : t("common.filter")}
             </Button>
           </Stack>
         </Stack>

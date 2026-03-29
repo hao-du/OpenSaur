@@ -12,6 +12,7 @@ import {
 } from "@mui/material";
 import { X } from "lucide-react";
 import { ControlledTextField } from "../../../components/molecules/controlled";
+import { usePreferences } from "../../preferences/PreferenceProvider";
 
 export type WorkspaceFilterValues = {
   search: string;
@@ -36,6 +37,7 @@ export function WorkspaceFiltersDrawer({
   onApply,
   onClose
 }: WorkspaceFiltersDrawerProps) {
+  const { t } = usePreferences();
   const {
     control,
     handleSubmit,
@@ -70,10 +72,10 @@ export function WorkspaceFiltersDrawer({
             component="h2"
             variant="h5"
           >
-            Filter workspaces
+            {t("workspaces.filters.title")}
           </Typography>
           <IconButton
-            aria-label="Close workspace filters"
+            aria-label={t("workspaces.filters.close")}
             onClick={onClose}
           >
             <X size={18} />
@@ -99,18 +101,18 @@ export function WorkspaceFiltersDrawer({
         >
           <ControlledTextField
             control={control}
-            label="Search workspaces"
+            label={t("workspaces.filters.search")}
             name="search"
           />
           <ControlledTextField
             control={control}
-            label="Workspace status"
+            label={t("workspaces.filters.status")}
             name="status"
             select
           >
-            <MenuItem value="all">All</MenuItem>
-            <MenuItem value="active">Active</MenuItem>
-            <MenuItem value="inactive">Inactive</MenuItem>
+            <MenuItem value="all">{t("common.all")}</MenuItem>
+            <MenuItem value="active">{t("common.active")}</MenuItem>
+            <MenuItem value="inactive">{t("common.inactive")}</MenuItem>
           </ControlledTextField>
           <Stack
             direction="row"
@@ -125,7 +127,7 @@ export function WorkspaceFiltersDrawer({
               type="button"
               variant="text"
             >
-              Reset filters
+              {t("common.resetFilters")}
             </Button>
             <Button
               aria-busy={isApplying}
@@ -136,7 +138,7 @@ export function WorkspaceFiltersDrawer({
                 : undefined}
               variant="contained"
             >
-              {isApplying ? "Applying filters..." : "Apply filters"}
+              {isApplying ? t("common.applyingFilters") : t("common.applyFilters")}
             </Button>
           </Stack>
         </Stack>

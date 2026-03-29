@@ -15,6 +15,7 @@ import {
 } from "@mui/material";
 import { isSuperAdministrator } from "../../../app/router/protectedShellRoutes";
 import type { RoleSummary } from "../types";
+import { usePreferences } from "../../preferences/PreferenceProvider";
 
 type RolesTableProps = {
   canEditDefinitions: boolean;
@@ -33,6 +34,8 @@ export function RolesTable({
   onRetry,
   roles
 }: RolesTableProps) {
+  const { t } = usePreferences();
+
   if (isLoading) {
     return (
       <Paper
@@ -45,7 +48,7 @@ export function RolesTable({
         <Stack alignItems="center" spacing={2}>
           <CircularProgress size={28} />
           <Typography color="text.secondary">
-            Loading roles...
+            {t("roles.loading")}
           </Typography>
         </Stack>
       </Paper>
@@ -57,12 +60,12 @@ export function RolesTable({
       <Alert
         action={onRetry ? (
           <Button color="inherit" onClick={onRetry} size="small">
-            Retry
+            {t("common.retry")}
           </Button>
         ) : undefined}
         severity="error"
       >
-        We couldn't load the role list right now.
+        {t("roles.listError")}
       </Alert>
     );
   }
@@ -78,10 +81,10 @@ export function RolesTable({
       >
         <Stack spacing={1}>
           <Typography variant="h6">
-            No roles yet
+            {t("roles.empty.title")}
           </Typography>
           <Typography color="text.secondary">
-            Create the first role to define permissions for managed users.
+            {t("roles.empty.description")}
           </Typography>
         </Stack>
       </Paper>
@@ -100,10 +103,10 @@ export function RolesTable({
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell>Name</TableCell>
-              <TableCell>Description</TableCell>
-              <TableCell>Status</TableCell>
-              {canEditDefinitions ? <TableCell align="right">Actions</TableCell> : null}
+              <TableCell>{t("roles.table.name")}</TableCell>
+              <TableCell>{t("roles.table.description")}</TableCell>
+              <TableCell>{t("roles.table.status")}</TableCell>
+              {canEditDefinitions ? <TableCell align="right">{t("roles.table.actions")}</TableCell> : null}
             </TableRow>
           </TableHead>
           <TableBody>
@@ -114,7 +117,7 @@ export function RolesTable({
                 <TableCell>
                   <Chip
                     color={role.isActive ? "success" : "default"}
-                    label={role.isActive ? "Active" : "Inactive"}
+                    label={role.isActive ? t("common.active") : t("common.inactive")}
                     size="small"
                     variant={role.isActive ? "filled" : "outlined"}
                   />
@@ -123,14 +126,14 @@ export function RolesTable({
                   <TableCell align="right">
                     {isSuperAdministrator([role.normalizedName]) ? null : (
                       <Button
-                        aria-label="Edit role"
+                        aria-label={t("roles.table.editAria")}
                         onClick={() => {
                           onEditRole(role.id);
                         }}
                         size="small"
                         variant="outlined"
                       >
-                        Edit
+                        {t("roles.table.edit")}
                       </Button>
                     )}
                   </TableCell>

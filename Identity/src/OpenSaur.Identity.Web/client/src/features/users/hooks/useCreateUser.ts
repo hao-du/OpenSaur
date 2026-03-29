@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { getApiErrorMessage } from "../../../shared/api";
 import { authQueryKeys } from "../../auth/queries/authQueryKeys";
 import { roleAssignmentQueryKeys } from "../../role-assignments/queries/roleAssignmentQueryKeys";
+import { i18n } from "../../localization/i18n";
 import { createUser } from "../api";
 import { userQueryKeys } from "../queries/userQueryKeys";
 import type { CreateUserRequest } from "../types";
@@ -20,7 +21,7 @@ export function useCreateUser() {
   return {
     createUser: (request: CreateUserRequest) => mutation.mutateAsync(request),
     errorMessage: mutation.error
-      ? getApiErrorMessage(mutation.error, "We couldn't create the user. Please try again.")
+      ? getApiErrorMessage(mutation.error, i18n.t("users.createError"))
       : null,
     isCreating: mutation.isPending,
     resetError: mutation.reset

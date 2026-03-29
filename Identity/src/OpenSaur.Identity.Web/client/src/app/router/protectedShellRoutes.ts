@@ -7,6 +7,7 @@ import {
   Users
 } from "../../shared/icons";
 import type { AuthMeResponse } from "../../features/auth/api/authApi";
+import type { TranslationKey } from "../../features/localization/resources";
 
 const superAdministratorRole = "SUPERADMINISTRATOR";
 
@@ -21,6 +22,7 @@ export type ProtectedShellRoute = {
   hideWhenImpersonating?: boolean;
   icon: LucideIcon;
   label: string;
+  labelKey?: TranslationKey;
   path: string;
   requiresImpersonation?: boolean;
   requiresSuperAdministrator?: boolean;
@@ -31,11 +33,13 @@ export const protectedShellRoutes: ProtectedShellRoute[] = [
   {
     icon: LayoutDashboard,
     label: "Dashboard",
+    labelKey: "nav.dashboard",
     path: "/"
   },
   {
     icon: Building2,
     label: "Workspace",
+    labelKey: "nav.workspaces",
     path: "/workspaces",
     hideWhenImpersonating: true,
     requiresSuperAdministrator: true
@@ -43,18 +47,21 @@ export const protectedShellRoutes: ProtectedShellRoute[] = [
   {
     icon: Users,
     label: "Users",
+    labelKey: "nav.users",
     path: "/users",
     requiresUserManagement: true
   },
   {
     icon: ShieldUser,
     label: "Roles",
+    labelKey: "nav.roles",
     path: "/roles",
     requiresSuperAdministrator: true
   },
   {
     icon: ShieldCheck,
     label: "Role Assignments",
+    labelKey: "nav.roleAssignments",
     path: "/role-assignments",
     requiresUserManagement: true
   }

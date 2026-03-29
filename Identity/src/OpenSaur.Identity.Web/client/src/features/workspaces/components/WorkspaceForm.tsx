@@ -16,6 +16,7 @@ import {
 } from "../../../components/molecules/controlled";
 import type { RoleSummary } from "../../roles/types";
 import { isSuperAdministrator } from "../../../app/router/protectedShellRoutes";
+import { usePreferences } from "../../preferences/PreferenceProvider";
 
 type WorkspaceFormValues = {
   description: string;
@@ -42,6 +43,7 @@ export function WorkspaceForm({
   isSubmitting,
   onSubmit
 }: WorkspaceFormProps) {
+  const { t } = usePreferences();
   const {
     control,
     handleSubmit,
@@ -73,22 +75,22 @@ export function WorkspaceForm({
       {errorMessage ? <Alert severity="error">{errorMessage}</Alert> : null}
       <ControlledTextField
         control={control}
-        label="Workspace name"
+        label={t("workspaces.form.name")}
         name="name"
         rules={{
-          required: "Workspace name is required."
+          required: t("workspaces.form.nameRequired")
         }}
       />
       <ControlledTextArea
         control={control}
-        label="Description"
+        label={t("workspaces.form.description")}
         name="description"
       />
       <ControlledTextField
         control={control}
         disabled={isSubmitting}
         inputProps={{ min: 0, step: 1 }}
-        label="Max active users"
+        label={t("workspaces.form.maxActiveUsers")}
         name="maxActiveUsers"
         rules={{
           validate: rawValue => {
@@ -100,13 +102,13 @@ export function WorkspaceForm({
             const parsedValue = Number(value);
             return Number.isInteger(parsedValue) && parsedValue >= 0
               ? true
-              : "Max active users must be zero or greater.";
+              : t("workspaces.form.maxActiveUsersValidation");
           }
         }}
         type="number"
       />
       <Stack spacing={2}>
-        <Typography variant="h6">Assigned Roles</Typography>
+        <Typography variant="h6">{t("workspaces.form.assignedRoles")}</Typography>
         <Autocomplete
           disableCloseOnSelect
           disabled={isSubmitting}
@@ -124,8 +126,8 @@ export function WorkspaceForm({
           renderInput={params => (
             <TextField
               {...params}
-              label="Assigned Roles"
-              placeholder="Search active roles"
+              label={t("workspaces.form.assignedRoles")}
+              placeholder={t("workspaces.form.searchRoles")}
             />
           )}
           renderOption={(props, option) => (
@@ -142,13 +144,13 @@ export function WorkspaceForm({
         />
       </Stack>
       {isEditMode ? (
-        <ControlledCheckbox
-          control={control}
-          inputProps={{ "aria-label": "Workspace is active" }}
-          label="Workspace is active"
-          name="isActive"
-        />
-      ) : null}
+          <ControlledCheckbox
+            control={control}
+            inputProps={{ "aria-label": t("workspaces.form.activeAriaLabel") }}
+            label={t("workspaces.form.activeLabel")}
+            name="isActive"
+          />
+        ) : null}
       <Stack
         direction="row"
         justifyContent="flex-end"
@@ -163,7 +165,7 @@ export function WorkspaceForm({
           type="submit"
           variant="contained"
         >
-          {isSubmitting ? "Saving..." : "Save"}
+          {isSubmitting ? t("common.saving") : t("common.save")}
         </Button>
       </Stack>
     </Stack>

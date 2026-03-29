@@ -19,6 +19,7 @@ import {
   useRoleQuery,
   useRolesQuery
 } from "../../features/roles/hooks";
+import { usePreferences } from "../../features/preferences/PreferenceProvider";
 
 export function RolesPage() {
   const [filters, setFilters] = useState<RoleFilterValues>({
@@ -29,6 +30,7 @@ export function RolesPage() {
   const [isCreateDrawerOpen, setIsCreateDrawerOpen] = useState(false);
   const [selectedRoleId, setSelectedRoleId] = useState<string | null>(null);
   const { data: currentUser } = useCurrentUserState();
+  const { t } = usePreferences();
   const canManageRoleDefinitions = currentUser !== undefined
     && currentUser !== null
     && isSuperAdministrator(currentUser.roles);
@@ -106,8 +108,8 @@ export function RolesPage() {
 
   return (
     <ProtectedShellTemplate
-      subtitle="Manage global role definitions and permission mapping from one place."
-      title="Roles"
+      subtitle={t("roles.description")}
+      title={t("roles.title")}
     >
       <Stack spacing={3}>
         <Stack
@@ -122,7 +124,7 @@ export function RolesPage() {
               }}
               variant="outlined"
             >
-              Filter
+              {t("common.filter")}
             </Button>
           </Stack>
           {canManageRoleDefinitions ? (
@@ -133,7 +135,7 @@ export function RolesPage() {
               }}
               variant="contained"
             >
-              Create
+              {t("common.create")}
             </Button>
           ) : null}
         </Stack>

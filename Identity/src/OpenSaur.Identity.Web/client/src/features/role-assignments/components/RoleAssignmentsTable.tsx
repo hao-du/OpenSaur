@@ -14,6 +14,7 @@ import {
   Typography
 } from "@mui/material";
 import type { RoleSummary } from "../../roles/types";
+import { usePreferences } from "../../preferences/PreferenceProvider";
 
 type RoleAssignmentsTableProps = {
   isError: boolean;
@@ -30,13 +31,15 @@ export function RoleAssignmentsTable({
   onRetry,
   roles
 }: RoleAssignmentsTableProps) {
+  const { t } = usePreferences();
+
   if (isLoading) {
     return (
       <Paper elevation={0} sx={{ border: "1px solid rgba(11,110,79,0.12)", p: 4 }}>
         <Stack alignItems="center" spacing={2}>
           <CircularProgress size={28} />
           <Typography color="text.secondary">
-            Loading roles...
+            {t("roleAssignments.loading")}
           </Typography>
         </Stack>
       </Paper>
@@ -48,12 +51,12 @@ export function RoleAssignmentsTable({
       <Alert
         action={onRetry ? (
           <Button color="inherit" onClick={onRetry} size="small">
-            Retry
+            {t("common.retry")}
           </Button>
         ) : undefined}
         severity="error"
       >
-        We couldn't load the role assignments right now.
+        {t("roleAssignments.retryLoad")}
       </Alert>
     );
   }
@@ -63,10 +66,10 @@ export function RoleAssignmentsTable({
       <Paper elevation={0} sx={{ border: "1px dashed rgba(11,110,79,0.24)", p: 4 }}>
         <Stack spacing={1}>
           <Typography variant="h6">
-            No roles available
+            {t("roleAssignments.empty.title")}
           </Typography>
           <Typography color="text.secondary">
-            There are no roles available to assign in the current workspace.
+            {t("roleAssignments.empty.description")}
           </Typography>
         </Stack>
       </Paper>
@@ -79,10 +82,10 @@ export function RoleAssignmentsTable({
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell>Name</TableCell>
-              <TableCell>Description</TableCell>
-              <TableCell>Status</TableCell>
-              <TableCell align="right">Actions</TableCell>
+              <TableCell>{t("roleAssignments.table.name")}</TableCell>
+              <TableCell>{t("roleAssignments.table.description")}</TableCell>
+              <TableCell>{t("roleAssignments.table.status")}</TableCell>
+              <TableCell align="right">{t("roleAssignments.table.actions")}</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -93,21 +96,21 @@ export function RoleAssignmentsTable({
                 <TableCell>
                   <Chip
                     color={role.isActive ? "success" : "default"}
-                    label={role.isActive ? "Active" : "Inactive"}
+                    label={role.isActive ? t("common.active") : t("common.inactive")}
                     size="small"
                     variant={role.isActive ? "filled" : "outlined"}
                   />
                 </TableCell>
                 <TableCell align="right">
                   <Button
-                    aria-label="Edit assignments"
+                    aria-label={t("roleAssignments.table.editAssignments")}
                     onClick={() => {
                       onEditAssignments(role.id);
                     }}
                     size="small"
                     variant="outlined"
                   >
-                    Edit
+                    {t("roleAssignments.table.edit")}
                   </Button>
                 </TableCell>
               </TableRow>

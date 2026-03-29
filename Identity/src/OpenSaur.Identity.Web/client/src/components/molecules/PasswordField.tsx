@@ -1,6 +1,7 @@
 import * as React from "react";
 import { IconButton, InputAdornment } from "@mui/material";
 import { Eye, EyeOff, KeyRound } from "../../shared/icons";
+import { usePreferences } from "../../features/preferences/PreferenceProvider";
 import { AuthTextField } from "../atoms";
 
 type PasswordFieldProps = {
@@ -26,6 +27,7 @@ export function PasswordField({
   onChange,
   value
 }: PasswordFieldProps) {
+  const { t } = usePreferences();
   const [isVisible, setIsVisible] = React.useState(false);
 
   return (
@@ -39,7 +41,7 @@ export function PasswordField({
         endAdornment: (
           <InputAdornment position="end">
             <IconButton
-              aria-label={isVisible ? "Hide password" : "Show password"}
+              aria-label={isVisible ? t("common.hidePassword") : t("common.showPassword")}
               edge="end"
               onClick={() => {
                 setIsVisible(currentValue => !currentValue);

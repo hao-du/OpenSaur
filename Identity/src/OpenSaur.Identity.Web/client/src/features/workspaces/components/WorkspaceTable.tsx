@@ -15,6 +15,7 @@ import {
 } from "@mui/material";
 import { RolePreviewList } from "../../../components/molecules";
 import type { WorkspaceSummary } from "../types";
+import { usePreferences } from "../../preferences/PreferenceProvider";
 
 type WorkspaceTableProps = {
   isError: boolean;
@@ -35,6 +36,8 @@ export function WorkspaceTable({
   roleNamesById,
   workspaces
 }: WorkspaceTableProps) {
+  const { t } = usePreferences();
+
   if (isLoading) {
     return (
       <Paper
@@ -50,7 +53,7 @@ export function WorkspaceTable({
         >
           <CircularProgress size={28} />
           <Typography color="text.secondary">
-            Loading workspaces...
+            {t("workspaces.loading")}
           </Typography>
         </Stack>
       </Paper>
@@ -66,12 +69,12 @@ export function WorkspaceTable({
             onClick={onRetry}
             size="small"
           >
-            Retry
+            {t("common.retry")}
           </Button>
         ) : undefined}
         severity="error"
       >
-        We couldn't load the workspace list right now.
+        {t("workspaces.listError")}
       </Alert>
     );
   }
@@ -87,10 +90,10 @@ export function WorkspaceTable({
       >
         <Stack spacing={1}>
           <Typography variant="h6">
-            No workspaces yet
+            {t("workspaces.empty.title")}
           </Typography>
           <Typography color="text.secondary">
-            Create the first workspace to start organizing access and administration.
+            {t("workspaces.empty.description")}
           </Typography>
         </Stack>
       </Paper>
@@ -109,11 +112,11 @@ export function WorkspaceTable({
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell>Name</TableCell>
-              <TableCell>Description</TableCell>
-              <TableCell>Roles</TableCell>
-              <TableCell>Status</TableCell>
-              <TableCell align="right">Actions</TableCell>
+              <TableCell>{t("workspaces.table.name")}</TableCell>
+              <TableCell>{t("workspaces.table.description")}</TableCell>
+              <TableCell>{t("workspaces.table.roles")}</TableCell>
+              <TableCell>{t("workspaces.table.status")}</TableCell>
+              <TableCell align="right">{t("workspaces.table.actions")}</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -126,7 +129,7 @@ export function WorkspaceTable({
                 <TableCell>{workspace.description}</TableCell>
                 <TableCell>
                   <RolePreviewList
-                    emptyLabel="No roles"
+                    emptyLabel={t("workspaces.noRoles")}
                     roles={workspace.assignedRoleIds
                       .map(roleId => ({
                         id: roleId,
@@ -140,7 +143,7 @@ export function WorkspaceTable({
                 <TableCell>
                   <Chip
                     color={workspace.isActive ? "success" : "default"}
-                    label={workspace.isActive ? "Active" : "Inactive"}
+                    label={workspace.isActive ? t("common.active") : t("common.inactive")}
                     size="small"
                     variant={workspace.isActive ? "filled" : "outlined"}
                   />
@@ -152,14 +155,14 @@ export function WorkspaceTable({
                     spacing={1}
                   >
                     <Button
-                      aria-label="Edit workspace"
+                      aria-label={t("workspaces.table.editAria")}
                       onClick={() => {
                         onEditWorkspace(workspace.id);
                       }}
                       size="small"
                       variant="outlined"
                     >
-                      Edit
+                      {t("workspaces.table.edit")}
                     </Button>
                     <Button
                       onClick={() => {
@@ -168,7 +171,7 @@ export function WorkspaceTable({
                       size="small"
                       variant="text"
                     >
-                      Login as
+                      {t("workspaces.loginAs")}
                     </Button>
                   </Stack>
                 </TableCell>

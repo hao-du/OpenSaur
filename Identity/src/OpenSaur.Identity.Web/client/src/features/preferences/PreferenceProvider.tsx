@@ -2,12 +2,15 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
   type PropsWithChildren
 } from "react";
 import type { CurrentUserSettingsResponse } from "../auth/api/authApi";
-import { preferenceMessages, type PreferenceMessageKey } from "./messages";
+import { i18n } from "../localization/i18n";
+import type { TranslationKey } from "../localization/resources";
+import { getLanguageTag, type AppLanguageTag } from "./locale";
 import { detectBrowserTimeZone, getSupportedTimeZones } from "./timeZones";
 import type { AppLocale, AppPreferences } from "./types";
 
@@ -15,11 +18,12 @@ export const preferenceStorageKey = "opensaur.identity.preferences";
 
 type PreferenceContextValue = {
   applyServerSettings: (settings: CurrentUserSettingsResponse) => void;
+  languageTag: AppLanguageTag;
   locale: AppLocale;
   preferences: AppPreferences;
   setPreferences: (preferences: AppPreferences) => void;
   supportedTimeZones: string[];
-  t: (key: PreferenceMessageKey) => string;
+  t: (key: TranslationKey, options?: Record<string, unknown>) => string;
   timeZone: string;
 };
 
@@ -92,6 +96,8 @@ function persistPreferences(preferences: AppPreferences) {
 export function PreferenceProvider({ children }: PropsWithChildren) {
   const [preferences, setPreferenceState] = useState(loadPreferencesFromLocalStorage);
   const supportedTimeZones = useMemo(() => getSupportedTimeZones(), []);
+  const languageTag = getLanguageTag(preferences.locale);
+  const fixedT = useMemo(() => i18n.getFixedT(languageTag), [languageTag]);
 
   const setPreferences = useCallback((nextPreferences: AppPreferences) => {
     setPreferenceState(nextPreferences);
@@ -113,17 +119,20 @@ export function PreferenceProvider({ children }: PropsWithChildren) {
     });
   }, []);
 
-  const localizedMessages = preferenceMessages[preferences.locale] as Record<string, string>;
+  useEffect(() => {
+    void i18n.changeLanguage(languageTag);
+  }, [languageTag]);
 
   const value = useMemo<PreferenceContextValue>(() => ({
     applyServerSettings,
+    languageTag,
     locale: preferences.locale,
     preferences,
     setPreferences,
     supportedTimeZones,
-    t: (key: PreferenceMessageKey) => localizedMessages[key] ?? preferenceMessages.en[key],
+    t: (key: TranslationKey, options?: Record<string, unknown>) => fixedT(key, options),
     timeZone: preferences.timeZone
-  }), [applyServerSettings, localizedMessages, preferences, setPreferences, supportedTimeZones]);
+  }), [applyServerSettings, fixedT, languageTag, preferences, setPreferences, supportedTimeZones]);
 
   return (
     <PreferenceContext.Provider value={value}>

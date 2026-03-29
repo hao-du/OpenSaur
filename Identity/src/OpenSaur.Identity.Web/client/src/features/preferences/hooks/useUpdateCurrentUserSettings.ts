@@ -4,6 +4,7 @@ import {
   type UpdateCurrentUserSettingsRequest
 } from "../../auth/api/authApi";
 import { getApiErrorMessage } from "../../../shared/api/getApiErrorMessage";
+import { i18n } from "../../localization/i18n";
 
 export function useUpdateCurrentUserSettings() {
   const mutation = useMutation({
@@ -12,7 +13,7 @@ export function useUpdateCurrentUserSettings() {
 
   return {
     errorMessage: mutation.error
-      ? getApiErrorMessage(mutation.error, "We couldn't save your settings right now.")
+      ? getApiErrorMessage(mutation.error, i18n.t("settings.error"))
       : null,
     isSaving: mutation.isPending,
     resetError: mutation.reset,

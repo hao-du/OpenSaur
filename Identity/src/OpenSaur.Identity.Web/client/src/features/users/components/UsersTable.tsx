@@ -15,6 +15,7 @@ import {
 } from "@mui/material";
 import { RolePreviewList } from "../../../components/molecules";
 import type { UserSummary } from "../types";
+import { usePreferences } from "../../preferences/PreferenceProvider";
 
 type UsersTableProps = {
   isError: boolean;
@@ -31,13 +32,15 @@ export function UsersTable({
   onRetry,
   users
 }: UsersTableProps) {
+  const { t } = usePreferences();
+
   if (isLoading) {
     return (
       <Paper elevation={0} sx={{ border: "1px solid rgba(11,110,79,0.12)", p: 4 }}>
         <Stack alignItems="center" spacing={2}>
           <CircularProgress size={28} />
           <Typography color="text.secondary">
-            Loading users...
+            {t("users.loading")}
           </Typography>
         </Stack>
       </Paper>
@@ -49,12 +52,12 @@ export function UsersTable({
       <Alert
         action={onRetry ? (
           <Button color="inherit" onClick={onRetry} size="small">
-            Retry
+            {t("common.retry")}
           </Button>
         ) : undefined}
         severity="error"
       >
-        We couldn't load the user list right now.
+        {t("users.listError")}
       </Alert>
     );
   }
@@ -64,10 +67,10 @@ export function UsersTable({
       <Paper elevation={0} sx={{ border: "1px dashed rgba(11,110,79,0.24)", p: 4 }}>
         <Stack spacing={1}>
           <Typography variant="h6">
-            No users yet
+            {t("users.empty.title")}
           </Typography>
           <Typography color="text.secondary">
-            Create the first user for the current workspace.
+            {t("users.empty.description")}
           </Typography>
         </Stack>
       </Paper>
@@ -80,11 +83,11 @@ export function UsersTable({
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell>User name</TableCell>
-              <TableCell>Email</TableCell>
-              <TableCell>Roles</TableCell>
-              <TableCell>Status</TableCell>
-              <TableCell align="right">Actions</TableCell>
+              <TableCell>{t("users.table.userName")}</TableCell>
+              <TableCell>{t("users.table.email")}</TableCell>
+              <TableCell>{t("users.table.roles")}</TableCell>
+              <TableCell>{t("users.table.status")}</TableCell>
+              <TableCell align="right">{t("users.table.actions")}</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -94,7 +97,7 @@ export function UsersTable({
                 <TableCell>{user.email}</TableCell>
                 <TableCell>
                   <RolePreviewList
-                    emptyLabel="No roles"
+                    emptyLabel={t("users.noRoles")}
                     roles={(user.roles ?? []).map(role => ({
                       id: role.id,
                       name: role.name
@@ -104,21 +107,21 @@ export function UsersTable({
                 <TableCell>
                   <Chip
                     color={user.isActive ? "success" : "default"}
-                    label={user.isActive ? "Active" : "Inactive"}
+                    label={user.isActive ? t("common.active") : t("common.inactive")}
                     size="small"
                     variant={user.isActive ? "filled" : "outlined"}
                   />
                 </TableCell>
                 <TableCell align="right">
                   <Button
-                    aria-label="Edit user"
+                    aria-label={t("users.table.editAria")}
                     onClick={() => {
                       onEditUser(user.id);
                     }}
                     size="small"
                     variant="outlined"
                   >
-                    Edit
+                    {t("users.table.edit")}
                   </Button>
                 </TableCell>
               </TableRow>

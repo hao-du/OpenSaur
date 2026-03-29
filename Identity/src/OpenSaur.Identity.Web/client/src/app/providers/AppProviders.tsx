@@ -1,8 +1,13 @@
-import { useState, type PropsWithChildren } from "react";
+import { useMemo, useState, type PropsWithChildren } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { CssBaseline, ThemeProvider } from "@mui/material";
-import { appTheme } from "../theme/theme";
+import { IntlProvider } from "react-intl";
+import { I18nextProvider } from "react-i18next";
+import { createAppTheme } from "../theme/theme";
+import { i18n } from "../../features/localization/i18n";
 import { PreferenceProvider } from "../../features/preferences/PreferenceProvider";
+import { usePreferences } from "../../features/preferences/PreferenceProvider";
+import { getLanguageTag, getMuiLocalization } from "../../features/preferences/locale";
 
 const defaultQueryStaleTimeInMilliseconds = 5 * 60 * 1000;
 
@@ -31,12 +36,32 @@ export function AppProviders({ children, queryClient }: AppProvidersProps) {
 
   return (
     <QueryClientProvider client={client}>
-      <PreferenceProvider>
-        <ThemeProvider theme={appTheme}>
-          <CssBaseline />
-          {children}
-        </ThemeProvider>
-      </PreferenceProvider>
+      <I18nextProvider i18n={i18n}>
+        <PreferenceProvider>
+          <LocalizedProviders>
+            {children}
+          </LocalizedProviders>
+        </PreferenceProvider>
+      </I18nextProvider>
     </QueryClientProvider>
+  );
+}
+
+function LocalizedProviders({ children }: PropsWithChildren) {
+  const { locale, timeZone } = usePreferences();
+  const languageTag = getLanguageTag(locale);
+  const theme = useMemo(() => createAppTheme(getMuiLocalization(locale)), [locale]);
+
+  return (
+    <IntlProvider
+      locale={languageTag}
+      messages={{}}
+      timeZone={timeZone}
+    >
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        {children}
+      </ThemeProvider>
+    </IntlProvider>
   );
 }

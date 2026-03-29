@@ -4,6 +4,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { AuthPageTemplate } from "../../components/templates";
 import { ChangePasswordForm } from "../../components/organisms";
 import { useChangePassword, useCurrentUserQuery, useCurrentUserState, useLogout } from "../../features/auth/hooks";
+import { usePreferences } from "../../features/preferences/PreferenceProvider";
 import { authSessionStore } from "../../features/auth/state/authSessionStore";
 import { normalizeAuthReturnUrl } from "../../features/auth/utils";
 import { ArrowLeft } from "../../shared/icons";
@@ -25,6 +26,7 @@ export function ChangePasswordPage() {
   const { data: currentUser } = useCurrentUserState();
   const { clearCurrentUser } = useCurrentUserQuery();
   const { isLoggingOut, logout } = useLogout();
+  const { t } = usePreferences();
   const backTarget = resolveBackTarget(location.state);
   const shouldShowBackNavigation = currentUser?.requirePasswordChange !== true;
 
@@ -45,7 +47,7 @@ export function ChangePasswordPage() {
       setErrorMessage(
         getApiErrorMessage(
           error,
-          "Password update failed. Check the current password and try again."
+          t("changePassword.error")
         )
       );
       return;
@@ -65,8 +67,8 @@ export function ChangePasswordPage() {
 
   return (
     <AuthPageTemplate
-      description="Update your password to continue."
-      title="Change password"
+      description={t("changePassword.description")}
+      title={t("changePassword.title")}
     >
       <Stack spacing={2}>
         {shouldShowBackNavigation ? (
@@ -78,7 +80,7 @@ export function ChangePasswordPage() {
             sx={{ alignSelf: "flex-start" }}
             variant="text"
           >
-            Back
+            {t("auth.back")}
           </Button>
         ) : null}
         <ChangePasswordForm

@@ -42,6 +42,11 @@ public class Result
         return Failure(StatusCodes.Status401Unauthorized, ResultErrors.Unauthorized(message, detail));
     }
 
+    public static Result Unauthorized(string code, string message, string detail)
+    {
+        return Failure(StatusCodes.Status401Unauthorized, ResultErrors.Unauthorized(code, message, detail));
+    }
+
     public static Result Forbidden(string message, string detail)
     {
         return Failure(StatusCodes.Status403Forbidden, ResultErrors.Forbidden(message, detail));
@@ -91,6 +96,11 @@ public sealed class Result<T> : Result
     public static new Result<T> Unauthorized(string message, string detail)
     {
         return Failure(StatusCodes.Status401Unauthorized, ResultErrors.Unauthorized(message, detail));
+    }
+
+    public static new Result<T> Unauthorized(string code, string message, string detail)
+    {
+        return Failure(StatusCodes.Status401Unauthorized, ResultErrors.Unauthorized(code, message, detail));
     }
 
     public static new Result<T> Forbidden(string message, string detail)

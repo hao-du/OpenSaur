@@ -3,6 +3,32 @@ import { describe, expect, it } from "vitest";
 import { getApiErrorMessage } from "./getApiErrorMessage";
 
 describe("getApiErrorMessage", () => {
+  it("prefers a translated message for known API error codes", () => {
+    const error = new axios.AxiosError(
+      "Request failed",
+      "400",
+      undefined,
+      undefined,
+      {
+        config: {} as never,
+        data: {
+          errors: [
+            {
+              code: "auth_invalid_credentials",
+              detail: "The supplied credentials are invalid or the account is unavailable.",
+              message: "Authentication failed."
+            }
+          ]
+        },
+        headers: {},
+        status: 400,
+        statusText: "Bad Request"
+      }
+    );
+
+    expect(getApiErrorMessage(error, "Fallback")).toBe("Sign in failed. Check your credentials and try again.");
+  });
+
   it("returns the first API error detail when present", () => {
     const error = new axios.AxiosError(
       "Request failed",
@@ -14,6 +40,7 @@ describe("getApiErrorMessage", () => {
         data: {
           errors: [
             {
+              code: "unknown_code",
               detail: "Passwords must have at least one non alphanumeric character.",
               message: "Validation failed."
             }

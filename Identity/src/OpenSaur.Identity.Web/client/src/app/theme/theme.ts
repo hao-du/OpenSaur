@@ -1,6 +1,7 @@
+import type { Localization } from "@mui/material/locale";
 import { createTheme } from "@mui/material/styles";
 
-export const appTheme = createTheme({
+export const appThemeOptions = {
   palette: {
     primary: {
       main: "#0b6e4f"
@@ -25,4 +26,8 @@ export const appTheme = createTheme({
       fontWeight: 700
     }
   }
-});
+} as const;
+
+export function createAppTheme(localization: Localization) {
+  return createTheme(appThemeOptions, localization);
+}

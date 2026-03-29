@@ -1,10 +1,13 @@
 import { Divider, Paper, Stack, Typography } from "@mui/material";
+import { usePreferences } from "../../features/preferences/PreferenceProvider";
 
 type ComingSoonStateProps = {
   description: string;
 };
 
 export function ComingSoonState({ description }: ComingSoonStateProps) {
+  const { t } = usePreferences();
+
   return (
     <Paper
       elevation={0}
@@ -18,7 +21,7 @@ export function ComingSoonState({ description }: ComingSoonStateProps) {
           component="h2"
           variant="h5"
         >
-          Coming soon
+          {t("common.comingSoon")}
         </Typography>
         <Divider />
         <Typography color="text.secondary">

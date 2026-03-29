@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { getApiErrorMessage } from "../../../shared/api";
 import { authQueryKeys } from "../../auth/queries/authQueryKeys";
+import { i18n } from "../../localization/i18n";
 import { roleAssignmentQueryKeys } from "../../role-assignments/queries/roleAssignmentQueryKeys";
 import { createRole } from "../api";
 import { roleQueryKeys } from "../queries/roleQueryKeys";
@@ -22,7 +23,7 @@ export function useCreateRole() {
   return {
     createRole: (request: CreateRoleRequest) => mutation.mutateAsync(request),
     errorMessage: mutation.error
-      ? getApiErrorMessage(mutation.error, "We couldn't create the role. Please try again.")
+      ? getApiErrorMessage(mutation.error, i18n.t("roles.error"))
       : null,
     isCreating: mutation.isPending,
     resetError: mutation.reset

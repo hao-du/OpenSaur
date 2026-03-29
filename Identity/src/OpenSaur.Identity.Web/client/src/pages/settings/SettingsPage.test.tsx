@@ -94,6 +94,8 @@ describe("SettingsPage", () => {
       </AppProviders>
     );
 
+    expect(screen.getByText(/date and time preview/i)).toBeDefined();
+
     fireEvent.mouseDown(screen.getByRole("combobox", { name: /locale/i }));
     fireEvent.click(await screen.findByRole("option", { name: /vietnamese/i }));
     fireEvent.change(screen.getByRole("combobox", { name: /time zone/i }), {

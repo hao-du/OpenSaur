@@ -35,6 +35,7 @@ public static class LoginHandler
         if (!userResult.IsSuccess || userResult.Value is null || !userResult.Value.User.IsActive)
         {
             return Result.Unauthorized(
+                    ApiErrorCodes.AuthInvalidCredentials,
                     "Authentication failed.",
                     "The supplied credentials are invalid or the account is unavailable.")
                 .ToApiErrorResult();
@@ -46,6 +47,7 @@ public static class LoginHandler
         if (!workspaceResult.IsSuccess)
         {
             return Result.Unauthorized(
+                    ApiErrorCodes.AuthInvalidCredentials,
                     "Authentication failed.",
                     "The supplied credentials are invalid or the account is unavailable.")
                 .ToApiErrorResult();
@@ -55,6 +57,7 @@ public static class LoginHandler
         if (!passwordIsValid)
         {
             return Result.Unauthorized(
+                    ApiErrorCodes.AuthInvalidCredentials,
                     "Authentication failed.",
                     "The supplied credentials are invalid or the account is unavailable.")
                 .ToApiErrorResult();

@@ -10,7 +10,10 @@ import {
   TextField
 } from "@mui/material";
 import { Controller, useForm } from "react-hook-form";
+import { IntlProvider } from "react-intl";
 import { ProtectedShellTemplate } from "../../components/templates";
+import { useLocalizedFormatting } from "../../features/localization/formatting";
+import { getLanguageTag } from "../../features/preferences/locale";
 import { usePreferences } from "../../features/preferences/PreferenceProvider";
 import { useUpdateCurrentUserSettings } from "../../features/preferences/hooks";
 
@@ -18,6 +21,32 @@ type SettingsFormValues = {
   locale: "en" | "vi";
   timeZone: string;
 };
+
+function SettingsDateTimePreviewContent({
+  value
+}: {
+  value: string;
+}) {
+  const { formatDate, formatTime } = useLocalizedFormatting();
+
+  return (
+    <Stack spacing={1}>
+      <Alert severity="info">
+        {formatDate(value, {
+          day: "numeric",
+          month: "long",
+          weekday: "long",
+          year: "numeric"
+        })} {" "}
+        {formatTime(value, {
+          hour: "numeric",
+          minute: "2-digit",
+          timeZoneName: "short"
+        })}
+      </Alert>
+    </Stack>
+  );
+}
 
 export function SettingsPage() {
   const {
@@ -33,13 +62,19 @@ export function SettingsPage() {
     updateSettings
   } = useUpdateCurrentUserSettings();
   const [isSaved, setIsSaved] = useState(false);
+  const previewDate = "2026-03-29T08:30:00.000Z";
   const {
     control,
     handleSubmit,
-    reset
+    reset,
+    watch
   } = useForm<SettingsFormValues>({
     values: preferences
   });
+  const selectedLocale = watch("locale");
+  const selectedTimeZone = watch("timeZone");
+  const previewLanguageTag = getLanguageTag(selectedLocale);
+  const previewTimeZone = selectedTimeZone.trim() || preferences.timeZone;
 
   useEffect(() => {
     reset(preferences);
@@ -118,6 +153,22 @@ export function SettingsPage() {
               />
             )}
           />
+          <Stack spacing={1}>
+            <Alert severity="info">{t("settings.previewDescription")}</Alert>
+            <Paper elevation={0} sx={{ border: "1px solid rgba(11,110,79,0.12)", p: 2 }}>
+              <Stack spacing={1.5}>
+                <strong>{t("settings.previewTitle")}</strong>
+                <IntlProvider
+                  key={`${previewLanguageTag}:${previewTimeZone}`}
+                  locale={previewLanguageTag}
+                  messages={{}}
+                  timeZone={previewTimeZone}
+                >
+                  <SettingsDateTimePreviewContent value={previewDate} />
+                </IntlProvider>
+              </Stack>
+            </Paper>
+          </Stack>
           <Stack direction="row" justifyContent="flex-end">
             <Button
               aria-busy={isSaving}

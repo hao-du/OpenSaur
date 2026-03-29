@@ -36,7 +36,7 @@ function getDisplayName(firstName?: string, lastName?: string, userName?: string
     return fullName;
   }
 
-  return userName ?? "Current user";
+  return userName ?? "";
 }
 
 function getUserInitials(firstName?: string, lastName?: string, userName?: string) {
@@ -73,9 +73,9 @@ export function ShellAccountMenu({
   userName
 }: ShellAccountMenuProps) {
   const [anchor, setAnchor] = useState<HTMLElement | null>(null);
-  const accountInitials = getUserInitials(firstName, lastName, userName);
-  const displayName = getDisplayName(firstName, lastName, userName);
   const { t } = usePreferences();
+  const accountInitials = getUserInitials(firstName, lastName, userName);
+  const displayName = getDisplayName(firstName, lastName, userName) || t("shell.currentUser");
 
   function handleOpenMenu(event: MouseEvent<HTMLElement>) {
     setAnchor(event.currentTarget);

@@ -15,6 +15,7 @@ import type {
   ImpersonationOptionsResponse,
   ImpersonationOptionsUser
 } from "../../auth/api/authApi";
+import { usePreferences } from "../../preferences/PreferenceProvider";
 
 type WorkspaceImpersonationDialogProps = {
   errorMessage: string | null;
@@ -35,6 +36,7 @@ export function WorkspaceImpersonationDialog({
   onSubmit,
   options
 }: WorkspaceImpersonationDialogProps) {
+  const { t } = usePreferences();
   const [selectedUser, setSelectedUser] = useState<ImpersonationOptionsUser | null>(null);
 
   useEffect(() => {
@@ -61,13 +63,13 @@ export function WorkspaceImpersonationDialog({
       onClose={onClose}
       open={isOpen}
     >
-      <DialogTitle>Login as</DialogTitle>
+      <DialogTitle>{t("workspaces.impersonation.title")}</DialogTitle>
       <DialogContent dividers>
         <Stack spacing={3}>
           {options ? (
             <Stack spacing={0.75}>
               <Typography color="primary.main" variant="overline">
-                Workspace
+                {t("workspaces.impersonation.workspace")}
               </Typography>
               <Typography variant="h6">{options.workspaceName}</Typography>
             </Stack>
@@ -79,7 +81,7 @@ export function WorkspaceImpersonationDialog({
           ) : null}
           {isLoading ? (
             <Typography color="text.secondary">
-              Loading available users...
+              {t("workspaces.impersonation.loadingUsers")}
             </Typography>
           ) : (
             <Autocomplete
@@ -97,7 +99,7 @@ export function WorkspaceImpersonationDialog({
               fullWidth
               getOptionLabel={option => option.userName}
               isOptionEqualToValue={(option, value) => option.id === value.id}
-              noOptionsText="No matching users."
+              noOptionsText={t("workspaces.impersonation.noMatchingUsers")}
               onChange={(_, value) => {
                 setSelectedUser(value);
               }}
@@ -105,8 +107,8 @@ export function WorkspaceImpersonationDialog({
               renderInput={params => (
                 <TextField
                   {...params}
-                  label="User"
-                  placeholder="Search users"
+                  label={t("workspaces.impersonation.user")}
+                  placeholder={t("workspaces.impersonation.searchUsers")}
                 />
               )}
               renderOption={(props, option) => (
@@ -140,7 +142,7 @@ export function WorkspaceImpersonationDialog({
           onClick={onClose}
           variant="text"
         >
-          Cancel
+          {t("workspaces.impersonation.cancel")}
         </Button>
         <Button
           aria-busy={isSubmitting ? "true" : undefined}
@@ -150,7 +152,7 @@ export function WorkspaceImpersonationDialog({
           }}
           variant="contained"
         >
-          {isSubmitting ? "Continuing..." : "Continue"}
+          {isSubmitting ? t("workspaces.impersonation.continuing") : t("workspaces.impersonation.continue")}
         </Button>
       </DialogActions>
     </Dialog>
