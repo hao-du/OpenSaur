@@ -34,18 +34,32 @@ The frontend SHALL expose real protected routes for `Workspace`, `Users`, and `R
 - **THEN** the frontend loads the route successfully
 - **AND** the page renders a clear coming-soon state instead of an error or blank screen
 
-### Requirement: Dashboard route SHALL remain intentionally empty in this phase
-The frontend SHALL provide a dashboard route inside the application shell, and that route SHALL remain intentionally empty during this phase.
-
-#### Scenario: User opens the dashboard
-- **WHEN** an authenticated user navigates to the dashboard route
-- **THEN** the frontend renders the dashboard inside the application shell
-- **AND** the dashboard does not display placeholder widgets or management content
-
 ### Requirement: Shell components SHALL be responsive across supported device sizes
 All shell-level components and layout primitives introduced in this phase SHALL remain usable on mobile, tablet, and desktop viewports.
 
 #### Scenario: Navigation and top bar adapt to smaller screens
 - **WHEN** the authenticated shell is rendered on a smaller viewport
 - **THEN** the top bar, navigation trigger, navigation drawer, and content region remain usable without horizontal overflow
+
+### Requirement: Dashboard route SHALL render role-aware summary blocks
+The frontend SHALL render summary blocks on the dashboard, and the displayed data SHALL vary by the current session scope.
+
+#### Scenario: Real super-admin opens dashboard at All workspaces
+- **WHEN** a non-impersonated `SuperAdministrator` opens the dashboard
+- **THEN** the dashboard shows global summary blocks for workspaces, users, and roles
+- **AND** the dashboard shows quick actions relevant to global administration
+
+#### Scenario: Workspace-scoped session opens dashboard
+- **WHEN** a workspace-scoped or impersonated session opens the dashboard
+- **THEN** the dashboard shows workspace-specific summary blocks
+- **AND** the dashboard includes active and inactive user counts
+- **AND** the dashboard includes capacity usage when the workspace has a maximum active-user limit
+
+### Requirement: Shell SHALL expose an icon-only impersonation exit action
+The authenticated shell SHALL render the impersonation exit action as an icon-only control when the current session is impersonating.
+
+#### Scenario: Impersonated session renders shell header
+- **WHEN** the current session is impersonating a workspace
+- **THEN** the shell renders an icon-only impersonation exit control
+- **AND** the control exposes a tooltip and accessible label for `Exit impersonation`
 
