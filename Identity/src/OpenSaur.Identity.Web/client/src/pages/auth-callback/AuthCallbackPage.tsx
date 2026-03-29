@@ -5,7 +5,7 @@ import { AuthPageTemplate } from "../../components/templates";
 import { useCurrentUserQuery } from "../../features/auth/hooks/useCurrentUserQuery";
 import { useExchangeWebSession } from "../../features/auth/hooks/useExchangeWebSession";
 import { authSessionStore } from "../../features/auth/state/authSessionStore";
-import { normalizeAuthReturnUrl } from "../../features/auth/utils";
+import { normalizeAuthReturnUrl, shouldEnforcePasswordChange } from "../../features/auth/utils";
 import type { ExchangeWebSessionResponse } from "../../features/auth/api/authApi";
 import { useSyncAuthenticatedPreferences } from "../../features/preferences/hooks";
 
@@ -65,7 +65,7 @@ export function AuthCallbackPage() {
           return;
         }
 
-        if (currentUser.requirePasswordChange) {
+        if (shouldEnforcePasswordChange(currentUser)) {
           authSessionStore.rememberReturnUrl(rememberedReturnUrl);
           navigate("/change-password", { replace: true });
           return;

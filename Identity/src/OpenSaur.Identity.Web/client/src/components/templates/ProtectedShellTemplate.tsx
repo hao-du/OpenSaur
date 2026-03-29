@@ -2,7 +2,6 @@ import { useMemo, useState, type PropsWithChildren } from "react";
 import {
   AppBar,
   Box,
-  Button,
   Divider,
   Drawer,
   IconButton,
@@ -13,6 +12,7 @@ import {
   Stack,
   Toolbar,
   Typography,
+  Tooltip,
   useMediaQuery,
   useTheme
 } from "@mui/material";
@@ -27,7 +27,7 @@ import {
 import { authSessionStore } from "../../features/auth/state/authSessionStore";
 import { useSyncAuthenticatedPreferences } from "../../features/preferences/hooks";
 import { BrandMark } from "../atoms";
-import { Menu } from "../../shared/icons";
+import { ArrowLeft, Menu } from "../../shared/icons";
 import { ShellAccountMenu } from "./ShellAccountMenu";
 
 type ProtectedShellTemplateProps = PropsWithChildren<{
@@ -266,16 +266,20 @@ export function ProtectedShellTemplate({
                     {workspaceName}
                   </Typography>
                   {currentUser?.isImpersonating ? (
-                    <Button
-                      disabled={isExitingImpersonation}
-                      onClick={() => {
-                        void handleExitImpersonation();
-                      }}
-                      size="small"
-                      variant="outlined"
-                    >
-                      {isExitingImpersonation ? "Exiting..." : "Exit impersonation"}
-                    </Button>
+                    <Tooltip title="Exit impersonation">
+                      <span>
+                        <IconButton
+                          aria-label="Exit impersonation"
+                          disabled={isExitingImpersonation}
+                          onClick={() => {
+                            void handleExitImpersonation();
+                          }}
+                          size="small"
+                        >
+                          <ArrowLeft size={18} />
+                        </IconButton>
+                      </span>
+                    </Tooltip>
                   ) : null}
                 </Stack>
               </Stack>
@@ -286,7 +290,10 @@ export function ProtectedShellTemplate({
               spacing={1.5}
             >
               <ShellAccountMenu
+                email={currentUser?.email}
+                firstName={currentUser?.firstName}
                 isLoggingOut={isLoggingOut}
+                lastName={currentUser?.lastName}
                 onChangePassword={handleNavigateToChangePassword}
                 onOpenProfile={handleNavigateToProfile}
                 onOpenSettings={handleNavigateToSettings}
@@ -306,7 +313,7 @@ export function ProtectedShellTemplate({
             py: { xs: 3, md: 4 }
           }}
         >
-          <Stack spacing={subtitle ? 4 : 0}>
+          <Stack spacing={subtitle ? 4 : 2}>
             <Stack spacing={1}>
               <Typography
                 component="h1"

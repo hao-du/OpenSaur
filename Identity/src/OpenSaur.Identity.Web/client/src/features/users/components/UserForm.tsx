@@ -21,7 +21,9 @@ import { isSuperAdministrator } from "../../../app/router/protectedShellRoutes";
 type UserFormValues = {
   description: string;
   email: string;
+  firstName: string;
   isActive: boolean;
+  lastName: string;
   password: string;
   selectedRoleIds: string[];
   userName: string;
@@ -82,6 +84,18 @@ export function UserForm({
           rules={{
             required: "User name is required."
           }}
+        />
+        <ControlledTextField
+          control={control}
+          disabled={isSubmitting}
+          label="First name"
+          name="firstName"
+        />
+        <ControlledTextField
+          control={control}
+          disabled={isSubmitting}
+          label="Last name"
+          name="lastName"
         />
         <ControlledTextField
           control={control}

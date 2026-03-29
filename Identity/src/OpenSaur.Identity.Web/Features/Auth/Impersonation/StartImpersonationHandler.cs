@@ -32,6 +32,9 @@ public static class StartImpersonationHandler
         HttpContext httpContext,
         CancellationToken cancellationToken)
     {
+        var normalizedSuperAdministrator = SystemRoles.NormalizedSuperAdministrator;
+        var spacedNormalizedSuperAdministrator = SystemRoles.SuperAdministrator.ToUpperInvariant();
+
         if (await validator.ValidateRequestAsync(request, cancellationToken) is { } validationFailure)
         {
             return validationFailure;
@@ -76,7 +79,8 @@ public static class StartImpersonationHandler
                                      assignment => assignment.IsActive
                                                    && assignment.Role != null
                                                    && assignment.Role.IsActive
-                                                   && SystemRoles.IsSuperAdministratorValue(assignment.Role.NormalizedName))),
+                                                   && (assignment.Role.NormalizedName == normalizedSuperAdministrator
+                                                       || assignment.Role.NormalizedName == spacedNormalizedSuperAdministrator))),
                 cancellationToken)
             : originalUser;
         if (effectiveUser is null)

@@ -49,6 +49,45 @@ public sealed class WorkspaceEndpointsTests : IClassFixture<OpenSaurWebApplicati
     }
 
     [Fact]
+    public async Task GetWorkspaces_WhenWorkspaceHasAssignedRolesAndCapacity_ReturnsPreviewData()
+    {
+        const string workspaceName = "Operations";
+        var workspaceId = await TestIdentitySeeder.SeedWorkspaceAsync(_factory, workspaceName);
+        var roleOneId = await TestIdentitySeeder.SeedRoleAsync(_factory, "Content Writer");
+        var roleTwoId = await TestIdentitySeeder.SeedRoleAsync(_factory, "Task Manager");
+        var roleThreeId = await TestIdentitySeeder.SeedRoleAsync(_factory, "Reviewer");
+        await TestIdentitySeeder.SeedWorkspaceRoleAsync(_factory, workspaceId, roleOneId);
+        await TestIdentitySeeder.SeedWorkspaceRoleAsync(_factory, workspaceId, roleTwoId);
+        await TestIdentitySeeder.SeedWorkspaceRoleAsync(_factory, workspaceId, roleThreeId);
+
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            var workspace = await dbContext.Workspaces.SingleAsync(candidate => candidate.Id == workspaceId);
+            workspace.MaxActiveUsers = 25;
+            await dbContext.SaveChangesAsync();
+        }
+
+        using var client = FirstPartyApiTestClient.CreateClient(_factory);
+        var accessToken = await FirstPartyApiTestClient.GetAccessTokenAsync(client, "SystemAdministrator", "Password1");
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+        var response = await client.GetAsync("/api/workspace/get");
+        var payload = await ApiResponseReader.ReadSuccessDataAsync<JsonElement>(response);
+        var workspaceSummary = payload.EnumerateArray().Single(candidate => candidate.GetProperty("id").GetGuid() == workspaceId);
+
+        Assert.Equal(25, workspaceSummary.GetProperty("maxActiveUsers").GetInt32());
+        var assignedRoleIds = workspaceSummary.GetProperty("assignedRoleIds")
+            .EnumerateArray()
+            .Select(static item => item.GetGuid())
+            .ToArray();
+
+        Assert.Contains(roleOneId, assignedRoleIds);
+        Assert.Contains(roleTwoId, assignedRoleIds);
+        Assert.Contains(roleThreeId, assignedRoleIds);
+    }
+
+    [Fact]
     public async Task GetWorkspaceById_WhenAdministratorTargetsDifferentWorkspace_ReturnsNotFound()
     {
         var administratorCredentials = TestFakers.CreateUserCredentials();
@@ -102,6 +141,34 @@ public sealed class WorkspaceEndpointsTests : IClassFixture<OpenSaurWebApplicati
         var workspace = await dbContext.Workspaces.SingleAsync(candidate => candidate.Name == workspaceName);
 
         Assert.True(workspace.IsActive);
+    }
+
+    [Fact]
+    public async Task PostCreate_WhenMaxActiveUsersProvided_PersistsLimitAndReturnsItFromGetById()
+    {
+        var workspaceName = TestFakers.CreateWorkspaceName();
+
+        using var client = FirstPartyApiTestClient.CreateClient(_factory);
+        var accessToken = await FirstPartyApiTestClient.GetAccessTokenAsync(client, "SystemAdministrator", "Password1");
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+        var createResponse = await FirstPartyApiTestClient.PostAsJsonWithIdempotencyAsync(
+            client,
+            "/api/workspace/create",
+            new CreateWorkspaceRequest(workspaceName, TestFakers.CreateDescription(), null, 5));
+        var createPayload = await ApiResponseReader.ReadSuccessDataAsync<JsonElement>(createResponse);
+        var workspaceId = createPayload.GetProperty("id").GetGuid();
+
+        var getResponse = await client.GetAsync($"/api/workspace/getbyid/{workspaceId}");
+        var getPayload = await ApiResponseReader.ReadSuccessDataAsync<JsonElement>(getResponse);
+
+        Assert.Equal(5, getPayload.GetProperty("maxActiveUsers").GetInt32());
+
+        using var scope = _factory.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var workspace = await dbContext.Workspaces.SingleAsync(candidate => candidate.Id == workspaceId);
+
+        Assert.Equal(5, workspace.MaxActiveUsers);
     }
 
     [Fact]
@@ -207,6 +274,50 @@ public sealed class WorkspaceEndpointsTests : IClassFixture<OpenSaurWebApplicati
         var removedAssignment = await dbContext.UserRoles.SingleAsync(candidate => candidate.Id == removedAssignmentId);
 
         Assert.False(removedAssignment.IsActive);
+    }
+
+    [Fact]
+    public async Task PutEdit_WhenLimitIsLoweredBelowCurrentActiveUsers_AllowsSaveAndPersistsLimit()
+    {
+        const string workspaceName = "Capacity Workspace";
+        var workspaceId = await TestIdentitySeeder.SeedWorkspaceAsync(_factory, workspaceName);
+        await TestIdentitySeeder.SeedUserAsync(
+            _factory,
+            "CapacityUserOne",
+            TestFakers.CreatePassword(),
+            [StandardRoleNames.User],
+            workspaceName: workspaceName);
+        await TestIdentitySeeder.SeedUserAsync(
+            _factory,
+            "CapacityUserTwo",
+            TestFakers.CreatePassword(),
+            [StandardRoleNames.User],
+            workspaceName: workspaceName);
+
+        using var client = FirstPartyApiTestClient.CreateClient(_factory);
+        var accessToken = await FirstPartyApiTestClient.GetAccessTokenAsync(client, "SystemAdministrator", "Password1");
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+        var response = await FirstPartyApiTestClient.PutAsJsonWithIdempotencyAsync(
+            client,
+            "/api/workspace/edit",
+            new EditWorkspaceRequest(
+                workspaceId,
+                workspaceName,
+                TestFakers.CreateDescription(),
+                true,
+                null,
+                1));
+
+        await ApiResponseReader.AssertNullSuccessDataAsync(response);
+
+        using var scope = _factory.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var workspace = await dbContext.Workspaces.SingleAsync(candidate => candidate.Id == workspaceId);
+        var activeUserCount = await dbContext.Users.CountAsync(candidate => candidate.WorkspaceId == workspaceId && candidate.IsActive);
+
+        Assert.Equal(1, workspace.MaxActiveUsers);
+        Assert.Equal(2, activeUserCount);
     }
 }
 

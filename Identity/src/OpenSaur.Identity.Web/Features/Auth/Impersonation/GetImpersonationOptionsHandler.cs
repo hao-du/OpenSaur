@@ -13,6 +13,9 @@ public static class GetImpersonationOptionsHandler
         ApplicationDbContext dbContext,
         CancellationToken cancellationToken)
     {
+        var normalizedSuperAdministrator = SystemRoles.NormalizedSuperAdministrator;
+        var spacedNormalizedSuperAdministrator = SystemRoles.SuperAdministrator.ToUpperInvariant();
+
         var workspace = await dbContext.Workspaces
             .AsNoTracking()
             .Where(candidate => candidate.Id == workspaceId && candidate.IsActive)
@@ -39,7 +42,8 @@ public static class GetImpersonationOptionsHandler
                     assignment => assignment.IsActive
                                   && assignment.Role != null
                                   && assignment.Role.IsActive
-                                  && SystemRoles.IsSuperAdministratorValue(assignment.Role.NormalizedName)))
+                                  && (assignment.Role.NormalizedName == normalizedSuperAdministrator
+                                      || assignment.Role.NormalizedName == spacedNormalizedSuperAdministrator)))
             .OrderBy(candidate => candidate.UserName)
             .Select(candidate => new ImpersonationUserResponse(
                 candidate.Id,

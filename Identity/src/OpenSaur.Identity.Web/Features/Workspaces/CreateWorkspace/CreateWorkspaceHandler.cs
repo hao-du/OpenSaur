@@ -43,6 +43,7 @@ public static class CreateWorkspaceHandler
             Name = name,
             Description = request.Description,
             IsActive = true,
+            MaxActiveUsers = request.MaxActiveUsers,
             CreatedBy = currentUserContext.UserId
         };
 

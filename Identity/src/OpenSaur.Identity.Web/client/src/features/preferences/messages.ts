@@ -20,6 +20,8 @@ export const preferenceMessages = {
     "profile.currentLocale": "Locale",
     "profile.currentTimeZone": "Time zone",
     "profile.email": "Email",
+    "profile.firstName": "First name",
+    "profile.lastName": "Last name",
     "profile.roles": "Effective roles",
     "profile.subtitle": "Review your account context and current preferences.",
     "profile.title": "My Profile",

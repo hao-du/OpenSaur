@@ -1,12 +1,14 @@
 import { useState, type MouseEvent } from "react";
 import {
   Avatar,
+  Box,
   CircularProgress,
   Divider,
   IconButton,
   Menu as MaterialMenu,
   MenuItem,
-  Stack
+  Stack,
+  Typography
 } from "@mui/material";
 import {
   KeyRound,
@@ -17,7 +19,10 @@ import {
 import { usePreferences } from "../../features/preferences/PreferenceProvider";
 
 type ShellAccountMenuProps = {
+  email?: string;
+  firstName?: string;
   isLoggingOut: boolean;
+  lastName?: string;
   onChangePassword: () => void;
   onOpenProfile: () => void;
   onOpenSettings: () => void;
@@ -25,12 +30,22 @@ type ShellAccountMenuProps = {
   userName?: string;
 };
 
-function getUserInitials(userName?: string) {
-  if (!userName) {
+function getDisplayName(firstName?: string, lastName?: string, userName?: string) {
+  const fullName = `${firstName ?? ""} ${lastName ?? ""}`.trim();
+  if (fullName.length > 0) {
+    return fullName;
+  }
+
+  return userName ?? "Current user";
+}
+
+function getUserInitials(firstName?: string, lastName?: string, userName?: string) {
+  const displayName = getDisplayName(firstName, lastName, userName);
+  if (!displayName) {
     return "CU";
   }
 
-  const segments = userName
+  const segments = displayName
     .replace(/([a-z])([A-Z])/g, "$1 $2")
     .split(/[\s._-]+/)
     .filter(Boolean);
@@ -47,7 +62,10 @@ function getUserInitials(userName?: string) {
 }
 
 export function ShellAccountMenu({
+  email,
+  firstName,
   isLoggingOut,
+  lastName,
   onChangePassword,
   onOpenProfile,
   onOpenSettings,
@@ -55,7 +73,8 @@ export function ShellAccountMenu({
   userName
 }: ShellAccountMenuProps) {
   const [anchor, setAnchor] = useState<HTMLElement | null>(null);
-  const accountInitials = getUserInitials(userName);
+  const accountInitials = getUserInitials(firstName, lastName, userName);
+  const displayName = getDisplayName(firstName, lastName, userName);
   const { t } = usePreferences();
 
   function handleOpenMenu(event: MouseEvent<HTMLElement>) {
@@ -109,6 +128,19 @@ export function ShellAccountMenu({
         onClose={handleCloseMenu}
         open={anchor !== null}
       >
+        <Box sx={{ px: 2, py: 1.5 }}>
+          <Stack spacing={0.25}>
+            <Typography sx={{ fontWeight: 600 }}>
+              {displayName}
+            </Typography>
+            {email ? (
+              <Typography color="text.secondary" variant="body2">
+                {email}
+              </Typography>
+            ) : null}
+          </Stack>
+        </Box>
+        <Divider />
         <MenuItem onClick={handleOpenProfile}>
           <Stack
             alignItems="center"

@@ -8,4 +8,6 @@ public sealed record AuthMeResponse(
     bool RequirePasswordChange,
     string WorkspaceName,
     bool IsImpersonating,
-    bool CanManageUsers);
+    bool CanManageUsers,
+    string? FirstName = null,
+    string? LastName = null);

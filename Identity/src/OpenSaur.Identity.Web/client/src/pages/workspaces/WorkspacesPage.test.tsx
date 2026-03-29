@@ -49,15 +49,19 @@ vi.mock("../../features/preferences/hooks", () => ({
 
 const workspaces: WorkspaceSummary[] = [
   {
+    assignedRoleIds: ["role-1", "role-2", "role-5"],
     description: "Primary staff workspace",
     id: "workspace-1",
     isActive: true,
+    maxActiveUsers: 10,
     name: "Operations"
   },
   {
+    assignedRoleIds: ["role-2"],
     description: "Archived partner workspace",
     id: "workspace-2",
     isActive: false,
+    maxActiveUsers: null,
     name: "Partners"
   }
 ];
@@ -90,6 +94,13 @@ const roles: RoleSummary[] = [
     isActive: true,
     name: "Super Administrator",
     normalizedName: "SUPERADMINISTRATOR"
+  },
+  {
+    description: "Reviewers",
+    id: "role-5",
+    isActive: true,
+    name: "Reviewer",
+    normalizedName: "REVIEWER"
   }
 ];
 
@@ -216,6 +227,7 @@ describe("WorkspacesPage", () => {
     expect(screen.getByRole("heading", { level: 2, name: /create workspace/i })).toBeDefined();
     expect(screen.getByRole("textbox", { name: /workspace name/i })).toBeDefined();
     expect(screen.getByRole("textbox", { name: /description/i })).toBeDefined();
+    expect(screen.getByRole("spinbutton", { name: /max active users/i })).toBeDefined();
     expect(screen.getByRole("combobox", { name: /assigned roles/i })).toBeDefined();
     expect(screen.queryByRole("checkbox", { name: /workspace is active/i })).toBeNull();
     expect(screen.queryByText(/new workspaces start in the active state/i)).toBeNull();
@@ -262,8 +274,23 @@ describe("WorkspacesPage", () => {
       expect(createWorkspace).toHaveBeenCalledWith({
         assignedRoleIds: ["role-1", "role-2"],
         description: "",
+        maxActiveUsers: null,
         name: "Marketing"
       });
+    });
+  });
+
+  it("renders role previews in the workspace list with overflow popover support", async () => {
+    renderPage();
+
+    expect(screen.getByRole("columnheader", { name: /^roles$/i })).toBeDefined();
+    expect(screen.getByText("Administrator")).toBeDefined();
+    expect(screen.getByText("Content Writer")).toBeDefined();
+
+    fireEvent.click(screen.getByRole("button", { name: /show 1 more role/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText("Reviewer")).toBeDefined();
     });
   });
 

@@ -85,6 +85,18 @@ describe("UsersPage", () => {
               id: "role-1",
               name: "Administrator",
               normalizedName: "ADMINISTRATOR"
+            },
+            {
+              assignmentId: "assignment-2",
+              id: "role-2",
+              name: "Content Writer",
+              normalizedName: "CONTENT_WRITER"
+            },
+            {
+              assignmentId: "assignment-3",
+              id: "role-3",
+              name: "Reviewer",
+              normalizedName: "REVIEWER"
             }
           ],
           userName: "Alex"
@@ -151,6 +163,20 @@ describe("UsersPage", () => {
     expect(screen.queryByText("InactiveUser")).toBeNull();
   });
 
+  it("renders assigned-role previews in the user list with overflow popover support", async () => {
+    renderPage();
+
+    expect(screen.getByRole("columnheader", { name: /^roles$/i })).toBeDefined();
+    expect(screen.getByText("Administrator")).toBeDefined();
+    expect(screen.getByText("Content Writer")).toBeDefined();
+
+    fireEvent.click(screen.getByRole("button", { name: /show 1 more role/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText("Reviewer")).toBeDefined();
+    });
+  });
+
   it("opens a user editor with user and assigned roles sections", async () => {
     renderPage();
 
@@ -158,6 +184,8 @@ describe("UsersPage", () => {
 
     expect(screen.getByRole("heading", { level: 2, name: /create user/i })).toBeDefined();
     expect(screen.getByRole("textbox", { name: /user name/i })).toBeDefined();
+    expect(screen.getByRole("textbox", { name: /first name/i })).toBeDefined();
+    expect(screen.getByRole("textbox", { name: /last name/i })).toBeDefined();
     expect(screen.getByRole("textbox", { name: /email/i })).toBeDefined();
     expect(screen.getByText(/^assigned roles$/i)).toBeDefined();
     expect(screen.getByRole("button", { name: /^save$/i })).toBeDefined();
@@ -207,6 +235,12 @@ describe("UsersPage", () => {
     renderPage();
 
     fireEvent.click(screen.getByRole("button", { name: /^create$/i }));
+    fireEvent.change(screen.getByRole("textbox", { name: /first name/i }), {
+      target: { value: "Jamie" }
+    });
+    fireEvent.change(screen.getByRole("textbox", { name: /last name/i }), {
+      target: { value: "Stone" }
+    });
     fireEvent.change(screen.getByRole("textbox", { name: /user name/i }), {
       target: { value: "Jamie" }
     });
@@ -219,11 +253,29 @@ describe("UsersPage", () => {
     fireEvent.click(screen.getByRole("button", { name: /^save$/i }));
 
     await waitFor(() => {
-      expect(createUser).toHaveBeenCalled();
+      expect(createUser).toHaveBeenCalledWith(expect.objectContaining({
+        firstName: "Jamie",
+        lastName: "Stone"
+      }));
     });
 
     const body = screen.getByRole("main");
     expect(within(body).getByText("Alex")).toBeDefined();
     expect(within(body).queryByText("InactiveUser")).toBeNull();
+  });
+
+  it("surfaces workspace-capacity validation errors in the create drawer", async () => {
+    useCreateUserMock.mockReturnValue({
+      createUser: vi.fn(),
+      errorMessage: "This workspace has reached its maximum of 2 active users.",
+      isCreating: false,
+      resetError: vi.fn()
+    });
+
+    renderPage();
+
+    fireEvent.click(screen.getByRole("button", { name: /^create$/i }));
+
+    expect(screen.getByText(/maximum of 2 active users/i)).toBeDefined();
   });
 });

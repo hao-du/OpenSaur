@@ -21,12 +21,22 @@ public static class GetUsersHandler
         return usersResult.ToApiResult(
             users => users.Users.Select(
                 static user => new GetUsersResponse(
-                user.Id,
-                user.UserName ?? string.Empty,
-                user.Email ?? string.Empty,
-                user.WorkspaceId,
-                user.IsActive,
-                user.RequirePasswordChange))
+                    user.Id,
+                    user.UserName ?? string.Empty,
+                    user.Email ?? string.Empty,
+                    user.WorkspaceId,
+                    user.IsActive,
+                    user.RequirePasswordChange,
+                    user.FirstName,
+                    user.LastName,
+                    user.UserRoles
+                        .Where(userRole => userRole.IsActive && userRole.Role?.IsActive == true)
+                        .OrderBy(userRole => userRole.Role!.Name)
+                        .Select(userRole => new GetUsersRoleResponse(
+                            userRole.RoleId,
+                            userRole.Role!.Name ?? string.Empty,
+                            userRole.Role.NormalizedName ?? string.Empty))
+                        .ToList()))
                 .ToList());
     }
 }

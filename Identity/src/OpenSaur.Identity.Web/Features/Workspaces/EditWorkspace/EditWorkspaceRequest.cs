@@ -5,4 +5,5 @@ public sealed record EditWorkspaceRequest(
     string Name,
     string Description,
     bool IsActive,
-    IReadOnlyCollection<Guid>? AssignedRoleIds = null);
+    IReadOnlyCollection<Guid>? AssignedRoleIds = null,
+    int? MaxActiveUsers = null);

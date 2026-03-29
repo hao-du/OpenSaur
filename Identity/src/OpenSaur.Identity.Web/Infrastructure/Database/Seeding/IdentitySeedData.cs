@@ -52,7 +52,9 @@ internal static class IdentitySeedData
             SecurityStamp = "d2deace4235042cdbba6c7b18cf54d39",
             ConcurrencyStamp = "d2deace4-2350-42cd-bba6-c7b18cf54d39",
             Description = "Default system administrator account.",
+            FirstName = "System",
             IsActive = true,
+            LastName = "Administrator",
             RequirePasswordChange = true,
             WorkspaceId = PersonalWorkspaceId,
             UserSettings = "{}",
@@ -169,7 +171,7 @@ internal static class IdentitySeedData
         {
             Id = id,
             Name = name,
-            NormalizedName = SystemRoles.Normalize(name),
+            NormalizedName = name.ToUpperInvariant(),
             Description = description,
             IsActive = true,
             CreatedBy = SystemActorId,

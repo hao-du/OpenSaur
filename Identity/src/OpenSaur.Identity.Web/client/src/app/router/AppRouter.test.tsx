@@ -107,9 +107,11 @@ describe("AppRouter", () => {
     useWorkspacesQueryMock.mockReturnValue({
       data: [
         {
+          assignedRoleIds: [],
           description: "Primary staff workspace",
           id: "workspace-1",
           isActive: true,
+          maxActiveUsers: null,
           name: "Operations"
         }
       ],
@@ -355,13 +357,13 @@ describe("AppRouter", () => {
     expect(screen.queryByRole("heading", { level: 1, name: /roles/i })).toBeNull();
   });
 
-  it("redirects non-super-administrators away from the role-assignments route", async () => {
+  it("renders the role assignments page for workspace sessions that can manage users", async () => {
     authSessionStore.setAuthenticatedSession({
       accessToken: "access-token",
       expiresAt: createFutureExpiry()
     });
     vi.mocked(authApi.getCurrentUser).mockResolvedValue({
-      canManageUsers: false,
+      canManageUsers: true,
       id: "user-2",
       isImpersonating: false,
       requirePasswordChange: false,
@@ -372,10 +374,10 @@ describe("AppRouter", () => {
     renderRouter("/role-assignments");
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { level: 1, name: /dashboard/i })).toBeDefined();
+      expect(screen.getByRole("heading", { level: 1, name: /role assignments/i })).toBeDefined();
     });
 
-    expect(screen.queryByRole("heading", { level: 1, name: /role assignments/i })).toBeNull();
+    expect(screen.getByRole("link", { name: /^role assignments$/i }).getAttribute("aria-current")).toBe("page");
   });
 
   it("renders the workspace management page for super administrators", async () => {
@@ -432,7 +434,7 @@ describe("AppRouter", () => {
       expiresAt: createFutureExpiry()
     });
     vi.mocked(authApi.getCurrentUser).mockResolvedValue({
-      canManageUsers: false,
+      canManageUsers: true,
       id: "user-5",
       isImpersonating: true,
       requirePasswordChange: false,
@@ -448,5 +450,28 @@ describe("AppRouter", () => {
 
     expect(screen.getByRole("button", { name: /edit assignments/i })).toBeDefined();
     expect(screen.getByRole("link", { name: /^role assignments$/i }).getAttribute("aria-current")).toBe("page");
+  });
+
+  it("redirects sessions without user-management access away from the role-assignments route", async () => {
+    authSessionStore.setAuthenticatedSession({
+      accessToken: "access-token",
+      expiresAt: createFutureExpiry()
+    });
+    vi.mocked(authApi.getCurrentUser).mockResolvedValue({
+      canManageUsers: false,
+      id: "user-6",
+      isImpersonating: false,
+      requirePasswordChange: false,
+      roles: ["User"],
+      userName: "workspace.user",
+      workspaceName: "Operations"
+    } as any);
+    renderRouter("/role-assignments");
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { level: 1, name: /dashboard/i })).toBeDefined();
+    });
+
+    expect(screen.queryByRole("heading", { level: 1, name: /role assignments/i })).toBeNull();
   });
 });

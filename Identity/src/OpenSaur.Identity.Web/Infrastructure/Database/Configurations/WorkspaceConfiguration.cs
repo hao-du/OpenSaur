@@ -12,6 +12,7 @@ internal sealed class WorkspaceConfiguration : IEntityTypeConfiguration<Workspac
         builder.ToTable("Workspaces");
         builder.Property(workspace => workspace.Name).HasMaxLength(200).IsRequired();
         builder.Property(workspace => workspace.Description).HasMaxLength(255);
+        builder.Property(workspace => workspace.MaxActiveUsers);
         builder.HasData(IdentitySeedData.GetWorkspaces());
     }
 }

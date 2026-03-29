@@ -160,6 +160,7 @@ describe("ProtectedShellTemplate", () => {
     });
 
     expect(screen.getByRole("link", { name: /^users$/i })).toBeDefined();
+    expect(screen.getByRole("link", { name: /^role assignments$/i })).toBeDefined();
     expect(screen.queryByRole("link", { name: /^workspace$/i })).toBeNull();
     expect(screen.queryByRole("link", { name: /^roles$/i })).toBeNull();
   });
@@ -230,6 +231,7 @@ describe("ProtectedShellTemplate", () => {
 
     expect(await screen.findByText(/contoso workspace/i)).toBeDefined();
     expect(screen.getByRole("button", { name: /exit impersonation/i })).toBeDefined();
+    expect(screen.queryByText(/^exit impersonation$/i)).toBeNull();
     expect(screen.getByRole("link", { name: /^role assignments$/i })).toBeDefined();
     expect(screen.queryByRole("link", { name: /^workspace$/i })).toBeNull();
   });

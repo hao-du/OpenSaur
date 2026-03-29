@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Identity;
 using OpenSaur.Identity.Web.Domain.Identity;
 using OpenSaur.Identity.Web.Features.Users.Outbox;
 using OpenSaur.Identity.Web.Infrastructure.Database;
+using OpenSaur.Identity.Web.Infrastructure.Database.Repositories.Users;
+using OpenSaur.Identity.Web.Infrastructure.Database.Repositories.Workspaces;
 using OpenSaur.Identity.Web.Infrastructure.Http.Responses;
 using OpenSaur.Identity.Web.Infrastructure.Results;
 using OpenSaur.Identity.Web.Infrastructure.Security;
@@ -17,13 +19,24 @@ public static class CreateUserHandler
         IValidator<CreateUserRequest> validator,
         CurrentUserContext currentUserContext,
         ApplicationDbContext dbContext,
+        UserRepository userRepository,
         UserOutboxWriter userOutboxWriter,
         UserManager<ApplicationUser> userManager,
+        WorkspaceRepository workspaceRepository,
         CancellationToken cancellationToken)
     {
         if (await validator.ValidateRequestAsync(request, cancellationToken) is { } validationFailure)
         {
             return validationFailure;
+        }
+
+        if (await UserCapacityGuard.EnsureCanIncreaseActiveUserCountAsync(
+                currentUserContext,
+                workspaceRepository,
+                userRepository,
+                cancellationToken) is { } capacityFailure)
+        {
+            return capacityFailure.ToApiErrorResult();
         }
 
         var user = new ApplicationUser
@@ -32,6 +45,8 @@ public static class CreateUserHandler
             Email = request.Email,
             WorkspaceId = currentUserContext.WorkspaceId,
             Description = request.Description,
+            FirstName = request.FirstName.Trim(),
+            LastName = request.LastName.Trim(),
             UserSettings = string.IsNullOrWhiteSpace(request.UserSettings) ? "{}" : request.UserSettings,
             RequirePasswordChange = true,
             IsActive = true,

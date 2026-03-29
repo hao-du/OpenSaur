@@ -68,5 +68,11 @@ describe("protectedShellRoutes", () => {
       isImpersonating: false,
       roles: ["ADMINISTRATOR"]
     } as any)).toBe(true);
+    expect(routes.some(route => route.path === "/role-assignments")).toBe(true);
+    expect(canAccessProtectedShellRoute("/role-assignments", {
+      canManageUsers: true,
+      isImpersonating: false,
+      roles: ["ADMINISTRATOR"]
+    } as any)).toBe(true);
   });
 });

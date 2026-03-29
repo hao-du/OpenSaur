@@ -113,15 +113,17 @@ export function PreferenceProvider({ children }: PropsWithChildren) {
     });
   }, []);
 
+  const localizedMessages = preferenceMessages[preferences.locale] as Record<string, string>;
+
   const value = useMemo<PreferenceContextValue>(() => ({
     applyServerSettings,
     locale: preferences.locale,
     preferences,
     setPreferences,
     supportedTimeZones,
-    t: (key: PreferenceMessageKey) => preferenceMessages[preferences.locale][key] ?? preferenceMessages.en[key],
+    t: (key: PreferenceMessageKey) => localizedMessages[key] ?? preferenceMessages.en[key],
     timeZone: preferences.timeZone
-  }), [applyServerSettings, preferences, setPreferences, supportedTimeZones]);
+  }), [applyServerSettings, localizedMessages, preferences, setPreferences, supportedTimeZones]);
 
   return (
     <PreferenceContext.Provider value={value}>

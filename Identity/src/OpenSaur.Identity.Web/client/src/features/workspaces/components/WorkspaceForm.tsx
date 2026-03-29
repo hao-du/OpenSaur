@@ -20,6 +20,7 @@ import { isSuperAdministrator } from "../../../app/router/protectedShellRoutes";
 type WorkspaceFormValues = {
   description: string;
   isActive: boolean;
+  maxActiveUsers: string;
   name: string;
   selectedRoleIds: string[];
 };
@@ -82,6 +83,27 @@ export function WorkspaceForm({
         control={control}
         label="Description"
         name="description"
+      />
+      <ControlledTextField
+        control={control}
+        disabled={isSubmitting}
+        inputProps={{ min: 0, step: 1 }}
+        label="Max active users"
+        name="maxActiveUsers"
+        rules={{
+          validate: rawValue => {
+            const value = String(rawValue ?? "");
+            if (value.trim().length === 0) {
+              return true;
+            }
+
+            const parsedValue = Number(value);
+            return Number.isInteger(parsedValue) && parsedValue >= 0
+              ? true
+              : "Max active users must be zero or greater.";
+          }
+        }}
+        type="number"
       />
       <Stack spacing={2}>
         <Typography variant="h6">Assigned Roles</Typography>

@@ -22,6 +22,7 @@ public static class GetCurrentUserHandler
             .ToArray();
         var isImpersonating = AuthPrincipalReader.IsImpersonating(user);
         var currentUserContext = CurrentUserContext.Create(user);
+        var currentUserProfile = await ResolveCurrentUserProfileAsync(user, dbContext, cancellationToken);
         var workspaceName = await ResolveWorkspaceNameAsync(
             user,
             roles,
@@ -35,13 +36,36 @@ public static class GetCurrentUserHandler
         return ApiResponses.Success(
             new AuthMeResponse(
                 AuthPrincipalReader.GetUserId(user),
-                user.Identity?.Name,
-                user.FindFirstValue(OpenIddictConstants.Claims.Email),
+                currentUserProfile?.UserName ?? user.Identity?.Name,
+                currentUserProfile?.Email ?? user.FindFirstValue(OpenIddictConstants.Claims.Email),
                 roles,
                 AuthPrincipalReader.GetRequirePasswordChange(user),
                 workspaceName,
                 isImpersonating,
-                canManageUsers));
+                canManageUsers,
+                currentUserProfile?.FirstName,
+                currentUserProfile?.LastName));
+    }
+
+    private static async Task<CurrentUserProfile?> ResolveCurrentUserProfileAsync(
+        ClaimsPrincipal user,
+        ApplicationDbContext dbContext,
+        CancellationToken cancellationToken)
+    {
+        if (!Guid.TryParse(AuthPrincipalReader.GetUserId(user), out var userId))
+        {
+            return null;
+        }
+
+        return await dbContext.Users
+            .AsNoTracking()
+            .Where(candidate => candidate.Id == userId)
+            .Select(candidate => new CurrentUserProfile(
+                candidate.UserName,
+                candidate.Email,
+                candidate.FirstName,
+                candidate.LastName))
+            .SingleOrDefaultAsync(cancellationToken);
     }
 
     private static async Task<string> ResolveWorkspaceNameAsync(
@@ -69,4 +93,10 @@ public static class GetCurrentUserHandler
                    .SingleOrDefaultAsync(cancellationToken)
                ?? "Protected workspace";
     }
+
+    private sealed record CurrentUserProfile(
+        string? UserName,
+        string? Email,
+        string FirstName,
+        string LastName);
 }

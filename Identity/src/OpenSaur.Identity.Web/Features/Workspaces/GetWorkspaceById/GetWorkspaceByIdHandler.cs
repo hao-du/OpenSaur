@@ -26,6 +26,7 @@ public static class GetWorkspaceByIdHandler
                 response.Workspace.WorkspaceRoles
                     .Where(workspaceRole => workspaceRole.IsActive)
                     .Select(workspaceRole => workspaceRole.RoleId)
-                    .ToList()));
+                    .ToList(),
+                response.Workspace.MaxActiveUsers));
     }
 }

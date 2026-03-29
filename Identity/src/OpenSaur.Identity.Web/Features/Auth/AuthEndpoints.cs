@@ -1,4 +1,5 @@
 using OpenSaur.Identity.Web.Features.Auth.ChangePassword;
+using OpenSaur.Identity.Web.Features.Auth.Dashboard;
 using OpenSaur.Identity.Web.Features.Auth.Login;
 using OpenSaur.Identity.Web.Features.Auth.Logout;
 using OpenSaur.Identity.Web.Features.Auth.Me;
@@ -31,6 +32,9 @@ public static class AuthEndpoints
             .WithResilienceScope(EndpointResiliencePolicyScope.Auth);
 
         auth.MapGet("/me", GetCurrentUserHandler.Handle)
+            .RequireAuthorization(AuthorizationPolicies.Api);
+
+        auth.MapGet("/dashboard", GetDashboardSummaryHandler.HandleAsync)
             .RequireAuthorization(AuthorizationPolicies.Api);
 
         auth.MapGet("/settings", GetCurrentUserSettingsHandler.HandleAsync)

@@ -169,6 +169,71 @@ public sealed class ApiAuthAccountEndpointsTests : IClassFixture<OpenSaurWebAppl
     }
 
     [Fact]
+    public async Task GetDashboard_WhenCallerIsSuperAdministratorAtAllWorkspaces_ReturnsGlobalSummary()
+    {
+        await TestIdentitySeeder.SeedWorkspaceAsync(_factory, "Operations");
+        await TestIdentitySeeder.SeedUserAsync(
+            _factory,
+            "operations-admin",
+            TestFakers.CreatePassword(),
+            [StandardRoleNames.Administrator],
+            workspaceName: "Operations");
+
+        using var client = FirstPartyApiTestClient.CreateClient(_factory);
+        var accessToken = await FirstPartyApiTestClient.GetAccessTokenAsync(client, "SystemAdministrator", "Password1");
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+        var response = await client.GetAsync("/api/auth/dashboard");
+        var payload = await ApiResponseReader.ReadSuccessDataAsync<JsonElement>(response);
+
+        Assert.Equal("global", payload.GetProperty("scope").GetString());
+        Assert.True(payload.GetProperty("workspaceCount").GetInt32() >= 2);
+        Assert.True(payload.GetProperty("activeUserCount").GetInt32() >= 2);
+        Assert.True(payload.GetProperty("availableRoleCount").GetInt32() >= 1);
+    }
+
+    [Fact]
+    public async Task GetDashboard_WhenCallerIsWorkspaceScoped_ReturnsWorkspaceSummaryIncludingCapacity()
+    {
+        const string workspaceName = "Operations";
+        var managerCredentials = TestFakers.CreateUserCredentials();
+        await TestIdentitySeeder.SeedUserAsync(
+            _factory,
+            managerCredentials.UserName,
+            managerCredentials.Password,
+            [StandardRoleNames.Administrator],
+            workspaceName: workspaceName);
+        await TestIdentitySeeder.SeedUserAsync(
+            _factory,
+            "inactive-operations-user",
+            TestFakers.CreatePassword(),
+            [StandardRoleNames.User],
+            workspaceName: workspaceName,
+            isActive: false);
+
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            var workspace = await dbContext.Workspaces.SingleAsync(candidate => candidate.Name == workspaceName);
+            workspace.MaxActiveUsers = 10;
+            await dbContext.SaveChangesAsync();
+        }
+
+        using var client = FirstPartyApiTestClient.CreateClient(_factory);
+        var accessToken = await FirstPartyApiTestClient.GetAccessTokenAsync(client, managerCredentials.UserName, managerCredentials.Password);
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+        var response = await client.GetAsync("/api/auth/dashboard");
+        var payload = await ApiResponseReader.ReadSuccessDataAsync<JsonElement>(response);
+
+        Assert.Equal("workspace", payload.GetProperty("scope").GetString());
+        Assert.Equal(workspaceName, payload.GetProperty("workspaceName").GetString());
+        Assert.Equal(10, payload.GetProperty("maxActiveUsers").GetInt32());
+        Assert.True(payload.GetProperty("activeUserCount").GetInt32() >= 1);
+        Assert.True(payload.GetProperty("inactiveUserCount").GetInt32() >= 1);
+    }
+
+    [Fact]
     public async Task GetSettings_WhenCurrentUserHasPersistedPreferences_ReturnsStoredLocaleAndTimeZone()
     {
         var credentials = TestFakers.CreateUserCredentials();

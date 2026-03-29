@@ -5,7 +5,7 @@ import { useCurrentUserQuery } from "./useCurrentUserQuery";
 import { useRefreshWebSession } from "./useRefreshWebSession";
 import { authSessionStore, sessionSyncStorageKey } from "../state/authSessionStore";
 import { useAuthSession } from "../state/useAuthSession";
-import { normalizeAuthReturnUrl } from "../utils";
+import { normalizeAuthReturnUrl, shouldEnforcePasswordChange } from "../utils";
 import { useSyncAuthenticatedPreferences } from "../../preferences/hooks";
 
 const refreshLeadTimeInMilliseconds = 5 * 60 * 1000;
@@ -56,7 +56,7 @@ export function useAuthBootstrap() {
           return;
         }
 
-        if (currentUser.requirePasswordChange) {
+        if (shouldEnforcePasswordChange(currentUser)) {
           if (location.pathname !== changePasswordRoute) {
             authSessionStore.rememberReturnUrl(buildReturnUrl(location));
             navigate(changePasswordRoute, { replace: true });
@@ -116,7 +116,7 @@ export function useAuthBootstrap() {
           return;
         }
 
-        if (currentUser.requirePasswordChange && location.pathname !== changePasswordRoute) {
+        if (shouldEnforcePasswordChange(currentUser) && location.pathname !== changePasswordRoute) {
           const returnUrl = resolvePostLoginReturnUrl(location);
           authSessionStore.rememberReturnUrl(returnUrl);
           navigate(changePasswordRoute, { replace: true });
@@ -180,7 +180,7 @@ export function useAuthBootstrap() {
       try {
         const currentUser = await refreshAuthenticatedUser();
 
-        if (currentUser.requirePasswordChange && location.pathname !== changePasswordRoute) {
+        if (shouldEnforcePasswordChange(currentUser) && location.pathname !== changePasswordRoute) {
           const returnUrl = resolvePostLoginReturnUrl(location);
           authSessionStore.rememberReturnUrl(returnUrl);
           navigate(changePasswordRoute, { replace: true });

@@ -8,4 +8,6 @@ public sealed record GetUserByIdResponse(
     string Description,
     bool IsActive,
     bool RequirePasswordChange,
-    string UserSettings);
+    string UserSettings,
+    string FirstName,
+    string LastName);

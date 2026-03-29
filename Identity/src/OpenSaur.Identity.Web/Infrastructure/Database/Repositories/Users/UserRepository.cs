@@ -15,6 +15,8 @@ public class UserRepository(ApplicationDbContext dbContext)
         var users = await ApplyManagedScope(
                 dbContext.Users
                     .AsNoTracking()
+                    .Include(user => user.UserRoles.Where(userRole => userRole.IsActive))
+                    .ThenInclude(userRole => userRole.Role)
                     .OrderBy(user => user.UserName),
                 request.CurrentUserContext)
             .ToListAsync(cancellationToken);
@@ -90,6 +92,19 @@ public class UserRepository(ApplicationDbContext dbContext)
                 "User not found.",
                 "No user matched the provided user name.")
             : Result<GetUserByUserNameResponse>.Success(new GetUserByUserNameResponse(user));
+    }
+
+    public virtual async Task<Result<GetActiveUserCountByWorkspaceIdResponse>> GetActiveUserCountByWorkspaceIdAsync(
+        GetActiveUserCountByWorkspaceIdRequest request,
+        CancellationToken cancellationToken)
+    {
+        var count = await dbContext.Users
+            .AsNoTracking()
+            .Where(candidate => candidate.WorkspaceId == request.WorkspaceId && candidate.IsActive)
+            .CountAsync(cancellationToken);
+
+        return Result<GetActiveUserCountByWorkspaceIdResponse>.Success(
+            new GetActiveUserCountByWorkspaceIdResponse(count));
     }
 
     private static IQueryable<ApplicationUser> ApplyManagedScope(

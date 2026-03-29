@@ -26,6 +26,14 @@ public sealed class EditUserRequestValidator : AbstractValidator<EditUserRequest
             .MaximumLength(255)
             .WithMessage("Description must be 255 characters or fewer.");
 
+        RuleFor(request => request.FirstName)
+            .MaximumLength(100)
+            .WithMessage("First name must be 100 characters or fewer.");
+
+        RuleFor(request => request.LastName)
+            .MaximumLength(100)
+            .WithMessage("Last name must be 100 characters or fewer.");
+
         RuleFor(request => request.UserSettings)
             .Must(UserSettingsJson.IsValid)
             .WithMessage("User settings must be valid JSON.");

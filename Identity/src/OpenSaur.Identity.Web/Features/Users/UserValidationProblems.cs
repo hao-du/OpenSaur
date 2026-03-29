@@ -13,4 +13,14 @@ internal static class UserValidationProblems
                 "An active workspace is required.")
         ];
     }
+
+    public static ResultError[] ForWorkspaceCapacity(int maxActiveUsers)
+    {
+        return
+        [
+            ResultErrors.Validation(
+                "Workspace active-user limit reached.",
+                $"This workspace has reached its maximum of {maxActiveUsers} active users.")
+        ];
+    }
 }

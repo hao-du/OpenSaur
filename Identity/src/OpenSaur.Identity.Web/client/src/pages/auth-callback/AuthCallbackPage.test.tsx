@@ -117,6 +117,46 @@ describe("AuthCallbackPage", () => {
     expect(authApi.getCurrentUser).toHaveBeenCalled();
   });
 
+  it("bootstraps the current user and preferences only once for a single callback completion", async () => {
+    vi.spyOn(authSessionStore, "getRememberedReturnUrl").mockReturnValue("/");
+    vi.mocked(authApi.exchangeWebSession).mockResolvedValue({
+      accessToken: "header.payload.signature",
+      expiresAt: "2026-03-28T00:00:00.000Z"
+    });
+    vi.mocked(authApi.getCurrentUser).mockResolvedValue({
+      id: "user-1",
+      requirePasswordChange: false,
+      roles: ["User"],
+      userName: "demo.user"
+    });
+
+    render(
+      <AppProviders>
+        <MemoryRouter initialEntries={["/auth/callback?code=single-bootstrap-code"]}>
+          <Routes>
+            <Route
+              element={<AuthCallbackPage />}
+              path="/auth/callback"
+            />
+            <Route
+              element={<div>Dashboard</div>}
+              path="/"
+            />
+          </Routes>
+          <LocationProbe />
+        </MemoryRouter>
+      </AppProviders>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("location").textContent).toBe("/");
+    });
+
+    expect(authApi.exchangeWebSession).toHaveBeenCalledTimes(1);
+    expect(authApi.getCurrentUser).toHaveBeenCalledTimes(1);
+    expect(authApi.getCurrentUserSettings).toHaveBeenCalledTimes(1);
+  });
+
   it("exchanges the authorization code only once in StrictMode", async () => {
     vi.spyOn(authSessionStore, "getRememberedReturnUrl").mockReturnValue("/");
     vi.mocked(authApi.exchangeWebSession).mockResolvedValue({
@@ -155,6 +195,48 @@ describe("AuthCallbackPage", () => {
     });
 
     expect(authApi.exchangeWebSession).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not force change-password during impersonation", async () => {
+    vi.spyOn(authSessionStore, "getRememberedReturnUrl").mockReturnValue("/users");
+    vi.mocked(authApi.exchangeWebSession).mockResolvedValue({
+      accessToken: "header.payload.signature",
+      expiresAt: "2026-03-28T00:00:00.000Z"
+    });
+    vi.mocked(authApi.getCurrentUser).mockResolvedValue({
+      id: "user-1",
+      isImpersonating: true,
+      requirePasswordChange: true,
+      roles: ["User"],
+      userName: "demo.user",
+      workspaceName: "Finance"
+    });
+
+    render(
+      <AppProviders>
+        <MemoryRouter initialEntries={["/auth/callback?code=impersonated-user-code"]}>
+          <Routes>
+            <Route
+              element={<AuthCallbackPage />}
+              path="/auth/callback"
+            />
+            <Route
+              element={<div>Users</div>}
+              path="/users"
+            />
+            <Route
+              element={<div>Change password</div>}
+              path="/change-password"
+            />
+          </Routes>
+          <LocationProbe />
+        </MemoryRouter>
+      </AppProviders>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("location").textContent).toBe("/users");
+    });
   });
 
   it("falls back to the dashboard when the remembered return url points back to change-password", async () => {

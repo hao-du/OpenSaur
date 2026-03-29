@@ -6,4 +6,6 @@ public sealed record EditUserRequest(
     string Email,
     string Description,
     bool IsActive,
-    string UserSettings);
+    string UserSettings,
+    string FirstName = "",
+    string LastName = "");

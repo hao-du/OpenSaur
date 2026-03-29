@@ -8,7 +8,10 @@ describe("ShellAccountMenu", () => {
     render(
       <AppProviders>
         <ShellAccountMenu
+          email="hao@example.com"
+          firstName="Hao"
           isLoggingOut={false}
+          lastName="Du"
           onChangePassword={vi.fn()}
           onOpenProfile={vi.fn()}
           onOpenSettings={vi.fn()}
@@ -22,6 +25,8 @@ describe("ShellAccountMenu", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /open account menu/i }));
 
+    expect(screen.getByText("Hao Du")).toBeDefined();
+    expect(screen.getByText("hao@example.com")).toBeDefined();
     expect(await screen.findByRole("menuitem", { name: /my profile/i })).toBeDefined();
     expect(screen.getByRole("menuitem", { name: /change password/i })).toBeDefined();
     expect(screen.getByRole("menuitem", { name: /settings/i })).toBeDefined();

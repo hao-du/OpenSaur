@@ -27,6 +27,8 @@ public static class GetUserByIdHandler
                 response.User.Description,
                 response.User.IsActive,
                 response.User.RequirePasswordChange,
-                response.User.UserSettings));
+                response.User.UserSettings,
+                response.User.FirstName,
+                response.User.LastName));
     }
 }

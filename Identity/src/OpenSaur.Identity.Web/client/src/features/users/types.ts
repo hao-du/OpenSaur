@@ -7,8 +7,10 @@ export type UserRoleSummary = {
 
 export type UserSummary = {
   email: string;
+  firstName?: string;
   id: string;
   isActive: boolean;
+  lastName?: string;
   requirePasswordChange: boolean;
   roles?: UserRoleSummary[];
   userName: string;
@@ -23,6 +25,8 @@ export type UserDetails = UserSummary & {
 export type CreateUserRequest = {
   description: string;
   email: string;
+  firstName: string;
+  lastName: string;
   password: string;
   userName: string;
   userSettings: string;
@@ -35,8 +39,10 @@ export type CreateUserResponse = {
 export type EditUserRequest = {
   description: string;
   email: string;
+  firstName: string;
   id: string;
   isActive: boolean;
+  lastName: string;
   userName: string;
   userSettings: string;
 };

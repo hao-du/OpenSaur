@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { getApiErrorMessage } from "../../../shared/api";
+import { authQueryKeys } from "../../auth/queries/authQueryKeys";
 import { editUser } from "../api";
 import { userQueryKeys } from "../queries/userQueryKeys";
 import type { EditUserRequest } from "../types";
@@ -11,6 +12,7 @@ export function useEditUser() {
     onSuccess: async (_, variables) => {
       await queryClient.invalidateQueries({ queryKey: userQueryKeys.all() });
       await queryClient.invalidateQueries({ queryKey: userQueryKeys.detail(variables.id) });
+      await queryClient.invalidateQueries({ queryKey: authQueryKeys.currentUser() });
     }
   });
 

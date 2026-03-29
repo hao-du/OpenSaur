@@ -13,8 +13,10 @@ export type ChangePasswordRequest = {
 export type AuthMeResponse = {
   canManageUsers?: boolean;
   email?: string;
+  firstName?: string;
   id: string;
   isImpersonating: boolean;
+  lastName?: string;
   requirePasswordChange: boolean;
   roles: string[];
   userName: string;
@@ -24,6 +26,17 @@ export type AuthMeResponse = {
 export type CurrentUserSettingsResponse = {
   locale: string | null;
   timeZone: string | null;
+};
+
+export type DashboardSummaryResponse = {
+  activeUserCount: number;
+  activeWorkspaceCount: number;
+  availableRoleCount: number;
+  inactiveUserCount: number;
+  maxActiveUsers: number | null;
+  scope: "global" | "workspace";
+  workspaceCount: number;
+  workspaceName: string | null;
 };
 
 export type UpdateCurrentUserSettingsRequest = {
@@ -94,6 +107,10 @@ export async function getCurrentUser() {
 
 export async function getCurrentUserSettings() {
   return await unwrapData<CurrentUserSettingsResponse>(httpClient.get("/api/auth/settings"));
+}
+
+export async function getDashboardSummary() {
+  return await unwrapData<DashboardSummaryResponse>(httpClient.get("/api/auth/dashboard"));
 }
 
 export async function exchangeWebSession(request: ExchangeWebSessionRequest) {

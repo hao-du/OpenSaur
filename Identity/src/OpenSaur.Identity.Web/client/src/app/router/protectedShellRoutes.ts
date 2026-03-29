@@ -56,8 +56,7 @@ export const protectedShellRoutes: ProtectedShellRoute[] = [
     icon: ShieldCheck,
     label: "Role Assignments",
     path: "/role-assignments",
-    requiresImpersonation: true,
-    requiresSuperAdministrator: true
+    requiresUserManagement: true
   }
 ];
 

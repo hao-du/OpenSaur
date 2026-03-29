@@ -62,6 +62,45 @@ public sealed class UserEndpointsTests : IClassFixture<OpenSaurWebApplicationFac
     }
 
     [Fact]
+    public async Task GetUsers_WhenManagedUsersHaveAssignedRoles_ReturnsActiveRoleSummaries()
+    {
+        const string workspaceName = "Operations";
+        var managerCredentials = TestFakers.CreateUserCredentials();
+        var targetCredentials = TestFakers.CreateUserCredentials();
+        var administratorRoleId = await TestIdentitySeeder.SeedRoleAsync(_factory, "Operations Manager");
+        var writerRoleId = await TestIdentitySeeder.SeedRoleAsync(_factory, "Content Writer");
+        await TestIdentitySeeder.SeedUserAsync(
+            _factory,
+            managerCredentials.UserName,
+            managerCredentials.Password,
+            [StandardRoleNames.Administrator],
+            workspaceName: workspaceName);
+        var targetUserId = await TestIdentitySeeder.SeedUserAsync(
+            _factory,
+            targetCredentials.UserName,
+            targetCredentials.Password,
+            [],
+            workspaceName: workspaceName);
+        await TestIdentitySeeder.SeedUserRoleAsync(_factory, targetUserId, administratorRoleId);
+        await TestIdentitySeeder.SeedUserRoleAsync(_factory, targetUserId, writerRoleId);
+
+        using var client = FirstPartyApiTestClient.CreateClient(_factory);
+        var accessToken = await FirstPartyApiTestClient.GetAccessTokenAsync(client, managerCredentials.UserName, managerCredentials.Password);
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+        var response = await client.GetAsync("/api/user/get");
+        var payload = await ApiResponseReader.ReadSuccessDataAsync<JsonElement>(response);
+        var user = payload.EnumerateArray().Single(candidate => candidate.GetProperty("id").GetGuid() == targetUserId);
+        var roleNames = user.GetProperty("roles")
+            .EnumerateArray()
+            .Select(static item => item.GetProperty("name").GetString() ?? string.Empty)
+            .OrderBy(static item => item)
+            .ToArray();
+
+        Assert.Equal(["Content Writer", "Operations Manager"], roleNames);
+    }
+
+    [Fact]
     public async Task GetUserById_WhenCallerTargetsDifferentWorkspace_ReturnsNotFound()
     {
         var managerCredentials = TestFakers.CreateUserCredentials();
@@ -172,6 +211,50 @@ public sealed class UserEndpointsTests : IClassFixture<OpenSaurWebApplicationFac
     }
 
     [Fact]
+    public async Task PostCreate_WhenWorkspaceCapacityIsReached_ReturnsValidationProblem()
+    {
+        const string workspaceName = "Operations";
+        var managerCredentials = TestFakers.CreateUserCredentials();
+        await TestIdentitySeeder.SeedUserAsync(
+            _factory,
+            managerCredentials.UserName,
+            managerCredentials.Password,
+            [StandardRoleNames.Administrator],
+            workspaceName: workspaceName);
+        await TestIdentitySeeder.SeedUserAsync(
+            _factory,
+            "capacity-user",
+            TestFakers.CreatePassword(),
+            [StandardRoleNames.User],
+            workspaceName: workspaceName);
+
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            var workspace = await dbContext.Workspaces.SingleAsync(candidate => candidate.Name == workspaceName);
+            workspace.MaxActiveUsers = 2;
+            await dbContext.SaveChangesAsync();
+        }
+
+        using var client = FirstPartyApiTestClient.CreateClient(_factory);
+        var accessToken = await FirstPartyApiTestClient.GetAccessTokenAsync(client, managerCredentials.UserName, managerCredentials.Password);
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+        var response = await FirstPartyApiTestClient.PostAsJsonWithIdempotencyAsync(
+            client,
+            "/api/user/create",
+            new CreateUserRequest(
+                "blocked-user",
+                TestFakers.CreateEmail("blocked-user"),
+                TestFakers.CreatePassword(),
+                TestFakers.CreateDescription(),
+                "{}"));
+        var payload = await ApiResponseReader.ReadFailureEnvelopeAsync(response, HttpStatusCode.BadRequest);
+
+        Assert.Contains(payload.Errors, error => error.Detail.Contains("maximum of 2 active users", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
     public async Task PutEdit_WhenCallerSetsIsActiveFalse_SoftDeletesUser()
     {
         var managerCredentials = TestFakers.CreateUserCredentials();
@@ -235,6 +318,107 @@ public sealed class UserEndpointsTests : IClassFixture<OpenSaurWebApplicationFac
                 "{\"language\":\"en\"}"));
 
         await ApiResponseReader.ReadFailureEnvelopeAsync(response, HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task PutEdit_WhenReactivatingUserAtWorkspaceCapacity_ReturnsValidationProblem()
+    {
+        const string workspaceName = "Operations";
+        var managerCredentials = TestFakers.CreateUserCredentials();
+        var activeUserCredentials = TestFakers.CreateUserCredentials();
+        var inactiveUserCredentials = TestFakers.CreateUserCredentials();
+
+        await TestIdentitySeeder.SeedUserAsync(
+            _factory,
+            managerCredentials.UserName,
+            managerCredentials.Password,
+            [StandardRoleNames.Administrator],
+            workspaceName: workspaceName);
+        await TestIdentitySeeder.SeedUserAsync(
+            _factory,
+            activeUserCredentials.UserName,
+            activeUserCredentials.Password,
+            [StandardRoleNames.User],
+            workspaceName: workspaceName);
+        var inactiveUserId = await TestIdentitySeeder.SeedUserAsync(
+            _factory,
+            inactiveUserCredentials.UserName,
+            inactiveUserCredentials.Password,
+            [StandardRoleNames.User],
+            workspaceName: workspaceName,
+            isActive: false);
+
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            var workspace = await dbContext.Workspaces.SingleAsync(candidate => candidate.Name == workspaceName);
+            workspace.MaxActiveUsers = 2;
+            await dbContext.SaveChangesAsync();
+        }
+
+        using var client = FirstPartyApiTestClient.CreateClient(_factory);
+        var accessToken = await FirstPartyApiTestClient.GetAccessTokenAsync(client, managerCredentials.UserName, managerCredentials.Password);
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+        var response = await FirstPartyApiTestClient.PutAsJsonWithIdempotencyAsync(
+            client,
+            "/api/user/edit",
+            new EditUserRequest(
+                inactiveUserId,
+                inactiveUserCredentials.UserName,
+                TestFakers.CreateEmail(inactiveUserCredentials.UserName),
+                TestFakers.CreateDescription(),
+                true,
+                "{\"language\":\"en\"}"));
+        var payload = await ApiResponseReader.ReadFailureEnvelopeAsync(response, HttpStatusCode.BadRequest);
+
+        Assert.Contains(payload.Errors, error => error.Detail.Contains("maximum of 2 active users", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public async Task PutEdit_WhenUserIsAlreadyActiveWhileWorkspaceIsOverCapacity_AllowsSave()
+    {
+        const string workspaceName = "Operations";
+        var managerCredentials = TestFakers.CreateUserCredentials();
+        var targetCredentials = TestFakers.CreateUserCredentials();
+
+        await TestIdentitySeeder.SeedUserAsync(
+            _factory,
+            managerCredentials.UserName,
+            managerCredentials.Password,
+            [StandardRoleNames.Administrator],
+            workspaceName: workspaceName);
+        var targetUserId = await TestIdentitySeeder.SeedUserAsync(
+            _factory,
+            targetCredentials.UserName,
+            targetCredentials.Password,
+            [StandardRoleNames.User],
+            workspaceName: workspaceName);
+
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            var workspace = await dbContext.Workspaces.SingleAsync(candidate => candidate.Name == workspaceName);
+            workspace.MaxActiveUsers = 1;
+            await dbContext.SaveChangesAsync();
+        }
+
+        using var client = FirstPartyApiTestClient.CreateClient(_factory);
+        var accessToken = await FirstPartyApiTestClient.GetAccessTokenAsync(client, managerCredentials.UserName, managerCredentials.Password);
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+        var response = await FirstPartyApiTestClient.PutAsJsonWithIdempotencyAsync(
+            client,
+            "/api/user/edit",
+            new EditUserRequest(
+                targetUserId,
+                targetCredentials.UserName,
+                TestFakers.CreateEmail(targetCredentials.UserName),
+                "Updated description",
+                true,
+                "{\"language\":\"vi\"}"));
+
+        await ApiResponseReader.AssertNullSuccessDataAsync(response);
     }
 
     [Fact]

@@ -2,6 +2,7 @@ export { useAuthBootstrap } from "./useAuthBootstrap";
 export { useChangePassword } from "./useChangePassword";
 export { useCurrentUserQuery } from "./useCurrentUserQuery";
 export { useCurrentUserState } from "./useCurrentUserState";
+export { useDashboardSummaryQuery } from "./useDashboardSummaryQuery";
 export { useExitImpersonation } from "./useExitImpersonation";
 export { useExchangeWebSession } from "./useExchangeWebSession";
 export { useImpersonationOptionsQuery } from "./useImpersonationOptionsQuery";

@@ -52,6 +52,7 @@ public static class EditWorkspaceHandler
         workspace.Name = name;
         workspace.Description = request.Description;
         workspace.IsActive = request.IsActive;
+        workspace.MaxActiveUsers = request.MaxActiveUsers;
 
         var selectedRoleIds = request.AssignedRoleIds?.Distinct().ToArray() ?? [];
         var selectedActiveRoles = await dbContext.Roles

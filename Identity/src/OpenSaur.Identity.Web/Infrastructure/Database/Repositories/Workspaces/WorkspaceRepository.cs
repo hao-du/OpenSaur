@@ -15,6 +15,7 @@ public sealed class WorkspaceRepository(ApplicationDbContext dbContext)
         var workspaces = await ApplyManagedScope(
                 dbContext.Workspaces
                     .AsNoTracking()
+                    .Include(workspace => workspace.WorkspaceRoles.Where(workspaceRole => workspaceRole.IsActive))
                     .OrderBy(workspace => workspace.Name),
                 request.CurrentUserContext)
             .ToListAsync(cancellationToken);

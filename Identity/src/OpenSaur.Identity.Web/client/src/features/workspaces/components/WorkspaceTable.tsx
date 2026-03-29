@@ -13,6 +13,7 @@ import {
   TableRow,
   Typography
 } from "@mui/material";
+import { RolePreviewList } from "../../../components/molecules";
 import type { WorkspaceSummary } from "../types";
 
 type WorkspaceTableProps = {
@@ -21,6 +22,7 @@ type WorkspaceTableProps = {
   onEditWorkspace: (workspaceId: string) => void;
   onLoginAsWorkspace: (workspaceId: string) => void;
   onRetry?: () => void;
+  roleNamesById: Record<string, string>;
   workspaces: WorkspaceSummary[];
 };
 
@@ -30,6 +32,7 @@ export function WorkspaceTable({
   onEditWorkspace,
   onLoginAsWorkspace,
   onRetry,
+  roleNamesById,
   workspaces
 }: WorkspaceTableProps) {
   if (isLoading) {
@@ -108,6 +111,7 @@ export function WorkspaceTable({
             <TableRow>
               <TableCell>Name</TableCell>
               <TableCell>Description</TableCell>
+              <TableCell>Roles</TableCell>
               <TableCell>Status</TableCell>
               <TableCell align="right">Actions</TableCell>
             </TableRow>
@@ -120,6 +124,19 @@ export function WorkspaceTable({
               >
                 <TableCell>{workspace.name}</TableCell>
                 <TableCell>{workspace.description}</TableCell>
+                <TableCell>
+                  <RolePreviewList
+                    emptyLabel="No roles"
+                    roles={workspace.assignedRoleIds
+                      .map(roleId => ({
+                        id: roleId,
+                        name: roleNamesById[roleId]
+                      }))
+                      .filter(
+                        (role): role is { id: string; name: string; } => Boolean(role.name)
+                      )}
+                  />
+                </TableCell>
                 <TableCell>
                   <Chip
                     color={workspace.isActive ? "success" : "default"}

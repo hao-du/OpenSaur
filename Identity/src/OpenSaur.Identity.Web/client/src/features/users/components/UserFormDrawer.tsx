@@ -26,7 +26,9 @@ type UserFormDrawerProps = {
   onSubmit: (values: {
     description: string;
     email: string;
+    firstName: string;
     isActive: boolean;
+    lastName: string;
     password: string;
     selectedRoleIds: string[];
     userName: string;
@@ -85,7 +87,9 @@ export function UserFormDrawer({
               initialValues={{
                 description: initialValues?.description ?? "",
                 email: initialValues?.email ?? "",
+                firstName: initialValues?.firstName ?? "",
                 isActive: initialValues?.isActive ?? true,
+                lastName: initialValues?.lastName ?? "",
                 password: "",
                 selectedRoleIds: userAssignments
                   .filter(assignment => assignment.isActive)

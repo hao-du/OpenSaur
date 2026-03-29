@@ -5,4 +5,6 @@ public sealed record CreateUserRequest(
     string Email,
     string Password,
     string Description,
-    string UserSettings);
+    string UserSettings,
+    string FirstName = "",
+    string LastName = "");

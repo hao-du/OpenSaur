@@ -5,4 +5,5 @@ public sealed record GetWorkspaceByIdResponse(
     string Name,
     string Description,
     bool IsActive,
-    IReadOnlyList<Guid> AssignedRoleIds);
+    IReadOnlyList<Guid> AssignedRoleIds,
+    int? MaxActiveUsers);

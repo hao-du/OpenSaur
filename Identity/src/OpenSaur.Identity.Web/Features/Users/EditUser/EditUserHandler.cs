@@ -5,6 +5,7 @@ using OpenSaur.Identity.Web.Features.Users.Outbox;
 using OpenSaur.Identity.Web.Infrastructure.Database;
 using OpenSaur.Identity.Web.Infrastructure.Database.Repositories.Users;
 using OpenSaur.Identity.Web.Infrastructure.Database.Repositories.Users.Dtos;
+using OpenSaur.Identity.Web.Infrastructure.Database.Repositories.Workspaces;
 using OpenSaur.Identity.Web.Infrastructure.Http.Responses;
 using OpenSaur.Identity.Web.Infrastructure.Results;
 using OpenSaur.Identity.Web.Infrastructure.Security;
@@ -22,6 +23,7 @@ public static class EditUserHandler
         UserOutboxWriter userOutboxWriter,
         UserRepository userRepository,
         UserManager<ApplicationUser> userManager,
+        WorkspaceRepository workspaceRepository,
         CancellationToken cancellationToken)
     {
         if (await validator.ValidateRequestAsync(request, cancellationToken) is { } validationFailure)
@@ -38,9 +40,22 @@ public static class EditUserHandler
         }
 
         var user = userResult.Value.User;
+        if (!user.IsActive
+            && request.IsActive
+            && await UserCapacityGuard.EnsureCanIncreaseActiveUserCountAsync(
+                currentUserContext,
+                workspaceRepository,
+                userRepository,
+                cancellationToken) is { } capacityFailure)
+        {
+            return capacityFailure.ToApiErrorResult();
+        }
+
         user.UserName = request.UserName;
         user.Email = request.Email;
         user.Description = request.Description;
+        user.FirstName = request.FirstName.Trim();
+        user.LastName = request.LastName.Trim();
         user.IsActive = request.IsActive;
         user.UserSettings = string.IsNullOrWhiteSpace(request.UserSettings) ? "{}" : request.UserSettings;
 

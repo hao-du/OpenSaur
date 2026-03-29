@@ -431,8 +431,16 @@ namespace OpenSaur.Identity.Web.Infrastructure.Database.Migrations
                     b.Property<bool>("EmailConfirmed")
                         .HasColumnType("boolean");
 
+                    b.Property<string>("FirstName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
+
+                    b.Property<string>("LastName")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<bool>("LockoutEnabled")
                         .HasColumnType("boolean");
@@ -507,7 +515,9 @@ namespace OpenSaur.Identity.Web.Infrastructure.Database.Migrations
                             Description = "Default system administrator account.",
                             Email = "SystemAdministrator@opensaur.local",
                             EmailConfirmed = true,
+                            FirstName = "System",
                             IsActive = true,
+                            LastName = "Administrator",
                             LockoutEnabled = false,
                             NormalizedEmail = "SYSTEMADMINISTRATOR@OPENSAUR.LOCAL",
                             NormalizedUserName = "SYSTEMADMINISTRATOR",
@@ -853,6 +863,9 @@ namespace OpenSaur.Identity.Web.Infrastructure.Database.Migrations
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
+
+                    b.Property<int?>("MaxActiveUsers")
+                        .HasColumnType("integer");
 
                     b.Property<string>("Name")
                         .IsRequired()

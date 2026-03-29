@@ -6,4 +6,7 @@ public sealed record GetUsersResponse(
     string Email,
     Guid WorkspaceId,
     bool IsActive,
-    bool RequirePasswordChange);
+    bool RequirePasswordChange,
+    string FirstName,
+    string LastName,
+    IReadOnlyList<GetUsersRoleResponse> Roles);

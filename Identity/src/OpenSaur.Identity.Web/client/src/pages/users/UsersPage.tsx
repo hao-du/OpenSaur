@@ -71,7 +71,7 @@ export function UsersPage() {
 
     return users.filter(user => {
       const matchesSearch = !normalizedSearch
-        || `${user.userName} ${user.email}`.toLowerCase().includes(normalizedSearch);
+        || `${user.userName} ${user.firstName ?? ""} ${user.lastName ?? ""} ${user.email}`.toLowerCase().includes(normalizedSearch);
       const matchesStatus = filters.status === "all"
         || (filters.status === "active" ? user.isActive : !user.isActive);
 
@@ -82,7 +82,9 @@ export function UsersPage() {
   async function handleCreateUser(values: {
     description: string;
     email: string;
+    firstName: string;
     isActive: boolean;
+    lastName: string;
     password: string;
     selectedRoleIds: string[];
     userName: string;
@@ -90,6 +92,8 @@ export function UsersPage() {
     const createdUser = await createUser({
       description: values.description,
       email: values.email,
+      firstName: values.firstName,
+      lastName: values.lastName,
       password: values.password,
       userName: values.userName,
       userSettings: "{}"
@@ -106,7 +110,9 @@ export function UsersPage() {
   async function handleEditUser(values: {
     description: string;
     email: string;
+    firstName: string;
     isActive: boolean;
+    lastName: string;
     password: string;
     selectedRoleIds: string[];
     userName: string;
@@ -118,8 +124,10 @@ export function UsersPage() {
     await editUser({
       description: values.description,
       email: values.email,
+      firstName: values.firstName,
       id: selectedUserId,
       isActive: values.isActive,
+      lastName: values.lastName,
       userName: values.userName,
       userSettings: selectedUser?.userSettings ?? "{}"
     });

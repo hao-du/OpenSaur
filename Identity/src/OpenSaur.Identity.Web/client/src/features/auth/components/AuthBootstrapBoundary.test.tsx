@@ -241,6 +241,52 @@ describe("AuthBootstrapBoundary", () => {
     expect(authSessionStore.getRememberedReturnUrl()).toBe("/reports");
   });
 
+  it("does not redirect to change-password when the refreshed session is impersonating", async () => {
+    vi.mocked(authApi.refreshWebSession).mockResolvedValue({
+      accessToken: "refreshed-access-token",
+      expiresAt: "2026-03-28T00:00:00.000Z"
+    });
+    vi.mocked(authApi.getCurrentUser).mockResolvedValue({
+      id: "user-1",
+      isImpersonating: true,
+      requirePasswordChange: true,
+      roles: ["User"],
+      userName: "demo.user",
+      workspaceName: "Protected workspace"
+    } as Awaited<ReturnType<typeof authApi.getCurrentUser>>);
+
+    render(
+      <AppProviders>
+        <MemoryRouter initialEntries={["/reports"]}>
+          <AuthBootstrapBoundary>
+            <Routes>
+              <Route
+                element={(
+                  <ProtectedRoute>
+                    <div>Reports</div>
+                  </ProtectedRoute>
+                )}
+                path="/reports"
+              />
+              <Route
+                element={<div>Change password</div>}
+                path="/change-password"
+              />
+            </Routes>
+            <LocationProbe />
+          </AuthBootstrapBoundary>
+        </MemoryRouter>
+      </AppProviders>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText("Reports")).toBeDefined();
+    });
+
+    expect(screen.getByTestId("location").textContent).toBe("/reports");
+    expect(authSessionStore.getRememberedReturnUrl()).toBeNull();
+  });
+
   it("refreshes the authenticated session when another tab broadcasts a session change", async () => {
     const queryClient = new QueryClient();
 

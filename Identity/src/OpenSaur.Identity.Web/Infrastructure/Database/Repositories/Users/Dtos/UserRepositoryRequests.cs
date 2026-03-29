@@ -16,6 +16,8 @@ public sealed record GetUserByIdRequest(Guid UserId, bool TrackChanges = false);
 
 public sealed record GetUserByUserNameRequest(string NormalizedUserName, bool TrackChanges = false);
 
+public sealed record GetActiveUserCountByWorkspaceIdRequest(Guid WorkspaceId);
+
 public sealed record GetManagedUsersResponse(IReadOnlyList<ApplicationUser> Users);
 
 public sealed record GetManagedActiveUsersResponse(IReadOnlyList<ApplicationUser> Users);
@@ -25,3 +27,5 @@ public sealed record GetManagedUserByIdResponse(ApplicationUser User);
 public sealed record GetUserByIdResponse(ApplicationUser User);
 
 public sealed record GetUserByUserNameResponse(ApplicationUser User);
+
+public sealed record GetActiveUserCountByWorkspaceIdResponse(int Count);

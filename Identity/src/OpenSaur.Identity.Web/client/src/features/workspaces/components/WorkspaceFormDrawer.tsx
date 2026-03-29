@@ -25,6 +25,7 @@ type WorkspaceFormDrawerProps = {
   onSubmit: (values: {
     description: string;
     isActive: boolean;
+    maxActiveUsers: string;
     name: string;
     selectedRoleIds: string[];
   }) => Promise<void>;
@@ -99,6 +100,7 @@ export function WorkspaceFormDrawer({
               initialValues={{
                 description: initialValues?.description ?? "",
                 isActive: initialValues?.isActive ?? true,
+                maxActiveUsers: initialValues?.maxActiveUsers?.toString() ?? "",
                 name: initialValues?.name ?? "",
                 selectedRoleIds: initialValues?.assignedRoleIds ?? defaultAssignedRoleIds
               }}

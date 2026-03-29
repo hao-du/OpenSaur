@@ -22,7 +22,12 @@ public static class GetWorkspacesHandler
                     workspace.Id,
                     workspace.Name,
                     workspace.Description,
-                    workspace.IsActive))
+                    workspace.IsActive,
+                    workspace.WorkspaceRoles
+                        .Where(workspaceRole => workspaceRole.IsActive)
+                        .Select(workspaceRole => workspaceRole.RoleId)
+                        .ToList(),
+                    workspace.MaxActiveUsers))
                 .ToList());
     }
 }

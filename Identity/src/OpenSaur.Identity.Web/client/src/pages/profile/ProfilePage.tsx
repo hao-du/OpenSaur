@@ -43,6 +43,14 @@ export function ProfilePage() {
       >
         <Stack spacing={3}>
           <ProfileField
+            label={t("profile.firstName")}
+            value={currentUser?.firstName ?? ""}
+          />
+          <ProfileField
+            label={t("profile.lastName")}
+            value={currentUser?.lastName ?? ""}
+          />
+          <ProfileField
             label={t("profile.userName")}
             value={currentUser?.userName ?? ""}
           />

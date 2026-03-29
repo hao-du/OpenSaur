@@ -13,6 +13,7 @@ import {
   TableRow,
   Typography
 } from "@mui/material";
+import { RolePreviewList } from "../../../components/molecules";
 import type { UserSummary } from "../types";
 
 type UsersTableProps = {
@@ -81,6 +82,7 @@ export function UsersTable({
             <TableRow>
               <TableCell>User name</TableCell>
               <TableCell>Email</TableCell>
+              <TableCell>Roles</TableCell>
               <TableCell>Status</TableCell>
               <TableCell align="right">Actions</TableCell>
             </TableRow>
@@ -90,6 +92,15 @@ export function UsersTable({
               <TableRow hover key={user.id}>
                 <TableCell>{user.userName}</TableCell>
                 <TableCell>{user.email}</TableCell>
+                <TableCell>
+                  <RolePreviewList
+                    emptyLabel="No roles"
+                    roles={(user.roles ?? []).map(role => ({
+                      id: role.id,
+                      name: role.name
+                    }))}
+                  />
+                </TableCell>
                 <TableCell>
                   <Chip
                     color={user.isActive ? "success" : "default"}

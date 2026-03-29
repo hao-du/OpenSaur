@@ -84,22 +84,34 @@ export function WorkspacesPage() {
       return matchesSearch && matchesStatus;
     });
   }, [filters, workspaces]);
+  const roleNamesById = useMemo(
+    () => Object.fromEntries(roles.map(role => [role.id, role.name])),
+    [roles]
+  );
   const defaultAssignedRoleIds = useMemo(
     () => roles
       .filter(role => role.isActive && role.normalizedName !== "SUPERADMINISTRATOR")
+      .slice(0, 2)
       .map(role => role.id),
     [roles]
   );
 
+  function normalizeMaxActiveUsers(value: string) {
+    const trimmedValue = value.trim();
+    return trimmedValue.length === 0 ? null : Number(trimmedValue);
+  }
+
   async function handleCreateWorkspace(values: {
     description: string;
     isActive: boolean;
+    maxActiveUsers: string;
     name: string;
     selectedRoleIds: string[];
   }) {
     await createWorkspace({
       assignedRoleIds: values.selectedRoleIds,
       description: values.description,
+      maxActiveUsers: normalizeMaxActiveUsers(values.maxActiveUsers),
       name: values.name
     });
     setIsCreateDrawerOpen(false);
@@ -108,6 +120,7 @@ export function WorkspacesPage() {
   async function handleEditWorkspace(values: {
     description: string;
     isActive: boolean;
+    maxActiveUsers: string;
     name: string;
     selectedRoleIds: string[];
   }) {
@@ -120,6 +133,7 @@ export function WorkspacesPage() {
       description: values.description,
       id: selectedWorkspaceId,
       isActive: values.isActive,
+      maxActiveUsers: normalizeMaxActiveUsers(values.maxActiveUsers),
       name: values.name
     });
     setSelectedWorkspaceId(null);
@@ -183,6 +197,7 @@ export function WorkspacesPage() {
           onRetry={() => {
             void refetch();
           }}
+          roleNamesById={roleNamesById}
           workspaces={filteredWorkspaces}
         />
       </Stack>
