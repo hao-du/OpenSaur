@@ -8,7 +8,7 @@ import { RoleAssignmentsPage } from "./RoleAssignmentsPage";
 const useCurrentUserStateMock = vi.fn();
 const useCurrentUserQueryMock = vi.fn();
 const useLogoutMock = vi.fn();
-const useRolesQueryMock = vi.fn();
+const useAvailableRolesQueryMock = vi.fn();
 const useRoleAssignmentsQueryMock = vi.fn();
 const useAssignmentCandidatesQueryMock = vi.fn();
 const useSaveRoleAssignmentsMock = vi.fn();
@@ -26,12 +26,9 @@ vi.mock("../../features/auth/hooks", async () => {
 
 vi.mock("../../features/role-assignments/hooks", () => ({
   useAssignmentCandidatesQuery: () => useAssignmentCandidatesQueryMock(),
+  useAvailableRolesQuery: () => useAvailableRolesQueryMock(),
   useRoleAssignmentsQuery: (...args: unknown[]) => useRoleAssignmentsQueryMock(...args),
   useSaveRoleAssignments: () => useSaveRoleAssignmentsMock()
-}));
-
-vi.mock("../../features/roles/hooks", () => ({
-  useRolesQuery: () => useRolesQueryMock()
 }));
 
 function renderPage() {
@@ -68,7 +65,7 @@ describe("RoleAssignmentsPage", () => {
       },
       isPending: false
     });
-    useRolesQueryMock.mockReturnValue({
+    useAvailableRolesQueryMock.mockReturnValue({
       data: [
         {
           description: "Administrators manage identity configuration.",

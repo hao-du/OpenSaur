@@ -5,11 +5,13 @@ import { AppProviders } from "../../app/providers/AppProviders";
 import { authSessionStore } from "../../features/auth/state/authSessionStore";
 import { WorkspacesPage } from "./WorkspacesPage";
 import type { WorkspaceSummary } from "../../features/workspaces/types";
+import type { RoleSummary } from "../../features/roles/types";
 
 const useWorkspacesQueryMock = vi.fn();
 const useCreateWorkspaceMock = vi.fn();
 const useEditWorkspaceMock = vi.fn();
 const useWorkspaceQueryMock = vi.fn();
+const useRolesQueryMock = vi.fn();
 const useCurrentUserStateMock = vi.fn();
 const useCurrentUserQueryMock = vi.fn();
 const useLogoutMock = vi.fn();
@@ -36,6 +38,10 @@ vi.mock("../../features/auth/hooks", async () => {
   };
 });
 
+vi.mock("../../features/roles/hooks", () => ({
+  useRolesQuery: () => useRolesQueryMock()
+}));
+
 const workspaces: WorkspaceSummary[] = [
   {
     description: "Primary staff workspace",
@@ -48,6 +54,37 @@ const workspaces: WorkspaceSummary[] = [
     id: "workspace-2",
     isActive: false,
     name: "Partners"
+  }
+];
+
+const roles: RoleSummary[] = [
+  {
+    description: "Workspace administrators",
+    id: "role-1",
+    isActive: true,
+    name: "Administrator",
+    normalizedName: "ADMINISTRATOR"
+  },
+  {
+    description: "Content writers",
+    id: "role-2",
+    isActive: true,
+    name: "Content Writer",
+    normalizedName: "CONTENT_WRITER"
+  },
+  {
+    description: "Inactive role",
+    id: "role-3",
+    isActive: false,
+    name: "Inactive Role",
+    normalizedName: "INACTIVE_ROLE"
+  },
+  {
+    description: "Reserved super admin",
+    id: "role-4",
+    isActive: true,
+    name: "Super Administrator",
+    normalizedName: "SUPERADMINISTRATOR"
   }
 ];
 
@@ -115,6 +152,12 @@ describe("WorkspacesPage", () => {
       isError: false,
       isLoading: false
     });
+    useRolesQueryMock.mockReturnValue({
+      data: roles,
+      isError: false,
+      isLoading: false,
+      refetch: vi.fn()
+    });
     useCreateWorkspaceMock.mockReturnValue({
       createWorkspace: vi.fn(),
       errorMessage: null,
@@ -167,6 +210,7 @@ describe("WorkspacesPage", () => {
     expect(screen.getByRole("heading", { level: 2, name: /create workspace/i })).toBeDefined();
     expect(screen.getByRole("textbox", { name: /workspace name/i })).toBeDefined();
     expect(screen.getByRole("textbox", { name: /description/i })).toBeDefined();
+    expect(screen.getByRole("combobox", { name: /assigned roles/i })).toBeDefined();
     expect(screen.queryByRole("checkbox", { name: /workspace is active/i })).toBeNull();
     expect(screen.queryByText(/new workspaces start in the active state/i)).toBeNull();
     expect(screen.getByRole("button", { name: /^save$/i })).toBeDefined();
@@ -190,6 +234,33 @@ describe("WorkspacesPage", () => {
     expect(submitButton.getAttribute("aria-busy")).toBe("true");
   });
 
+  it("submits default assigned roles for a new workspace", async () => {
+    const createWorkspace = vi.fn().mockResolvedValue(undefined);
+
+    useCreateWorkspaceMock.mockReturnValue({
+      createWorkspace,
+      errorMessage: null,
+      isCreating: false,
+      resetError: vi.fn()
+    });
+
+    renderPage();
+
+    fireEvent.click(screen.getByRole("button", { name: /^create$/i }));
+    fireEvent.change(screen.getByRole("textbox", { name: /workspace name/i }), {
+      target: { value: "Marketing" }
+    });
+    fireEvent.click(screen.getByRole("button", { name: /^save$/i }));
+
+    await waitFor(() => {
+      expect(createWorkspace).toHaveBeenCalledWith({
+        assignedRoleIds: ["role-1", "role-2"],
+        description: "",
+        name: "Marketing"
+      });
+    });
+  });
+
   it("opens the edit drawer for the selected workspace row", () => {
     useWorkspaceQueryMock.mockReturnValue({
       data: workspaces[0],
@@ -204,6 +275,7 @@ describe("WorkspacesPage", () => {
 
     expect(screen.getByRole("heading", { level: 2, name: /edit workspace/i })).toBeDefined();
     expect((screen.getByRole("textbox", { name: /workspace name/i }) as HTMLInputElement).value).toBe("Operations");
+    expect(screen.getByRole("combobox", { name: /assigned roles/i })).toBeDefined();
     expect((screen.getByRole("checkbox", { name: /workspace is active/i }) as HTMLInputElement).checked).toBe(true);
     expect(screen.getByRole("button", { name: /^save$/i })).toBeDefined();
   });

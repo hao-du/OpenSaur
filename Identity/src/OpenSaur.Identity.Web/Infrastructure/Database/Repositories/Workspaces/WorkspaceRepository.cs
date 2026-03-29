@@ -27,8 +27,12 @@ public sealed class WorkspaceRepository(ApplicationDbContext dbContext)
         CancellationToken cancellationToken)
     {
         var query = request.TrackChanges
-            ? dbContext.Workspaces.AsQueryable()
-            : dbContext.Workspaces.AsNoTracking();
+            ? dbContext.Workspaces
+                .Include(candidate => candidate.WorkspaceRoles)
+                .AsQueryable()
+            : dbContext.Workspaces
+                .AsNoTracking()
+                .Include(candidate => candidate.WorkspaceRoles);
 
         var workspace = await ApplyManagedScope(query, request.CurrentUserContext)
             .SingleOrDefaultAsync(candidate => candidate.Id == request.WorkspaceId, cancellationToken);
@@ -45,8 +49,12 @@ public sealed class WorkspaceRepository(ApplicationDbContext dbContext)
         CancellationToken cancellationToken)
     {
         var query = request.TrackChanges
-            ? dbContext.Workspaces.AsQueryable()
-            : dbContext.Workspaces.AsNoTracking();
+            ? dbContext.Workspaces
+                .Include(candidate => candidate.WorkspaceRoles)
+                .AsQueryable()
+            : dbContext.Workspaces
+                .AsNoTracking()
+                .Include(candidate => candidate.WorkspaceRoles);
 
         var workspace = await query.SingleOrDefaultAsync(candidate => candidate.Id == request.WorkspaceId, cancellationToken);
 

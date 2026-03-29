@@ -45,6 +45,7 @@ public static class TestIdentitySeeder
             {
                 dbContext.Workspaces.Add(workspace);
                 await dbContext.SaveChangesAsync();
+                await AssignDefaultWorkspaceRolesAsync(dbContext, workspace.Id);
             }
         }
 
@@ -115,6 +116,7 @@ public static class TestIdentitySeeder
 
         dbContext.Workspaces.Add(workspace);
         await dbContext.SaveChangesAsync();
+        await AssignDefaultWorkspaceRolesAsync(dbContext, workspace.Id);
 
         return workspace.Id;
     }
@@ -202,5 +204,81 @@ public static class TestIdentitySeeder
         await dbContext.SaveChangesAsync();
 
         return assignment.Id;
+    }
+
+    public static async Task<Guid> SeedWorkspaceRoleAsync(
+        OpenSaurWebApplicationFactory factory,
+        Guid workspaceId,
+        Guid roleId,
+        bool isActive = true)
+    {
+        using var scope = factory.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+        var existingAssignment = await dbContext.WorkspaceRoles.SingleOrDefaultAsync(
+            candidate => candidate.WorkspaceId == workspaceId && candidate.RoleId == roleId);
+        if (existingAssignment is not null)
+        {
+            existingAssignment.IsActive = isActive;
+            await dbContext.SaveChangesAsync();
+
+            return existingAssignment.Id;
+        }
+
+        var assignment = new WorkspaceRole
+        {
+            WorkspaceId = workspaceId,
+            RoleId = roleId,
+            Description = TestFakers.CreateDescription(),
+            IsActive = isActive,
+            CreatedBy = Guid.CreateVersion7(),
+            CreatedOn = DateTime.UtcNow
+        };
+
+        dbContext.WorkspaceRoles.Add(assignment);
+        await dbContext.SaveChangesAsync();
+
+        return assignment.Id;
+    }
+
+    private static async Task AssignDefaultWorkspaceRolesAsync(ApplicationDbContext dbContext, Guid workspaceId)
+    {
+        var activeRoles = await dbContext.Roles
+            .AsNoTracking()
+            .Where(role => role.IsActive)
+            .Select(role => new
+            {
+                role.Id,
+                NormalizedName = role.NormalizedName ?? string.Empty
+            })
+            .ToListAsync();
+
+        var existingRoleIds = await dbContext.WorkspaceRoles
+            .AsNoTracking()
+            .Where(workspaceRole => workspaceRole.WorkspaceId == workspaceId)
+            .Select(workspaceRole => workspaceRole.RoleId)
+            .ToListAsync();
+
+        var defaultAssignments = activeRoles
+            .Where(role => !SystemRoles.IsSuperAdministratorValue(role.NormalizedName))
+            .Where(role => !existingRoleIds.Contains(role.Id))
+            .Select(role => new WorkspaceRole
+            {
+                WorkspaceId = workspaceId,
+                RoleId = role.Id,
+                Description = TestFakers.CreateDescription(),
+                IsActive = true,
+                CreatedBy = Guid.CreateVersion7(),
+                CreatedOn = DateTime.UtcNow
+            })
+            .ToList();
+
+        if (defaultAssignments.Count == 0)
+        {
+            return;
+        }
+
+        dbContext.WorkspaceRoles.AddRange(defaultAssignments);
+        await dbContext.SaveChangesAsync();
     }
 }

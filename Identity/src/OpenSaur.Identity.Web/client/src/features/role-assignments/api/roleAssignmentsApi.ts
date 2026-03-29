@@ -1,4 +1,5 @@
 import { httpClient, type OpenSaurRequestConfig } from "../../../shared/api/httpClient";
+import type { RoleSummary } from "../../roles/types";
 import type {
   AssignmentCandidate,
   RoleAssignmentSummary
@@ -32,6 +33,12 @@ export async function getRoleAssignments(roleId: string) {
 export async function getAssignmentCandidates() {
   return await unwrapData<AssignmentCandidate[]>(
     httpClient.get("/api/user-role/getcandidates")
+  );
+}
+
+export async function getAvailableRoles() {
+  return await unwrapData<RoleSummary[]>(
+    httpClient.get("/api/user-role/getavailableroles")
   );
 }
 

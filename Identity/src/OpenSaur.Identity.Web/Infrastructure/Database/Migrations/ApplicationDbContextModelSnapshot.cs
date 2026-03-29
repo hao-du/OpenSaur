@@ -384,8 +384,8 @@ namespace OpenSaur.Identity.Web.Infrastructure.Database.Migrations
                             CreatedOn = new DateTime(2026, 3, 22, 0, 0, 0, 0, DateTimeKind.Utc),
                             Description = "Default cross-workspace super administrator role.",
                             IsActive = true,
-                            Name = "SuperAdministrator",
-                            NormalizedName = "SUPERADMINISTRATOR"
+                            Name = "Super Administrator",
+                            NormalizedName = "SUPER ADMINISTRATOR"
                         },
                         new
                         {
@@ -881,6 +881,73 @@ namespace OpenSaur.Identity.Web.Infrastructure.Database.Migrations
                         });
                 });
 
+            modelBuilder.Entity("OpenSaur.Identity.Web.Domain.Workspaces.WorkspaceRole", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedOn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid>("RoleId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("UpdatedOn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("WorkspaceId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Id")
+                        .IsUnique();
+
+                    b.HasIndex("RoleId");
+
+                    b.HasIndex("WorkspaceId", "RoleId")
+                        .IsUnique();
+
+                    b.ToTable("WorkspaceRoles", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("81a4f14f-27f9-4b8a-a360-b26e71877648"),
+                            CreatedBy = new Guid("67be05c0-1f88-4a2c-86f4-d97ad4589135"),
+                            CreatedOn = new DateTime(2026, 3, 22, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Description = "Default personal-workspace administrator role availability.",
+                            IsActive = true,
+                            RoleId = new Guid("ebc29128-4abe-4456-9c09-f9348ddfe91c"),
+                            WorkspaceId = new Guid("e3a2d95a-9d31-4232-b617-1ea4cdc65f88")
+                        },
+                        new
+                        {
+                            Id = new Guid("4dba0a76-675d-487d-9d0c-7e4bdbb98b7e"),
+                            CreatedBy = new Guid("67be05c0-1f88-4a2c-86f4-d97ad4589135"),
+                            CreatedOn = new DateTime(2026, 3, 22, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Description = "Default personal-workspace user role availability.",
+                            IsActive = true,
+                            RoleId = new Guid("1cf3d7a5-b4b3-4b08-b3a8-b5c62f5266b4"),
+                            WorkspaceId = new Guid("e3a2d95a-9d31-4232-b617-1ea4cdc65f88")
+                        });
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<System.Guid>", b =>
                 {
                     b.HasOne("OpenSaur.Identity.Web.Domain.Identity.ApplicationRole", null)
@@ -1001,6 +1068,25 @@ namespace OpenSaur.Identity.Web.Infrastructure.Database.Migrations
                     b.Navigation("Role");
                 });
 
+            modelBuilder.Entity("OpenSaur.Identity.Web.Domain.Workspaces.WorkspaceRole", b =>
+                {
+                    b.HasOne("OpenSaur.Identity.Web.Domain.Identity.ApplicationRole", "Role")
+                        .WithMany("WorkspaceRoles")
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("OpenSaur.Identity.Web.Domain.Workspaces.Workspace", "Workspace")
+                        .WithMany("WorkspaceRoles")
+                        .HasForeignKey("WorkspaceId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Role");
+
+                    b.Navigation("Workspace");
+                });
+
             modelBuilder.Entity("OpenIddict.EntityFrameworkCore.Models.OpenIddictEntityFrameworkCoreApplication<System.Guid>", b =>
                 {
                     b.Navigation("Authorizations");
@@ -1016,6 +1102,8 @@ namespace OpenSaur.Identity.Web.Infrastructure.Database.Migrations
             modelBuilder.Entity("OpenSaur.Identity.Web.Domain.Identity.ApplicationRole", b =>
                 {
                     b.Navigation("UserRoles");
+
+                    b.Navigation("WorkspaceRoles");
                 });
 
             modelBuilder.Entity("OpenSaur.Identity.Web.Domain.Identity.ApplicationUser", b =>
@@ -1026,6 +1114,8 @@ namespace OpenSaur.Identity.Web.Infrastructure.Database.Migrations
             modelBuilder.Entity("OpenSaur.Identity.Web.Domain.Workspaces.Workspace", b =>
                 {
                     b.Navigation("Users");
+
+                    b.Navigation("WorkspaceRoles");
                 });
 #pragma warning restore 612, 618
         }

@@ -105,6 +105,40 @@ public sealed class WorkspaceEndpointsTests : IClassFixture<OpenSaurWebApplicati
     }
 
     [Fact]
+    public async Task PostCreate_WhenAssignedRoleIdsAreProvided_PersistsWorkspaceRoleAvailabilityAndReturnsItFromGetById()
+    {
+        var workspaceName = TestFakers.CreateWorkspaceName();
+        var availableRoleId = await TestIdentitySeeder.SeedRoleAsync(_factory, "Content Writer");
+        var excludedRoleId = await TestIdentitySeeder.SeedRoleAsync(_factory, "Task Manager");
+
+        using var client = FirstPartyApiTestClient.CreateClient(_factory);
+        var accessToken = await FirstPartyApiTestClient.GetAccessTokenAsync(client, "SystemAdministrator", "Password1");
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+        var createResponse = await FirstPartyApiTestClient.PostAsJsonWithIdempotencyAsync(
+            client,
+            "/api/workspace/create",
+            new
+            {
+                Name = workspaceName,
+                Description = TestFakers.CreateDescription(),
+                AssignedRoleIds = new[] { availableRoleId }
+            });
+        var createPayload = await ApiResponseReader.ReadSuccessDataAsync<JsonElement>(createResponse);
+        var workspaceId = createPayload.GetProperty("id").GetGuid();
+
+        var getResponse = await client.GetAsync($"/api/workspace/getbyid/{workspaceId}");
+        var getPayload = await ApiResponseReader.ReadSuccessDataAsync<JsonElement>(getResponse);
+        var assignedRoleIds = getPayload.GetProperty("assignedRoleIds")
+            .EnumerateArray()
+            .Select(static roleId => roleId.GetGuid())
+            .ToArray();
+
+        Assert.Contains(availableRoleId, assignedRoleIds);
+        Assert.DoesNotContain(excludedRoleId, assignedRoleIds);
+    }
+
+    [Fact]
     public async Task PutEdit_WhenCallerIsSuperAdministrator_UpdatesWorkspaceAndCanDeactivateIt()
     {
         var workspaceId = await TestIdentitySeeder.SeedWorkspaceAsync(_factory, TestFakers.CreateWorkspaceName());
@@ -130,6 +164,49 @@ public sealed class WorkspaceEndpointsTests : IClassFixture<OpenSaurWebApplicati
 
         Assert.Equal("Updated Workspace", workspace.Name);
         Assert.False(workspace.IsActive);
+    }
+
+    [Fact]
+    public async Task PutEdit_WhenAssignedRoleIdsRemoveWorkspaceRole_DeactivatesMatchingUserRoleAssignments()
+    {
+        const string workspaceName = "Operations";
+        var workspaceId = await TestIdentitySeeder.SeedWorkspaceAsync(_factory, workspaceName);
+        var userId = await TestIdentitySeeder.SeedUserAsync(
+            _factory,
+            "OperationsWriter",
+            TestFakers.CreatePassword(),
+            [],
+            workspaceName: workspaceName);
+        var retainedRoleId = await TestIdentitySeeder.SeedRoleAsync(_factory, "Operations Manager");
+        var removedRoleId = await TestIdentitySeeder.SeedRoleAsync(_factory, "Content Writer");
+        await TestIdentitySeeder.SeedWorkspaceRoleAsync(_factory, workspaceId, retainedRoleId);
+        await TestIdentitySeeder.SeedWorkspaceRoleAsync(_factory, workspaceId, removedRoleId);
+        await TestIdentitySeeder.SeedUserRoleAsync(_factory, userId, retainedRoleId);
+        var removedAssignmentId = await TestIdentitySeeder.SeedUserRoleAsync(_factory, userId, removedRoleId);
+
+        using var client = FirstPartyApiTestClient.CreateClient(_factory);
+        var accessToken = await FirstPartyApiTestClient.GetAccessTokenAsync(client, "SystemAdministrator", "Password1");
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+        var response = await FirstPartyApiTestClient.PutAsJsonWithIdempotencyAsync(
+            client,
+            "/api/workspace/edit",
+            new
+            {
+                Id = workspaceId,
+                Name = workspaceName,
+                Description = TestFakers.CreateDescription(),
+                IsActive = true,
+                AssignedRoleIds = new[] { retainedRoleId }
+            });
+
+        await ApiResponseReader.AssertNullSuccessDataAsync(response);
+
+        using var scope = _factory.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var removedAssignment = await dbContext.UserRoles.SingleAsync(candidate => candidate.Id == removedAssignmentId);
+
+        Assert.False(removedAssignment.IsActive);
     }
 }
 

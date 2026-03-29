@@ -39,6 +39,8 @@ public sealed class ApplicationDbContext
 
     public DbSet<Workspace> Workspaces => Set<Workspace>();
 
+    public DbSet<WorkspaceRole> WorkspaceRoles => Set<WorkspaceRole>();
+
     public DbSet<PermissionScope> PermissionScopes => Set<PermissionScope>();
 
     public DbSet<Permission> Permissions => Set<Permission>();

@@ -10,8 +10,11 @@ import {
 import { X } from "lucide-react";
 import { WorkspaceForm } from "./WorkspaceForm";
 import type { WorkspaceDetails } from "../types";
+import type { RoleSummary } from "../../roles/types";
 
 type WorkspaceFormDrawerProps = {
+  availableRoles: RoleSummary[];
+  defaultAssignedRoleIds: string[];
   errorMessage: string | null;
   initialValues?: WorkspaceDetails | null;
   isEditMode: boolean;
@@ -23,10 +26,13 @@ type WorkspaceFormDrawerProps = {
     description: string;
     isActive: boolean;
     name: string;
+    selectedRoleIds: string[];
   }) => Promise<void>;
 };
 
 export function WorkspaceFormDrawer({
+  availableRoles,
+  defaultAssignedRoleIds,
   errorMessage,
   initialValues,
   isEditMode,
@@ -88,11 +94,13 @@ export function WorkspaceFormDrawer({
         ) : (
           <Box sx={{ flex: 1 }}>
             <WorkspaceForm
+              availableRoles={availableRoles}
               errorMessage={errorMessage}
               initialValues={{
                 description: initialValues?.description ?? "",
                 isActive: initialValues?.isActive ?? true,
-                name: initialValues?.name ?? ""
+                name: initialValues?.name ?? "",
+                selectedRoleIds: initialValues?.assignedRoleIds ?? defaultAssignedRoleIds
               }}
               isEditMode={isEditMode}
               isSubmitting={isSubmitting}

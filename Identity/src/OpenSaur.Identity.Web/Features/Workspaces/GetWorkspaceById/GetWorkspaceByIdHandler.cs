@@ -22,6 +22,10 @@ public static class GetWorkspaceByIdHandler
                 response.Workspace.Id,
                 response.Workspace.Name,
                 response.Workspace.Description,
-                response.Workspace.IsActive));
+                response.Workspace.IsActive,
+                response.Workspace.WorkspaceRoles
+                    .Where(workspaceRole => workspaceRole.IsActive)
+                    .Select(workspaceRole => workspaceRole.RoleId)
+                    .ToList()));
     }
 }

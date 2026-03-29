@@ -1,18 +1,20 @@
-using OpenSaur.Identity.Web.Infrastructure.Database.Repositories.Roles;
-using OpenSaur.Identity.Web.Infrastructure.Database.Repositories.Roles.Dtos;
 using OpenSaur.Identity.Web.Infrastructure.Http.Responses;
 using OpenSaur.Identity.Web.Domain.Identity;
+using OpenSaur.Identity.Web.Infrastructure.Database.Repositories.WorkspaceRoles;
+using OpenSaur.Identity.Web.Infrastructure.Database.Repositories.WorkspaceRoles.Dtos;
+using OpenSaur.Identity.Web.Infrastructure.Security;
 
 namespace OpenSaur.Identity.Web.Features.UserRoles.GetRoleCandidates;
 
 public static class GetRoleCandidatesHandler
 {
     public static async Task<IResult> HandleAsync(
-        RoleRepository roleRepository,
+        CurrentUserContext currentUserContext,
+        WorkspaceRoleRepository workspaceRoleRepository,
         CancellationToken cancellationToken)
     {
-        var rolesResult = await roleRepository.GetActiveRolesAsync(
-            new GetActiveRolesRequest(),
+        var rolesResult = await workspaceRoleRepository.GetActiveWorkspaceRolesAsync(
+            new GetActiveWorkspaceRolesRequest(currentUserContext.WorkspaceId),
             cancellationToken);
 
         return rolesResult.ToApiResult(

@@ -47,7 +47,7 @@ public static class ExitImpersonationHandler
         }
 
         var originalRolesResult = await userRoleRepository.GetActiveNormalizedRoleNamesForUserAsync(
-            new GetActiveNormalizedRoleNamesForUserRequest(originalUser.Id),
+            new GetActiveNormalizedRoleNamesForUserRequest(originalUser.Id, originalUser.WorkspaceId),
             cancellationToken);
         await signInManager.SignInAsync(originalUser, isPersistent: false);
 

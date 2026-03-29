@@ -136,57 +136,133 @@ If the OpenSpec change is fully completed, ask Codex:
 Use openspec-archive-change for <change-name>
 ```
 
-## Running the App
+## Build And Run The App
 
-Build the current app:
+The backend and frontend live in the same project tree:
+
+- backend: `src/OpenSaur.Identity.Web`
+- frontend: `src/OpenSaur.Identity.Web/client`
+
+### Prerequisites
+
+Install these first:
+
+- .NET 10 SDK
+- Node.js and npm
+- a reachable PostgreSQL instance for the development connection
+
+The current development configuration expects the Identity database on `localhost:5432`. See:
+
+- `src/OpenSaur.Identity.Web/appsettings.Development.json`
+
+If you use local HTTPS and do not already trust the ASP.NET Core development certificate:
 
 ```powershell
+dotnet dev-certs https --trust
+```
+
+### Build Backend
+
+From the repository root:
+
+```powershell
+dotnet restore .\src\OpenSaur.Identity.Web\OpenSaur.Identity.Web.csproj
 dotnet build .\src\OpenSaur.Identity.Web\OpenSaur.Identity.Web.csproj
 ```
 
-Run the app:
+### Build Frontend
+
+From the repository root:
 
 ```powershell
-dotnet run --project .\src\OpenSaur.Identity.Web\OpenSaur.Identity.Web.csproj
+Set-Location .\src\OpenSaur.Identity.Web\client
+npm install
+npm run build
+Set-Location ..\..\..
 ```
 
-The current starter endpoint is defined in `src/OpenSaur.Identity.Web/Program.cs`.
+The frontend build writes into:
 
-## Frontend Workflow
+- `src/OpenSaur.Identity.Web/wwwroot`
 
-The first-party React client lives under `src/OpenSaur.Identity.Web/client`.
+That built output is what ASP.NET Core serves for the same-host app.
 
-For frontend development:
+If you need source maps in a local development build, use:
 
 ```powershell
-cd .\src\OpenSaur.Identity.Web\client
+Set-Location .\src\OpenSaur.Identity.Web\client
+npm run build:dev
+Set-Location ..\..\..
+```
+
+`build:dev` writes the same output into `wwwroot`, but enables Vite build sourcemaps only for development mode. The normal `npm run build` command stays optimized for non-development and publish scenarios.
+
+### Run The Same-Host App
+
+This is the recommended local flow when you want the app exactly as users will see it.
+
+1. Make sure the development database is reachable.
+2. Build the frontend so `wwwroot` is up to date.
+3. Start the ASP.NET Core host.
+
+From the repository root:
+
+```powershell
+Set-Location .\src\OpenSaur.Identity.Web\client
+npm install
+npm run build
+Set-Location ..\..\..
+dotnet run --launch-profile https --project .\src\OpenSaur.Identity.Web\OpenSaur.Identity.Web.csproj
+```
+
+Open:
+
+- `https://localhost:7017/`
+- `https://localhost:7017/login`
+
+### Run Frontend And Backend Separately For UI Development
+
+Use this when you want Vite hot reload during frontend work.
+
+Terminal 1, start the backend:
+
+```powershell
+dotnet run --launch-profile https --project .\src\OpenSaur.Identity.Web\OpenSaur.Identity.Web.csproj
+```
+
+Terminal 2, start Vite:
+
+```powershell
+Set-Location .\src\OpenSaur.Identity.Web\client
 npm install
 npm run dev
 ```
 
-Vite runs on `http://localhost:5173` for frontend-only development and proxies `/api`, `/.well-known`, and `/connect` back to the ASP.NET Core host.
+Open:
 
-For same-host local review and deployment:
+- `http://localhost:5173/`
 
-```powershell
-cd .\src\OpenSaur.Identity.Web\client
-npm run build
-dotnet run --project ..\OpenSaur.Identity.Web.csproj
-```
+In this mode, Vite proxies these paths back to the ASP.NET Core host:
 
-The client build writes into `src/OpenSaur.Identity.Web/wwwroot`, and ASP.NET Core serves the built app on the same host as the backend routes.
+- `/api`
+- `/.well-known`
+- `/connect`
 
-Current hosted auth routes:
+### Current Hosted SPA Routes
 
+- `/`
 - `/login`
 - `/auth/callback`
 - `/change-password`
-- `/`
+- `/users`
+- `/workspaces`
+- `/roles`
+- `/role-assignments`
 
-Browser automation note:
+### Browser Automation
 
-- frontend unit/integration-style tests stay close to the client app
-- browser automation should be added later in a separate automation test project, not inside `src/OpenSaur.Identity.Web/client`
+- frontend unit and integration-style tests stay in `src/OpenSaur.Identity.Web/client`
+- browser automation should live in a separate automation test project, not inside the client app
 
 ## Example Prompt
 

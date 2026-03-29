@@ -35,6 +35,7 @@ using OpenSaur.Identity.Web.Infrastructure.Database.Repositories.Permissions;
 using OpenSaur.Identity.Web.Infrastructure.Database.Repositories.Roles;
 using OpenSaur.Identity.Web.Infrastructure.Database.Repositories.UserRoles;
 using OpenSaur.Identity.Web.Infrastructure.Database.Repositories.Workspaces;
+using OpenSaur.Identity.Web.Infrastructure.Database.Repositories.WorkspaceRoles;
 using OpenSaur.Identity.Web.Infrastructure.Http.Configuration;
 using OpenSaur.Identity.Web.Infrastructure.Http.Idempotency;
 using OpenSaur.Identity.Web.Infrastructure.Http.Metadata;
@@ -181,6 +182,7 @@ public static class DependencyInjection
         services.AddScoped<PermissionScopeRepository>();
         services.AddScoped<UserRoleRepository>();
         services.AddScoped<WorkspaceRepository>();
+        services.AddScoped<WorkspaceRoleRepository>();
 
         return services;
     }

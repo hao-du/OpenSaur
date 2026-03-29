@@ -106,17 +106,32 @@ public sealed class UserRoleRepository(ApplicationDbContext dbContext)
         GetActiveNormalizedRoleNamesForUserRequest request,
         CancellationToken cancellationToken)
     {
-        var normalizedRoleNames = await dbContext.UserRoles
+        var assignedRoles = await dbContext.UserRoles
             .AsNoTracking()
             .Where(userRole => userRole.UserId == request.UserId && userRole.IsActive)
             .Join(
                 dbContext.Roles.AsNoTracking().Where(role => role.IsActive),
                 userRole => userRole.RoleId,
                 role => role.Id,
-                (_, role) => role.NormalizedName ?? string.Empty)
-            .Where(static role => !string.IsNullOrWhiteSpace(role))
-            .Distinct()
+                (_, role) => new
+                {
+                    role.Id,
+                    NormalizedName = role.NormalizedName ?? string.Empty
+                })
             .ToListAsync(cancellationToken);
+        var activeWorkspaceRoleIds = await dbContext.WorkspaceRoles
+            .AsNoTracking()
+            .Where(workspaceRole => workspaceRole.WorkspaceId == request.WorkspaceId && workspaceRole.IsActive)
+            .Select(workspaceRole => workspaceRole.RoleId)
+            .ToListAsync(cancellationToken);
+        var normalizedRoleNames = assignedRoles
+            .Where(role =>
+                !string.IsNullOrWhiteSpace(role.NormalizedName)
+                && (SystemRoles.IsSuperAdministratorValue(role.NormalizedName)
+                    || activeWorkspaceRoleIds.Contains(role.Id)))
+            .Select(role => role.NormalizedName)
+            .Distinct()
+            .ToList();
 
         return Result<GetActiveNormalizedRoleNamesForUserResponse>.Success(
             new GetActiveNormalizedRoleNamesForUserResponse(normalizedRoleNames));

@@ -15,10 +15,10 @@ import {
 } from "../../features/roles/components";
 import {
   useAssignmentCandidatesQuery,
+  useAvailableRolesQuery,
   useRoleAssignmentsQuery,
   useSaveRoleAssignments
 } from "../../features/role-assignments/hooks";
-import { useRolesQuery } from "../../features/roles/hooks";
 
 export function RoleAssignmentsPage() {
   const [filters, setFilters] = useState<RoleFilterValues>({
@@ -33,7 +33,7 @@ export function RoleAssignmentsPage() {
     isError: isRolesError,
     isLoading: isRolesLoading,
     refetch
-  } = useRolesQuery();
+  } = useAvailableRolesQuery();
   const selectedRole = useMemo(
     () => roles.find(role => role.id === selectedRoleId) ?? null,
     [roles, selectedRoleId]

@@ -41,6 +41,31 @@ public sealed class PermissionAuthorizationService
             codeId => permissionSnapshot.GrantedCodeIds.Contains(codeId));
     }
 
+    public async Task<IReadOnlyDictionary<int, bool>> HasPermissionsAsync(
+        CurrentUserContext currentUserContext,
+        int[] requiredCodeIds,
+        CancellationToken cancellationToken = default)
+    {
+        var distinctRequiredCodeIds = requiredCodeIds
+            .Distinct()
+            .ToArray();
+
+        if (distinctRequiredCodeIds.Length == 0)
+        {
+            return new Dictionary<int, bool>();
+        }
+
+        var permissionSnapshot = await GetPermissionSnapshotAsync(currentUserContext, cancellationToken);
+        if (permissionSnapshot.IsSuperAdministrator)
+        {
+            return distinctRequiredCodeIds.ToDictionary(codeId => codeId, static _ => true);
+        }
+
+        return distinctRequiredCodeIds.ToDictionary(
+            codeId => codeId,
+            codeId => permissionSnapshot.GrantedCodeIds.Contains(codeId));
+    }
+
     public async Task<IReadOnlyDictionary<PermissionCode, bool>> HasPermissionsAsync(
         Guid userId,
         PermissionCode[] requiredPermissionCodes,
@@ -48,6 +73,23 @@ public sealed class PermissionAuthorizationService
     {
         var permissions = await HasPermissionsAsync(
             userId,
+            requiredPermissionCodes.Select(static permissionCode => (int)permissionCode).ToArray(),
+            cancellationToken);
+
+        return requiredPermissionCodes
+            .Distinct()
+            .ToDictionary(
+                permissionCode => permissionCode,
+                permissionCode => permissions[(int)permissionCode]);
+    }
+
+    public async Task<IReadOnlyDictionary<PermissionCode, bool>> HasPermissionsAsync(
+        CurrentUserContext currentUserContext,
+        PermissionCode[] requiredPermissionCodes,
+        CancellationToken cancellationToken = default)
+    {
+        var permissions = await HasPermissionsAsync(
+            currentUserContext,
             requiredPermissionCodes.Select(static permissionCode => (int)permissionCode).ToArray(),
             cancellationToken);
 
@@ -68,12 +110,30 @@ public sealed class PermissionAuthorizationService
         return permissions[requiredCodeId];
     }
 
+    public async Task<bool> HasPermissionAsync(
+        CurrentUserContext currentUserContext,
+        int requiredCodeId,
+        CancellationToken cancellationToken = default)
+    {
+        var permissions = await HasPermissionsAsync(currentUserContext, [requiredCodeId], cancellationToken);
+
+        return permissions[requiredCodeId];
+    }
+
     public Task<bool> HasPermissionAsync(
         Guid userId,
         PermissionCode requiredPermissionCode,
         CancellationToken cancellationToken = default)
     {
         return HasPermissionAsync(userId, (int)requiredPermissionCode, cancellationToken);
+    }
+
+    public Task<bool> HasPermissionAsync(
+        CurrentUserContext currentUserContext,
+        PermissionCode requiredPermissionCode,
+        CancellationToken cancellationToken = default)
+    {
+        return HasPermissionAsync(currentUserContext, (int)requiredPermissionCode, cancellationToken);
     }
 
     public async Task<bool> CanManageWorkspaceAsync(
@@ -84,12 +144,18 @@ public sealed class PermissionAuthorizationService
     {
         var userId = principal.FindFirstValue(ApplicationClaimTypes.Subject)
                      ?? principal.FindFirstValue(ApplicationClaimTypes.NameIdentifier);
-        if (!Guid.TryParse(userId, out var parsedUserId))
+        if (!Guid.TryParse(userId, out _))
         {
             return false;
         }
 
-        var permissionSnapshot = await GetPermissionSnapshotAsync(parsedUserId, cancellationToken);
+        var currentUserContext = CurrentUserContext.Create(principal);
+        if (currentUserContext is null)
+        {
+            return false;
+        }
+
+        var permissionSnapshot = await GetPermissionSnapshotAsync(currentUserContext, cancellationToken);
         if (permissionSnapshot.IsSuperAdministrator)
         {
             return true;
@@ -115,61 +181,47 @@ public sealed class PermissionAuthorizationService
 
     private async Task<PermissionSnapshot> GetPermissionSnapshotAsync(Guid userId, CancellationToken cancellationToken)
     {
-        var permissionRows = await _dbContext.UserRoles
+        var assignedRoles = await _dbContext.UserRoles
             .AsNoTracking()
             .Where(userRole => userRole.UserId == userId && userRole.IsActive)
             .Join(
                 _dbContext.Roles.AsNoTracking().Where(role => role.IsActive),
                 userRole => userRole.RoleId,
                 role => role.Id,
-                (userRole, role) => new
+                (_, role) => new
                 {
                     RoleId = role.Id,
                     RoleNormalizedName = role.NormalizedName ?? string.Empty
                 })
-            .SelectMany(
-                role => _dbContext.RolePermissions
-                    .AsNoTracking()
-                    .Where(rolePermission => rolePermission.IsActive && rolePermission.RoleId == role.RoleId)
-                    .Join(
-                        _dbContext.Permissions.AsNoTracking().Where(permission => permission.IsActive),
-                        rolePermission => rolePermission.PermissionId,
-                        permission => permission.Id,
-                        (_, permission) => new
-                        {
-                            CodeId = (int?)permission.CodeId,
-                            PermissionScopeId = (Guid?)permission.PermissionScopeId,
-                            Rank = (int?)permission.Rank
-                        })
-                    .DefaultIfEmpty(),
-                (role, permission) => new PermissionRow(
-                    role.RoleNormalizedName,
-                    permission == null
-                    || !permission.CodeId.HasValue
-                    || !permission.PermissionScopeId.HasValue
-                    || !permission.Rank.HasValue
-                        ? null
-                        : new PermissionMetadata(
-                            permission.CodeId.Value,
-                            permission.PermissionScopeId.Value,
-                            permission.Rank.Value)))
             .ToListAsync(cancellationToken);
 
-        if (permissionRows.Count == 0)
+        if (assignedRoles.Count == 0)
         {
             return PermissionSnapshot.Empty;
         }
 
-        if (permissionRows.Any(role => SystemRoles.IsSuperAdministratorValue(role.RoleNormalizedName)))
+        if (assignedRoles.Any(role => SystemRoles.IsSuperAdministratorValue(role.RoleNormalizedName)))
         {
             return PermissionSnapshot.SuperAdministrator;
         }
 
-        var directlyAssignedPermissions = permissionRows
-            .Where(row => row.Permission is not null)
-            .Select(row => row.Permission!)
+        var effectiveRoleIds = assignedRoles
+            .Select(role => role.RoleId)
             .Distinct()
             .ToArray();
+        var directlyAssignedPermissions = await _dbContext.RolePermissions
+            .AsNoTracking()
+            .Where(rolePermission => rolePermission.IsActive && effectiveRoleIds.Contains(rolePermission.RoleId))
+            .Join(
+                _dbContext.Permissions.AsNoTracking().Where(permission => permission.IsActive),
+                rolePermission => rolePermission.PermissionId,
+                permission => permission.Id,
+                (_, permission) => new PermissionMetadata(
+                    permission.CodeId,
+                    permission.PermissionScopeId,
+                    permission.Rank))
+            .Distinct()
+            .ToArrayAsync(cancellationToken);
 
         if (directlyAssignedPermissions.Length == 0)
         {
@@ -202,7 +254,96 @@ public sealed class PermissionAuthorizationService
         return new PermissionSnapshot(false, grantedCodeIds);
     }
 
-    private sealed record PermissionRow(string RoleNormalizedName, PermissionMetadata? Permission);
+    private async Task<PermissionSnapshot> GetPermissionSnapshotAsync(CurrentUserContext currentUserContext, CancellationToken cancellationToken)
+    {
+        var assignedRoles = await _dbContext.UserRoles
+            .AsNoTracking()
+            .Where(userRole => userRole.UserId == currentUserContext.UserId && userRole.IsActive)
+            .Join(
+                _dbContext.Roles.AsNoTracking().Where(role => role.IsActive),
+                userRole => userRole.RoleId,
+                role => role.Id,
+                (_, role) => new
+                {
+                    RoleId = role.Id,
+                    RoleNormalizedName = role.NormalizedName ?? string.Empty
+                })
+            .ToListAsync(cancellationToken);
+
+        if (assignedRoles.Count == 0)
+        {
+            return PermissionSnapshot.Empty;
+        }
+
+        var activeWorkspaceRoleIds = await _dbContext.WorkspaceRoles
+            .AsNoTracking()
+            .Where(workspaceRole => workspaceRole.WorkspaceId == currentUserContext.WorkspaceId && workspaceRole.IsActive)
+            .Select(workspaceRole => workspaceRole.RoleId)
+            .ToListAsync(cancellationToken);
+        var effectiveRoles = assignedRoles
+            .Where(role =>
+                SystemRoles.IsSuperAdministratorValue(role.RoleNormalizedName)
+                || activeWorkspaceRoleIds.Contains(role.RoleId))
+            .ToList();
+
+        if (effectiveRoles.Count == 0)
+        {
+            return PermissionSnapshot.Empty;
+        }
+
+        if (effectiveRoles.Any(role => SystemRoles.IsSuperAdministratorValue(role.RoleNormalizedName)))
+        {
+            return PermissionSnapshot.SuperAdministrator;
+        }
+
+        var effectiveRoleIds = effectiveRoles
+            .Select(role => role.RoleId)
+            .Distinct()
+            .ToArray();
+        var directlyAssignedPermissions = await _dbContext.RolePermissions
+            .AsNoTracking()
+            .Where(rolePermission => rolePermission.IsActive && effectiveRoleIds.Contains(rolePermission.RoleId))
+            .Join(
+                _dbContext.Permissions.AsNoTracking().Where(permission => permission.IsActive),
+                rolePermission => rolePermission.PermissionId,
+                permission => permission.Id,
+                (_, permission) => new PermissionMetadata(
+                    permission.CodeId,
+                    permission.PermissionScopeId,
+                    permission.Rank))
+            .Distinct()
+            .ToArrayAsync(cancellationToken);
+
+        if (directlyAssignedPermissions.Length == 0)
+        {
+            return PermissionSnapshot.Empty;
+        }
+
+        var relevantPermissionScopeIds = directlyAssignedPermissions
+            .Select(permission => permission.PermissionScopeId)
+            .Distinct()
+            .ToArray();
+
+        var activePermissions = await _dbContext.Permissions
+            .AsNoTracking()
+            .Where(permission => permission.IsActive && relevantPermissionScopeIds.Contains(permission.PermissionScopeId))
+            .Select(permission => new PermissionMetadata(
+                permission.CodeId,
+                permission.PermissionScopeId,
+                permission.Rank))
+            .ToListAsync(cancellationToken);
+
+        var grantedCodeIds = directlyAssignedPermissions
+            .SelectMany(
+                assignedPermission => activePermissions.Where(
+                    candidate =>
+                        candidate.PermissionScopeId == assignedPermission.PermissionScopeId
+                        && candidate.Rank <= assignedPermission.Rank))
+            .Select(candidate => candidate.CodeId)
+            .ToHashSet();
+
+        return new PermissionSnapshot(false, grantedCodeIds);
+    }
 
     private sealed record PermissionMetadata(int CodeId, Guid PermissionScopeId, int Rank);
 

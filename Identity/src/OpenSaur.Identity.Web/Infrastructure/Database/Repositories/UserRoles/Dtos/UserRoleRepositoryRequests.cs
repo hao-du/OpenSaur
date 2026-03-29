@@ -23,7 +23,7 @@ public sealed record GetUserRolesByUserAndRoleRequest(
     Guid RoleId,
     Guid? ExcludedUserRoleId = null);
 
-public sealed record GetActiveNormalizedRoleNamesForUserRequest(Guid UserId);
+public sealed record GetActiveNormalizedRoleNamesForUserRequest(Guid UserId, Guid WorkspaceId);
 
 public sealed record GetAccessibleUserRolesResponse(IReadOnlyList<ApplicationUserRole> UserRoles);
 

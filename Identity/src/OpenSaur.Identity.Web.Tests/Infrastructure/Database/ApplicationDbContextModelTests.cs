@@ -39,6 +39,7 @@ public sealed class ApplicationDbContextModelTests
                          .SequenceEqual([nameof(ApplicationUserRole.UserId), nameof(ApplicationUserRole.RoleId)]));
         Assert.Equal("UserRoles", userRoleEntity.GetTableName());
         Assert.Equal("Workspaces", dbContext.Model.FindEntityType(typeof(Workspace))!.GetTableName());
+        Assert.Equal("WorkspaceRoles", dbContext.Model.FindEntityType(typeof(WorkspaceRole))!.GetTableName());
         Assert.Equal("PermissionScopes", dbContext.Model.FindEntityType(typeof(PermissionScope))!.GetTableName());
         Assert.Equal("Permissions", dbContext.Model.FindEntityType(typeof(Permission))!.GetTableName());
         Assert.Equal("RolePermissions", dbContext.Model.FindEntityType(typeof(RolePermission))!.GetTableName());
@@ -55,6 +56,7 @@ public sealed class ApplicationDbContextModelTests
         var userSeeds = designTimeModel.FindEntityType(typeof(ApplicationUser))!.GetSeedData();
         var userRoleSeeds = designTimeModel.FindEntityType(typeof(ApplicationUserRole))!.GetSeedData();
         var workspaceSeeds = designTimeModel.FindEntityType(typeof(Workspace))!.GetSeedData();
+        var workspaceRoleSeeds = designTimeModel.FindEntityType(typeof(WorkspaceRole))!.GetSeedData();
         var permissionScopeSeeds = designTimeModel.FindEntityType(typeof(PermissionScope))!.GetSeedData();
         var permissionSeeds = designTimeModel.FindEntityType(typeof(Permission))!.GetSeedData();
         var rolePermissionSeeds = designTimeModel.FindEntityType(typeof(RolePermission))!.GetSeedData();
@@ -90,6 +92,25 @@ public sealed class ApplicationDbContextModelTests
             workspaceSeeds,
             seed => string.Equals(seed[nameof(Workspace.Name)] as string, SystemWorkspaces.Personal, StringComparison.Ordinal)
                     && Equals(seed[nameof(Workspace.IsActive)], true));
+
+        var personalWorkspaceSeed = workspaceSeeds.Single(
+            seed => string.Equals(seed[nameof(Workspace.Name)] as string, SystemWorkspaces.Personal, StringComparison.Ordinal));
+        var administratorRoleSeed = roleSeeds.Single(
+            seed => string.Equals(seed[nameof(ApplicationRole.Name)] as string, StandardRoleNames.Administrator, StringComparison.Ordinal));
+        var userRoleSeed = roleSeeds.Single(
+            seed => string.Equals(seed[nameof(ApplicationRole.Name)] as string, StandardRoleNames.User, StringComparison.Ordinal));
+
+        Assert.Contains(
+            workspaceRoleSeeds,
+            seed => Equals(seed[nameof(WorkspaceRole.WorkspaceId)], personalWorkspaceSeed[nameof(Workspace.Id)])
+                    && Equals(seed[nameof(WorkspaceRole.RoleId)], administratorRoleSeed[nameof(ApplicationRole.Id)])
+                    && Equals(seed[nameof(WorkspaceRole.IsActive)], true));
+        Assert.Contains(
+            workspaceRoleSeeds,
+            seed => Equals(seed[nameof(WorkspaceRole.WorkspaceId)], personalWorkspaceSeed[nameof(Workspace.Id)])
+                    && Equals(seed[nameof(WorkspaceRole.RoleId)], userRoleSeed[nameof(ApplicationRole.Id)])
+                    && Equals(seed[nameof(WorkspaceRole.IsActive)], true));
+
         Assert.Contains(
             permissionScopeSeeds,
             seed => Equals(seed[nameof(PermissionScope.Id)], PermissionScopeCatalog.AdministratorPermissionScopeId)
@@ -102,8 +123,6 @@ public sealed class ApplicationDbContextModelTests
                     && Equals(seed[nameof(Permission.Rank)], 2)
                     && Equals(seed[nameof(Permission.PermissionScopeId)], PermissionScopeCatalog.AdministratorPermissionScopeId));
 
-        var administratorRoleSeed = roleSeeds.Single(
-            seed => string.Equals(seed[nameof(ApplicationRole.Name)] as string, StandardRoleNames.Administrator, StringComparison.Ordinal));
         var administratorPermissionSeed = permissionSeeds.Single(
             seed => Equals(seed[nameof(Permission.CodeId)], (int)PermissionCode.Administrator_CanManage));
 

@@ -26,7 +26,7 @@ public sealed class PermissionAuthorizationHandler
         }
 
         var permissions = await _permissionAuthorizationService.HasPermissionsAsync(
-            currentUserContext.UserId,
+            currentUserContext,
             requirement.RequiredPermissions.ToArray(),
             CancellationToken.None);
 

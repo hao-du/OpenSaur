@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using OpenIddict.EntityFrameworkCore;
 using OpenSaur.Identity.Web.Domain.Identity;
+using OpenSaur.Identity.Web.Domain.Workspaces;
 using OpenSaur.Identity.Web.Features.UserRoles.CreateUserRole;
 using OpenSaur.Identity.Web.Features.UserRoles.EditUserRole;
 using OpenSaur.Identity.Web.Infrastructure.Database;
@@ -14,6 +15,7 @@ using OpenSaur.Identity.Web.Infrastructure.Database.Repositories.Roles;
 using OpenSaur.Identity.Web.Infrastructure.Database.Repositories.UserRoles;
 using OpenSaur.Identity.Web.Infrastructure.Database.Repositories.UserRoles.Dtos;
 using OpenSaur.Identity.Web.Infrastructure.Database.Repositories.Users;
+using OpenSaur.Identity.Web.Infrastructure.Database.Repositories.WorkspaceRoles;
 using OpenSaur.Identity.Web.Infrastructure.Http.Responses;
 using OpenSaur.Identity.Web.Infrastructure.Security;
 
@@ -30,12 +32,13 @@ public sealed class UserRolePersistenceResultTests
         var options = CreateOptions(connection);
 
         Guid userId;
+        Guid workspaceId;
 
         await using (var setupContext = new ApplicationDbContext(options))
         {
             await setupContext.Database.EnsureCreatedAsync();
 
-            var workspaceId = await setupContext.Workspaces
+            workspaceId = await setupContext.Workspaces
                 .Select(workspace => workspace.Id)
                 .SingleAsync();
 
@@ -94,6 +97,25 @@ public sealed class UserRolePersistenceResultTests
 
             setupContext.Users.Add(user);
             setupContext.Roles.AddRange(activeRole, administratorRole, inactiveRole, inactiveAssignmentRole);
+            setupContext.WorkspaceRoles.AddRange(
+                new WorkspaceRole
+                {
+                    Id = Guid.CreateVersion7(),
+                    WorkspaceId = workspaceId,
+                    RoleId = activeRole.Id,
+                    Description = "active role available in workspace",
+                    IsActive = true,
+                    CreatedBy = Guid.CreateVersion7()
+                },
+                new WorkspaceRole
+                {
+                    Id = Guid.CreateVersion7(),
+                    WorkspaceId = workspaceId,
+                    RoleId = administratorRole.Id,
+                    Description = "administrator role available in workspace",
+                    IsActive = true,
+                    CreatedBy = Guid.CreateVersion7()
+                });
             setupContext.UserRoles.AddRange(
                 new ApplicationUserRole
                 {
@@ -141,7 +163,7 @@ public sealed class UserRolePersistenceResultTests
         var repository = new UserRoleRepository(repositoryContext);
 
         var result = await repository.GetActiveNormalizedRoleNamesForUserAsync(
-            new GetActiveNormalizedRoleNamesForUserRequest(userId),
+            new GetActiveNormalizedRoleNamesForUserRequest(userId, workspaceId),
             CancellationToken.None);
 
         Assert.True(result.IsSuccess);
@@ -190,6 +212,16 @@ public sealed class UserRolePersistenceResultTests
                     CreatedBy = Guid.CreateVersion7(),
                     ConcurrencyStamp = Guid.NewGuid().ToString("N")
                 });
+            setupContext.WorkspaceRoles.Add(
+                new WorkspaceRole
+                {
+                    Id = Guid.CreateVersion7(),
+                    WorkspaceId = workspaceId,
+                    RoleId = setupContext.Roles.Local.Single(role => role.Name == "Duplicate Role").Id,
+                    Description = "duplicate role available in workspace",
+                    IsActive = true,
+                    CreatedBy = Guid.CreateVersion7()
+                });
 
             await setupContext.SaveChangesAsync();
         }
@@ -225,6 +257,7 @@ public sealed class UserRolePersistenceResultTests
             new OutboxMessageWriter(handlerContext),
             new UserRepository(handlerContext),
             new RoleRepository(handlerContext),
+            new WorkspaceRoleRepository(handlerContext),
             new UserRoleRepository(handlerContext),
             CancellationToken.None);
 
@@ -321,6 +354,25 @@ public sealed class UserRolePersistenceResultTests
 
             setupContext.Users.Add(user);
             setupContext.Roles.AddRange(originalRole, replacementRole);
+            setupContext.WorkspaceRoles.AddRange(
+                new WorkspaceRole
+                {
+                    Id = Guid.CreateVersion7(),
+                    WorkspaceId = workspaceId,
+                    RoleId = originalRole.Id,
+                    Description = "original role available in workspace",
+                    IsActive = true,
+                    CreatedBy = Guid.CreateVersion7()
+                },
+                new WorkspaceRole
+                {
+                    Id = Guid.CreateVersion7(),
+                    WorkspaceId = workspaceId,
+                    RoleId = replacementRole.Id,
+                    Description = "replacement role available in workspace",
+                    IsActive = true,
+                    CreatedBy = Guid.CreateVersion7()
+                });
             setupContext.UserRoles.Add(assignment);
             await setupContext.SaveChangesAsync();
 
@@ -341,6 +393,7 @@ public sealed class UserRolePersistenceResultTests
             handlerContext,
             new OutboxMessageWriter(handlerContext),
             new RoleRepository(handlerContext),
+            new WorkspaceRoleRepository(handlerContext),
             new UserRoleRepository(handlerContext),
             CancellationToken.None);
 

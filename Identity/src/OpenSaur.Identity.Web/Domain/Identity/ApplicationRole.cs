@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Identity;
+using OpenSaur.Identity.Web.Domain.Workspaces;
 
 namespace OpenSaur.Identity.Web.Domain.Identity;
 
@@ -17,4 +18,6 @@ public class ApplicationRole : IdentityRole<Guid>
     public DateTime? UpdatedOn { get; set; }
 
     public ICollection<ApplicationUserRole> UserRoles { get; set; } = [];
+
+    public ICollection<WorkspaceRole> WorkspaceRoles { get; set; } = [];
 }

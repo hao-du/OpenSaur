@@ -11,6 +11,7 @@ const useWorkspaceQueryMock = vi.fn();
 const useCreateWorkspaceMock = vi.fn();
 const useEditWorkspaceMock = vi.fn();
 const useRolesQueryMock = vi.fn();
+const useAvailableRolesQueryMock = vi.fn();
 const useRoleAssignmentsQueryMock = vi.fn();
 const useAssignmentCandidatesQueryMock = vi.fn();
 const useSaveRoleAssignmentsMock = vi.fn();
@@ -54,6 +55,7 @@ vi.mock("../../features/roles/hooks", () => ({
 
 vi.mock("../../features/role-assignments/hooks", () => ({
   useAssignmentCandidatesQuery: () => useAssignmentCandidatesQueryMock(),
+  useAvailableRolesQuery: () => useAvailableRolesQueryMock(),
   useRoleAssignmentsQuery: (...args: unknown[]) => useRoleAssignmentsQueryMock(...args),
   useSaveRoleAssignments: () => useSaveRoleAssignmentsMock()
 }));
@@ -143,6 +145,20 @@ describe("AppRouter", () => {
       data: [],
       isError: false,
       isLoading: false
+    });
+    useAvailableRolesQueryMock.mockReturnValue({
+      data: [
+        {
+          description: "Administrators manage identity configuration.",
+          id: "role-1",
+          isActive: true,
+          name: "Administrator",
+          normalizedName: "ADMINISTRATOR"
+        }
+      ],
+      isError: false,
+      isLoading: false,
+      refetch: vi.fn()
     });
     useAssignmentCandidatesQueryMock.mockReturnValue({
       data: [],

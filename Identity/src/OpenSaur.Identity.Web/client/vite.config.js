@@ -7,32 +7,36 @@ var backendTarget = process.env.ASPNETCORE_HTTPS_PORTS != null &&
         process.env.ASPNETCORE_URLS.length > 0
         ? process.env.ASPNETCORE_URLS.split(";")[0]
         : "https://localhost:7017";
-export default defineConfig({
-    build: {
-        emptyOutDir: true,
-        outDir: "../wwwroot"
-    },
-    plugins: [react()],
-    server: {
-        host: "0.0.0.0",
-        port: 5173,
-        proxy: {
-            "/.well-known": {
-                changeOrigin: true,
-                secure: false,
-                target: backendTarget
-            },
-            "/api": {
-                changeOrigin: true,
-                secure: false,
-                target: backendTarget
-            },
-            "/connect": {
-                changeOrigin: true,
-                secure: false,
-                target: backendTarget
-            }
+export default defineConfig(function (_a) {
+    var mode = _a.mode;
+    return ({
+        build: {
+            emptyOutDir: true,
+            outDir: "../wwwroot",
+            sourcemap: mode === "development"
         },
-        strictPort: true
-    }
+        plugins: [react()],
+        server: {
+            host: "0.0.0.0",
+            port: 5173,
+            proxy: {
+                "/.well-known": {
+                    changeOrigin: true,
+                    secure: false,
+                    target: backendTarget
+                },
+                "/api": {
+                    changeOrigin: true,
+                    secure: false,
+                    target: backendTarget
+                },
+                "/connect": {
+                    changeOrigin: true,
+                    secure: false,
+                    target: backendTarget
+                }
+            },
+            strictPort: true
+        }
+    });
 });

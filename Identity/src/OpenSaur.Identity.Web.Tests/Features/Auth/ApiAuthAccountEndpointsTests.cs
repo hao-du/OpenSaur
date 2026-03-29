@@ -237,6 +237,35 @@ public sealed class ApiAuthAccountEndpointsTests : IClassFixture<OpenSaurWebAppl
     }
 
     [Fact]
+    public async Task GetMe_WhenRoleIsNotAssignedToWorkspace_ExcludesRoleAndReturnsCanManageUsersFalse()
+    {
+        var managerCredentials = TestFakers.CreateUserCredentials();
+        const string workspaceName = "Operations";
+        var workspaceId = await TestIdentitySeeder.SeedWorkspaceAsync(_factory, workspaceName);
+        await TestIdentitySeeder.SeedUserAsync(
+            _factory,
+            managerCredentials.UserName,
+            managerCredentials.Password,
+            [StandardRoleNames.Administrator],
+            workspaceName: workspaceName);
+        var administratorRoleId = await TestIdentitySeeder.SeedRoleAsync(_factory, StandardRoleNames.Administrator);
+        await TestIdentitySeeder.SeedWorkspaceRoleAsync(_factory, workspaceId, administratorRoleId, isActive: false);
+
+        using var client = FirstPartyApiTestClient.CreateClient(_factory);
+        var accessToken = await FirstPartyApiTestClient.GetAccessTokenAsync(
+            client,
+            managerCredentials.UserName,
+            managerCredentials.Password);
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+        var response = await client.GetAsync("/api/auth/me");
+        var payload = await ApiResponseReader.ReadSuccessDataAsync<AuthMeResponse>(response);
+
+        Assert.DoesNotContain(payload.Roles, role => string.Equals(role, StandardRoleNames.Administrator.ToUpperInvariant(), StringComparison.Ordinal));
+        Assert.False(payload.CanManageUsers);
+    }
+
+    [Fact]
     public async Task GetMe_WhenCallerIsAdministratorInPersonalWorkspace_ReturnsCanManageUsersFalse()
     {
         var managerCredentials = TestFakers.CreateUserCredentials();

@@ -89,7 +89,7 @@ public static class StartImpersonationHandler
         }
 
         var effectiveRolesResult = await userRoleRepository.GetActiveNormalizedRoleNamesForUserAsync(
-            new GetActiveNormalizedRoleNamesForUserRequest(effectiveUser.Id),
+            new GetActiveNormalizedRoleNamesForUserRequest(effectiveUser.Id, request.WorkspaceId),
             cancellationToken);
         var additionalClaims = new List<Claim>
         {

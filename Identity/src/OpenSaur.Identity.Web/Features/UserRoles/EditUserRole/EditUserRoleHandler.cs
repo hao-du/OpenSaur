@@ -7,6 +7,8 @@ using OpenSaur.Identity.Web.Infrastructure.Database.Repositories.Roles;
 using OpenSaur.Identity.Web.Infrastructure.Database.Repositories.Roles.Dtos;
 using OpenSaur.Identity.Web.Infrastructure.Database.Repositories.UserRoles;
 using OpenSaur.Identity.Web.Infrastructure.Database.Repositories.UserRoles.Dtos;
+using OpenSaur.Identity.Web.Infrastructure.Database.Repositories.WorkspaceRoles;
+using OpenSaur.Identity.Web.Infrastructure.Database.Repositories.WorkspaceRoles.Dtos;
 using OpenSaur.Identity.Web.Infrastructure.Http.Responses;
 using OpenSaur.Identity.Web.Infrastructure.Results;
 using OpenSaur.Identity.Web.Infrastructure.Security;
@@ -23,6 +25,7 @@ public static class EditUserRoleHandler
         ApplicationDbContext dbContext,
         OutboxMessageWriter outboxMessageWriter,
         RoleRepository roleRepository,
+        WorkspaceRoleRepository workspaceRoleRepository,
         UserRoleRepository userRoleRepository,
         CancellationToken cancellationToken)
     {
@@ -43,6 +46,14 @@ public static class EditUserRoleHandler
             new GetActiveRolesByIdsRequest([request.RoleId]),
             cancellationToken);
         if (rolesResult.Value?.Roles.Count != 1)
+        {
+            return Result.Validation(UserRoleValidationProblems.ForRole()).ToApiErrorResult();
+        }
+
+        var availableRoleResult = await workspaceRoleRepository.HasActiveWorkspaceRoleAsync(
+            new HasActiveWorkspaceRoleRequest(currentUserContext.WorkspaceId, request.RoleId),
+            cancellationToken);
+        if (availableRoleResult.Value is not { Exists: true })
         {
             return Result.Validation(UserRoleValidationProblems.ForRole()).ToApiErrorResult();
         }

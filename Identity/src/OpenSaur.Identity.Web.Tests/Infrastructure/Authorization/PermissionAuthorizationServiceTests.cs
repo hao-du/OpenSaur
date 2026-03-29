@@ -375,6 +375,13 @@ public sealed class PermissionAuthorizationServiceTests
             UserId = user.Id,
             RoleId = customRole.Id
         });
+        dbContext.WorkspaceRoles.Add(new WorkspaceRole
+        {
+            WorkspaceId = workspace.Id,
+            RoleId = customRole.Id,
+            CreatedBy = Guid.CreateVersion7(),
+            CreatedOn = DateTime.UtcNow
+        });
         dbContext.RolePermissions.Add(new RolePermission
         {
             RoleId = customRole.Id,
@@ -416,6 +423,13 @@ public sealed class PermissionAuthorizationServiceTests
         {
             UserId = user.Id,
             RoleId = customRole.Id
+        });
+        dbContext.WorkspaceRoles.Add(new WorkspaceRole
+        {
+            WorkspaceId = workspace.Id,
+            RoleId = customRole.Id,
+            CreatedBy = Guid.CreateVersion7(),
+            CreatedOn = DateTime.UtcNow
         });
         dbContext.RolePermissions.Add(new RolePermission
         {
@@ -517,7 +531,7 @@ public sealed class PermissionAuthorizationServiceTests
             (int)PermissionCode.Administrator_CanManage);
 
         Assert.True(isAuthorized);
-        Assert.Equal(2, commandCounter.CommandCount);
+        Assert.Equal(3, commandCounter.CommandCount);
     }
 
     private static ClaimsPrincipal CreatePrincipal(

@@ -16,6 +16,7 @@ import {
   useImpersonationOptionsQuery,
   useStartImpersonation
 } from "../../features/auth/hooks";
+import { useRolesQuery } from "../../features/roles/hooks";
 import {
   useCreateWorkspace,
   useEditWorkspace,
@@ -36,6 +37,7 @@ export function WorkspacesPage() {
   const [selectedWorkspaceId, setSelectedWorkspaceId] = useState<string | null>(null);
   const [impersonationWorkspaceId, setImpersonationWorkspaceId] = useState<string | null>(null);
   const { fetchCurrentUser } = useCurrentUserQuery();
+  const { data: roles = [], isLoading: isRolesLoading } = useRolesQuery();
   const {
     data: workspaces = [],
     isError,
@@ -80,21 +82,39 @@ export function WorkspacesPage() {
       return matchesSearch && matchesStatus;
     });
   }, [filters, workspaces]);
+  const defaultAssignedRoleIds = useMemo(
+    () => roles
+      .filter(role => role.isActive && role.normalizedName !== "SUPERADMINISTRATOR")
+      .map(role => role.id),
+    [roles]
+  );
 
-  async function handleCreateWorkspace(values: { description: string; isActive: boolean; name: string; }) {
+  async function handleCreateWorkspace(values: {
+    description: string;
+    isActive: boolean;
+    name: string;
+    selectedRoleIds: string[];
+  }) {
     await createWorkspace({
+      assignedRoleIds: values.selectedRoleIds,
       description: values.description,
       name: values.name
     });
     setIsCreateDrawerOpen(false);
   }
 
-  async function handleEditWorkspace(values: { description: string; isActive: boolean; name: string; }) {
+  async function handleEditWorkspace(values: {
+    description: string;
+    isActive: boolean;
+    name: string;
+    selectedRoleIds: string[];
+  }) {
     if (!selectedWorkspaceId) {
       return;
     }
 
     await editWorkspace({
+      assignedRoleIds: values.selectedRoleIds,
       description: values.description,
       id: selectedWorkspaceId,
       isActive: values.isActive,
@@ -176,9 +196,11 @@ export function WorkspacesPage() {
         }}
       />
       <WorkspaceFormDrawer
+        availableRoles={roles}
+        defaultAssignedRoleIds={defaultAssignedRoleIds}
         errorMessage={createErrorMessage}
         isEditMode={false}
-        isLoading={false}
+        isLoading={isRolesLoading}
         isOpen={isCreateDrawerOpen}
         isSubmitting={isCreating}
         onClose={() => {
@@ -187,10 +209,12 @@ export function WorkspacesPage() {
         onSubmit={handleCreateWorkspace}
       />
       <WorkspaceFormDrawer
+        availableRoles={roles}
+        defaultAssignedRoleIds={defaultAssignedRoleIds}
         errorMessage={editErrorMessage}
         initialValues={selectedWorkspace}
         isEditMode
-        isLoading={isSelectedWorkspaceLoading}
+        isLoading={isSelectedWorkspaceLoading || isRolesLoading}
         isOpen={selectedWorkspaceId !== null}
         isSubmitting={isEditing}
         onClose={() => {

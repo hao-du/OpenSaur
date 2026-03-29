@@ -10,10 +10,11 @@ const backendTarget =
       ? process.env.ASPNETCORE_URLS.split(";")[0]
       : "https://localhost:7017";
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   build: {
     emptyOutDir: true,
-    outDir: "../wwwroot"
+    outDir: "../wwwroot",
+    sourcemap: mode === "development"
   },
   plugins: [react()],
   server: {
@@ -38,4 +39,4 @@ export default defineConfig({
     },
     strictPort: true
   }
-});
+}));

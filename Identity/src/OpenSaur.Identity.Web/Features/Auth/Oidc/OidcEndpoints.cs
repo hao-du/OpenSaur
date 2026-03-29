@@ -85,7 +85,7 @@ public static class OidcEndpoints
                 }
 
                 var rolesResult = await userRoleRepository.GetActiveNormalizedRoleNamesForUserAsync(
-                    new GetActiveNormalizedRoleNamesForUserRequest(user.Id),
+                    new GetActiveNormalizedRoleNamesForUserRequest(user.Id, effectiveWorkspaceId),
                     httpContext.RequestAborted);
                 var principal = AuthSessionPrincipalFactory.Create(
                     user,

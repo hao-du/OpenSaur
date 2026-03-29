@@ -11,34 +11,30 @@ The system SHALL store app-owned identity management records with `Id`, `Descrip
 - **THEN** the record includes the standard audit columns and a version 7 GUID identifier
 
 ### Requirement: Users SHALL be managed through explicit action-style APIs
-The system SHALL expose action-style minimal API endpoints for user listing, lookup, creation, editing, administrator password reset, and explicit workspace reassignment, and SHALL store each user in a workspace with JSON user settings metadata.
+The system SHALL expose action-style minimal API endpoints for user listing, lookup, creation, editing, administrator password reset, and explicit workspace reassignment, and SHALL store each user in a workspace with JSON user settings metadata. User-management access SHALL be limited to callers who are currently operating inside a specific workspace scope. In non-`Personal` workspaces, workspace-scoped callers with effective `Administrator.CanManage` permission and workspace-scoped `SuperAdministrator` callers MAY manage users. In the `Personal` workspace, only `SuperAdministrator` callers MAY manage users.
 
-#### Scenario: User is created
-- **WHEN** an authorized administrator creates a user through the user create endpoint
-- **THEN** the system stores the user with a workspace assignment and `UserSettings` JSON payload support
+#### Scenario: All-workspaces session cannot manage users
+- **WHEN** a non-impersonated `SuperAdministrator` session at `All workspaces` calls the user-management endpoints
+- **THEN** the system rejects the request instead of exposing cross-workspace user management from the `Users` surface
 
-#### Scenario: User is edited
-- **WHEN** an authorized administrator edits a user through the user edit endpoint
-- **THEN** the system updates the requested user fields without requiring a delete endpoint
+#### Scenario: Non-superadmin cannot manage Personal workspace users
+- **WHEN** a non-superadmin caller in the `Personal` workspace has effective `Administrator.CanManage`
+- **THEN** the system still rejects user-management requests for that workspace
 
-#### Scenario: Administrator resets a user password
-- **WHEN** an authorized administrator submits a password reset request for a managed user
-- **THEN** the system updates the target user's password through the dedicated user-management password action endpoint and requires the target user to change it again on next sign-in
-
-#### Scenario: User workspace is reassigned
-- **WHEN** an authorized super administrator submits a change-workspace request for a user and an active target workspace
-- **THEN** the system updates the user's workspace membership through the dedicated workspace action endpoint
+#### Scenario: Workspace-scoped admin manages org users
+- **WHEN** a workspace-scoped caller in a non-`Personal` workspace has effective `Administrator.CanManage`
+- **THEN** the system authorizes list, lookup, create, edit, and deactivate operations for managed users in that workspace
 
 ### Requirement: Roles and user-role assignments SHALL be managed explicitly
-The system SHALL expose action-style minimal API endpoints for role management and user-role assignment management using app-owned user-role records that support audit data and activation state.
+The system SHALL expose action-style minimal API endpoints for role management and user-role assignment management using app-owned user-role records that support audit data and activation state. The system SHALL also expose backend read support for user-scoped current assignments and active role candidates so the hosted frontend can manage user-role assignment from the `Users` editor without reconstructing the model client-side.
 
-#### Scenario: Role is created
-- **WHEN** an authorized administrator creates a role through the role create endpoint
-- **THEN** the system stores the role and makes it available for assignment
+#### Scenario: User-scoped assignments are loaded for a managed user
+- **WHEN** an authorized caller requests assignment data for a specific managed user
+- **THEN** the system returns the current accessible user-role assignments for that user
 
-#### Scenario: User-role assignment is created
-- **WHEN** an authorized administrator creates a user-role assignment through the user-role create endpoint
-- **THEN** the system stores an app-owned user-role record that supports audit fields and activation state
+#### Scenario: Active role candidates are loaded for user assignment editing
+- **WHEN** an authorized caller requests candidate roles for user assignment editing
+- **THEN** the system returns only active roles that are valid for the managed scope
 
 ### Requirement: Workspace membership SHALL drive administrative scope
 The system SHALL place each user in a workspace, create a default `Personal` workspace, and limit `Administrator` actions to the administrator's workspace while allowing `SuperAdministrator` to operate across workspaces.
@@ -84,4 +80,22 @@ The system SHALL return the common application JSON envelope for `/api/user/*`, 
 #### Scenario: Directory request fails
 - **WHEN** a directory-management request fails because of validation, authorization, not-found, conflict, or an unexpected server exception
 - **THEN** the system returns the common failure envelope and does not expose raw `ProblemDetails` or inconsistent ad hoc JSON shapes
+
+### Requirement: Directory management SHALL persist workspace-owned role availability
+The system SHALL persist workspace-owned role availability through app-owned workspace-role records that support audit data and activation state, and workspace create/edit APIs SHALL manage the selected role ids as part of the workspace save flow.
+
+#### Scenario: Workspace save persists selected role ids
+- **WHEN** an authorized super administrator creates or edits a workspace with selected active non-reserved role ids
+- **THEN** the system stores workspace-role records for the selected roles and excludes non-selected roles from the active mapping
+
+### Requirement: Workspace-scoped role-assignment reads SHALL honor workspace role availability
+The system SHALL filter workspace-scoped role lists and role candidates by the active role availability of the current workspace. Non-reserved roles that are not assigned to the workspace SHALL NOT be returned by the workspace-scoped role-assignment read APIs.
+
+#### Scenario: User role candidates are workspace-scoped
+- **WHEN** an authorized caller requests user-assignment role candidates inside a workspace
+- **THEN** the system returns only active non-reserved roles assigned to that workspace
+
+#### Scenario: Role assignment list is workspace-scoped
+- **WHEN** an impersonated super administrator requests role-assignment roles inside a workspace
+- **THEN** the system returns only active non-reserved roles assigned to that workspace
 

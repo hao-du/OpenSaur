@@ -68,7 +68,7 @@ public sealed class UserAuthorizationService(
         }
 
         return await permissionAuthorizationService.HasPermissionAsync(
-            currentUserContext.UserId,
+            currentUserContext,
             PermissionCode.Administrator_CanManage,
             cancellationToken);
     }

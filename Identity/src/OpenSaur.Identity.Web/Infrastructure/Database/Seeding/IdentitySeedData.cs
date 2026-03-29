@@ -11,6 +11,8 @@ internal static class IdentitySeedData
     private static readonly Guid SystemActorId = Guid.Parse("67be05c0-1f88-4a2c-86f4-d97ad4589135");
     private static readonly Guid AdministratorCanManageRolePermissionId = Guid.Parse("d0edb44d-1a1d-47f8-85fd-5998a2c0de0c");
     private static readonly Guid SystemAdministratorUserRoleAssignmentId = Guid.Parse("dcbe2a91-7e7f-4f7a-a053-f9553fcc2aba");
+    private static readonly Guid PersonalWorkspaceAdministratorRoleAssignmentId = Guid.Parse("81a4f14f-27f9-4b8a-a360-b26e71877648");
+    private static readonly Guid PersonalWorkspaceUserRoleAssignmentId = Guid.Parse("4dba0a76-675d-487d-9d0c-7e4bdbb98b7e");
     private const string SystemAdministratorPasswordHash = "AQAAAAIAAYagAAAAEOFFiUu7B4wSzY7A4i1/VLOUnRjvSDE14MryEaaq4/og63kvvhceW3RF1F+hb+ETlg==";
 
     private static readonly IReadOnlyDictionary<int, Guid> PermissionIds = new Dictionary<int, Guid>
@@ -130,6 +132,31 @@ internal static class IdentitySeedData
             UserId = SystemAdministratorUserId,
             RoleId = SuperAdministratorRoleId,
             Description = "Default system administrator role assignment.",
+            IsActive = true,
+            CreatedBy = SystemActorId,
+            CreatedOn = SeededOnUtc
+        };
+    }
+
+    internal static IEnumerable<WorkspaceRole> GetWorkspaceRoles()
+    {
+        yield return new WorkspaceRole
+        {
+            Id = PersonalWorkspaceAdministratorRoleAssignmentId,
+            WorkspaceId = PersonalWorkspaceId,
+            RoleId = AdministratorRoleId,
+            Description = "Default personal-workspace administrator role availability.",
+            IsActive = true,
+            CreatedBy = SystemActorId,
+            CreatedOn = SeededOnUtc
+        };
+
+        yield return new WorkspaceRole
+        {
+            Id = PersonalWorkspaceUserRoleAssignmentId,
+            WorkspaceId = PersonalWorkspaceId,
+            RoleId = UserRoleId,
+            Description = "Default personal-workspace user role availability.",
             IsActive = true,
             CreatedBy = SystemActorId,
             CreatedOn = SeededOnUtc
