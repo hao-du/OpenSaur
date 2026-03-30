@@ -24,11 +24,11 @@ variables:
   publishArtifactName: webapp-publish
 
 stages:
-  - stage: Test
-    displayName: Run Tests
+  - stage: Build
+    displayName: Build
     jobs:
-      - job: BackendTest
-        displayName: Run Backend Unit Tests
+      - job: BackendBuild
+        displayName: Build Backend
         steps:
           - checkout: self
             clean: true
@@ -77,8 +77,8 @@ stages:
               failTaskOnFailedTests: true
               testRunTitle: Backend unit tests
 
-      - job: FrontendTest
-        displayName: Run Frontend Unit Tests
+      - job: FrontendBuild
+        displayName: Build Frontend
         steps:
           - checkout: self
             clean: true
@@ -109,18 +109,18 @@ stages:
               customCommand: run build
 
   - stage: Publish
-    displayName: Build and Publish Artifact
-    dependsOn: Test
+    displayName: Publish Artifact
+    dependsOn: Build
     condition: succeeded()
     jobs:
-      - job: BuildAndPublish
-        displayName: Build and Publish Application
+      - job: Publish
+        displayName: Publish Application
         steps:
           - checkout: self
             clean: true
 
           - task: DotNetCoreCLI@2
-            displayName: Publish web application artifact
+            displayName: Publish web application
             inputs:
               command: 'publish'
               publishWebProjects: false
@@ -130,7 +130,7 @@ stages:
               modifyOutputPath: false
 
           - task: PublishPipelineArtifact@1
-            displayName: Publish web application artifact
+            displayName: Publish to artifact
             inputs:
               targetPath: $(publishOutputDirectory)
               artifact: $(publishArtifactName)
