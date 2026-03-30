@@ -15,8 +15,8 @@ variables:
   buildConfiguration: Release
   dotnetSdkVersion: 10.0.x
   nodeVersion: 20.x
-  backendProjects: src/**/*.csproj
   backendTestProject: src/OpenSaur.Identity.Web.Tests/OpenSaur.Identity.Web.Tests.csproj
+  backendTestResultsDirectory: $(Agent.TempDirectory)/backend-test-results
   webProject: src/OpenSaur.Identity.Web/OpenSaur.Identity.Web.csproj
   clientWorkingDirectory: src/OpenSaur.Identity.Web/client
   publishOutputDirectory: $(Build.ArtifactStagingDirectory)/webapp-publish
@@ -43,26 +43,43 @@ stages:
             inputs:
               version: $(nodeVersion)
 
-          - task: DotNetCoreCLI@2
+          - bash: |
+              set -euo pipefail
+              echo "Repository root: $(Build.SourcesDirectory)"
+              test -f "$(webProject)"
+              test -f "$(backendTestProject)"
+            displayName: Verify backend project paths
+
+          - bash: |
+              set -euo pipefail
+              dotnet restore "$(webProject)"
+              dotnet restore "$(backendTestProject)"
             displayName: Restore backend dependencies
-            inputs:
-              command: restore
-              projects: $(backendProjects)
 
-          - task: DotNetCoreCLI@2
+          - bash: |
+              set -euo pipefail
+              dotnet build "$(webProject)" --configuration "$(buildConfiguration)" --no-restore
+              dotnet build "$(backendTestProject)" --configuration "$(buildConfiguration)" --no-restore
             displayName: Build backend
-            inputs:
-              command: build
-              projects: $(backendProjects)
-              arguments: --configuration $(buildConfiguration) --no-restore
 
-          - task: DotNetCoreCLI@2
+          - bash: |
+              set -euo pipefail
+              mkdir -p "$(backendTestResultsDirectory)"
+              dotnet test "$(backendTestProject)" \
+                --configuration "$(buildConfiguration)" \
+                --no-restore \
+                --no-build \
+                --logger "trx;LogFileName=backend-tests.trx" \
+                --results-directory "$(backendTestResultsDirectory)"
             displayName: Run backend unit tests
+
+          - task: PublishTestResults@2
+            displayName: Publish backend test results
             inputs:
-              command: test
-              projects: $(backendTestProject)
-              arguments: --configuration $(buildConfiguration) --no-restore --no-build
-              publishTestResults: true
+              testResultsFormat: VSTest
+              testResultsFiles: $(backendTestResultsDirectory)/*.trx
+              failTaskOnFailedTests: true
+              testRunTitle: Backend unit tests
 
           - task: Npm@1
             displayName: Install frontend dependencies
@@ -84,15 +101,13 @@ stages:
               workingDir: $(clientWorkingDirectory)
               customCommand: run build
 
-          - task: DotNetCoreCLI@2
+          - bash: |
+              set -euo pipefail
+              dotnet publish "$(webProject)" \
+                --configuration "$(buildConfiguration)" \
+                --output "$(publishOutputDirectory)" \
+                /p:CompressionEnabled=false
             displayName: Publish web application artifact
-            inputs:
-              command: publish
-              publishWebProjects: false
-              projects: $(webProject)
-              arguments: --configuration $(buildConfiguration) --output $(publishOutputDirectory) /p:CompressionEnabled=false
-              zipAfterPublish: false
-              modifyOutputPath: false
 
           - task: PublishPipelineArtifact@1
             displayName: Publish web application artifact
