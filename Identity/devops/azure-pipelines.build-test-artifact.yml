@@ -44,37 +44,39 @@ stages:
             inputs:
               version: $(nodeVersion)
 
-          - bash: |
-              set -euo pipefail
-              echo "Repository root: $(Build.SourcesDirectory)"
-              pwd
-              ls -la
-              test -f "$(webProject)"
-              test -f "$(backendTestProject)"
-            displayName: Verify backend project paths
+          # 1. Restore Backend Dependencies
+          - task: DotNetCoreCLI@2
+            displayName: 'Restore backend dependencies'
+            inputs:
+              command: 'restore'
+              projects: |
+                $(webProject)
+                $(backendTestProject)
+              feedsToUse: 'select'
 
-          - bash: |
-              set -euo pipefail
-              dotnet restore "$(webProject)"
-              dotnet restore "$(backendTestProject)"
-            displayName: Restore backend dependencies
+          # 2. Build Backend
+          - task: DotNetCoreCLI@2
+            displayName: 'Build backend'
+            inputs:
+              command: 'build'
+              projects: |
+                $(webProject)
+                $(backendTestProject)
+              arguments: '--configuration $(buildConfiguration) --no-restore'
 
-          - bash: |
-              set -euo pipefail
-              dotnet build "$(webProject)" --configuration "$(buildConfiguration)" --no-restore
-              dotnet build "$(backendTestProject)" --configuration "$(buildConfiguration)" --no-restore
-            displayName: Build backend
-
-          - bash: |
-              set -euo pipefail
-              mkdir -p "$(backendTestResultsDirectory)"
-              dotnet test "$(backendTestProject)" \
-                --configuration "$(buildConfiguration)" \
-                --no-restore \
-                --no-build \
-                --logger "trx;LogFileName=backend-tests.trx" \
-                --results-directory "$(backendTestResultsDirectory)"
-            displayName: Run backend unit tests
+          # 3. Run Backend Unit Tests
+          - task: DotNetCoreCLI@2
+            displayName: 'Run backend unit tests'
+            inputs:
+              command: 'test'
+              projects: '$(backendTestProject)'
+              arguments: >
+                --configuration $(buildConfiguration)
+                --no-restore
+                --no-build
+                --logger "trx;LogFileName=backend-tests.trx"
+                --results-directory $(backendTestResultsDirectory)
+              publishTestResults: true
 
           - task: PublishTestResults@2
             displayName: Publish backend test results
