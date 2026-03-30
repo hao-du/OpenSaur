@@ -24,11 +24,11 @@ variables:
   publishArtifactName: webapp-publish
 
 stages:
-  - stage: BuildTestAndPublish
-    displayName: Build, Test, And Publish Artifact
+  - stage: Test
+    displayName: Run Tests
     jobs:
-      - job: BuildTestPublish
-        displayName: Build, Run Unit Tests, And Publish
+      - job: BackendTest
+        displayName: Run Backend Unit Tests
         steps:
           - checkout: self
             clean: true
@@ -38,11 +38,6 @@ stages:
             inputs:
               packageType: sdk
               version: $(dotnetSdkVersion)
-
-          - task: UseNode@1
-            displayName: Install Node.js
-            inputs:
-              version: $(nodeVersion)
 
           - task: DotNetCoreCLI@2
             displayName: 'Restore backend dependencies'
@@ -82,6 +77,17 @@ stages:
               failTaskOnFailedTests: true
               testRunTitle: Backend unit tests
 
+      - job: FrontendTest
+        displayName: Run Frontend Unit Tests
+        steps:
+          - checkout: self
+            clean: true
+
+          - task: UseNode@1
+            displayName: Install Node.js
+            inputs:
+              version: $(nodeVersion)
+
           - task: Npm@1
             displayName: Install frontend dependencies
             inputs:
@@ -102,13 +108,26 @@ stages:
               workingDir: $(clientWorkingDirectory)
               customCommand: run build
 
-          - bash: |
-              set -euo pipefail
-              dotnet publish "$(webProject)" \
-                --configuration "$(buildConfiguration)" \
-                --output "$(publishOutputDirectory)" \
-                /p:CompressionEnabled=false
+  - stage: Publish
+    displayName: Build and Publish Artifact
+    dependsOn: Test
+    condition: succeeded()
+    jobs:
+      - job: BuildAndPublish
+        displayName: Build and Publish Application
+        steps:
+          - checkout: self
+            clean: true
+
+          - task: DotNetCoreCLI@2
             displayName: Publish web application artifact
+            inputs:
+              command: 'publish'
+              publishWebProjects: false
+              projects: '$(webProject)'
+              arguments: '--configuration $(buildConfiguration) --output $(publishOutputDirectory) /p:CompressionEnabled=false'
+              zipAfterPublish: false
+              modifyOutputPath: false
 
           - task: PublishPipelineArtifact@1
             displayName: Publish web application artifact
