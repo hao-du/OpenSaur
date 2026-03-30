@@ -15,10 +15,11 @@ variables:
   buildConfiguration: Release
   dotnetSdkVersion: 10.0.x
   nodeVersion: 20.x
-  backendTestProject: src/OpenSaur.Identity.Web.Tests/OpenSaur.Identity.Web.Tests.csproj
+  projectRoot: Identity
+  backendTestProject: Identity/src/OpenSaur.Identity.Web.Tests/OpenSaur.Identity.Web.Tests.csproj
   backendTestResultsDirectory: $(Agent.TempDirectory)/backend-test-results
-  webProject: src/OpenSaur.Identity.Web/OpenSaur.Identity.Web.csproj
-  clientWorkingDirectory: src/OpenSaur.Identity.Web/client
+  webProject: Identity/src/OpenSaur.Identity.Web/OpenSaur.Identity.Web.csproj
+  clientWorkingDirectory: Identity/src/OpenSaur.Identity.Web/client
   publishOutputDirectory: $(Build.ArtifactStagingDirectory)/webapp-publish
   publishArtifactName: webapp-publish
 
@@ -46,6 +47,8 @@ stages:
           - bash: |
               set -euo pipefail
               echo "Repository root: $(Build.SourcesDirectory)"
+              pwd
+              ls -la
               test -f "$(webProject)"
               test -f "$(backendTestProject)"
             displayName: Verify backend project paths

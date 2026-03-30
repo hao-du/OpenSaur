@@ -17,7 +17,7 @@ variables:
   sourceBranchRef: refs/heads/main
   sourceArtifactName: webapp-publish
   dockerRepository: REPLACE_WITH_DOCKERHUB_NAMESPACE/REPLACE_WITH_IMAGE_NAME
-  dockerfileSourcePath: devops/Dockerfile.artifact
+  dockerfileSourcePath: Identity/devops/Dockerfile.artifact
   dockerfileName: Dockerfile.artifact
   artifactDownloadPath: $(Pipeline.Workspace)/published-app
   imageMetadataArtifactName: docker-image-metadata
