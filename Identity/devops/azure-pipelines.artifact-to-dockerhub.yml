@@ -4,7 +4,7 @@ pr: none
 resources:
   pipelines:
     - pipeline: BuildPipelineRun
-      source: 'REPLACE_WITH_BUILD_PIPELINE_NAME'
+      source: 'OpenSaur Identity Build'
 
 pool:
   vmImage: ubuntu-latest
