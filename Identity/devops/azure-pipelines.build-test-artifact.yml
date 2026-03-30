@@ -71,9 +71,7 @@ stages:
                 --configuration $(buildConfiguration)
                 --no-restore
                 --no-build
-                --logger "trx;LogFileName=backend-tests.trx"
                 --logger "console;verbosity=normal"
-                --results-directory $(backendTestResultsDirectory)
               publishTestResults: false
 
           - task: PublishTestResults@2
