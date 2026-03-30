@@ -15,7 +15,7 @@ variables:
   buildConfiguration: Release
   dotnetSdkVersion: 10.0.x
   nodeVersion: 20.x
-  solutionPath: src/OpenSaur.Identity.Web.slnx
+  backendProjects: src/**/*.csproj
   backendTestProject: src/OpenSaur.Identity.Web.Tests/OpenSaur.Identity.Web.Tests.csproj
   webProject: src/OpenSaur.Identity.Web/OpenSaur.Identity.Web.csproj
   clientWorkingDirectory: src/OpenSaur.Identity.Web/client
@@ -47,13 +47,13 @@ stages:
             displayName: Restore backend dependencies
             inputs:
               command: restore
-              projects: $(solutionPath)
+              projects: $(backendProjects)
 
           - task: DotNetCoreCLI@2
             displayName: Build backend
             inputs:
               command: build
-              projects: $(solutionPath)
+              projects: $(backendProjects)
               arguments: --configuration $(buildConfiguration) --no-restore
 
           - task: DotNetCoreCLI@2

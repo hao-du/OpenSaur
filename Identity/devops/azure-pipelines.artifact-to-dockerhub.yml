@@ -17,6 +17,7 @@ variables:
   sourceBranchRef: refs/heads/main
   sourceArtifactName: webapp-publish
   dockerRepository: REPLACE_WITH_DOCKERHUB_NAMESPACE/REPLACE_WITH_IMAGE_NAME
+  dockerfileSourcePath: devops/Dockerfile.artifact
   dockerfileName: Dockerfile.artifact
   artifactDownloadPath: $(Pipeline.Workspace)/published-app
   imageMetadataArtifactName: docker-image-metadata
@@ -56,7 +57,7 @@ stages:
               artifactName: $(sourceArtifactName)
               targetPath: $(artifactDownloadPath)
 
-          - script: cp "$(Build.SourcesDirectory)/$(dockerfileName)" "$(artifactDownloadPath)/$(dockerfileName)"
+          - script: cp "$(Build.SourcesDirectory)/$(dockerfileSourcePath)" "$(artifactDownloadPath)/$(dockerfileName)"
             displayName: Copy Dockerfile into artifact context
 
           - task: Docker@2
