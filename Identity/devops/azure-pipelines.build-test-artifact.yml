@@ -44,7 +44,6 @@ stages:
             inputs:
               version: $(nodeVersion)
 
-          # 1. Restore Backend Dependencies
           - task: DotNetCoreCLI@2
             displayName: 'Restore backend dependencies'
             inputs:
@@ -54,7 +53,6 @@ stages:
                 $(backendTestProject)
               feedsToUse: 'select'
 
-          # 2. Build Backend
           - task: DotNetCoreCLI@2
             displayName: 'Build backend'
             inputs:
@@ -64,7 +62,6 @@ stages:
                 $(backendTestProject)
               arguments: '--configuration $(buildConfiguration) --no-restore'
 
-          # 3. Run Backend Unit Tests
           - task: DotNetCoreCLI@2
             displayName: 'Run backend unit tests'
             inputs:
@@ -76,7 +73,7 @@ stages:
                 --no-build
                 --logger "trx;LogFileName=backend-tests.trx"
                 --results-directory $(backendTestResultsDirectory)
-              publishTestResults: true
+              publishTestResults: false
 
           - task: PublishTestResults@2
             displayName: Publish backend test results
