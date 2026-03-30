@@ -1,0 +1,83 @@
+trigger: none
+pr: none
+
+parameters:
+  - name: sourceBuildRunId
+    displayName: Optional build pipeline run ID
+    type: string
+    default: ''
+
+pool:
+  vmImage: ubuntu-latest
+
+variables:
+  dockerHubServiceConnection: REPLACE_WITH_DOCKER_HUB_SERVICE_CONNECTION
+  sourceProject: REPLACE_WITH_AZURE_DEVOPS_PROJECT_NAME
+  sourcePipelineDefinitionId: REPLACE_WITH_BUILD_PIPELINE_DEFINITION_ID
+  sourceBranchRef: refs/heads/main
+  sourceArtifactName: webapp-publish
+  dockerRepository: REPLACE_WITH_DOCKERHUB_NAMESPACE/REPLACE_WITH_IMAGE_NAME
+  dockerfileName: Dockerfile.artifact
+  artifactDownloadPath: $(Pipeline.Workspace)/published-app
+  imageMetadataArtifactName: docker-image-metadata
+  imageMetadataDirectory: $(Build.ArtifactStagingDirectory)/docker-image-metadata
+
+stages:
+  - stage: ContainerizeAndPublish
+    displayName: Containerize Artifact And Publish To Docker Hub
+    jobs:
+      - job: Dockerize
+        displayName: Build And Push Docker Image
+        steps:
+          - checkout: self
+            clean: true
+
+          - task: DownloadPipelineArtifact@2
+            displayName: Download published app artifact by specific run
+            condition: ne('${{ parameters.sourceBuildRunId }}', '')
+            inputs:
+              buildType: specific
+              project: $(sourceProject)
+              definition: $(sourcePipelineDefinitionId)
+              buildVersionToDownload: specific
+              pipelineId: ${{ parameters.sourceBuildRunId }}
+              artifactName: $(sourceArtifactName)
+              targetPath: $(artifactDownloadPath)
+
+          - task: DownloadPipelineArtifact@2
+            displayName: Download latest published app artifact from main
+            condition: eq('${{ parameters.sourceBuildRunId }}', '')
+            inputs:
+              buildType: specific
+              project: $(sourceProject)
+              definition: $(sourcePipelineDefinitionId)
+              buildVersionToDownload: latestFromBranch
+              branchName: $(sourceBranchRef)
+              artifactName: $(sourceArtifactName)
+              targetPath: $(artifactDownloadPath)
+
+          - script: cp "$(Build.SourcesDirectory)/$(dockerfileName)" "$(artifactDownloadPath)/$(dockerfileName)"
+            displayName: Copy Dockerfile into artifact context
+
+          - task: Docker@2
+            displayName: Build and push Docker image
+            inputs:
+              command: buildAndPush
+              containerRegistry: $(dockerHubServiceConnection)
+              repository: $(dockerRepository)
+              Dockerfile: $(artifactDownloadPath)/$(dockerfileName)
+              buildContext: $(artifactDownloadPath)
+              tags: |
+                $(Build.BuildId)
+
+          - script: |
+              mkdir -p "$(imageMetadataDirectory)"
+              printf '%s\n' "$(dockerRepository):$(Build.BuildId)" > "$(imageMetadataDirectory)/image-reference.txt"
+            displayName: Write image metadata
+
+          - task: PublishPipelineArtifact@1
+            displayName: Publish image metadata artifact
+            inputs:
+              targetPath: $(imageMetadataDirectory)
+              artifact: $(imageMetadataArtifactName)
+              publishLocation: pipeline
