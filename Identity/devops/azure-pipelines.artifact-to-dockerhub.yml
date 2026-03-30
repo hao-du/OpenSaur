@@ -11,17 +11,11 @@ pool:
   vmImage: ubuntu-latest
 
 variables:
+  # ⚠️ ONLY these four variables need to be replaced!
   dockerHubServiceConnection: REPLACE_WITH_DOCKER_HUB_SERVICE_CONNECTION
   sourceProject: REPLACE_WITH_AZURE_DEVOPS_PROJECT_NAME
   sourcePipelineDefinitionId: REPLACE_WITH_BUILD_PIPELINE_DEFINITION_ID
-  sourceBranchRef: refs/heads/main
-  sourceArtifactName: webapp-publish
   dockerRepository: REPLACE_WITH_DOCKERHUB_NAMESPACE/REPLACE_WITH_IMAGE_NAME
-  dockerfileSourcePath: Identity/devops/Dockerfile.artifact
-  dockerfileName: Dockerfile.artifact
-  artifactDownloadPath: $(Pipeline.Workspace)/published-app
-  imageMetadataArtifactName: docker-image-metadata
-  imageMetadataDirectory: $(Build.ArtifactStagingDirectory)/docker-image-metadata
 
 stages:
   - stage: ContainerizeAndPublish
@@ -42,8 +36,8 @@ stages:
               definition: $(sourcePipelineDefinitionId)
               buildVersionToDownload: specific
               pipelineId: ${{ parameters.sourceBuildRunId }}
-              artifactName: $(sourceArtifactName)
-              targetPath: $(artifactDownloadPath)
+              artifactName: webapp-publish
+              targetPath: $(Pipeline.Workspace)/published-app
 
           - task: DownloadPipelineArtifact@2
             displayName: Download latest published app artifact from main
@@ -53,11 +47,11 @@ stages:
               project: $(sourceProject)
               definition: $(sourcePipelineDefinitionId)
               buildVersionToDownload: latestFromBranch
-              branchName: $(sourceBranchRef)
-              artifactName: $(sourceArtifactName)
-              targetPath: $(artifactDownloadPath)
+              branchName: refs/heads/main
+              artifactName: webapp-publish
+              targetPath: $(Pipeline.Workspace)/published-app
 
-          - script: cp "$(Build.SourcesDirectory)/$(dockerfileSourcePath)" "$(artifactDownloadPath)/$(dockerfileName)"
+          - script: cp "$(Build.SourcesDirectory)/Identity/devops/Dockerfile.artifact" "$(Pipeline.Workspace)/published-app/Dockerfile.artifact"
             displayName: Copy Dockerfile into artifact context
 
           - task: Docker@2
@@ -66,19 +60,19 @@ stages:
               command: buildAndPush
               containerRegistry: $(dockerHubServiceConnection)
               repository: $(dockerRepository)
-              Dockerfile: $(artifactDownloadPath)/$(dockerfileName)
-              buildContext: $(artifactDownloadPath)
+              Dockerfile: $(Pipeline.Workspace)/published-app/Dockerfile.artifact
+              buildContext: $(Pipeline.Workspace)/published-app
               tags: |
                 $(Build.BuildId)
 
           - script: |
-              mkdir -p "$(imageMetadataDirectory)"
-              printf '%s\n' "$(dockerRepository):$(Build.BuildId)" > "$(imageMetadataDirectory)/image-reference.txt"
+              mkdir -p "$(Build.ArtifactStagingDirectory)/docker-image-metadata"
+              printf '%s\n' "$(dockerRepository):$(Build.BuildId)" > "$(Build.ArtifactStagingDirectory)/docker-image-metadata/image-reference.txt"
             displayName: Write image metadata
 
           - task: PublishPipelineArtifact@1
             displayName: Publish image metadata artifact
             inputs:
-              targetPath: $(imageMetadataDirectory)
-              artifact: $(imageMetadataArtifactName)
+              targetPath: $(Build.ArtifactStagingDirectory)/docker-image-metadata
+              artifact: docker-image-metadata
               publishLocation: pipeline
