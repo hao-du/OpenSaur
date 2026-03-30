@@ -1,11 +1,10 @@
-FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
 
+USER $APP_UID
 WORKDIR /app
 
-ENV ASPNETCORE_ENVIRONMENT=Production \
-    ASPNETCORE_URLS=http://+:8080
-
 EXPOSE 8080
+EXPOSE 8081
 
 COPY . .
 

@@ -7,6 +7,8 @@
     <SpaRoot>client\</SpaRoot>
     <SpaProxyServerUrl>http://localhost:5173</SpaProxyServerUrl>
     <SpaProxyLaunchCommand>npm run dev -- --host 0.0.0.0 --port 5173</SpaProxyLaunchCommand>
+    <UserSecretsId>fd087abf-c244-4e14-ab01-1dc72d25055b</UserSecretsId>
+    <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
   </PropertyGroup>
 
   <ItemGroup>
@@ -21,6 +23,7 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+    <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.23.0" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.0" />
     <PackageReference Include="OpenIddict.AspNetCore" Version="7.3.0" />
     <PackageReference Include="OpenIddict.EntityFrameworkCore" Version="7.3.0" />
