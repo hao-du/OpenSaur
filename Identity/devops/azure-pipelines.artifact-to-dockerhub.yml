@@ -3,7 +3,7 @@ pr: none
 
 resources:
   pipelines:
-    - pipeline: BuildPipelineRun
+    - pipeline: 'Build Pipeline'
       source: 'OpenSaur Identity Build'
 
 pool:
