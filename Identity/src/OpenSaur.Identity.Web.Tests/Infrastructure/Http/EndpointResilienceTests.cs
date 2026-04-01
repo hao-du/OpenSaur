@@ -177,7 +177,12 @@ public sealed class EndpointResilienceTests
 
         var managerCredentials = TestFakers.CreateUserCredentials();
         var newUserCredentials = TestFakers.CreateUserCredentials();
-        await TestIdentitySeeder.SeedUserAsync(factory, managerCredentials.UserName, managerCredentials.Password, [StandardRoleNames.Administrator]);
+        await TestIdentitySeeder.SeedUserAsync(
+            factory,
+            managerCredentials.UserName,
+            managerCredentials.Password,
+            [StandardRoleNames.Administrator],
+            workspaceName: "Operations");
 
         using var client = FirstPartyApiTestClient.CreateClient(factory);
         var accessToken = await FirstPartyApiTestClient.GetAccessTokenAsync(client, managerCredentials.UserName, managerCredentials.Password);
@@ -215,7 +220,12 @@ public sealed class EndpointResilienceTests
         var managerCredentials = TestFakers.CreateUserCredentials();
         var firstUserCredentials = TestFakers.CreateUserCredentials();
         var secondUserCredentials = TestFakers.CreateUserCredentials();
-        await TestIdentitySeeder.SeedUserAsync(factory, managerCredentials.UserName, managerCredentials.Password, [StandardRoleNames.Administrator]);
+        await TestIdentitySeeder.SeedUserAsync(
+            factory,
+            managerCredentials.UserName,
+            managerCredentials.Password,
+            [StandardRoleNames.Administrator],
+            workspaceName: "Operations");
 
         using var client = FirstPartyApiTestClient.CreateClient(factory);
         var accessToken = await FirstPartyApiTestClient.GetAccessTokenAsync(client, managerCredentials.UserName, managerCredentials.Password);

@@ -33,9 +33,15 @@ public sealed class OutboxMessageRecordingTests : IClassFixture<OpenSaurWebAppli
     [Fact]
     public async Task PostCreateUser_WritesUserCreatedOutboxMessage()
     {
+        const string workspaceName = "Operations";
         var managerCredentials = TestFakers.CreateUserCredentials();
         var newUserCredentials = TestFakers.CreateUserCredentials();
-        await TestIdentitySeeder.SeedUserAsync(_factory, managerCredentials.UserName, managerCredentials.Password, [StandardRoleNames.Administrator]);
+        await TestIdentitySeeder.SeedUserAsync(
+            _factory,
+            managerCredentials.UserName,
+            managerCredentials.Password,
+            [StandardRoleNames.Administrator],
+            workspaceName: workspaceName);
 
         using var client = FirstPartyApiTestClient.CreateClient(_factory);
         var accessToken = await FirstPartyApiTestClient.GetAccessTokenAsync(client, managerCredentials.UserName, managerCredentials.Password);
@@ -77,11 +83,22 @@ public sealed class OutboxMessageRecordingTests : IClassFixture<OpenSaurWebAppli
     [Fact]
     public async Task PutEditUser_WhenSoftDeleted_WritesUserUpdatedOutboxMessageWithoutDeleteEvent()
     {
+        const string workspaceName = "Operations";
         var managerCredentials = TestFakers.CreateUserCredentials();
         var targetCredentials = TestFakers.CreateUserCredentials();
 
-        await TestIdentitySeeder.SeedUserAsync(_factory, managerCredentials.UserName, managerCredentials.Password, [StandardRoleNames.Administrator]);
-        var targetUserId = await TestIdentitySeeder.SeedUserAsync(_factory, targetCredentials.UserName, targetCredentials.Password, [StandardRoleNames.User]);
+        await TestIdentitySeeder.SeedUserAsync(
+            _factory,
+            managerCredentials.UserName,
+            managerCredentials.Password,
+            [StandardRoleNames.Administrator],
+            workspaceName: workspaceName);
+        var targetUserId = await TestIdentitySeeder.SeedUserAsync(
+            _factory,
+            targetCredentials.UserName,
+            targetCredentials.Password,
+            [StandardRoleNames.User],
+            workspaceName: workspaceName);
 
         using var client = FirstPartyApiTestClient.CreateClient(_factory);
         var accessToken = await FirstPartyApiTestClient.GetAccessTokenAsync(client, managerCredentials.UserName, managerCredentials.Password);
@@ -120,12 +137,25 @@ public sealed class OutboxMessageRecordingTests : IClassFixture<OpenSaurWebAppli
     [Fact]
     public async Task PostCreateUserRole_WritesUserRoleCreatedOutboxMessage()
     {
+        const string workspaceName = "Operations";
+        var workspaceId = await TestIdentitySeeder.SeedWorkspaceAsync(_factory, workspaceName);
         var managerCredentials = TestFakers.CreateUserCredentials();
         var targetCredentials = TestFakers.CreateUserCredentials();
 
-        await TestIdentitySeeder.SeedUserAsync(_factory, managerCredentials.UserName, managerCredentials.Password, [StandardRoleNames.Administrator]);
-        var targetUserId = await TestIdentitySeeder.SeedUserAsync(_factory, targetCredentials.UserName, targetCredentials.Password, []);
+        await TestIdentitySeeder.SeedUserAsync(
+            _factory,
+            managerCredentials.UserName,
+            managerCredentials.Password,
+            [StandardRoleNames.Administrator],
+            workspaceName: workspaceName);
+        var targetUserId = await TestIdentitySeeder.SeedUserAsync(
+            _factory,
+            targetCredentials.UserName,
+            targetCredentials.Password,
+            [],
+            workspaceName: workspaceName);
         var roleId = await TestIdentitySeeder.SeedRoleAsync(_factory, TestFakers.CreateRoleName());
+        await TestIdentitySeeder.SeedWorkspaceRoleAsync(_factory, workspaceId, roleId);
 
         using var client = FirstPartyApiTestClient.CreateClient(_factory);
         var accessToken = await FirstPartyApiTestClient.GetAccessTokenAsync(client, managerCredentials.UserName, managerCredentials.Password);
@@ -163,12 +193,25 @@ public sealed class OutboxMessageRecordingTests : IClassFixture<OpenSaurWebAppli
     [Fact]
     public async Task PutEditUserRole_WritesUserRoleUpdatedOutboxMessageWithoutDeleteEvent()
     {
+        const string workspaceName = "Operations";
+        var workspaceId = await TestIdentitySeeder.SeedWorkspaceAsync(_factory, workspaceName);
         var managerCredentials = TestFakers.CreateUserCredentials();
         var targetCredentials = TestFakers.CreateUserCredentials();
 
-        await TestIdentitySeeder.SeedUserAsync(_factory, managerCredentials.UserName, managerCredentials.Password, [StandardRoleNames.Administrator]);
-        var targetUserId = await TestIdentitySeeder.SeedUserAsync(_factory, targetCredentials.UserName, targetCredentials.Password, []);
+        await TestIdentitySeeder.SeedUserAsync(
+            _factory,
+            managerCredentials.UserName,
+            managerCredentials.Password,
+            [StandardRoleNames.Administrator],
+            workspaceName: workspaceName);
+        var targetUserId = await TestIdentitySeeder.SeedUserAsync(
+            _factory,
+            targetCredentials.UserName,
+            targetCredentials.Password,
+            [],
+            workspaceName: workspaceName);
         var roleId = await TestIdentitySeeder.SeedRoleAsync(_factory, TestFakers.CreateRoleName());
+        await TestIdentitySeeder.SeedWorkspaceRoleAsync(_factory, workspaceId, roleId);
         var assignmentId = await TestIdentitySeeder.SeedUserRoleAsync(_factory, targetUserId, roleId);
 
         using var client = FirstPartyApiTestClient.CreateClient(_factory);
@@ -206,11 +249,8 @@ public sealed class OutboxMessageRecordingTests : IClassFixture<OpenSaurWebAppli
     [Fact]
     public async Task PostCreateRole_WritesRolePermissionsCreatedOutboxMessage()
     {
-        var managerCredentials = TestFakers.CreateUserCredentials();
-        await TestIdentitySeeder.SeedUserAsync(_factory, managerCredentials.UserName, managerCredentials.Password, [StandardRoleNames.Administrator]);
-
         using var client = FirstPartyApiTestClient.CreateClient(_factory);
-        var accessToken = await FirstPartyApiTestClient.GetAccessTokenAsync(client, managerCredentials.UserName, managerCredentials.Password);
+        var accessToken = await FirstPartyApiTestClient.GetAccessTokenAsync(client, "SystemAdministrator", "Password1");
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
         var roleName = TestFakers.CreateRoleName();
@@ -245,15 +285,13 @@ public sealed class OutboxMessageRecordingTests : IClassFixture<OpenSaurWebAppli
     [Fact]
     public async Task PutEditRole_WritesRolePermissionsUpdatedOutboxMessage()
     {
-        var managerCredentials = TestFakers.CreateUserCredentials();
-        await TestIdentitySeeder.SeedUserAsync(_factory, managerCredentials.UserName, managerCredentials.Password, [StandardRoleNames.Administrator]);
         var roleId = await TestIdentitySeeder.SeedRoleAsync(
             _factory,
             TestFakers.CreateRoleName(),
             [(int)PermissionCode.Administrator_CanManage]);
 
         using var client = FirstPartyApiTestClient.CreateClient(_factory);
-        var accessToken = await FirstPartyApiTestClient.GetAccessTokenAsync(client, managerCredentials.UserName, managerCredentials.Password);
+        var accessToken = await FirstPartyApiTestClient.GetAccessTokenAsync(client, "SystemAdministrator", "Password1");
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
 
         var response = await FirstPartyApiTestClient.SendJsonWithIdempotencyAsync(

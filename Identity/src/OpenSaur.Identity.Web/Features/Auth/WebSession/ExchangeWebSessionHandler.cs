@@ -38,7 +38,7 @@ public static class ExchangeWebSessionHandler
                 HttpOnly = true,
                 IsEssential = true,
                 SameSite = SameSiteMode.Lax,
-                Secure = true
+                Secure = httpContext.Request.IsHttps
             });
 
         return Result<ExchangeWebSessionResponse>.Success(

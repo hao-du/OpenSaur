@@ -3,10 +3,17 @@ trigger:
     include:
       - main
 
-pr:
-  branches:
-    include:
-      - main
+parameters:
+  - name: runBackendTests
+    displayName: Run backend tests
+    type: boolean
+    default: true
+  - name: runFrontendTests
+    displayName: Run frontend tests
+    type: boolean
+    default: true
+
+pr: none
 
 pool:
   vmImage: ubuntu-latest
@@ -15,54 +22,73 @@ variables:
   buildConfiguration: Release
   dotnetSdkVersion: 10.0.x
   nodeVersion: 20.x
-  solutionPath: src/OpenSaur.Identity.Web.slnx
-  backendTestProject: src/OpenSaur.Identity.Web.Tests/OpenSaur.Identity.Web.Tests.csproj
-  webProject: src/OpenSaur.Identity.Web/OpenSaur.Identity.Web.csproj
-  clientWorkingDirectory: src/OpenSaur.Identity.Web/client
+  projectRoot: Identity
+  backendTestProject: Identity/src/OpenSaur.Identity.Web.Tests/OpenSaur.Identity.Web.Tests.csproj
+  backendTestResultsDirectory: $(Agent.TempDirectory)/backend-test-results
+  webProject: Identity/src/OpenSaur.Identity.Web/OpenSaur.Identity.Web.csproj
+  clientWorkingDirectory: Identity/src/OpenSaur.Identity.Web/client
   publishOutputDirectory: $(Build.ArtifactStagingDirectory)/webapp-publish
   publishArtifactName: webapp-publish
 
 stages:
-  - stage: BuildTestAndPublish
-    displayName: Build, Test, And Publish Artifact
+  - stage: Build
+    displayName: Build
     jobs:
-      - job: BuildTestPublish
-        displayName: Build, Run Unit Tests, And Publish
+      - job: BackendBuild
+        displayName: Build Backend
         steps:
-          - checkout: self
-            clean: true
-
           - task: UseDotNet@2
             displayName: Install .NET SDK
             inputs:
               packageType: sdk
               version: $(dotnetSdkVersion)
 
+          - task: DotNetCoreCLI@2
+            displayName: 'Restore backend dependencies'
+            inputs:
+              command: 'restore'
+              projects: |
+                $(webProject)
+                $(backendTestProject)
+              feedsToUse: 'select'
+
+          - task: DotNetCoreCLI@2
+            displayName: 'Build backend'
+            inputs:
+              command: 'build'
+              projects: |
+                $(webProject)
+                $(backendTestProject)
+              arguments: '--configuration $(buildConfiguration) --no-restore'
+
+          - ${{ if eq(parameters.runBackendTests, true) }}:
+              - task: DotNetCoreCLI@2
+                displayName: 'Run backend unit tests'
+                inputs:
+                  command: 'test'
+                  projects: '$(backendTestProject)'
+                  arguments: >
+                    --configuration $(buildConfiguration)
+                    --no-restore
+                    --no-build
+                    --logger "console;verbosity=normal"
+                  publishTestResults: false
+
+              - task: PublishTestResults@2
+                displayName: Publish backend test results
+                inputs:
+                  testResultsFormat: VSTest
+                  testResultsFiles: $(backendTestResultsDirectory)/*.trx
+                  failTaskOnFailedTests: true
+                  testRunTitle: Backend unit tests
+
+      - job: FrontendBuild
+        displayName: Build Frontend
+        steps:
           - task: UseNode@1
             displayName: Install Node.js
             inputs:
               version: $(nodeVersion)
-
-          - task: DotNetCoreCLI@2
-            displayName: Restore backend dependencies
-            inputs:
-              command: restore
-              projects: $(solutionPath)
-
-          - task: DotNetCoreCLI@2
-            displayName: Build backend
-            inputs:
-              command: build
-              projects: $(solutionPath)
-              arguments: --configuration $(buildConfiguration) --no-restore
-
-          - task: DotNetCoreCLI@2
-            displayName: Run backend unit tests
-            inputs:
-              command: test
-              projects: $(backendTestProject)
-              arguments: --configuration $(buildConfiguration) --no-restore --no-build
-              publishTestResults: true
 
           - task: Npm@1
             displayName: Install frontend dependencies
@@ -70,12 +96,13 @@ stages:
               command: install
               workingDir: $(clientWorkingDirectory)
 
-          - task: Npm@1
-            displayName: Run frontend unit tests
-            inputs:
-              command: custom
-              workingDir: $(clientWorkingDirectory)
-              customCommand: run test -- --run
+          - ${{ if eq(parameters.runFrontendTests, true) }}:
+              - task: Npm@1
+                displayName: Run frontend unit tests
+                inputs:
+                  command: custom
+                  workingDir: $(clientWorkingDirectory)
+                  customCommand: run test -- --run
 
           - task: Npm@1
             displayName: Build frontend
@@ -84,18 +111,26 @@ stages:
               workingDir: $(clientWorkingDirectory)
               customCommand: run build
 
+  - stage: Publish
+    displayName: Publish Artifact
+    dependsOn: Build
+    condition: succeeded()
+    jobs:
+      - job: Publish
+        displayName: Publish Application
+        steps:
           - task: DotNetCoreCLI@2
-            displayName: Publish web application artifact
+            displayName: Publish web application
             inputs:
-              command: publish
+              command: 'publish'
               publishWebProjects: false
-              projects: $(webProject)
-              arguments: --configuration $(buildConfiguration) --output $(publishOutputDirectory) /p:CompressionEnabled=false
+              projects: '$(webProject)'
+              arguments: '--configuration $(buildConfiguration) --output $(publishOutputDirectory) /p:CompressionEnabled=false'
               zipAfterPublish: false
               modifyOutputPath: false
 
           - task: PublishPipelineArtifact@1
-            displayName: Publish web application artifact
+            displayName: Publish to artifact
             inputs:
               targetPath: $(publishOutputDirectory)
               artifact: $(publishArtifactName)

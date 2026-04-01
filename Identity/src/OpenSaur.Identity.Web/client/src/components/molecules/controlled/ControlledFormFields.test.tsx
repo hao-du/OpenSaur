@@ -2,6 +2,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { Button } from "@mui/material";
 import { useForm } from "react-hook-form";
 import { describe, expect, it } from "vitest";
+import { AppProviders } from "../../../app/providers/AppProviders";
 import { UserRound } from "../../../shared/icons";
 import { ControlledAuthTextField } from "./ControlledAuthTextField";
 import { ControlledPasswordField } from "./ControlledPasswordField";
@@ -45,7 +46,11 @@ function ControlledFieldsHarness() {
 
 describe("Controlled auth form fields", () => {
   it("shows validation for the controlled auth text field", async () => {
-    render(<ControlledFieldsHarness />);
+    render(
+      <AppProviders>
+        <ControlledFieldsHarness />
+      </AppProviders>
+    );
 
     fireEvent.click(screen.getByRole("button", { name: /submit/i }));
 
@@ -55,7 +60,11 @@ describe("Controlled auth form fields", () => {
   });
 
   it("shows validation for the controlled password field", async () => {
-    render(<ControlledFieldsHarness />);
+    render(
+      <AppProviders>
+        <ControlledFieldsHarness />
+      </AppProviders>
+    );
 
     fireEvent.click(screen.getByRole("button", { name: /submit/i }));
 

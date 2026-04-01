@@ -1,26 +1,17 @@
 trigger: none
 pr: none
 
-parameters:
-  - name: sourceBuildRunId
-    displayName: Optional build pipeline run ID
-    type: string
-    default: ''
+resources:
+  pipelines:
+    - pipeline: BuildPipelineRun
+      source: 'OpenSaur Identity - Build'
 
 pool:
   vmImage: ubuntu-latest
 
 variables:
-  dockerHubServiceConnection: REPLACE_WITH_DOCKER_HUB_SERVICE_CONNECTION
-  sourceProject: REPLACE_WITH_AZURE_DEVOPS_PROJECT_NAME
-  sourcePipelineDefinitionId: REPLACE_WITH_BUILD_PIPELINE_DEFINITION_ID
-  sourceBranchRef: refs/heads/main
-  sourceArtifactName: webapp-publish
-  dockerRepository: REPLACE_WITH_DOCKERHUB_NAMESPACE/REPLACE_WITH_IMAGE_NAME
-  dockerfileName: Dockerfile.artifact
-  artifactDownloadPath: $(Pipeline.Workspace)/published-app
-  imageMetadataArtifactName: docker-image-metadata
-  imageMetadataDirectory: $(Build.ArtifactStagingDirectory)/docker-image-metadata
+  dockerHubServiceConnection: 'Docker Hub'
+  dockerRepository: 'duchihao/opensaur-indentity'
 
 stages:
   - stage: ContainerizeAndPublish
@@ -32,31 +23,11 @@ stages:
           - checkout: self
             clean: true
 
-          - task: DownloadPipelineArtifact@2
-            displayName: Download published app artifact by specific run
-            condition: ne('${{ parameters.sourceBuildRunId }}', '')
-            inputs:
-              buildType: specific
-              project: $(sourceProject)
-              definition: $(sourcePipelineDefinitionId)
-              buildVersionToDownload: specific
-              pipelineId: ${{ parameters.sourceBuildRunId }}
-              artifactName: $(sourceArtifactName)
-              targetPath: $(artifactDownloadPath)
+          - download: BuildPipelineRun
+            artifact: webapp-publish
+            displayName: Download app artifact from selected pipeline
 
-          - task: DownloadPipelineArtifact@2
-            displayName: Download latest published app artifact from main
-            condition: eq('${{ parameters.sourceBuildRunId }}', '')
-            inputs:
-              buildType: specific
-              project: $(sourceProject)
-              definition: $(sourcePipelineDefinitionId)
-              buildVersionToDownload: latestFromBranch
-              branchName: $(sourceBranchRef)
-              artifactName: $(sourceArtifactName)
-              targetPath: $(artifactDownloadPath)
-
-          - script: cp "$(Build.SourcesDirectory)/$(dockerfileName)" "$(artifactDownloadPath)/$(dockerfileName)"
+          - script: cp "$(Build.SourcesDirectory)/Identity/devops/Dockerfile.artifact" "$(Pipeline.Workspace)/BuildPipelineRun/webapp-publish/Dockerfile.artifact"
             displayName: Copy Dockerfile into artifact context
 
           - task: Docker@2
@@ -65,19 +36,19 @@ stages:
               command: buildAndPush
               containerRegistry: $(dockerHubServiceConnection)
               repository: $(dockerRepository)
-              Dockerfile: $(artifactDownloadPath)/$(dockerfileName)
-              buildContext: $(artifactDownloadPath)
+              Dockerfile: $(Pipeline.Workspace)/BuildPipelineRun/webapp-publish/Dockerfile.artifact
+              buildContext: $(Pipeline.Workspace)/BuildPipelineRun/webapp-publish
               tags: |
                 $(Build.BuildId)
 
           - script: |
-              mkdir -p "$(imageMetadataDirectory)"
-              printf '%s\n' "$(dockerRepository):$(Build.BuildId)" > "$(imageMetadataDirectory)/image-reference.txt"
+              mkdir -p "$(Build.ArtifactStagingDirectory)/docker-image-metadata"
+              printf '%s\n' "$(dockerRepository):$(Build.BuildId)" > "$(Build.ArtifactStagingDirectory)/docker-image-metadata/image-reference.txt"
             displayName: Write image metadata
 
           - task: PublishPipelineArtifact@1
             displayName: Publish image metadata artifact
             inputs:
-              targetPath: $(imageMetadataDirectory)
-              artifact: $(imageMetadataArtifactName)
+              targetPath: $(Build.ArtifactStagingDirectory)/docker-image-metadata
+              artifact: docker-image-metadata
               publishLocation: pipeline

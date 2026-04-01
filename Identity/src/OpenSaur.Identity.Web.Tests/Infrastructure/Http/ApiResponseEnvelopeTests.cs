@@ -127,7 +127,12 @@ public sealed class ApiResponseEnvelopeTests : IClassFixture<OpenSaurWebApplicat
         var managerCredentials = TestFakers.CreateUserCredentials();
         var otherWorkspaceUserCredentials = TestFakers.CreateUserCredentials();
 
-        await TestIdentitySeeder.SeedUserAsync(_factory, managerCredentials.UserName, managerCredentials.Password, [StandardRoleNames.Administrator]);
+        await TestIdentitySeeder.SeedUserAsync(
+            _factory,
+            managerCredentials.UserName,
+            managerCredentials.Password,
+            [StandardRoleNames.Administrator],
+            workspaceName: "Operations");
         var otherWorkspaceUserId = await TestIdentitySeeder.SeedUserAsync(
             _factory,
             otherWorkspaceUserCredentials.UserName,

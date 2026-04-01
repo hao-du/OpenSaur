@@ -2,6 +2,10 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
 using OpenSaur.Identity.Web.Infrastructure;
 
 namespace OpenSaur.Identity.Web.Tests.Infrastructure;
@@ -96,6 +100,23 @@ public sealed class DependencyInjectionTests
             "StackExchangeRedis",
             distributedCache.GetType().FullName,
             StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void AddOpenSaurInfrastructure_UsesRequestScopedAuthCookies()
+    {
+        var services = new ServiceCollection();
+        var configuration = CreateConfiguration();
+        var environment = new TestHostEnvironment(Environments.Development);
+
+        services.AddOpenSaurInfrastructure(configuration, environment);
+
+        using var serviceProvider = services.BuildServiceProvider();
+        var options = serviceProvider
+            .GetRequiredService<IOptionsMonitor<CookieAuthenticationOptions>>()
+            .Get(IdentityConstants.ApplicationScheme);
+
+        Assert.Equal(CookieSecurePolicy.SameAsRequest, options.Cookie.SecurePolicy);
     }
 
     private static IConfiguration CreateConfiguration(Dictionary<string, string?>? overrides = null)

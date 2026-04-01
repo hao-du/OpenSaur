@@ -115,6 +115,6 @@ describe("ShellAccountMenu", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /open account menu/i }));
 
-    expect(await screen.findByRole("menuitem", { name: /signing out/i })).toBeDefined();
+    expect(await screen.findByRole("menuitem", { name: /logging out/i })).toBeDefined();
   });
 });

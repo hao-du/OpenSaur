@@ -17,7 +17,7 @@ public static class LogoutHandler
                 HttpOnly = true,
                 IsEssential = true,
                 SameSite = SameSiteMode.Lax,
-                Secure = true
+                Secure = httpContext.Request.IsHttps
             });
 
         return Result.Success().ToApiResult();
