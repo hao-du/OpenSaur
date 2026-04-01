@@ -21,13 +21,6 @@ using (var scope = app.Services.CreateScope())
 app.UseForwardedHeaders();
 app.UseExceptionHandler();
 
-if (!app.Environment.IsDevelopment())
-{
-    app.UseHsts();
-}
-
-app.UseHttpsRedirection();
-
 if (serveBuiltShell)
 {
     app.UseDefaultFiles();

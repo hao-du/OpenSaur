@@ -152,7 +152,6 @@ public static class DependencyInjection
         }
 
         services.AddHybridCache();
-        services.AddHttpsRedirection(options => options.HttpsPort = 443);
         services.AddHttpContextAccessor();
         services.Configure<ForwardedHeadersOptions>(options =>
         {
@@ -208,7 +207,7 @@ public static class DependencyInjection
             options.Cookie.HttpOnly = true;
             options.Cookie.IsEssential = true;
             options.Cookie.SameSite = SameSiteMode.Lax;
-            options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+            options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
             options.LoginPath = "/login";
             options.ReturnUrlParameter = "returnUrl";
             options.SlidingExpiration = true;
@@ -328,6 +327,7 @@ public static class DependencyInjection
                         .SetOrder(int.MaxValue)
                         .SetType(OpenIddictServerHandlerType.Custom));
                 options.UseAspNetCore()
+                    .DisableTransportSecurityRequirement()
                     .EnableAuthorizationEndpointPassthrough()
                     .EnableEndSessionEndpointPassthrough();
             })
