@@ -34,15 +34,23 @@ variables:
   publishArtifactName: webapp-publish
 
 stages:
-  - stage: Build
-    displayName: Build
+  - stage: Checkout
+    displayName: Checkout code
     jobs:
-      - job: BackendBuild
-        displayName: Build Backend
+      - job: Checkout
+        displayName: Checkout code
         steps:
           - checkout: self
             clean: true
 
+  - stage: Build
+    displayName: Build
+    dependsOn: Checkout
+    condition: succeeded()
+    jobs:
+      - job: BackendBuild
+        displayName: Build Backend
+        steps:
           - task: UseDotNet@2
             displayName: Install .NET SDK
             inputs:
@@ -91,9 +99,6 @@ stages:
       - job: FrontendBuild
         displayName: Build Frontend
         steps:
-          - checkout: self
-            clean: true
-
           - task: UseNode@1
             displayName: Install Node.js
             inputs:
@@ -128,9 +133,6 @@ stages:
       - job: Publish
         displayName: Publish Application
         steps:
-          - checkout: self
-            clean: true
-
           - task: DotNetCoreCLI@2
             displayName: Publish web application
             inputs:
