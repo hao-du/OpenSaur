@@ -34,19 +34,8 @@ variables:
   publishArtifactName: webapp-publish
 
 stages:
-  - stage: Checkout
-    displayName: Checkout code
-    jobs:
-      - job: Checkout
-        displayName: Checkout code
-        steps:
-          - checkout: self
-            clean: true
-
   - stage: Build
     displayName: Build
-    dependsOn: Checkout
-    condition: succeeded()
     jobs:
       - job: BackendBuild
         displayName: Build Backend
