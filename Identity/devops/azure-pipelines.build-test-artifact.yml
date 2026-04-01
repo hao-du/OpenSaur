@@ -13,10 +13,7 @@ parameters:
     type: boolean
     default: true
 
-pr:
-  branches:
-    include:
-      - main
+pr: none
 
 pool:
   vmImage: ubuntu-latest
