@@ -3,6 +3,16 @@ trigger:
     include:
       - main
 
+parameters:
+  - name: runBackendTests
+    displayName: Run backend tests
+    type: boolean
+    default: true
+  - name: runFrontendTests
+    displayName: Run frontend tests
+    type: boolean
+    default: true
+
 pr:
   branches:
     include:
@@ -57,25 +67,26 @@ stages:
                 $(backendTestProject)
               arguments: '--configuration $(buildConfiguration) --no-restore'
 
-          - task: DotNetCoreCLI@2
-            displayName: 'Run backend unit tests'
-            inputs:
-              command: 'test'
-              projects: '$(backendTestProject)'
-              arguments: >
-                --configuration $(buildConfiguration)
-                --no-restore
-                --no-build
-                --logger "console;verbosity=normal"
-              publishTestResults: false
+          - ${{ if eq(parameters.runBackendTests, true) }}:
+              - task: DotNetCoreCLI@2
+                displayName: 'Run backend unit tests'
+                inputs:
+                  command: 'test'
+                  projects: '$(backendTestProject)'
+                  arguments: >
+                    --configuration $(buildConfiguration)
+                    --no-restore
+                    --no-build
+                    --logger "console;verbosity=normal"
+                  publishTestResults: false
 
-          - task: PublishTestResults@2
-            displayName: Publish backend test results
-            inputs:
-              testResultsFormat: VSTest
-              testResultsFiles: $(backendTestResultsDirectory)/*.trx
-              failTaskOnFailedTests: true
-              testRunTitle: Backend unit tests
+              - task: PublishTestResults@2
+                displayName: Publish backend test results
+                inputs:
+                  testResultsFormat: VSTest
+                  testResultsFiles: $(backendTestResultsDirectory)/*.trx
+                  failTaskOnFailedTests: true
+                  testRunTitle: Backend unit tests
 
       - job: FrontendBuild
         displayName: Build Frontend
@@ -94,12 +105,13 @@ stages:
               command: install
               workingDir: $(clientWorkingDirectory)
 
-          - task: Npm@1
-            displayName: Run frontend unit tests
-            inputs:
-              command: custom
-              workingDir: $(clientWorkingDirectory)
-              customCommand: run test -- --run
+          - ${{ if eq(parameters.runFrontendTests, true) }}:
+              - task: Npm@1
+                displayName: Run frontend unit tests
+                inputs:
+                  command: custom
+                  workingDir: $(clientWorkingDirectory)
+                  customCommand: run test -- --run
 
           - task: Npm@1
             displayName: Build frontend
