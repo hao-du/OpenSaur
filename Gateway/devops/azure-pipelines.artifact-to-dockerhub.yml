@@ -1,0 +1,55 @@
+trigger: none
+pr: none
+
+resources:
+  pipelines:
+    - pipeline: BuildPipelineRun
+      source: 'OpenSaur Gateway - Build'
+
+pool:
+  vmImage: ubuntu-latest
+
+variables:
+  dockerHubServiceConnection: 'Docker Hub'
+  dockerRepository: 'duchihao/opensaur-gateway'
+  publishArtifactName: gateway-publish
+
+stages:
+  - stage: ContainerizeAndPublish
+    displayName: Containerize Artifact And Publish To Docker Hub
+    jobs:
+      - job: Dockerize
+        displayName: Build And Push Docker Image
+        steps:
+          - checkout: self
+            clean: true
+
+          - download: BuildPipelineRun
+            artifact: $(publishArtifactName)
+            displayName: Download Gateway artifact from selected pipeline
+
+          - script: cp "$(Build.SourcesDirectory)/Gateway/devops/Dockerfile.artifact" "$(Pipeline.Workspace)/BuildPipelineRun/$(publishArtifactName)/Dockerfile.artifact"
+            displayName: Copy Dockerfile into artifact context
+
+          - task: Docker@2
+            displayName: Build and push Docker image
+            inputs:
+              command: buildAndPush
+              containerRegistry: $(dockerHubServiceConnection)
+              repository: $(dockerRepository)
+              Dockerfile: $(Pipeline.Workspace)/BuildPipelineRun/$(publishArtifactName)/Dockerfile.artifact
+              buildContext: $(Pipeline.Workspace)/BuildPipelineRun/$(publishArtifactName)
+              tags: |
+                $(Build.BuildId)
+
+          - script: |
+              mkdir -p "$(Build.ArtifactStagingDirectory)/docker-image-metadata"
+              printf '%s\n' "$(dockerRepository):$(Build.BuildId)" > "$(Build.ArtifactStagingDirectory)/docker-image-metadata/image-reference.txt"
+            displayName: Write image metadata
+
+          - task: PublishPipelineArtifact@1
+            displayName: Publish image metadata artifact
+            inputs:
+              targetPath: $(Build.ArtifactStagingDirectory)/docker-image-metadata
+              artifact: docker-image-metadata
+              publishLocation: pipeline

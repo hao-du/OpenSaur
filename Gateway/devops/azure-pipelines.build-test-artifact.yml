@@ -1,0 +1,64 @@
+trigger: none
+pr: none
+
+pool:
+  vmImage: ubuntu-latest
+
+variables:
+  buildConfiguration: Release
+  dotnetSdkVersion: 10.0.x
+  webProject: Gateway/src/OpenSaur.Gateway/OpenSaur.Gateway.csproj
+  publishOutputDirectory: $(Build.ArtifactStagingDirectory)/gateway-publish
+  publishArtifactName: gateway-publish
+
+stages:
+  - stage: Build
+    displayName: Build
+    jobs:
+      - job: BackendBuild
+        displayName: Build Gateway
+        steps:
+          - task: UseDotNet@2
+            displayName: Install .NET SDK
+            inputs:
+              packageType: sdk
+              version: $(dotnetSdkVersion)
+
+          - task: DotNetCoreCLI@2
+            displayName: Restore Gateway dependencies
+            inputs:
+              command: restore
+              projects: $(webProject)
+              feedsToUse: select
+
+          - task: DotNetCoreCLI@2
+            displayName: Build Gateway
+            inputs:
+              command: build
+              projects: $(webProject)
+              arguments: --configuration $(buildConfiguration) --no-restore
+
+  - stage: Publish
+    displayName: Publish Artifact
+    dependsOn: Build
+    condition: succeeded()
+    jobs:
+      - job: Publish
+        displayName: Publish Gateway Artifact
+        steps:
+          - task: DotNetCoreCLI@2
+            displayName: Publish Gateway application
+            inputs:
+              command: publish
+              publishWebProjects: false
+              projects: $(webProject)
+              arguments: --configuration $(buildConfiguration) --output $(publishOutputDirectory) /p:CompressionEnabled=false
+              zipAfterPublish: false
+              modifyOutputPath: false
+
+          - task: PublishPipelineArtifact@1
+            displayName: Publish Gateway artifact
+            inputs:
+              targetPath: $(publishOutputDirectory)
+              artifact: $(publishArtifactName)
+              publishLocation: pipeline
