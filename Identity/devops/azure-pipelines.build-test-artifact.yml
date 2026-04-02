@@ -11,8 +11,6 @@ parameters:
     type: boolean
     default: true
 
-pr: none
-
 pool:
   vmImage: ubuntu-latest
 
