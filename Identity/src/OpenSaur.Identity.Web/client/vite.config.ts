@@ -11,6 +11,7 @@ const backendTarget =
       : "http://localhost:5220";
 
 export default defineConfig(({ mode }) => ({
+  base: "/identity/",
   build: {
     emptyOutDir: true,
     outDir: "../wwwroot",
@@ -21,17 +22,17 @@ export default defineConfig(({ mode }) => ({
     host: "0.0.0.0",
     port: 5173,
     proxy: {
-      "/.well-known": {
+      "/identity/.well-known": {
         changeOrigin: true,
         secure: false,
         target: backendTarget
       },
-      "/api": {
+      "/identity/api": {
         changeOrigin: true,
         secure: false,
         target: backendTarget
       },
-      "/connect": {
+      "/identity/connect": {
         changeOrigin: true,
         secure: false,
         target: backendTarget

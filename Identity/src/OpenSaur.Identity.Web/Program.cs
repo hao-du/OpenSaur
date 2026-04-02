@@ -11,6 +11,7 @@ builder.Services.AddOpenSaurInfrastructure(builder.Configuration, builder.Enviro
 
 var app = builder.Build();
 var serveBuiltShell = FrontendAppRoutes.ShouldServeBuiltShell(app.Environment);
+var identityPathBase = new PathString("/identity");
 
 using (var scope = app.Services.CreateScope())
 {
@@ -19,6 +20,17 @@ using (var scope = app.Services.CreateScope())
 }
 
 app.UseForwardedHeaders();
+app.Use(async (httpContext, next) =>
+{
+    if (!httpContext.Request.Path.StartsWithSegments(identityPathBase))
+    {
+        httpContext.Response.StatusCode = StatusCodes.Status404NotFound;
+        return;
+    }
+
+    await next();
+});
+app.UsePathBase(identityPathBase);
 app.UseExceptionHandler();
 
 if (serveBuiltShell)

@@ -1,4 +1,5 @@
 import { appEnvironment } from "../../../shared/config/env";
+import { appBasePath, withAppBasePath } from "../../../shared/config/appBasePath";
 
 type BuildFirstPartyAuthorizeUrlOptions = {
   origin?: string;
@@ -6,7 +7,7 @@ type BuildFirstPartyAuthorizeUrlOptions = {
 };
 
 function buildRedirectUri(origin: string) {
-  return `${origin}/auth/callback`;
+  return `${origin}${withAppBasePath("/auth/callback")}`;
 }
 
 function createAuthorizationState() {
@@ -33,7 +34,7 @@ export function buildFirstPartyAuthorizeUrl({
     state
   });
 
-  return `/connect/authorize?${query.toString()}`;
+  return `${appBasePath}/connect/authorize?${query.toString()}`;
 }
 
 export function startFirstPartyAuthorization() {

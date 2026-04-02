@@ -20,6 +20,7 @@ import { SettingsPage } from "../../pages/settings/SettingsPage";
 import { UsersPage } from "../../pages/users/UsersPage";
 import { WorkspacesPage } from "../../pages/workspaces/WorkspacesPage";
 import { canAccessProtectedShellRoute } from "./protectedShellRoutes";
+import { appBasePath } from "../../shared/config/appBasePath";
 
 function RequireProtectedShellAccess({
   children,
@@ -138,7 +139,9 @@ export const appRoutes: RouteObject[] = [
 ];
 
 export function createAppRouter() {
-  return createBrowserRouter(appRoutes);
+  return createBrowserRouter(appRoutes, {
+    basename: appBasePath || undefined
+  });
 }
 
 export function AppRouter() {

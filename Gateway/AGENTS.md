@@ -20,6 +20,7 @@ Before performing any task:
 - Codex project configuration and custom agents live under `.codex/`.
 - OpenSpec workspace lives under `openspec/`.
 - Beads data lives under `.beads/`.
+- The current Gateway application project lives under `src/OpenSaur.Gateway/`.
 
 ## Beads
 
@@ -74,6 +75,7 @@ When delegation is needed:
 - For code changes, run relevant build, test, or verification commands when possible.
 - Report what was verified and what could not be verified.
 - If there are project-specific checks mentioned in a more specific `AGENTS.md`, run them.
+- For the initial Gateway slices, do not create a dedicated test project unless the user explicitly asks for one. Prefer build verification and focused manual/runtime checks until test work is requested.
 
 ## Safety
 

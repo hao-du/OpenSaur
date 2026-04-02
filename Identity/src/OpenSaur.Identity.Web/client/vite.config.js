@@ -10,6 +10,7 @@ var backendTarget = process.env.ASPNETCORE_HTTP_PORTS != null &&
 export default defineConfig(function (_a) {
     var mode = _a.mode;
     return ({
+        base: "/identity/",
         build: {
             emptyOutDir: true,
             outDir: "../wwwroot",
@@ -20,17 +21,17 @@ export default defineConfig(function (_a) {
             host: "0.0.0.0",
             port: 5173,
             proxy: {
-                "/.well-known": {
+                "/identity/.well-known": {
                     changeOrigin: true,
                     secure: false,
                     target: backendTarget
                 },
-                "/api": {
+                "/identity/api": {
                     changeOrigin: true,
                     secure: false,
                     target: backendTarget
                 },
-                "/connect": {
+                "/identity/connect": {
                     changeOrigin: true,
                     secure: false,
                     target: backendTarget
