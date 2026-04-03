@@ -2,7 +2,7 @@ trigger: none
 
 # Azure DevOps YAML runtime parameter dropdowns are static.
 # Refresh CONTAINER_APP_NAMES values with:
-# az containerapp list --resource-group <RESOURCE_GROUP> --query "[].name" -o tsv
+# powershell -File .\Infrastructure\pipelines\refresh-container-app-parameter-values.ps1 -ResourceGroup <RESOURCE_GROUP>
 
 parameters:
   - name: ACTION
@@ -20,8 +20,12 @@ parameters:
     displayName: "Container App Names"
     default:
       - "ca-identity"
+      - "ca-gateway"
+      - "ca-cloudflared"
     values:
       - "ca-identity"
+      - "ca-gateway"
+      - "ca-cloudflared"
 
 variables:
   azureServiceConnection: "Azure Service Connection"
@@ -63,22 +67,7 @@ stages:
             set -euo pipefail
 
             SUBSCRIPTION_ID="$(az account show --query id -o tsv)"
-            LIST_URI="https://management.azure.com/subscriptions/${SUBSCRIPTION_ID}/resourceGroups/${RESOURCE_GROUP}/providers/Microsoft.App/containerApps?api-version=${CONTAINER_APPS_API_VERSION}"
             ACTION_URI="https://management.azure.com/subscriptions/${SUBSCRIPTION_ID}/resourceGroups/${RESOURCE_GROUP}/providers/Microsoft.App/containerApps/${CONTAINER_APP_NAME}/${ACTION}?api-version=${CONTAINER_APPS_API_VERSION}"
-
-            echo "Available Container Apps in ${RESOURCE_GROUP}:"
-            AVAILABLE_APPS="$(az rest --method get --uri "${LIST_URI}" --query "value[].name" -o tsv)"
-
-            if [ -n "${AVAILABLE_APPS}" ]; then
-              printf '%s\n' "${AVAILABLE_APPS}"
-            else
-              echo "No Container Apps found in resource group ${RESOURCE_GROUP}."
-            fi
-
-            if ! printf '%s\n' "${AVAILABLE_APPS}" | grep -Fxq "${CONTAINER_APP_NAME}"; then
-              echo "Container App ${CONTAINER_APP_NAME} was not found in resource group ${RESOURCE_GROUP}."
-              exit 1
-            fi
 
             echo "Performing ${ACTION} on ${CONTAINER_APP_NAME} in resource group ${RESOURCE_GROUP}"
             az rest --method post --uri "${ACTION_URI}" --output none
@@ -109,22 +98,7 @@ stages:
             set -euo pipefail
 
             SUBSCRIPTION_ID="$(az account show --query id -o tsv)"
-            LIST_URI="https://management.azure.com/subscriptions/${SUBSCRIPTION_ID}/resourceGroups/${RESOURCE_GROUP}/providers/Microsoft.App/containerApps?api-version=${CONTAINER_APPS_API_VERSION}"
             ACTION_URI="https://management.azure.com/subscriptions/${SUBSCRIPTION_ID}/resourceGroups/${RESOURCE_GROUP}/providers/Microsoft.App/containerApps/${CONTAINER_APP_NAME}/stop?api-version=${CONTAINER_APPS_API_VERSION}"
-
-            echo "Available Container Apps in ${RESOURCE_GROUP}:"
-            AVAILABLE_APPS="$(az rest --method get --uri "${LIST_URI}" --query "value[].name" -o tsv)"
-
-            if [ -n "${AVAILABLE_APPS}" ]; then
-              printf '%s\n' "${AVAILABLE_APPS}"
-            else
-              echo "No Container Apps found in resource group ${RESOURCE_GROUP}."
-            fi
-
-            if ! printf '%s\n' "${AVAILABLE_APPS}" | grep -Fxq "${CONTAINER_APP_NAME}"; then
-              echo "Container App ${CONTAINER_APP_NAME} was not found in resource group ${RESOURCE_GROUP}."
-              exit 1
-            fi
 
             echo "Stopping ${CONTAINER_APP_NAME} in resource group ${RESOURCE_GROUP}"
             az rest --method post --uri "${ACTION_URI}" --output none
@@ -154,22 +128,7 @@ stages:
             set -euo pipefail
 
             SUBSCRIPTION_ID="$(az account show --query id -o tsv)"
-            LIST_URI="https://management.azure.com/subscriptions/${SUBSCRIPTION_ID}/resourceGroups/${RESOURCE_GROUP}/providers/Microsoft.App/containerApps?api-version=${CONTAINER_APPS_API_VERSION}"
             ACTION_URI="https://management.azure.com/subscriptions/${SUBSCRIPTION_ID}/resourceGroups/${RESOURCE_GROUP}/providers/Microsoft.App/containerApps/${CONTAINER_APP_NAME}/start?api-version=${CONTAINER_APPS_API_VERSION}"
-
-            echo "Available Container Apps in ${RESOURCE_GROUP}:"
-            AVAILABLE_APPS="$(az rest --method get --uri "${LIST_URI}" --query "value[].name" -o tsv)"
-
-            if [ -n "${AVAILABLE_APPS}" ]; then
-              printf '%s\n' "${AVAILABLE_APPS}"
-            else
-              echo "No Container Apps found in resource group ${RESOURCE_GROUP}."
-            fi
-
-            if ! printf '%s\n' "${AVAILABLE_APPS}" | grep -Fxq "${CONTAINER_APP_NAME}"; then
-              echo "Container App ${CONTAINER_APP_NAME} was not found in resource group ${RESOURCE_GROUP}."
-              exit 1
-            fi
 
             echo "Starting ${CONTAINER_APP_NAME} in resource group ${RESOURCE_GROUP}"
             az rest --method post --uri "${ACTION_URI}" --output none
