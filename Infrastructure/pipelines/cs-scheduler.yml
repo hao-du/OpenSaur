@@ -1,0 +1,176 @@
+trigger: none
+
+# Azure DevOps YAML runtime parameter dropdowns are static.
+# Refresh CONTAINER_APP_NAME values with:
+# az containerapp list --resource-group <RESOURCE_GROUP> --query "[].name" -o tsv
+
+parameters:
+  - name: ACTION
+    type: string
+    displayName: "Action"
+    default: stop  # default for scheduled run
+    values:
+      - start
+      - stop
+  - name: RESOURCE_GROUP
+    type: string
+    default: "Home"
+  - name: CONTAINER_APP_NAME
+    type: string
+    displayName: "Container App Name"
+    default: "ca-identity"
+    values:
+      - "ca-identity"
+
+variables:
+  azureServiceConnection: "Azure Service Connection"
+  containerAppsApiVersion: "2025-07-01"
+
+schedules:
+- cron: "0 19 * * 0-4"  # 2:00 AM UTC+7 (Mon-Fri)
+  displayName: "Stop Container App"
+  branches:
+    include:
+      - main
+  always: true
+
+- cron: "0 12 * * 1-5"  # 7:00 PM UTC+7 (Mon-Fri)
+  displayName: "Start Container App"
+  branches:
+    include:
+      - main
+  always: true
+
+stages:
+- stage: ManualStartStopContainerApp
+  displayName: "Manual Start/Stop Container App"
+  condition: eq(variables['Build.CronSchedule.DisplayName'], '')
+  jobs:
+  - job: ManualContainerAppStartStop
+    displayName: "Manual Start/Stop Container App"
+    pool:
+      vmImage: "ubuntu-latest"
+    steps:
+    - task: AzureCLI@2
+      displayName: "Manual Start/Stop Container App"
+      inputs:
+        azureSubscription: "$(azureServiceConnection)"
+        scriptType: "bash"
+        scriptLocation: "inlineScript"
+        inlineScript: |
+          set -euo pipefail
+
+          SUBSCRIPTION_ID="$(az account show --query id -o tsv)"
+          LIST_URI="https://management.azure.com/subscriptions/${SUBSCRIPTION_ID}/resourceGroups/${RESOURCE_GROUP}/providers/Microsoft.App/containerApps?api-version=${CONTAINER_APPS_API_VERSION}"
+          ACTION_URI="https://management.azure.com/subscriptions/${SUBSCRIPTION_ID}/resourceGroups/${RESOURCE_GROUP}/providers/Microsoft.App/containerApps/${CONTAINER_APP_NAME}/${ACTION}?api-version=${CONTAINER_APPS_API_VERSION}"
+
+          echo "Available Container Apps in ${RESOURCE_GROUP}:"
+          AVAILABLE_APPS="$(az rest --method get --uri "${LIST_URI}" --query "value[].name" -o tsv)"
+
+          if [ -n "${AVAILABLE_APPS}" ]; then
+            printf '%s\n' "${AVAILABLE_APPS}"
+          else
+            echo "No Container Apps found in resource group ${RESOURCE_GROUP}."
+          fi
+
+          if ! printf '%s\n' "${AVAILABLE_APPS}" | grep -Fxq "${CONTAINER_APP_NAME}"; then
+            echo "Container App ${CONTAINER_APP_NAME} was not found in resource group ${RESOURCE_GROUP}."
+            exit 1
+          fi
+
+          echo "Performing ${ACTION} on ${CONTAINER_APP_NAME} in resource group ${RESOURCE_GROUP}"
+          az rest --method post --uri "${ACTION_URI}" --output none
+          echo "Requested ${ACTION} for ${CONTAINER_APP_NAME}."
+      env:
+        ACTION: ${{ parameters.ACTION }}
+        RESOURCE_GROUP: ${{ parameters.RESOURCE_GROUP }}
+        CONTAINER_APP_NAME: ${{ parameters.CONTAINER_APP_NAME }}
+        CONTAINER_APPS_API_VERSION: $(containerAppsApiVersion)
+
+- stage: StopContainerApp
+  displayName: "Stop Container App Scheduler"
+  condition: eq(variables['Build.CronSchedule.DisplayName'], 'Stop Container App')
+  jobs:
+  - job: StopContainerApp
+    displayName: "Stop Container App Scheduler"
+    pool:
+      vmImage: "ubuntu-latest"
+    steps:
+    - task: AzureCLI@2
+      displayName: "Stop Container App Scheduler"
+      inputs:
+        azureSubscription: "$(azureServiceConnection)"
+        scriptType: "bash"
+        scriptLocation: "inlineScript"
+        inlineScript: |
+          set -euo pipefail
+
+          SUBSCRIPTION_ID="$(az account show --query id -o tsv)"
+          LIST_URI="https://management.azure.com/subscriptions/${SUBSCRIPTION_ID}/resourceGroups/${RESOURCE_GROUP}/providers/Microsoft.App/containerApps?api-version=${CONTAINER_APPS_API_VERSION}"
+          ACTION_URI="https://management.azure.com/subscriptions/${SUBSCRIPTION_ID}/resourceGroups/${RESOURCE_GROUP}/providers/Microsoft.App/containerApps/${CONTAINER_APP_NAME}/stop?api-version=${CONTAINER_APPS_API_VERSION}"
+
+          echo "Available Container Apps in ${RESOURCE_GROUP}:"
+          AVAILABLE_APPS="$(az rest --method get --uri "${LIST_URI}" --query "value[].name" -o tsv)"
+
+          if [ -n "${AVAILABLE_APPS}" ]; then
+            printf '%s\n' "${AVAILABLE_APPS}"
+          else
+            echo "No Container Apps found in resource group ${RESOURCE_GROUP}."
+          fi
+
+          if ! printf '%s\n' "${AVAILABLE_APPS}" | grep -Fxq "${CONTAINER_APP_NAME}"; then
+            echo "Container App ${CONTAINER_APP_NAME} was not found in resource group ${RESOURCE_GROUP}."
+            exit 1
+          fi
+
+          echo "Stopping ${CONTAINER_APP_NAME} in resource group ${RESOURCE_GROUP}"
+          az rest --method post --uri "${ACTION_URI}" --output none
+          echo "Requested stop for ${CONTAINER_APP_NAME}."
+      env:
+        RESOURCE_GROUP: ${{ parameters.RESOURCE_GROUP }}
+        CONTAINER_APP_NAME: ${{ parameters.CONTAINER_APP_NAME }}
+        CONTAINER_APPS_API_VERSION: $(containerAppsApiVersion)
+
+- stage: StartContainerApp
+  displayName: "Start Container App Scheduler"
+  condition: eq(variables['Build.CronSchedule.DisplayName'], 'Start Container App')
+  jobs:
+  - job: StartContainerApp
+    displayName: "Start Container App Scheduler"
+    pool:
+      vmImage: "ubuntu-latest"
+    steps:
+    - task: AzureCLI@2
+      displayName: "Start Container App Scheduler"
+      inputs:
+        azureSubscription: "$(azureServiceConnection)"
+        scriptType: "bash"
+        scriptLocation: "inlineScript"
+        inlineScript: |
+          set -euo pipefail
+
+          SUBSCRIPTION_ID="$(az account show --query id -o tsv)"
+          LIST_URI="https://management.azure.com/subscriptions/${SUBSCRIPTION_ID}/resourceGroups/${RESOURCE_GROUP}/providers/Microsoft.App/containerApps?api-version=${CONTAINER_APPS_API_VERSION}"
+          ACTION_URI="https://management.azure.com/subscriptions/${SUBSCRIPTION_ID}/resourceGroups/${RESOURCE_GROUP}/providers/Microsoft.App/containerApps/${CONTAINER_APP_NAME}/start?api-version=${CONTAINER_APPS_API_VERSION}"
+
+          echo "Available Container Apps in ${RESOURCE_GROUP}:"
+          AVAILABLE_APPS="$(az rest --method get --uri "${LIST_URI}" --query "value[].name" -o tsv)"
+
+          if [ -n "${AVAILABLE_APPS}" ]; then
+            printf '%s\n' "${AVAILABLE_APPS}"
+          else
+            echo "No Container Apps found in resource group ${RESOURCE_GROUP}."
+          fi
+
+          if ! printf '%s\n' "${AVAILABLE_APPS}" | grep -Fxq "${CONTAINER_APP_NAME}"; then
+            echo "Container App ${CONTAINER_APP_NAME} was not found in resource group ${RESOURCE_GROUP}."
+            exit 1
+          fi
+
+          echo "Starting ${CONTAINER_APP_NAME} in resource group ${RESOURCE_GROUP}"
+          az rest --method post --uri "${ACTION_URI}" --output none
+          echo "Requested start for ${CONTAINER_APP_NAME}."
+      env:
+        RESOURCE_GROUP: ${{ parameters.RESOURCE_GROUP }}
+        CONTAINER_APP_NAME: ${{ parameters.CONTAINER_APP_NAME }}
+        CONTAINER_APPS_API_VERSION: $(containerAppsApiVersion)

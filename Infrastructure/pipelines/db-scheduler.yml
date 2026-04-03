@@ -1,0 +1,107 @@
+trigger: none
+
+parameters:
+  - name: ACTION
+    type: string
+    displayName: "Action"
+    default: stop  # default for scheduled run
+    values:
+      - start
+      - stop
+  - name: RESOURCE_GROUP
+    type: string
+    default: "Home"
+  - name: SERVER_NAME
+    type: string
+    default: "home-db"
+
+schedules:
+- cron: "0 19 * * 0-4"  # 2:00 AM UTC+7 (Mon-Fri)
+  displayName: "Stop PostgreSQL"
+  branches:
+    include:
+      - main
+  always: true
+
+- cron: "0 12 * * 1-5"  # 7:00 PM UTC+7 (Mon-Fri)
+  displayName: "Start PostgreSQL"
+  branches:
+    include:
+      - main
+  always: true
+
+stages:
+- stage: ManualStartStopPostgres
+  displayName: "Manual Start/Stop Database Server"
+  condition: eq(variables['Build.CronSchedule.DisplayName'], '')
+  jobs:
+  - job: ManualDatabaseStartStop
+    displayName: "Manual Start/Stop Database Server"
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
+    - task: AzureCLI@2
+      displayName: "Manual Start/Stop Database Server"
+      inputs:
+        azureSubscription: 'Azure Service Connection'
+        scriptType: 'bash'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          echo "Performing $ACTION on server $SERVER_NAME in resource group $RESOURCE_GROUP"
+
+          if [ "$ACTION" == "start" ]; then
+            az postgres flexible-server start --name $SERVER_NAME --resource-group $RESOURCE_GROUP
+          elif [ "$ACTION" == "stop" ]; then
+            az postgres flexible-server stop --name $SERVER_NAME --resource-group $RESOURCE_GROUP
+          else
+            echo "Invalid ACTION: $ACTION. Must be 'start' or 'stop'."
+            exit 1
+          fi
+      env:
+        ACTION: ${{ parameters.action }}
+        RESOURCE_GROUP: ${{ parameters.RESOURCE_GROUP }}
+        SERVER_NAME: ${{ parameters.SERVER_NAME }}
+
+- stage: StopPostgres
+  displayName: "Stop Database Scheduler"
+  condition: eq(variables['Build.CronSchedule.DisplayName'], 'Stop PostgreSQL')
+  jobs:
+  - job: StopDatabaseServer
+    displayName: "Stop Database Scheduler"
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
+    - task: AzureCLI@2
+      displayName: "Stop Database Scheduler"
+      inputs:
+        azureSubscription: 'Azure Service Connection'
+        scriptType: 'bash'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          echo "Stopping server $SERVER_NAME in resource group $RESOURCE_GROUP"
+          az postgres flexible-server stop --name $SERVER_NAME --resource-group $RESOURCE_GROUP
+      env:
+        RESOURCE_GROUP: ${{ parameters.RESOURCE_GROUP }}
+        SERVER_NAME: ${{ parameters.SERVER_NAME }}
+
+- stage: StartPostgres
+  displayName: "Start Database Scheduler"
+  condition: eq(variables['Build.CronSchedule.DisplayName'], 'Start PostgreSQL')
+  jobs:
+  - job: StartDatabaseServer
+    displayName: "Start Database Scheduler"
+    pool:
+      vmImage: 'ubuntu-latest'
+    steps:
+    - task: AzureCLI@2
+      displayName: "Start Database Scheduler"
+      inputs:
+        azureSubscription: 'Azure Service Connection'
+        scriptType: 'bash'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          echo "Starting server $SERVER_NAME in resource group $RESOURCE_GROUP"
+          az postgres flexible-server start --name $SERVER_NAME --resource-group $RESOURCE_GROUP
+      env:
+        RESOURCE_GROUP: ${{ parameters.RESOURCE_GROUP }}
+        SERVER_NAME: ${{ parameters.SERVER_NAME }}
