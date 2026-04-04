@@ -6,6 +6,7 @@ public interface IFirstPartyOidcTokenClient
 {
     Task<FirstPartyOidcTokenResult?> ExchangeAuthorizationCodeAsync(
         string code,
+        string redirectUri,
         CancellationToken cancellationToken);
 
     Task<FirstPartyOidcTokenResult?> IssueTokensAsync(

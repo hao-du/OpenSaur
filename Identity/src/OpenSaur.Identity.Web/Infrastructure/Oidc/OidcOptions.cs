@@ -35,6 +35,26 @@ public sealed class OidcOptions
 
         return browserClient;
     }
+
+    public BrowserClientOidcOptions GetBrowserClientByRedirectUri(string redirectUri)
+    {
+        if (string.IsNullOrWhiteSpace(redirectUri))
+        {
+            throw new InvalidOperationException("OIDC redirect URI configuration is required.");
+        }
+
+        foreach (var browserClient in BrowserClients.Values)
+        {
+            if (browserClient.RedirectUris.Any(configuredRedirectUri =>
+                    string.Equals(configuredRedirectUri, redirectUri, StringComparison.OrdinalIgnoreCase)))
+            {
+                return browserClient;
+            }
+        }
+
+        throw new InvalidOperationException(
+            $"OIDC browser client for redirect URI '{redirectUri}' is not configured.");
+    }
 }
 
 public sealed class BrowserClientOidcOptions

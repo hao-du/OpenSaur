@@ -24,12 +24,12 @@ public sealed class FirstPartyOidcTokenClient : IFirstPartyOidcTokenClient
 
     public async Task<FirstPartyOidcTokenResult?> ExchangeAuthorizationCodeAsync(
         string code,
+        string redirectUri,
         CancellationToken cancellationToken)
     {
-        var hostedIdentityClient = _oidcOptions.Value.GetHostedIdentityClient();
-        if (string.IsNullOrWhiteSpace(hostedIdentityClient.ClientId)
-            || string.IsNullOrWhiteSpace(hostedIdentityClient.ClientSecret)
-            || hostedIdentityClient.RedirectUris.Count == 0)
+        var browserClient = _oidcOptions.Value.GetBrowserClientByRedirectUri(redirectUri);
+        if (string.IsNullOrWhiteSpace(browserClient.ClientId)
+            || string.IsNullOrWhiteSpace(browserClient.ClientSecret))
         {
             throw new InvalidOperationException("OIDC hosted identity client configuration is required.");
         }
@@ -38,9 +38,9 @@ public sealed class FirstPartyOidcTokenClient : IFirstPartyOidcTokenClient
             new OpenIddictRequest
             {
                 GrantType = GrantTypes.AuthorizationCode,
-                ClientId = hostedIdentityClient.ClientId,
-                ClientSecret = hostedIdentityClient.ClientSecret,
-                RedirectUri = hostedIdentityClient.RedirectUris[0],
+                ClientId = browserClient.ClientId,
+                ClientSecret = browserClient.ClientSecret,
+                RedirectUri = redirectUri,
                 Code = code
             },
             cancellationToken);
