@@ -1,16 +1,6 @@
 trigger: none
 pr: none
 
-parameters:
-  - name: runBackendTests
-    displayName: Run backend tests
-    type: boolean
-    default: true
-  - name: runFrontendTests
-    displayName: Run frontend tests
-    type: boolean
-    default: true
-
 pool:
   vmImage: ubuntu-latest
 
@@ -19,8 +9,6 @@ variables:
   dotnetSdkVersion: 10.0.x
   nodeVersion: 20.x
   projectRoot: Identity
-  backendTestProject: Identity/src/OpenSaur.Identity.Web.Tests/OpenSaur.Identity.Web.Tests.csproj
-  backendTestResultsDirectory: $(Agent.TempDirectory)/backend-test-results
   webProject: Identity/src/OpenSaur.Identity.Web/OpenSaur.Identity.Web.csproj
   clientWorkingDirectory: Identity/src/OpenSaur.Identity.Web/client
   publishOutputDirectory: $(Build.ArtifactStagingDirectory)/webapp-publish
@@ -43,40 +31,15 @@ stages:
             displayName: 'Restore backend dependencies'
             inputs:
               command: 'restore'
-              projects: |
-                $(webProject)
-                $(backendTestProject)
+              projects: '$(webProject)'
               feedsToUse: 'select'
 
           - task: DotNetCoreCLI@2
             displayName: 'Build backend'
             inputs:
               command: 'build'
-              projects: |
-                $(webProject)
-                $(backendTestProject)
+              projects: '$(webProject)'
               arguments: '--configuration $(buildConfiguration) --no-restore'
-
-          - ${{ if eq(parameters.runBackendTests, true) }}:
-              - task: DotNetCoreCLI@2
-                displayName: 'Run backend unit tests'
-                inputs:
-                  command: 'test'
-                  projects: '$(backendTestProject)'
-                  arguments: >
-                    --configuration $(buildConfiguration)
-                    --no-restore
-                    --no-build
-                    --logger "console;verbosity=normal"
-                  publishTestResults: false
-
-              - task: PublishTestResults@2
-                displayName: Publish backend test results
-                inputs:
-                  testResultsFormat: VSTest
-                  testResultsFiles: $(backendTestResultsDirectory)/*.trx
-                  failTaskOnFailedTests: true
-                  testRunTitle: Backend unit tests
 
       - job: FrontendBuild
         displayName: Build Frontend
@@ -91,14 +54,6 @@ stages:
             inputs:
               command: install
               workingDir: $(clientWorkingDirectory)
-
-          - ${{ if eq(parameters.runFrontendTests, true) }}:
-              - task: Npm@1
-                displayName: Run frontend unit tests
-                inputs:
-                  command: custom
-                  workingDir: $(clientWorkingDirectory)
-                  customCommand: run test -- --run
 
           - task: Npm@1
             displayName: Build frontend

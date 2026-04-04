@@ -1,3 +1,11 @@
 export { normalizeAuthReturnUrl } from "./normalizeAuthReturnUrl";
-export { buildFirstPartyAuthorizeUrl, createFirstPartyAuthorizationState, startFirstPartyAuthorization } from "./firstPartyOidc";
+export {
+  buildFirstPartyAuthorizeUrl,
+  continueFirstPartyAuthorizationReturnUrl,
+  createFirstPartyAuthorizationState,
+  isCurrentAppHostedByIssuer,
+  isFirstPartyAuthorizeReturnUrl,
+  readFirstPartyAuthorizationReturnUrl,
+  startFirstPartyAuthorization
+} from "./firstPartyOidc";
 export { shouldEnforcePasswordChange } from "./shouldEnforcePasswordChange";

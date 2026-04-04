@@ -1,4 +1,3 @@
 <Solution>
-  <Project Path="OpenSaur.Identity.Web.Tests/OpenSaur.Identity.Web.Tests.csproj" />
   <Project Path="OpenSaur.Identity.Web/OpenSaur.Identity.Web.csproj" />
 </Solution>

@@ -5,7 +5,11 @@ import { AuthPageTemplate } from "../../components/templates";
 import { useCurrentUserQuery } from "../../features/auth/hooks/useCurrentUserQuery";
 import { useExchangeWebSession } from "../../features/auth/hooks/useExchangeWebSession";
 import { authSessionStore } from "../../features/auth/state/authSessionStore";
-import { normalizeAuthReturnUrl, shouldEnforcePasswordChange } from "../../features/auth/utils";
+import {
+  normalizeAuthReturnUrl,
+  readFirstPartyAuthorizationReturnUrl,
+  shouldEnforcePasswordChange
+} from "../../features/auth/utils";
 import type { ExchangeWebSessionResponse } from "../../features/auth/api/authApi";
 import { usePreferences } from "../../features/preferences/PreferenceProvider";
 import { useSyncAuthenticatedPreferences } from "../../features/preferences/hooks";
@@ -44,7 +48,8 @@ export function AuthCallbackPage() {
     let isCancelled = false;
 
     async function completeSignIn() {
-      const rememberedReturnUrl = normalizeAuthReturnUrl(authSessionStore.getRememberedReturnUrl());
+      const rememberedReturnUrl = readFirstPartyAuthorizationReturnUrl(searchParams.get("state"))
+        ?? normalizeAuthReturnUrl(authSessionStore.getRememberedReturnUrl());
       if (!authorizationCode) {
         authSessionStore.clearRememberedReturnUrl();
         navigate(`/login?returnUrl=${encodeURIComponent(rememberedReturnUrl)}`, {
@@ -89,7 +94,7 @@ export function AuthCallbackPage() {
     return () => {
       isCancelled = true;
     };
-  }, [authorizationCode, clearCurrentUser, exchangeSession, fetchCurrentUser, navigate, syncAuthenticatedPreferences]);
+  }, [authorizationCode, clearCurrentUser, exchangeSession, fetchCurrentUser, navigate, searchParams, syncAuthenticatedPreferences]);
 
   return (
     <AuthPageTemplate

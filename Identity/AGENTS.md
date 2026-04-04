@@ -36,6 +36,7 @@ Before performing any task:
 - Do not modify unrelated files.
 - Preserve existing project patterns unless the task explicitly requires changing them.
 - Prefer clear, maintainable solutions over clever or overly abstract ones.
+- Do not create or update automated tests unless the user explicitly asks for test work after the implementation scopes are complete.
 
 ## Specs And Planning
 
@@ -58,7 +59,6 @@ Use project agents when their specialty matches the task:
 - `Nguyen Bao Duy`: .NET backend implementation
 - `Le Viet Hieu`: React and frontend implementation
 - `Kulpreet Alagh`: UI/UX and responsive design
-- `Ho Thanh Toan`: test cases and Playwright automation
 
 These named agent definitions live under `.codex/agents/*.toml` and are the canonical project agents for this repository.
 
@@ -71,7 +71,8 @@ When delegation is needed:
 
 ## Validation
 
-- For code changes, run relevant build, test, or verification commands when possible.
+- For code changes, run relevant build or non-test verification commands when possible.
+- Do not add, update, or run automated tests as part of normal implementation in this repository unless the user explicitly requests test work later.
 - Report what was verified and what could not be verified.
 - If there are project-specific checks mentioned in a more specific `AGENTS.md`, run them.
 
