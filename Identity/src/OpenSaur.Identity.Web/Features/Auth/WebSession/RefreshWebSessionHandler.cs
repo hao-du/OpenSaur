@@ -21,7 +21,10 @@ public static class RefreshWebSessionHandler
                 .ToApiErrorResult();
         }
 
-        var tokenResult = await tokenClient.RefreshAccessTokenAsync(refreshToken, cancellationToken);
+        var tokenResult = await tokenClient.RefreshAccessTokenAsync(
+            refreshToken,
+            httpContext.BuildFirstPartyRedirectUri(),
+            cancellationToken);
         if (tokenResult is null)
         {
             httpContext.Response.Cookies.Delete(

@@ -48,11 +48,12 @@ public sealed class FirstPartyOidcTokenClient : IFirstPartyOidcTokenClient
 
     public async Task<FirstPartyOidcTokenResult?> RefreshAccessTokenAsync(
         string refreshToken,
+        string redirectUri,
         CancellationToken cancellationToken)
     {
-        var hostedIdentityClient = _oidcOptions.Value.GetHostedIdentityClient();
-        if (string.IsNullOrWhiteSpace(hostedIdentityClient.ClientId)
-            || string.IsNullOrWhiteSpace(hostedIdentityClient.ClientSecret))
+        var browserClient = _oidcOptions.Value.GetBrowserClientByRedirectUri(redirectUri);
+        if (string.IsNullOrWhiteSpace(browserClient.ClientId)
+            || string.IsNullOrWhiteSpace(browserClient.ClientSecret))
         {
             throw new InvalidOperationException("OIDC hosted identity client configuration is required.");
         }
@@ -61,8 +62,8 @@ public sealed class FirstPartyOidcTokenClient : IFirstPartyOidcTokenClient
             new OpenIddictRequest
             {
                 GrantType = GrantTypes.RefreshToken,
-                ClientId = hostedIdentityClient.ClientId,
-                ClientSecret = hostedIdentityClient.ClientSecret,
+                ClientId = browserClient.ClientId,
+                ClientSecret = browserClient.ClientSecret,
                 RefreshToken = refreshToken
             },
             cancellationToken);
@@ -70,10 +71,11 @@ public sealed class FirstPartyOidcTokenClient : IFirstPartyOidcTokenClient
 
     public async Task<FirstPartyOidcTokenResult?> IssueTokensAsync(
         ClaimsPrincipal principal,
+        string redirectUri,
         CancellationToken cancellationToken)
     {
-        var hostedIdentityClient = _oidcOptions.Value.GetHostedIdentityClient();
-        if (string.IsNullOrWhiteSpace(hostedIdentityClient.ClientId))
+        var browserClient = _oidcOptions.Value.GetBrowserClientByRedirectUri(redirectUri);
+        if (string.IsNullOrWhiteSpace(browserClient.ClientId))
         {
             throw new InvalidOperationException("OIDC hosted identity client configuration is required.");
         }
@@ -81,7 +83,7 @@ public sealed class FirstPartyOidcTokenClient : IFirstPartyOidcTokenClient
         var transaction = await CreateTransactionAsync(
             new OpenIddictRequest
             {
-                ClientId = hostedIdentityClient.ClientId
+                ClientId = browserClient.ClientId
             },
             cancellationToken);
 

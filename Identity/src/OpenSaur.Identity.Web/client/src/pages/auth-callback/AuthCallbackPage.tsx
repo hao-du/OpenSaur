@@ -50,9 +50,13 @@ export function AuthCallbackPage() {
     async function completeSignIn() {
       const rememberedReturnUrl = readFirstPartyAuthorizationReturnUrl(searchParams.get("state"))
         ?? normalizeAuthReturnUrl(authSessionStore.getRememberedReturnUrl());
+      const loginSearchParams = new URLSearchParams({
+        returnUrl: rememberedReturnUrl
+      });
+
       if (!authorizationCode) {
         authSessionStore.clearRememberedReturnUrl();
-        navigate(`/login?returnUrl=${encodeURIComponent(rememberedReturnUrl)}`, {
+        navigate(`/login?${loginSearchParams.toString()}`, {
           replace: true
         });
         return;
@@ -83,7 +87,8 @@ export function AuthCallbackPage() {
       } catch {
         clearCurrentUser();
         authSessionStore.clearSession();
-        navigate(`/login?returnUrl=${encodeURIComponent(rememberedReturnUrl)}`, {
+        loginSearchParams.set("authError", "exchange_failed");
+        navigate(`/login?${loginSearchParams.toString()}`, {
           replace: true
         });
       }

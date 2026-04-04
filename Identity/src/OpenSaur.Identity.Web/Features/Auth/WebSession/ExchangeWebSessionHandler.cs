@@ -21,14 +21,7 @@ public static class ExchangeWebSessionHandler
             return validationFailure;
         }
 
-        var redirectPath = httpContext.Request.PathBase.Add("/auth/callback");
-        var redirectUri = new UriBuilder(
-            httpContext.Request.Scheme,
-            httpContext.Request.Host.Host,
-            httpContext.Request.Host.Port ?? -1)
-        {
-            Path = redirectPath.Value
-        }.Uri.AbsoluteUri;
+        var redirectUri = httpContext.BuildFirstPartyRedirectUri();
 
         var tokenResult = await tokenClient.ExchangeAuthorizationCodeAsync(
             request.Code,

@@ -110,7 +110,10 @@ public static class StartImpersonationHandler
             workspaceOverrideId: request.WorkspaceId,
             isImpersonating: true,
             impersonationOriginalUserId: currentUserContext.UserId);
-        var tokenResult = await tokenClient.IssueTokensAsync(tokenPrincipal, cancellationToken);
+        var tokenResult = await tokenClient.IssueTokensAsync(
+            tokenPrincipal,
+            httpContext.BuildFirstPartyRedirectUri(),
+            cancellationToken);
         if (tokenResult is null)
         {
             return Result.Failure(

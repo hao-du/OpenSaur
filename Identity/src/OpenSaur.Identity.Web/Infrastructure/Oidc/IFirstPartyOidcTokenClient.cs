@@ -11,10 +11,12 @@ public interface IFirstPartyOidcTokenClient
 
     Task<FirstPartyOidcTokenResult?> IssueTokensAsync(
         ClaimsPrincipal principal,
+        string redirectUri,
         CancellationToken cancellationToken);
 
     Task<FirstPartyOidcTokenResult?> RefreshAccessTokenAsync(
         string refreshToken,
+        string redirectUri,
         CancellationToken cancellationToken);
 }
 

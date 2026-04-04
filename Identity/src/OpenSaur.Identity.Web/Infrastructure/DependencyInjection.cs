@@ -399,21 +399,36 @@ public static class DependencyInjection
         OidcOptions oidcOptions,
         IHostEnvironment environment)
     {
-        if (environment.IsDevelopment())
-        {
-            builder.AddEphemeralEncryptionKey()
-                .AddEphemeralSigningKey();
-
-            return;
-        }
-
         var signingCertificateConfigured = !string.IsNullOrWhiteSpace(oidcOptions.SigningCertificatePath);
         var encryptionCertificateConfigured = !string.IsNullOrWhiteSpace(oidcOptions.EncryptionCertificatePath);
 
         if (signingCertificateConfigured != encryptionCertificateConfigured)
         {
             throw new InvalidOperationException(
-                "Both OIDC signing and encryption certificate paths must be configured together outside the Development environment.");
+                "Both OIDC signing and encryption certificate paths must be configured together.");
+        }
+
+        if (signingCertificateConfigured)
+        {
+            var signingCertificate = LoadCertificate(
+                oidcOptions.SigningCertificatePath!,
+                oidcOptions.SigningCertificatePassword);
+            var encryptionCertificate = LoadCertificate(
+                oidcOptions.EncryptionCertificatePath!,
+                oidcOptions.EncryptionCertificatePassword);
+
+            builder.AddSigningCertificate(signingCertificate)
+                .AddEncryptionCertificate(encryptionCertificate);
+
+            return;
+        }
+
+        if (environment.IsDevelopment())
+        {
+            builder.AddEphemeralEncryptionKey()
+                .AddEphemeralSigningKey();
+
+            return;
         }
 
         if (!signingCertificateConfigured && !encryptionCertificateConfigured)
@@ -432,16 +447,6 @@ public static class DependencyInjection
 
             return;
         }
-
-        var signingCertificate = LoadCertificate(
-            oidcOptions.SigningCertificatePath!,
-            oidcOptions.SigningCertificatePassword);
-        var encryptionCertificate = LoadCertificate(
-            oidcOptions.EncryptionCertificatePath!,
-            oidcOptions.EncryptionCertificatePassword);
-
-        builder.AddSigningCertificate(signingCertificate)
-            .AddEncryptionCertificate(encryptionCertificate);
     }
 
     private static X509Certificate2 LoadCertificate(string certificatePath, string? certificatePassword)

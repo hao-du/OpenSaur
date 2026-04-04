@@ -55,7 +55,10 @@ public static class ExitImpersonationHandler
             originalUser,
             originalRolesResult.Value?.NormalizedRoleNames ?? [],
             oidcOptions.Value.GetFirstPartyScopes());
-        var tokenResult = await tokenClient.IssueTokensAsync(tokenPrincipal, cancellationToken);
+        var tokenResult = await tokenClient.IssueTokensAsync(
+            tokenPrincipal,
+            httpContext.BuildFirstPartyRedirectUri(),
+            cancellationToken);
         if (tokenResult is null)
         {
             return Result.Failure(

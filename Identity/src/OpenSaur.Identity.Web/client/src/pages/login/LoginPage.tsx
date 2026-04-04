@@ -20,6 +20,7 @@ import { usePreferences } from "../../features/preferences/PreferenceProvider";
 export function LoginPage() {
   const [searchParams] = useSearchParams();
   const normalizedReturnUrl = normalizeAuthReturnUrl(searchParams.get("returnUrl"));
+  const authError = searchParams.get("authError");
   const isIssuerHostedLogin = isCurrentAppHostedByIssuer();
   const [authorizeUrl] = useState(() => buildFirstPartyAuthorizeUrl({
     state: createFirstPartyAuthorizationState(normalizedReturnUrl)
@@ -28,14 +29,15 @@ export function LoginPage() {
   const [hasStartedRedirect, setHasStartedRedirect] = useState(false);
   const { isLoggingIn, login } = useLogin();
   const { t } = usePreferences();
+  const shouldAutoRedirect = !isIssuerHostedLogin && !authError;
 
   useLayoutEffect(() => {
     authSessionStore.rememberReturnUrl(normalizedReturnUrl);
-    if (!isIssuerHostedLogin && !hasStartedRedirect) {
+    if (shouldAutoRedirect && !hasStartedRedirect) {
       setHasStartedRedirect(true);
       startFirstPartyAuthorization(authorizeUrl);
     }
-  }, [authorizeUrl, hasStartedRedirect, isIssuerHostedLogin, normalizedReturnUrl]);
+  }, [authorizeUrl, hasStartedRedirect, normalizedReturnUrl, shouldAutoRedirect]);
 
   async function handleSubmit(values: LoginRequest) {
     setErrorMessage(null);
@@ -68,13 +70,15 @@ export function LoginPage() {
       ) : (
         <Stack spacing={2} alignItems="flex-start">
           <Stack direction="row" spacing={1.5} alignItems="center">
-            <CircularProgress size={20} />
+            {shouldAutoRedirect ? <CircularProgress size={20} /> : null}
             <Typography color="text.secondary">
-              {t("auth.preparingSession")}
+              {t(shouldAutoRedirect ? "auth.preparingSession" : "login.error")}
             </Typography>
           </Stack>
           <Typography color="text.secondary" variant="body2">
-            Continue on the issuer-hosted sign-in page if the browser does not redirect automatically.
+            {shouldAutoRedirect
+              ? "Continue on the issuer-hosted sign-in page if the browser does not redirect automatically."
+              : "The hosted sign-in completed, but the local callback could not establish a session. Review the local OIDC client configuration, then retry manually."}
           </Typography>
           <Button href={authorizeUrl} onClick={() => startFirstPartyAuthorization(authorizeUrl)} variant="contained">
             Continue to Sign In
