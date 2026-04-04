@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
+using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.WebUtilities;
 using OpenSaur.Identity.Web.Domain.Identity;
 using OpenSaur.Identity.Web.Tests.Support;
@@ -116,6 +117,61 @@ public sealed class OidcAuthorizationFlowTests : IClassFixture<OpenSaurWebApplic
         var callbackQuery = QueryHelpers.ParseQuery(secondAuthorizeResponse.Headers.Location.Query);
         Assert.True(callbackQuery.ContainsKey("code"));
         Assert.Equal("oidc-state", callbackQuery["state"].ToString());
+    }
+
+    [Fact]
+    public async Task GetAuthorize_WhenRedirectUriIsNotRegistered_ReturnsBadRequest()
+    {
+        const string clientId = "third-party-client";
+        const string registeredRedirectUri = "https://client.test.opensaur/signin-oidc";
+        const string unregisteredRedirectUri = "https://client.test.opensaur/rogue-callback";
+
+        await _factory.SeedOidcClientAsync(clientId, registeredRedirectUri, ClientSecret);
+        using var client = FirstPartyApiTestClient.CreateClient(_factory);
+
+        var response = await client.GetAsync(
+            FirstPartyApiTestClient.CreateAuthorizeUrl(clientId, unregisteredRedirectUri, "oidc-state"));
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+
+        await using var payloadStream = await response.Content.ReadAsStreamAsync();
+        using var payload = await JsonDocument.ParseAsync(payloadStream);
+        Assert.Equal("invalid_request", payload.RootElement.GetProperty("error").GetString());
+    }
+
+    [Fact]
+    public async Task GetAuthorize_WhenIssuerHostDiffersFromRequestHost_RedirectsToIssuerHostedLogin()
+    {
+        const string clientId = "third-party-client";
+        const string redirectUri = "https://client.test.opensaur/signin-oidc";
+        const string internalHost = "ca-identity.bluesea-ebd8152c.canadacentral.azurecontainerapps.io";
+
+        using var factory = new OpenSaurWebApplicationFactory(
+            new Dictionary<string, string?>
+            {
+                ["Oidc:Issuer"] = "https://app.duchihao.com/identity"
+            });
+        await factory.ResetDatabaseAsync();
+        await factory.SeedOidcClientAsync(clientId, redirectUri, ClientSecret);
+        using var client = factory.CreateClient(
+            new WebApplicationFactoryClientOptions
+            {
+                AllowAutoRedirect = false,
+                BaseAddress = new Uri($"https://{internalHost}/identity/"),
+                HandleCookies = true
+            });
+
+        var response = await client.GetAsync(
+            FirstPartyApiTestClient.CreateAuthorizeUrl(clientId, redirectUri, "oidc-state").TrimStart('/'));
+
+        Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
+        Assert.NotNull(response.Headers.Location);
+        Assert.Equal("app.duchihao.com", response.Headers.Location!.Host);
+        Assert.Equal("/identity/login", response.Headers.Location.AbsolutePath);
+
+        var query = QueryHelpers.ParseQuery(response.Headers.Location.Query);
+        Assert.True(query.TryGetValue("returnUrl", out var returnUrl));
+        Assert.Contains("/identity/connect/authorize", returnUrl.ToString(), StringComparison.Ordinal);
     }
 
     [Fact]

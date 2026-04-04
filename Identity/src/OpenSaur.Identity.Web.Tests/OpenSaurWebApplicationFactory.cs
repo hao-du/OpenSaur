@@ -58,9 +58,10 @@ public sealed class OpenSaurWebApplicationFactory : WebApplicationFactory<Progra
         });
         builder.UseSetting("ConnectionStrings:IdentityDb", IdentityDbConnectionString);
         builder.UseSetting("Oidc:Issuer", Issuer);
-        builder.UseSetting("Oidc:FirstPartyWeb:ClientId", FirstPartyApiTestClient.ClientId);
-        builder.UseSetting("Oidc:FirstPartyWeb:ClientSecret", FirstPartyApiTestClient.ClientSecret);
-        builder.UseSetting("Oidc:FirstPartyWeb:RedirectUri", FirstPartyApiTestClient.RedirectUri);
+        builder.UseSetting("Oidc:HostedIdentityClient", "hosted-identity");
+        builder.UseSetting("Oidc:BrowserClients:hosted-identity:ClientId", FirstPartyApiTestClient.ClientId);
+        builder.UseSetting("Oidc:BrowserClients:hosted-identity:ClientSecret", FirstPartyApiTestClient.ClientSecret);
+        builder.UseSetting("Oidc:BrowserClients:hosted-identity:RedirectUris:0", FirstPartyApiTestClient.RedirectUri);
         builder.UseSetting("EndpointResilience:RateLimiting:Default:PermitLimit", "1000");
         builder.UseSetting("EndpointResilience:RateLimiting:Auth:PermitLimit", "1000");
         builder.UseSetting("EndpointResilience:RateLimiting:Token:PermitLimit", "1000");

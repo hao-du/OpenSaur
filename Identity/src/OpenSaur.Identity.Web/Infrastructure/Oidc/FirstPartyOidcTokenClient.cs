@@ -26,21 +26,21 @@ public sealed class FirstPartyOidcTokenClient : IFirstPartyOidcTokenClient
         string code,
         CancellationToken cancellationToken)
     {
-        var firstPartyWeb = _oidcOptions.Value.FirstPartyWeb;
-        if (string.IsNullOrWhiteSpace(firstPartyWeb.ClientId)
-            || string.IsNullOrWhiteSpace(firstPartyWeb.ClientSecret)
-            || string.IsNullOrWhiteSpace(firstPartyWeb.RedirectUri))
+        var hostedIdentityClient = _oidcOptions.Value.GetHostedIdentityClient();
+        if (string.IsNullOrWhiteSpace(hostedIdentityClient.ClientId)
+            || string.IsNullOrWhiteSpace(hostedIdentityClient.ClientSecret)
+            || hostedIdentityClient.RedirectUris.Count == 0)
         {
-            throw new InvalidOperationException("OIDC first-party web client configuration is required.");
+            throw new InvalidOperationException("OIDC hosted identity client configuration is required.");
         }
 
         return await ProcessTokenRequestAsync(
             new OpenIddictRequest
             {
                 GrantType = GrantTypes.AuthorizationCode,
-                ClientId = firstPartyWeb.ClientId,
-                ClientSecret = firstPartyWeb.ClientSecret,
-                RedirectUri = firstPartyWeb.RedirectUri,
+                ClientId = hostedIdentityClient.ClientId,
+                ClientSecret = hostedIdentityClient.ClientSecret,
+                RedirectUri = hostedIdentityClient.RedirectUris[0],
                 Code = code
             },
             cancellationToken);
@@ -50,19 +50,19 @@ public sealed class FirstPartyOidcTokenClient : IFirstPartyOidcTokenClient
         string refreshToken,
         CancellationToken cancellationToken)
     {
-        var firstPartyWeb = _oidcOptions.Value.FirstPartyWeb;
-        if (string.IsNullOrWhiteSpace(firstPartyWeb.ClientId)
-            || string.IsNullOrWhiteSpace(firstPartyWeb.ClientSecret))
+        var hostedIdentityClient = _oidcOptions.Value.GetHostedIdentityClient();
+        if (string.IsNullOrWhiteSpace(hostedIdentityClient.ClientId)
+            || string.IsNullOrWhiteSpace(hostedIdentityClient.ClientSecret))
         {
-            throw new InvalidOperationException("OIDC first-party web client configuration is required.");
+            throw new InvalidOperationException("OIDC hosted identity client configuration is required.");
         }
 
         return await ProcessTokenRequestAsync(
             new OpenIddictRequest
             {
                 GrantType = GrantTypes.RefreshToken,
-                ClientId = firstPartyWeb.ClientId,
-                ClientSecret = firstPartyWeb.ClientSecret,
+                ClientId = hostedIdentityClient.ClientId,
+                ClientSecret = hostedIdentityClient.ClientSecret,
                 RefreshToken = refreshToken
             },
             cancellationToken);
@@ -72,16 +72,16 @@ public sealed class FirstPartyOidcTokenClient : IFirstPartyOidcTokenClient
         ClaimsPrincipal principal,
         CancellationToken cancellationToken)
     {
-        var firstPartyWeb = _oidcOptions.Value.FirstPartyWeb;
-        if (string.IsNullOrWhiteSpace(firstPartyWeb.ClientId))
+        var hostedIdentityClient = _oidcOptions.Value.GetHostedIdentityClient();
+        if (string.IsNullOrWhiteSpace(hostedIdentityClient.ClientId))
         {
-            throw new InvalidOperationException("OIDC first-party web client configuration is required.");
+            throw new InvalidOperationException("OIDC hosted identity client configuration is required.");
         }
 
         var transaction = await CreateTransactionAsync(
             new OpenIddictRequest
             {
-                ClientId = firstPartyWeb.ClientId
+                ClientId = hostedIdentityClient.ClientId
             },
             cancellationToken);
 

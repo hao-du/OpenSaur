@@ -3,6 +3,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.Security.Claims;
 using System.Threading.RateLimiting;
 using System.Diagnostics;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -155,7 +156,9 @@ public static class DependencyInjection
         services.AddHttpContextAccessor();
         services.Configure<ForwardedHeadersOptions>(options =>
         {
-            options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+            options.ForwardedHeaders = ForwardedHeaders.XForwardedFor
+                | ForwardedHeaders.XForwardedProto
+                | ForwardedHeaders.XForwardedHost;
 
             // This service is expected to run behind a trusted reverse proxy.
             // Narrow KnownNetworks/KnownProxies in deployment-specific configuration if needed.
@@ -211,6 +214,15 @@ public static class DependencyInjection
             options.LoginPath = "/login";
             options.ReturnUrlParameter = "returnUrl";
             options.SlidingExpiration = true;
+            options.Events = new CookieAuthenticationEvents
+            {
+                OnRedirectToLogin = context =>
+                {
+                    var oidcOptions = context.HttpContext.RequestServices.GetRequiredService<IOptions<OidcOptions>>().Value;
+                    context.Response.Redirect(BuildIssuerHostedLoginRedirectUri(context, oidcOptions));
+                    return Task.CompletedTask;
+                }
+            };
         });
         services.AddAuthentication(options =>
             {
@@ -255,6 +267,47 @@ public static class DependencyInjection
     {
         services.AddValidatorsFromAssemblyContaining<LoginRequestValidator>(ServiceLifetime.Transient);
         return services;
+    }
+
+    private static string BuildIssuerHostedLoginRedirectUri(
+        RedirectContext<CookieAuthenticationOptions> context,
+        OidcOptions oidcOptions)
+    {
+        if (!Uri.TryCreate(oidcOptions.Issuer, UriKind.Absolute, out var issuerUri))
+        {
+            return context.RedirectUri;
+        }
+
+        var originalRedirectUri = new Uri(context.RedirectUri, UriKind.Absolute);
+        var issuerHostedLoginPath = CombinePathSegments(
+            context.Request.PathBase.HasValue ? context.Request.PathBase.Value : issuerUri.AbsolutePath,
+            context.Options.LoginPath.Value);
+
+        var issuerHostedLoginUri = new UriBuilder(issuerUri.Scheme, issuerUri.Host, issuerUri.IsDefaultPort ? -1 : issuerUri.Port)
+        {
+            Path = issuerHostedLoginPath,
+            Query = originalRedirectUri.Query.TrimStart('?')
+        };
+
+        return issuerHostedLoginUri.Uri.AbsoluteUri;
+    }
+
+    private static string CombinePathSegments(string? left, string? right)
+    {
+        var normalizedLeft = string.IsNullOrWhiteSpace(left) || string.Equals(left, "/", StringComparison.Ordinal)
+            ? string.Empty
+            : left.TrimEnd('/');
+        var normalizedRight = string.IsNullOrWhiteSpace(right) || string.Equals(right, "/", StringComparison.Ordinal)
+            ? string.Empty
+            : right.TrimStart('/');
+
+        return (normalizedLeft, normalizedRight) switch
+        {
+            ("", "") => "/",
+            ("", _) => $"/{normalizedRight}",
+            (_, "") => normalizedLeft,
+            _ => $"{normalizedLeft}/{normalizedRight}"
+        };
     }
 
     private static IServiceCollection AddRateLimitingServices(this IServiceCollection services)

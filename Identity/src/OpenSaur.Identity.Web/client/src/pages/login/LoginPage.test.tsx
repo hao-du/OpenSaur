@@ -2,7 +2,6 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 import { AppProviders } from "../../app/providers/AppProviders";
-import * as authApi from "../../features/auth/api/authApi";
 import { authSessionStore } from "../../features/auth/state/authSessionStore";
 import * as firstPartyOidc from "../../features/auth/utils/firstPartyOidc";
 import { LoginPage } from "./LoginPage";
@@ -30,20 +29,13 @@ function ensureLocalStorage() {
   });
 }
 
-vi.mock("../../features/auth/api/authApi", async () => {
-  const actual = await vi.importActual<typeof import("../../features/auth/api/authApi")>("../../features/auth/api/authApi");
-
-  return {
-    ...actual,
-    login: vi.fn()
-  };
-});
-
 vi.mock("../../features/auth/utils/firstPartyOidc", async () => {
   const actual = await vi.importActual<typeof import("../../features/auth/utils/firstPartyOidc")>("../../features/auth/utils/firstPartyOidc");
 
   return {
     ...actual,
+    buildFirstPartyAuthorizeUrl: vi.fn(() => "https://app.duchihao.com/identity/connect/authorize?state=test-state"),
+    createFirstPartyAuthorizationState: vi.fn(() => "test-state"),
     startFirstPartyAuthorization: vi.fn()
   };
 });
@@ -57,7 +49,7 @@ describe("LoginPage", () => {
     vi.resetAllMocks();
   });
 
-  it("renders the sign in form with user-facing copy", () => {
+  it("starts the issuer-hosted authorize flow on load", async () => {
     render(
       <AppProviders>
         <MemoryRouter initialEntries={["/login"]}>
@@ -67,22 +59,15 @@ describe("LoginPage", () => {
     );
 
     expect(screen.getByRole("heading", { level: 3, name: /^sign in$/i })).toBeDefined();
-    expect(
-      screen.getByText(/sign in to continue and pick up where you left off/i)
-    ).toBeDefined();
-    expect(screen.getByLabelText(/username/i)).toBeDefined();
-    expect(screen.getByLabelText(/^password$/i)).toBeDefined();
-    expect(screen.getByRole("button", { name: /sign in/i })).toBeDefined();
-    expect(screen.queryByText(/hosted sign in/i)).toBeNull();
-    expect(screen.queryByText(/first-party identity shell/i)).toBeNull();
-    expect(screen.queryByText(/authorization flow/i)).toBeNull();
+    expect(screen.getAllByText(/preparing your session/i).length).toBeGreaterThan(0);
+    expect(screen.getByRole("link", { name: /continue to sign in/i })).toBeDefined();
+
+    await waitFor(() => {
+      expect(firstPartyOidc.startFirstPartyAuthorization).toHaveBeenCalledWith("https://app.duchihao.com/identity/connect/authorize?state=test-state");
+    });
   });
 
-  it("posts credentials and starts the first-party authorize flow", async () => {
-    vi.mocked(authApi.login).mockResolvedValue({
-      data: { data: null, errors: [], success: true }
-    } as Awaited<ReturnType<typeof authApi.login>>);
-
+  it("stores the normalized return url before starting authorization", async () => {
     render(
       <AppProviders>
         <MemoryRouter initialEntries={["/login?returnUrl=%2Freports%3Ftab%3Drecent"]}>
@@ -91,28 +76,14 @@ describe("LoginPage", () => {
       </AppProviders>
     );
 
-    fireEvent.change(screen.getByLabelText(/username/i), {
-      target: { value: "demo.user" }
-    });
-    fireEvent.change(screen.getByLabelText(/^password$/i), {
-      target: { value: "Password1!" }
-    });
-    fireEvent.click(screen.getByRole("button", { name: /sign in/i }));
-
     await waitFor(() => {
-      expect(vi.mocked(authApi.login).mock.calls[0]?.[0]).toEqual({
-        password: "Password1!",
-        userName: "demo.user"
-      });
+      expect(firstPartyOidc.startFirstPartyAuthorization).toHaveBeenCalledWith("https://app.duchihao.com/identity/connect/authorize?state=test-state");
     });
 
     expect(authSessionStore.consumeReturnUrl()).toBe("/reports?tab=recent");
-    expect(firstPartyOidc.startFirstPartyAuthorization).toHaveBeenCalledOnce();
   });
 
-  it("shows an error message when the hosted login request fails", async () => {
-    vi.mocked(authApi.login).mockRejectedValue(new Error("invalid credentials"));
-
+  it("allows manual continuation if automatic redirect does not happen", async () => {
     render(
       <AppProviders>
         <MemoryRouter initialEntries={["/login"]}>
@@ -121,47 +92,18 @@ describe("LoginPage", () => {
       </AppProviders>
     );
 
-    fireEvent.change(screen.getByLabelText(/username/i), {
-      target: { value: "demo.user" }
+    await waitFor(() => {
+      expect(firstPartyOidc.startFirstPartyAuthorization).toHaveBeenCalledWith("https://app.duchihao.com/identity/connect/authorize?state=test-state");
     });
-    fireEvent.change(screen.getByLabelText(/^password$/i), {
-      target: { value: "wrong-password" }
-    });
-    fireEvent.click(screen.getByRole("button", { name: /sign in/i }));
+
+    fireEvent.click(screen.getByRole("link", { name: /continue to sign in/i }));
 
     await waitFor(() => {
-      expect(screen.getByText(/sign in failed/i)).toBeDefined();
-    });
-
-    expect(firstPartyOidc.startFirstPartyAuthorization).not.toHaveBeenCalled();
-  });
-
-  it("shows a visible loading indicator while the hosted login request is pending", async () => {
-    vi.mocked(authApi.login).mockReturnValue(new Promise(() => {}) as Awaited<ReturnType<typeof authApi.login>>);
-
-    render(
-      <AppProviders>
-        <MemoryRouter initialEntries={["/login"]}>
-          <LoginPage />
-        </MemoryRouter>
-      </AppProviders>
-    );
-
-    fireEvent.change(screen.getByLabelText(/username/i), {
-      target: { value: "demo.user" }
-    });
-    fireEvent.change(screen.getByLabelText(/^password$/i), {
-      target: { value: "Password1!" }
-    });
-    fireEvent.click(screen.getByRole("button", { name: /sign in/i }));
-
-    await waitFor(() => {
-      expect(screen.getByRole("button", { name: /signing in/i })).toBeDefined();
-      expect(screen.getByRole("progressbar")).toBeDefined();
+      expect(firstPartyOidc.startFirstPartyAuthorization).toHaveBeenCalledTimes(2);
     });
   });
 
-  it("restores Vietnamese locale from local storage before authentication", () => {
+  it("restores Vietnamese locale before issuer redirect", async () => {
     window.localStorage.setItem("opensaur.identity.preferences", JSON.stringify({
       locale: "vi",
       timeZone: "Asia/Saigon"
@@ -176,6 +118,10 @@ describe("LoginPage", () => {
     );
 
     expect(screen.getByRole("heading", { level: 3, name: /đăng nhập/i })).toBeDefined();
-    expect(screen.getByRole("button", { name: /^đăng nhập$/i })).toBeDefined();
+    expect(screen.getByRole("progressbar")).toBeDefined();
+
+    await waitFor(() => {
+      expect(firstPartyOidc.startFirstPartyAuthorization).toHaveBeenCalledWith("https://app.duchihao.com/identity/connect/authorize?state=test-state");
+    });
   });
 });

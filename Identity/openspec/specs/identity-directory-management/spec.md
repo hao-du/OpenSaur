@@ -67,7 +67,7 @@ The system SHALL not expose delete endpoints for app-owned identity management r
 - **THEN** delete endpoints are not part of the supported API surface for users, roles, user-role assignments, or workspaces
 
 ### Requirement: Directory management APIs SHALL return the common application JSON envelope
-The system SHALL return the common application JSON envelope for `/api/user/*`, `/api/role/*`, `/api/user-role/*`, and `/api/workspace/*` endpoints. Successful operations SHALL return `200 OK` with `success = true`, a JSON `data` value or `null`, and an empty `errors` array. Expected business failures SHALL be represented through the application result pattern and converted into the common envelope. Unexpected exceptions SHALL be normalized centrally into the same failure envelope instead of being handled ad hoc in each endpoint. Failed operations SHALL return `success = false`, `data = null`, and an `errors` array whose items contain string `code`, `message`, and `detail` values.
+The system SHALL return the common application JSON envelope for `/api/user/*`, `/api/role/*`, `/api/user-role/*`, and `/api/workspace/*` endpoints. Successful operations SHALL return `200 OK` with `success = true`, a JSON `data` value or `null`, and an empty `errors` array. Expected business failures SHALL be represented through the application result pattern and converted into the common envelope. Unexpected exceptions SHALL be normalized centrally into the same failure envelope instead of being handled ad hoc in each endpoint. Failed operations SHALL return `success = false`, `data = null`, and an `errors` array whose items contain stable string `code`, English `message`, and English `detail` values so the hosted frontend can localize known failures without matching raw backend message text.
 
 #### Scenario: Directory create or edit succeeds
 - **WHEN** an authorized caller completes a successful create, edit, password-reset, or workspace-reassignment operation through a directory-management endpoint
@@ -80,6 +80,11 @@ The system SHALL return the common application JSON envelope for `/api/user/*`, 
 #### Scenario: Directory request fails
 - **WHEN** a directory-management request fails because of validation, authorization, not-found, conflict, or an unexpected server exception
 - **THEN** the system returns the common failure envelope and does not expose raw `ProblemDetails` or inconsistent ad hoc JSON shapes
+
+#### Scenario: Expected directory failure returns a stable code
+- **WHEN** a directory-management request fails for an expected business reason
+- **THEN** the common failure envelope includes a stable error `code` value suitable for frontend localization
+- **AND** the envelope still includes English backend `message` and `detail` values as fallback diagnostics
 
 ### Requirement: Directory management SHALL persist workspace-owned role availability
 The system SHALL persist workspace-owned role availability through app-owned workspace-role records that support audit data and activation state, and workspace create/edit APIs SHALL manage the selected role ids as part of the workspace save flow.
@@ -98,4 +103,3 @@ The system SHALL filter workspace-scoped role lists and role candidates by the a
 #### Scenario: Role assignment list is workspace-scoped
 - **WHEN** an impersonated super administrator requests role-assignment roles inside a workspace
 - **THEN** the system returns only active non-reserved roles assigned to that workspace
-
