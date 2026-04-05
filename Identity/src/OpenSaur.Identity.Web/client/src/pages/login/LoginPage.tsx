@@ -15,6 +15,7 @@ import {
   startFirstPartyAuthorization
 } from "../../features/auth/utils";
 import { usePreferences } from "../../features/preferences/PreferenceProvider";
+import { resolveAppBrowserPath } from "../../shared/config/appBasePath";
 
 export function LoginPage() {
   const [searchParams] = useSearchParams();
@@ -52,7 +53,7 @@ export function LoginPage() {
       }
 
       if (isIssuerHostedLogin) {
-        window.location.assign(normalizedReturnUrl);
+        window.location.assign(resolveAppBrowserPath(normalizedReturnUrl));
         return;
       }
 
