@@ -8,7 +8,9 @@ using OpenSaur.Identity.Web.Infrastructure.Oidc;
 
 namespace OpenSaur.Identity.Web.Features.Auth.Impersonation;
 
-public sealed class FirstPartyImpersonationBridge(IOptions<OidcOptions> oidcOptions)
+public sealed class FirstPartyImpersonationBridge(
+    IOptions<OidcOptions> oidcOptions,
+    ManagedOidcClientResolver managedOidcClientResolver)
 {
     private static readonly JsonSerializerOptions SerializerOptions = new(JsonSerializerDefaults.Web);
     private static readonly TimeSpan CommandLifetime = TimeSpan.FromMinutes(5);
@@ -19,7 +21,13 @@ public sealed class FirstPartyImpersonationBridge(IOptions<OidcOptions> oidcOpti
         "/change-password"
     };
 
-    public string BuildStartRedirectUrl(Guid actorUserId, Guid workspaceId, Guid? userId, string redirectUri, string? returnUrl)
+    public async Task<string> BuildStartRedirectUrlAsync(
+        Guid actorUserId,
+        Guid workspaceId,
+        Guid? userId,
+        string redirectUri,
+        string? returnUrl,
+        CancellationToken cancellationToken = default)
     {
         var command = new ImpersonationBridgeCommand(
             Action: ImpersonationBridgeAction.Start,
@@ -30,10 +38,16 @@ public sealed class FirstPartyImpersonationBridge(IOptions<OidcOptions> oidcOpti
             UserId: userId,
             ExpiresAtUnixTimeSeconds: DateTimeOffset.UtcNow.Add(CommandLifetime).ToUnixTimeSeconds());
 
-        return BuildIssuerCommandUrl("api/auth/impersonation/start", Protect(command));
+        return BuildIssuerCommandUrl(
+            "api/auth/impersonation/start",
+            await ProtectAsync(command, cancellationToken));
     }
 
-    public string BuildExitRedirectUrl(Guid actorUserId, string redirectUri, string? returnUrl)
+    public async Task<string> BuildExitRedirectUrlAsync(
+        Guid actorUserId,
+        string redirectUri,
+        string? returnUrl,
+        CancellationToken cancellationToken = default)
     {
         var command = new ImpersonationBridgeCommand(
             Action: ImpersonationBridgeAction.Exit,
@@ -44,10 +58,14 @@ public sealed class FirstPartyImpersonationBridge(IOptions<OidcOptions> oidcOpti
             UserId: null,
             ExpiresAtUnixTimeSeconds: DateTimeOffset.UtcNow.Add(CommandLifetime).ToUnixTimeSeconds());
 
-        return BuildIssuerCommandUrl("api/auth/impersonation/exit", Protect(command));
+        return BuildIssuerCommandUrl(
+            "api/auth/impersonation/exit",
+            await ProtectAsync(command, cancellationToken));
     }
 
-    public ImpersonationBridgeCommand? ReadCommand(string? token)
+    public async Task<ImpersonationBridgeCommand?> ReadCommandAsync(
+        string? token,
+        CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(token))
         {
@@ -73,12 +91,6 @@ public sealed class FirstPartyImpersonationBridge(IOptions<OidcOptions> oidcOpti
             return null;
         }
 
-        var expectedSignature = Sign(payloadBytes);
-        if (!CryptographicOperations.FixedTimeEquals(providedSignature, expectedSignature))
-        {
-            return null;
-        }
-
         var command = JsonSerializer.Deserialize<ImpersonationBridgeCommand>(payloadBytes, SerializerOptions);
         if (command is null
             || DateTimeOffset.UtcNow.ToUnixTimeSeconds() > command.ExpiresAtUnixTimeSeconds
@@ -87,7 +99,19 @@ public sealed class FirstPartyImpersonationBridge(IOptions<OidcOptions> oidcOpti
             return null;
         }
 
-        oidcOptions.Value.GetFirstPartyClient(command.RedirectUri);
+        var expectedSignature = await SignAsync(payloadBytes, command.RedirectUri, cancellationToken);
+        if (!CryptographicOperations.FixedTimeEquals(providedSignature, expectedSignature))
+        {
+            return null;
+        }
+
+        var managedClient = await managedOidcClientResolver.ResolveClientByRedirectUriAsync(
+            command.RedirectUri,
+            cancellationToken);
+        if (managedClient is null)
+        {
+            return null;
+        }
 
         return command with
         {
@@ -95,16 +119,24 @@ public sealed class FirstPartyImpersonationBridge(IOptions<OidcOptions> oidcOpti
         };
     }
 
-    public string BuildCompletionUrl(ImpersonationBridgeCommand command)
+    public async Task<string> BuildCompletionUrlAsync(
+        ImpersonationBridgeCommand command,
+        CancellationToken cancellationToken = default)
     {
         return IsIssuerHostedRedirectUri(command.RedirectUri)
             ? BuildIssuerHostedReturnUrl(command.ReturnUrl)
-            : BuildAuthorizeUrl(command);
+            : await BuildAuthorizeUrlAsync(command, cancellationToken);
     }
 
-    public string BuildAuthorizeUrl(ImpersonationBridgeCommand command)
+    public async Task<string> BuildAuthorizeUrlAsync(
+        ImpersonationBridgeCommand command,
+        CancellationToken cancellationToken = default)
     {
-        var firstPartyClient = oidcOptions.Value.GetFirstPartyClient(command.RedirectUri);
+        var firstPartyClient = await managedOidcClientResolver.ResolveClientByRedirectUriAsync(
+                                   command.RedirectUri,
+                                   cancellationToken)
+                               ?? throw new InvalidOperationException(
+                                   $"No active managed OIDC client matched redirect URI '{command.RedirectUri}'.");
         var authorizeUri = new Uri(oidcOptions.Value.GetIssuerBaseUri(), "connect/authorize");
         var query = new QueryBuilder
         {
@@ -161,9 +193,15 @@ public sealed class FirstPartyImpersonationBridge(IOptions<OidcOptions> oidcOpti
         }.Uri.AbsoluteUri;
     }
 
-    private byte[] Sign(byte[] payloadBytes)
+    private async Task<byte[]> SignAsync(
+        byte[] payloadBytes,
+        string redirectUri,
+        CancellationToken cancellationToken)
     {
-        var clientSecret = oidcOptions.Value.GetFirstPartyClient().ClientSecret;
+        var managedClient = await managedOidcClientResolver.ResolveClientByRedirectUriAsync(
+            redirectUri,
+            cancellationToken);
+        var clientSecret = managedClient?.ClientSecret;
         if (string.IsNullOrWhiteSpace(clientSecret))
         {
             throw new InvalidOperationException("OIDC first-party client secret is required.");
@@ -172,10 +210,12 @@ public sealed class FirstPartyImpersonationBridge(IOptions<OidcOptions> oidcOpti
         return HMACSHA256.HashData(Encoding.UTF8.GetBytes(clientSecret), payloadBytes);
     }
 
-    private string Protect(ImpersonationBridgeCommand command)
+    private async Task<string> ProtectAsync(
+        ImpersonationBridgeCommand command,
+        CancellationToken cancellationToken)
     {
         var payloadBytes = JsonSerializer.SerializeToUtf8Bytes(command, SerializerOptions);
-        var signatureBytes = Sign(payloadBytes);
+        var signatureBytes = await SignAsync(payloadBytes, command.RedirectUri, cancellationToken);
 
         return $"{Base64UrlTextEncoder.Encode(payloadBytes)}.{Base64UrlTextEncoder.Encode(signatureBytes)}";
     }

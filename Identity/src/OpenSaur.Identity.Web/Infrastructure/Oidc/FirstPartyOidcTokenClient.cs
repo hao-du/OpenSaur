@@ -13,16 +13,16 @@ public sealed class FirstPartyOidcTokenClient : IFirstPartyOidcTokenClient
 
     private readonly HttpClient _httpClient;
     private readonly ILogger<FirstPartyOidcTokenClient> _logger;
-    private readonly IOptions<OidcOptions> _oidcOptions;
+    private readonly ManagedOidcClientResolver _managedOidcClientResolver;
 
     public FirstPartyOidcTokenClient(
         HttpClient httpClient,
         ILogger<FirstPartyOidcTokenClient> logger,
-        IOptions<OidcOptions> oidcOptions)
+        ManagedOidcClientResolver managedOidcClientResolver)
     {
         _httpClient = httpClient;
         _logger = logger;
-        _oidcOptions = oidcOptions;
+        _managedOidcClientResolver = managedOidcClientResolver;
     }
 
     public async Task<FirstPartyOidcTokenResult?> ExchangeAuthorizationCodeAsync(
@@ -30,7 +30,7 @@ public sealed class FirstPartyOidcTokenClient : IFirstPartyOidcTokenClient
         string redirectUri,
         CancellationToken cancellationToken)
     {
-        var browserClient = GetConfiguredFirstPartyClient(redirectUri, requireSecret: true);
+        var browserClient = await GetConfiguredFirstPartyClientAsync(redirectUri, requireSecret: true, cancellationToken);
 
         return await SendTokenRequestAsync(
             new Dictionary<string, string>
@@ -46,9 +46,10 @@ public sealed class FirstPartyOidcTokenClient : IFirstPartyOidcTokenClient
 
     public async Task<FirstPartyOidcTokenResult?> RefreshAccessTokenAsync(
         string refreshToken,
+        string redirectUri,
         CancellationToken cancellationToken)
     {
-        var browserClient = GetConfiguredFirstPartyClient(requireSecret: true);
+        var browserClient = await GetConfiguredFirstPartyClientAsync(redirectUri, requireSecret: true, cancellationToken);
 
         return await SendTokenRequestAsync(
             new Dictionary<string, string>
@@ -119,11 +120,19 @@ public sealed class FirstPartyOidcTokenClient : IFirstPartyOidcTokenClient
         }
     }
 
-    private FirstPartyClientOidcOptions GetConfiguredFirstPartyClient(
-        string? redirectUri = null,
-        bool requireSecret = false)
+    private async Task<ManagedOidcClientRuntime> GetConfiguredFirstPartyClientAsync(
+        string redirectUri,
+        bool requireSecret,
+        CancellationToken cancellationToken)
     {
-        var browserClient = _oidcOptions.Value.GetFirstPartyClient(redirectUri);
+        var browserClient = await _managedOidcClientResolver.ResolveClientByRedirectUriAsync(
+            redirectUri,
+            cancellationToken);
+        if (browserClient is null)
+        {
+            throw new InvalidOperationException($"No active managed OIDC client matched redirect URI '{redirectUri}'.");
+        }
+
         if (string.IsNullOrWhiteSpace(browserClient.ClientId)
             || requireSecret && string.IsNullOrWhiteSpace(browserClient.ClientSecret))
         {

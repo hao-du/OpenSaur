@@ -13,6 +13,7 @@ import { AuthCallbackPage } from "../../pages/auth-callback/AuthCallbackPage";
 import { ChangePasswordPage } from "../../pages/change-password/ChangePasswordPage";
 import { HomePage } from "../../pages/home/HomePage";
 import { LoginPage } from "../../pages/login/LoginPage";
+import { OidcClientsPage } from "../../pages/oidc-clients/OidcClientsPage";
 import { ProfilePage } from "../../pages/profile/ProfilePage";
 import { RoleAssignmentsPage } from "../../pages/role-assignments/RoleAssignmentsPage";
 import { RolesPage } from "../../pages/roles/RolesPage";
@@ -90,6 +91,16 @@ export const appRoutes: RouteObject[] = [
           <ProtectedRoute>
             <RequireProtectedShellAccess path="/users">
               <UsersPage />
+            </RequireProtectedShellAccess>
+          </ProtectedRoute>
+        )
+      },
+      {
+        path: "/oidc-clients",
+        element: (
+          <ProtectedRoute>
+            <RequireProtectedShellAccess path="/oidc-clients">
+              <OidcClientsPage />
             </RequireProtectedShellAccess>
           </ProtectedRoute>
         )

@@ -588,6 +588,107 @@ namespace OpenSaur.Identity.Web.Infrastructure.Database.Migrations
                         });
                 });
 
+            modelBuilder.Entity("OpenSaur.Identity.Web.Domain.Oidc.OidcClient", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("AppPathBase")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("ClientId")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("ClientSecret")
+                        .IsRequired()
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedOn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<string>("DisplayName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Scope")
+                        .IsRequired()
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("UpdatedOn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ClientId")
+                        .IsUnique();
+
+                    b.ToTable("OidcClients", (string)null);
+                });
+
+            modelBuilder.Entity("OpenSaur.Identity.Web.Domain.Oidc.OidcClientOrigin", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("BaseUri")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedOn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid>("OidcClientId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("UpdatedOn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OidcClientId", "BaseUri")
+                        .IsUnique();
+
+                    b.ToTable("OidcClientOrigins", (string)null);
+                });
+
             modelBuilder.Entity("OpenSaur.Identity.Web.Domain.Outbox.OutboxMessage", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1051,6 +1152,17 @@ namespace OpenSaur.Identity.Web.Infrastructure.Database.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("OpenSaur.Identity.Web.Domain.Oidc.OidcClientOrigin", b =>
+                {
+                    b.HasOne("OpenSaur.Identity.Web.Domain.Oidc.OidcClient", "OidcClient")
+                        .WithMany("Origins")
+                        .HasForeignKey("OidcClientId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("OidcClient");
+                });
+
             modelBuilder.Entity("OpenSaur.Identity.Web.Domain.Permissions.Permission", b =>
                 {
                     b.HasOne("OpenSaur.Identity.Web.Domain.Permissions.PermissionScope", "PermissionScope")
@@ -1122,6 +1234,11 @@ namespace OpenSaur.Identity.Web.Infrastructure.Database.Migrations
             modelBuilder.Entity("OpenSaur.Identity.Web.Domain.Identity.ApplicationUser", b =>
                 {
                     b.Navigation("UserRoles");
+                });
+
+            modelBuilder.Entity("OpenSaur.Identity.Web.Domain.Oidc.OidcClient", b =>
+                {
+                    b.Navigation("Origins");
                 });
 
             modelBuilder.Entity("OpenSaur.Identity.Web.Domain.Workspaces.Workspace", b =>

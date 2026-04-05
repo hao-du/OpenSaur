@@ -9,6 +9,7 @@ public interface IFirstPartyOidcTokenClient
 
     Task<FirstPartyOidcTokenResult?> RefreshAccessTokenAsync(
         string refreshToken,
+        string redirectUri,
         CancellationToken cancellationToken);
 }
 

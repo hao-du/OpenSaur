@@ -19,6 +19,7 @@ using OpenSaur.Identity.Web.Features.Auth;
 using OpenSaur.Identity.Web.Features.Auth.Impersonation;
 using OpenSaur.Identity.Web.Features.Auth.Login;
 using OpenSaur.Identity.Web.Features.Auth.Oidc;
+using OpenSaur.Identity.Web.Features.OidcClients;
 using OpenSaur.Identity.Web.Features.PermissionScopes;
 using OpenSaur.Identity.Web.Features.Permissions;
 using OpenSaur.Identity.Web.Features.Roles;
@@ -284,6 +285,8 @@ public static class DependencyInjection
         services.AddScoped<UserAuthorizationService>();
         services.AddScoped<IAuthorizationHandler, PermissionAuthorizationHandler>();
         services.AddScoped<FirstPartyImpersonationBridge>();
+        services.AddScoped<ManagedOidcClientResolver>();
+        services.AddScoped<ManagedOidcClientSynchronizer>();
         services.AddScoped<FirstPartyOidcClientRegistrar>();
         services.AddHttpClient<IGoogleRecaptchaVerifier, GoogleRecaptchaVerifier>(client =>
         {
@@ -506,6 +509,7 @@ public static class DependencyInjection
         app.MapUserRoleEndpoints();
         app.MapWorkspaceEndpoints();
         app.MapRoleEndpoints();
+        app.MapOidcClientEndpoints();
         app.MapPermissionEndpoints();
         app.MapPermissionScopeEndpoints();
 

@@ -4,11 +4,13 @@ public sealed class OidcOptions
 {
     public const string SectionName = "Oidc";
 
+    public BootstrapFirstPartyClientOidcOptions BootstrapClient { get; set; } = new();
+
+    public FirstPartyClientPathOptions ClientPaths { get; set; } = new();
+
     public string Issuer { get; set; } = string.Empty;
 
     public string? CurrentAppBaseUri { get; set; }
-
-    public FirstPartyClientOidcOptions FirstPartyClient { get; set; } = new();
 
     public string? SigningCertificatePath { get; set; }
 
@@ -19,41 +21,26 @@ public sealed class OidcOptions
     public string? EncryptionCertificatePassword { get; set; }
 
     public bool AllowEphemeralKeysInProduction { get; set; }
-
-    public FirstPartyClientOidcOptions GetFirstPartyClient(string? redirectUri = null)
-    {
-        if (string.IsNullOrWhiteSpace(FirstPartyClient.ClientId))
-        {
-            throw new InvalidOperationException("OIDC first-party client configuration is required.");
-        }
-
-        if (string.IsNullOrWhiteSpace(redirectUri))
-        {
-            return FirstPartyClient;
-        }
-
-        if (!FirstPartyClient.RedirectUris.Any(configuredRedirectUri =>
-                string.Equals(configuredRedirectUri, redirectUri, StringComparison.OrdinalIgnoreCase)))
-        {
-            throw new InvalidOperationException(
-                $"OIDC first-party client does not allow redirect URI '{redirectUri}'.");
-        }
-
-        return FirstPartyClient;
-    }
 }
 
-public sealed class FirstPartyClientOidcOptions
+public sealed class BootstrapFirstPartyClientOidcOptions
 {
     public string ClientId { get; set; } = string.Empty;
 
     public string ClientSecret { get; set; } = string.Empty;
 
-    public List<string> RedirectUris { get; set; } = [];
-
-    public List<string> PostLogoutRedirectUris { get; set; } = [];
+    public string AppPathBase { get; set; } = "/identity";
 
     public string Scope { get; set; } = "openid profile email roles offline_access api";
 
     public string DisplayName { get; set; } = string.Empty;
+
+    public List<string> Origins { get; set; } = [];
+}
+
+public sealed class FirstPartyClientPathOptions
+{
+    public string CallbackPath { get; set; } = "/auth/callback";
+
+    public string PostLogoutPath { get; set; } = "/login";
 }

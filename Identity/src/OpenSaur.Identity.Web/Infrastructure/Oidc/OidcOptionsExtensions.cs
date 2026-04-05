@@ -4,17 +4,6 @@ namespace OpenSaur.Identity.Web.Infrastructure.Oidc;
 
 public static class OidcOptionsExtensions
 {
-    public static string[] GetFirstPartyScopes(this OidcOptions oidcOptions)
-    {
-        return oidcOptions.GetFirstPartyClient().Scope
-            .Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-    }
-
-    public static string BuildFirstPartyRedirectUri(this HttpContext httpContext, OidcOptions oidcOptions)
-    {
-        return new Uri(oidcOptions.GetCurrentAppBaseUri(httpContext.Request), "auth/callback").AbsoluteUri;
-    }
-
     public static Uri GetIssuerBaseUri(this OidcOptions oidcOptions)
     {
         if (!Uri.TryCreate(oidcOptions.Issuer, UriKind.Absolute, out var issuerUri))

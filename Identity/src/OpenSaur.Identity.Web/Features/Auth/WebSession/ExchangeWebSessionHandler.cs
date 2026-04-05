@@ -1,6 +1,5 @@
 using FluentValidation;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Options;
 using OpenSaur.Identity.Web.Infrastructure.Http.Responses;
 using OpenSaur.Identity.Web.Infrastructure.Oidc;
 using OpenSaur.Identity.Web.Infrastructure.Results;
@@ -14,7 +13,7 @@ public static class ExchangeWebSessionHandler
         ExchangeWebSessionRequest request,
         IValidator<ExchangeWebSessionRequest> validator,
         IFirstPartyOidcTokenClient tokenClient,
-        IOptions<OidcOptions> oidcOptionsAccessor,
+        ManagedOidcClientResolver managedOidcClientResolver,
         HttpContext httpContext,
         CancellationToken cancellationToken)
     {
@@ -23,7 +22,11 @@ public static class ExchangeWebSessionHandler
             return validationFailure;
         }
 
-        var redirectUri = httpContext.BuildFirstPartyRedirectUri(oidcOptionsAccessor.Value);
+        var redirectUri = await managedOidcClientResolver.BuildCurrentRedirectUriAsync(
+                              httpContext.Request,
+                              cancellationToken)
+                          ?? throw new InvalidOperationException(
+                              "No active managed OIDC client matched the current app base URI.");
 
         var tokenResult = await tokenClient.ExchangeAuthorizationCodeAsync(
             request.Code,

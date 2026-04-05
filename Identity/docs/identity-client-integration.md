@@ -89,8 +89,8 @@ Required registration fields:
 
 - `client_id`
 - `client_secret` when confidential
-- exact `redirect_uri` list
-- exact post-logout redirect URI list if logout redirection is needed
+- public origin root list
+- app path base
 - scopes
 
 Rules:
@@ -99,6 +99,12 @@ Rules:
 - never accept wildcard redirect URIs
 - never share one callback URI across unrelated apps through custom brokering
 - preserve the client's final route in state or app-managed return-url storage
+
+In the current Identity issuer, exact callback and post-logout redirect URIs are composed from:
+
+- managed origin root in the database
+- managed app path base in the database
+- configured suffixes in `Oidc.ClientPaths`
 
 Generic examples:
 
@@ -187,6 +193,8 @@ Use this rule:
 - the shell derives only the current protected return route in the browser
 
 For the current Identity shell, the backend serves a runtime bootstrap script for the frontend. That keeps hosted and localhost deployments on the same codebase without hardcoding one deployment's issuer hostname into another deployment's frontend build.
+
+The current shell also resolves its active client registration from the managed OIDC client tables by exact public origin root plus app path base. That keeps the same codebase reusable across hosted, localhost, and future same-domain different-path deployments without hardcoding one static client record into the frontend bundle.
 
 If a deployment sits behind reverse proxies, tunnels, or gateways that may not preserve the browser-visible host reliably, configure the current app's public base URI explicitly. The shell should generate callback URIs and issuer-hosted-mode detection from that configured public base URI, not from an internal proxy hostname.
 

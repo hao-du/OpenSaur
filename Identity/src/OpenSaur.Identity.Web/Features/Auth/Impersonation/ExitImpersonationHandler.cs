@@ -1,7 +1,6 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.Extensions.Options;
 using OpenSaur.Identity.Web.Domain.Identity;
 using OpenSaur.Identity.Web.Features.Auth.Oidc;
 using OpenSaur.Identity.Web.Infrastructure.Http.Responses;
@@ -18,8 +17,9 @@ public static class ExitImpersonationHandler
         ClaimsPrincipal user,
         UserManager<ApplicationUser> userManager,
         FirstPartyImpersonationBridge impersonationBridge,
-        IOptions<OidcOptions> oidcOptionsAccessor,
-        HttpContext httpContext)
+        ManagedOidcClientResolver managedOidcClientResolver,
+        HttpContext httpContext,
+        CancellationToken cancellationToken)
     {
         if (await ValidateExitRequestAsync(user, userManager) is { } validationResult)
         {
@@ -27,10 +27,16 @@ public static class ExitImpersonationHandler
         }
 
         var originalUserId = AuthPrincipalReader.GetImpersonationOriginalUserId(user);
-        var redirectUrl = impersonationBridge.BuildExitRedirectUrl(
+        var redirectUri = await managedOidcClientResolver.BuildCurrentRedirectUriAsync(
+                              httpContext.Request,
+                              cancellationToken)
+                          ?? throw new InvalidOperationException(
+                              "No active managed OIDC client matched the current app base URI.");
+        var redirectUrl = await impersonationBridge.BuildExitRedirectUrlAsync(
             originalUserId!.Value,
-            httpContext.BuildFirstPartyRedirectUri(oidcOptionsAccessor.Value),
-            request.ReturnUrl);
+            redirectUri,
+            request.ReturnUrl,
+            cancellationToken);
 
         return Result<ImpersonationRedirectResponse>.Success(new ImpersonationRedirectResponse(redirectUrl))
             .ToApiResult();
@@ -43,7 +49,7 @@ public static class ExitImpersonationHandler
         SignInManager<ApplicationUser> signInManager,
         FirstPartyImpersonationBridge impersonationBridge)
     {
-        var bridgeCommand = impersonationBridge.ReadCommand(command);
+        var bridgeCommand = await impersonationBridge.ReadCommandAsync(command, CancellationToken.None);
         if (bridgeCommand is null || bridgeCommand.Action != "exit")
         {
             return Result.Validation(
@@ -78,7 +84,7 @@ public static class ExitImpersonationHandler
             await signInManager.SignInAsync(originalUser, isPersistent: false);
         }
 
-        return Results.Redirect(impersonationBridge.BuildCompletionUrl(bridgeCommand));
+        return Results.Redirect(await impersonationBridge.BuildCompletionUrlAsync(bridgeCommand, CancellationToken.None));
     }
 
     private static async Task<IResult?> ValidateExitRequestAsync(

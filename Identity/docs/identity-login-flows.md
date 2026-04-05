@@ -99,6 +99,7 @@ Backend:
 
 - endpoint wiring: `src/OpenSaur.Identity.Web/Program.cs`
 - runtime auth config bootstrap and shell route serving: `src/OpenSaur.Identity.Web/Infrastructure/Hosting/FrontendAppRoutes.cs`
+- managed client admin endpoints: `src/OpenSaur.Identity.Web/Features/OidcClients/OidcClientEndpoints.cs`
 - auth helpers: `src/OpenSaur.Identity.Web/Features/Auth/AuthEndpoints.cs`
 - login API: `src/OpenSaur.Identity.Web/Features/Auth/Login/LoginHandler.cs`
 - current-user API: `src/OpenSaur.Identity.Web/Features/Auth/Me/GetCurrentUserHandler.cs`
@@ -109,6 +110,7 @@ Backend:
 - cookie claim enrichment for hosted mode: `src/OpenSaur.Identity.Web/Infrastructure/Security/IdentitySessionClaimsTransformation.cs`
 - token client for non-issuer hosts: `src/OpenSaur.Identity.Web/Infrastructure/Oidc/FirstPartyOidcTokenClient.cs`
 - first-party client config: `src/OpenSaur.Identity.Web/Infrastructure/Oidc/OidcOptions.cs`
+- managed client resolver and OpenIddict synchronizer: `src/OpenSaur.Identity.Web/Infrastructure/Oidc/ManagedOidcClientResolver.cs`, `src/OpenSaur.Identity.Web/Infrastructure/Oidc/ManagedOidcClientSynchronizer.cs`
 - public-base-uri and redirect helpers: `src/OpenSaur.Identity.Web/Infrastructure/Oidc/OidcOptionsExtensions.cs`
 - impersonation bridge: `src/OpenSaur.Identity.Web/Features/Auth/Impersonation/FirstPartyImpersonationBridge.cs`
 
@@ -118,6 +120,7 @@ The first-party shell no longer relies on build-time frontend host defaults for 
 
 - the backend serves `/identity/app-config.js` from the current host
 - that bootstrap payload contains the configured issuer, first-party client id, scope, current-host callback URI, whether the current host is the issuer, and the public Google reCAPTCHA v3 login settings when enabled
+- the current host's client id, scopes, and callback URI are resolved from the managed OIDC client record that matches the current public origin root and app path base
 - the frontend reads that payload through `shared/config/env.ts` before it decides whether to reuse the issuer cookie or start `/connect/authorize`
 - the backend also serves the hosted shell HTML with no-store headers for the same reason
 
@@ -132,22 +135,32 @@ For the current Identity shell, the browser-visible runtime config should always
 - hosted issuer deployment: `redirectUri = https://<issuer-host>/<issuer-app-base>/auth/callback` and `isIssuerHostedApp = true`
 - localhost or another non-issuer client deployment: `redirectUri = http://localhost:<port>/<issuer-app-base>/auth/callback` (or that client's own registered callback) and `isIssuerHostedApp = false`
 
-## Browser Client Registration
+## Managed Browser Client Registration
 
-The shared first-party browser client is currently:
+The issuer now treats first-party browser clients as managed data:
 
-- `first-party-web`
+- `Oidc.BootstrapClient` exists only to seed the initial client when the managed-client tables are empty
+- long-term client management lives in the application database
+- each managed client stores:
+  - `ClientId`
+  - `ClientSecret`
+  - `DisplayName`
+  - `Scope`
+  - `AppPathBase`
+  - public origin roots such as `https://app.example.com/` or `http://localhost:5220/`
 
-Registered callback URIs:
+Exact redirect and post-logout redirect URIs are derived by combining:
 
-- `https://<issuer-host>/<issuer-app-base>/auth/callback`
-- `http://localhost:<port>/<issuer-app-base>/auth/callback`
+- managed origin root
+- managed app path base
+- configured suffixes in `Oidc.ClientPaths`
 
 At runtime:
 
-- the frontend always uses the same client id
-- `resolveFirstPartyRedirectUri()` derives the callback candidate from the current origin
-- the backend rejects callback URIs that are not explicitly registered
+- the frontend receives the resolved current client id from runtime config
+- the backend derives the current callback URI from the current managed client plus `Oidc.ClientPaths.CallbackPath`
+- the backend derives the post-logout redirect URI from the current managed client plus `Oidc.ClientPaths.PostLogoutPath`
+- OpenIddict still validates exact redirect URIs, because the synchronizer writes those exact derived URIs into the OpenIddict application record
 
 ## Issuer-Hosted Flow
 
@@ -369,6 +382,20 @@ For a healthy deployment, keep these aligned:
 
 - `Oidc:Issuer` must point to the public issuer base URI
 - each deployment should set `Oidc:CurrentAppBaseUri` to its own browser-visible public base URI
-- the shared first-party client must include the exact callback URI for each supported host
+- the managed OIDC client table must contain the correct public origin roots and app path base for each supported host
+- `Oidc.ClientPaths` must contain the callback and post-logout suffixes that are composed with those managed roots
 - `/identity/app-config.js` and hosted shell HTML must not be edge-cached
 - hosted-shell login success should return to the app base route, not the domain root
+
+## Managed Client Administration
+
+The hosted shell now includes a super-administrator-only `/oidc-clients` page.
+
+That page allows:
+
+- create managed clients
+- edit managed client id, secret, scope, app path base, and origins
+- review derived redirect URIs
+- deactivate clients without dropping audit history
+
+Deactivation removes the matching active OpenIddict application registration, so the client can no longer start new authorization flows until it is reactivated.

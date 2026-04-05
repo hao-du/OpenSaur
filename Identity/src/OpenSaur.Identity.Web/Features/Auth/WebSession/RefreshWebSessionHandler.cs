@@ -10,6 +10,7 @@ public static class RefreshWebSessionHandler
     public static async Task<IResult> HandleAsync(
         IFirstPartyOidcTokenClient tokenClient,
         HttpContext httpContext,
+        ManagedOidcClientResolver managedOidcClientResolver,
         CancellationToken cancellationToken)
     {
         var refreshToken = httpContext.Request.Cookies[AuthCookieNames.Refresh];
@@ -21,8 +22,15 @@ public static class RefreshWebSessionHandler
                 .ToApiErrorResult();
         }
 
+        var redirectUri = await managedOidcClientResolver.BuildCurrentRedirectUriAsync(
+                              httpContext.Request,
+                              cancellationToken)
+                          ?? throw new InvalidOperationException(
+                              "No active managed OIDC client matched the current app base URI.");
+
         var tokenResult = await tokenClient.RefreshAccessTokenAsync(
             refreshToken,
+            redirectUri,
             cancellationToken);
         if (tokenResult is null)
         {

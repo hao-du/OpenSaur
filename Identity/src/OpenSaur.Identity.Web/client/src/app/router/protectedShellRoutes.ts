@@ -1,6 +1,7 @@
 import type { LucideIcon } from "lucide-react";
 import {
   Building2,
+  KeyRound,
   LayoutDashboard,
   ShieldCheck,
   ShieldUser,
@@ -46,6 +47,12 @@ export const protectedShellRoutes: ProtectedShellRoute[] = [
     labelKey: "nav.users",
     path: "/users",
     requiresUserManagement: true
+  },
+  {
+    icon: KeyRound,
+    labelKey: "nav.oidcClients",
+    path: "/oidc-clients",
+    requiresSuperAdministrator: true
   },
   {
     icon: ShieldUser,
