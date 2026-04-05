@@ -38,6 +38,15 @@ function getIssuerAuthorizePath() {
   return new URL("connect/authorize", getIssuerBaseUri()).pathname;
 }
 
+function getIssuerImpersonationPaths() {
+  const issuerBaseUri = getIssuerBaseUri();
+
+  return new Set([
+    new URL("api/auth/impersonation/start", issuerBaseUri).pathname,
+    new URL("api/auth/impersonation/exit", issuerBaseUri).pathname
+  ]);
+}
+
 function parseAuthorizationState(state: string | null | undefined) {
   if (!state) {
     return null;
@@ -106,6 +115,21 @@ export function isFirstPartyAuthorizeReturnUrl(returnUrl: string) {
     const resolvedReturnUrl = new URL(returnUrl, getIssuerBaseUri().origin);
 
     return resolvedReturnUrl.pathname === getIssuerAuthorizePath();
+  } catch {
+    return false;
+  }
+}
+
+export function isIssuerAuthenticationContinuationReturnUrl(returnUrl: string) {
+  if (!returnUrl.startsWith("/")) {
+    return false;
+  }
+
+  try {
+    const resolvedReturnUrl = new URL(returnUrl, getIssuerBaseUri().origin);
+
+    return resolvedReturnUrl.pathname === getIssuerAuthorizePath()
+      || getIssuerImpersonationPaths().has(resolvedReturnUrl.pathname);
   } catch {
     return false;
   }

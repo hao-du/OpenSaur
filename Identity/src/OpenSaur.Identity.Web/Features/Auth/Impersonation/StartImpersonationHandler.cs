@@ -72,19 +72,31 @@ public static class StartImpersonationHandler
             return IssuerAuthenticationFlow.ChallengeIssuerLogin(httpContext);
         }
 
-        var currentUserContext = CurrentUserContext.Create(authenticationResult.Principal);
-        if (currentUserContext is null)
+        var authenticatedUserId = AuthPrincipalReader.GetUserId(authenticationResult.Principal);
+        if (string.IsNullOrWhiteSpace(authenticatedUserId))
         {
             return await IssuerAuthenticationFlow.SignOutAndChallengeIssuerLoginAsync(httpContext);
         }
 
-        if (currentUserContext.UserId != bridgeCommand.ActorUserId)
+        var authenticatedUser = await userManager.FindByIdAsync(authenticatedUserId);
+        if (authenticatedUser is null || !authenticatedUser.IsActive)
+        {
+            return await IssuerAuthenticationFlow.SignOutAndChallengeIssuerLoginAsync(httpContext);
+        }
+
+        if (authenticatedUser.Id != bridgeCommand.ActorUserId)
         {
             return Result.Unauthorized(
                     "Authentication failed.",
                     "The issuer login did not match the impersonation request.")
                 .ToApiErrorResult();
         }
+
+        var currentUserContext = new CurrentUserContext(
+            authenticatedUser.Id,
+            authenticatedUser.WorkspaceId,
+            IsSuperAdministrator: false,
+            IsImpersonating: AuthPrincipalReader.IsImpersonating(authenticationResult.Principal));
 
         if (await ValidateStartRequestAsync(
                 new StartImpersonationRequest(bridgeCommand.WorkspaceId.Value, bridgeCommand.UserId, bridgeCommand.ReturnUrl),

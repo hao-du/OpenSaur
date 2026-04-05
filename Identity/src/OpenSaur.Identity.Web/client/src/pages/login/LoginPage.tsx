@@ -9,8 +9,8 @@ import { authSessionStore } from "../../features/auth/state/authSessionStore";
 import {
   buildFirstPartyAuthorizeUrl,
   createFirstPartyAuthorizationState,
+  isIssuerAuthenticationContinuationReturnUrl,
   isCurrentAppHostedByIssuer,
-  isFirstPartyAuthorizeReturnUrl,
   normalizeAuthReturnUrl,
   startFirstPartyAuthorization
 } from "../../features/auth/utils";
@@ -46,7 +46,7 @@ export function LoginPage() {
     try {
       await login(values);
 
-      if (isFirstPartyAuthorizeReturnUrl(normalizedReturnUrl)) {
+      if (isIssuerAuthenticationContinuationReturnUrl(normalizedReturnUrl)) {
         window.location.assign(normalizedReturnUrl);
         return;
       }
