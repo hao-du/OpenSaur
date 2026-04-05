@@ -120,7 +120,8 @@ The first-party shell no longer relies on build-time frontend host defaults for 
 
 - the backend serves `/identity/app-config.js` from the current host
 - that bootstrap payload contains the configured issuer, first-party client id, scope, current-host callback URI, whether the current host is the issuer, and the public Google reCAPTCHA v3 login settings when enabled
-- the current host's client id, scopes, and callback URI are resolved from the managed OIDC client record that matches the current public origin root and app path base
+- `Oidc.CurrentClient` identifies which managed OIDC client record belongs to that deployment
+- the current public origin root and app path base are then validated against that managed client before the callback URI is composed
 - the frontend reads that payload through `shared/config/env.ts` before it decides whether to reuse the issuer cookie or start `/connect/authorize`
 - the backend also serves the hosted shell HTML with no-store headers for the same reason
 
@@ -140,6 +141,7 @@ For the current Identity shell, the browser-visible runtime config should always
 The issuer now treats first-party browser clients as managed data:
 
 - `Oidc.BootstrapClient` exists only to seed the initial client when the managed-client tables are empty
+- `Oidc.CurrentClient` identifies which existing managed client belongs to the current deployment
 - long-term client management lives in the application database
 - each managed client stores:
   - `ClientId`
@@ -147,19 +149,21 @@ The issuer now treats first-party browser clients as managed data:
   - `DisplayName`
   - `Scope`
   - `AppPathBase`
+  - `CallbackPath`
+  - `PostLogoutPath`
   - public origin roots such as `https://app.example.com/` or `http://localhost:5220/`
 
 Exact redirect and post-logout redirect URIs are derived by combining:
 
 - managed origin root
 - managed app path base
-- configured suffixes in `Oidc.ClientPaths`
+- managed callback and post-logout paths for that client
 
 At runtime:
 
 - the frontend receives the resolved current client id from runtime config
-- the backend derives the current callback URI from the current managed client plus `Oidc.ClientPaths.CallbackPath`
-- the backend derives the post-logout redirect URI from the current managed client plus `Oidc.ClientPaths.PostLogoutPath`
+- the backend derives the current callback URI from the current managed client plus that client's `CallbackPath`
+- the backend derives the post-logout redirect URI from the current managed client plus that client's `PostLogoutPath`
 - OpenIddict still validates exact redirect URIs, because the synchronizer writes those exact derived URIs into the OpenIddict application record
 
 ## Issuer-Hosted Flow
@@ -383,7 +387,7 @@ For a healthy deployment, keep these aligned:
 - `Oidc:Issuer` must point to the public issuer base URI
 - each deployment should set `Oidc:CurrentAppBaseUri` to its own browser-visible public base URI
 - the managed OIDC client table must contain the correct public origin roots and app path base for each supported host
-- `Oidc.ClientPaths` must contain the callback and post-logout suffixes that are composed with those managed roots
+- each managed client record must contain the callback and post-logout paths that are composed with its managed origin roots
 - `/identity/app-config.js` and hosted shell HTML must not be edge-cached
 - hosted-shell login success should return to the app base route, not the domain root
 

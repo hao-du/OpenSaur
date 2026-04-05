@@ -13,13 +13,14 @@ Move first-party OIDC client registration from static URI arrays in config to ma
 ## Scope
 
 - Add DB-backed managed OIDC client and origin records.
+- Store client-owned callback and post-logout paths alongside each managed client.
 - Derive exact redirect and post-logout URIs by combining:
   - managed public origins from DB
   - managed app path base from DB
-  - configured callback and post-logout suffixes from settings
+  - managed callback and post-logout paths from DB
 - Synchronize managed active clients into OpenIddict applications.
 - Add super-administrator-only CRUD APIs and a hosted shell page for managed OIDC clients.
-- Keep a bootstrap config path so an empty database can seed the initial shell client.
+- Keep a bootstrap config path so an empty database can seed the initial shell client, including its default callback and post-logout paths.
 
 ## Out Of Scope
 

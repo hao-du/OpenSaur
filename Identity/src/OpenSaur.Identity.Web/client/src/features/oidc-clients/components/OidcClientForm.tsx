@@ -17,12 +17,14 @@ import { usePreferences } from "../../preferences/PreferenceProvider";
 
 type OidcClientFormValues = {
   appPathBase: string;
+  callbackPath: string;
   clientId: string;
   clientSecret: string;
   description: string;
   displayName: string;
   isActive: boolean;
   originsText: string;
+  postLogoutPath: string;
   scope: string;
 };
 
@@ -33,12 +35,14 @@ type OidcClientFormProps = {
   isSubmitting: boolean;
   onSubmit: (values: {
     appPathBase: string;
+    callbackPath: string;
     clientId: string;
     clientSecret: string;
     description: string;
     displayName: string;
     isActive: boolean;
     origins: string[];
+    postLogoutPath: string;
     scope: string;
   }) => Promise<void>;
 };
@@ -78,12 +82,14 @@ export function OidcClientForm({
       onSubmit={handleSubmit(async values => {
         await onSubmit({
           appPathBase: values.appPathBase,
+          callbackPath: values.callbackPath,
           clientId: values.clientId,
           clientSecret: values.clientSecret,
           description: values.description,
           displayName: values.displayName,
           isActive: values.isActive,
           origins: splitOrigins(values.originsText),
+          postLogoutPath: values.postLogoutPath,
           scope: values.scope
         });
       })}
@@ -148,6 +154,18 @@ export function OidcClientForm({
         <Typography color="text.secondary" variant="body2">
           {t("oidcClients.form.appPathBaseHelp")}
         </Typography>
+        <ControlledTextField
+          control={control}
+          disabled={isSubmitting}
+          label={t("oidcClients.form.callbackPath")}
+          name="callbackPath"
+          rules={{
+            required: t("oidcClients.form.callbackPathRequired")
+          }}
+        />
+        <Typography color="text.secondary" variant="body2">
+          {t("oidcClients.form.callbackPathHelp")}
+        </Typography>
         <ControlledTextArea
           control={control}
           disabled={isSubmitting}
@@ -169,6 +187,18 @@ export function OidcClientForm({
             {originPreview.join(", ")}
           </Alert>
         ) : null}
+        <ControlledTextField
+          control={control}
+          disabled={isSubmitting}
+          label={t("oidcClients.form.postLogoutPath")}
+          name="postLogoutPath"
+          rules={{
+            required: t("oidcClients.form.postLogoutPathRequired")
+          }}
+        />
+        <Typography color="text.secondary" variant="body2">
+          {t("oidcClients.form.postLogoutPathHelp")}
+        </Typography>
         <ControlledTextArea
           control={control}
           disabled={isSubmitting}

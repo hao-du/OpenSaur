@@ -8,6 +8,8 @@ public sealed record ManagedOidcClientRuntime(
     string Description,
     string Scope,
     string AppPathBase,
+    string CallbackPath,
+    string PostLogoutPath,
     IReadOnlyList<string> Origins,
     IReadOnlyList<string> RedirectUris,
     IReadOnlyList<string> PostLogoutRedirectUris,

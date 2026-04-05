@@ -85,8 +85,11 @@ export function OidcClientsTable({
               <TableCell>{t("oidcClients.table.displayName")}</TableCell>
               <TableCell>{t("oidcClients.table.clientId")}</TableCell>
               <TableCell>{t("oidcClients.table.appPathBase")}</TableCell>
+              <TableCell>{t("oidcClients.table.callbackPath")}</TableCell>
               <TableCell>{t("oidcClients.table.origins")}</TableCell>
               <TableCell>{t("oidcClients.table.redirectUris")}</TableCell>
+              <TableCell>{t("oidcClients.table.postLogoutPath")}</TableCell>
+              <TableCell>{t("oidcClients.table.postLogoutRedirectUris")}</TableCell>
               <TableCell>{t("oidcClients.table.status")}</TableCell>
               <TableCell align="right">{t("oidcClients.table.actions")}</TableCell>
             </TableRow>
@@ -104,6 +107,7 @@ export function OidcClientsTable({
                 </TableCell>
                 <TableCell>{client.clientId}</TableCell>
                 <TableCell>{client.appPathBase}</TableCell>
+                <TableCell>{client.callbackPath}</TableCell>
                 <TableCell>
                   <Stack direction="row" flexWrap="wrap" gap={1}>
                     {client.origins.map(origin => (
@@ -116,6 +120,16 @@ export function OidcClientsTable({
                     {client.redirectUris.map(redirectUri => (
                       <Typography key={redirectUri} variant="body2">
                         {redirectUri}
+                      </Typography>
+                    ))}
+                  </Stack>
+                </TableCell>
+                <TableCell>{client.postLogoutPath}</TableCell>
+                <TableCell>
+                  <Stack spacing={0.75}>
+                    {client.postLogoutRedirectUris.map(postLogoutRedirectUri => (
+                      <Typography key={postLogoutRedirectUri} variant="body2">
+                        {postLogoutRedirectUri}
                       </Typography>
                     ))}
                   </Stack>

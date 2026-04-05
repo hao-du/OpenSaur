@@ -7,21 +7,24 @@ The issuer remains the source of truth for OpenIddict applications, but the app 
 Instead:
 
 1. `Oidc.BootstrapClient` seeds the initial shell client when the database has no managed client records.
-2. Managed OIDC clients are stored in application tables:
+2. `Oidc.CurrentClient` identifies which managed client belongs to the current deployment at runtime.
+3. Managed OIDC clients are stored in application tables:
    - `OidcClients`
    - `OidcClientOrigins`
-3. Each managed client stores:
+4. Each managed client stores:
    - `ClientId`
    - `ClientSecret`
    - `DisplayName`
    - `Description`
    - `Scope`
    - `AppPathBase`
+   - `CallbackPath`
+   - `PostLogoutPath`
    - active public origins
-4. Exact redirect and post-logout URIs are derived at runtime and during OpenIddict synchronization by combining:
+5. Exact redirect and post-logout URIs are derived at runtime and during OpenIddict synchronization by combining:
    - origin root from DB
    - app path base from DB
-   - configured suffixes from `Oidc.ClientPaths`
+   - client-owned callback and post-logout paths from DB
 
 This keeps the callback/login path rules centralized while letting operators manage actual hosts in data.
 
@@ -43,11 +46,11 @@ The app path base belongs to the client, not to the origin, because the same log
 
 ## URI Composition
 
-Configured suffixes:
+Bootstrap defaults for first seed only:
 
 ```json
 "Oidc": {
-  "ClientPaths": {
+  "BootstrapClient": {
     "CallbackPath": "/auth/callback",
     "PostLogoutPath": "/login"
   }
@@ -59,10 +62,12 @@ Managed client data example:
 ```json
 {
   "AppPathBase": "/identity",
+  "CallbackPath": "/auth/callback",
   "Origins": [
     "https://app.example.com/",
     "http://localhost:5220/"
-  ]
+  ],
+  "PostLogoutPath": "/login"
 }
 ```
 
@@ -74,13 +79,18 @@ Derived URIs:
 - `http://localhost:5220/identity/login`
 
 This keeps the DB payload smaller and avoids repeating callback/login suffixes across every origin.
+It also allows different client types such as shell-style clients and framework-owned clients like Umbraco to use different callback conventions under the same issuer.
 
 ## Runtime Resolution
 
 The runtime shell config and backend token exchange paths resolve the current managed client from:
 
-- effective public current app base URI
-- normalized origin root
+- `Oidc.CurrentClient.ClientId`
+- `Oidc.CurrentClient.ClientSecret`
+
+Then they validate that the current host or callback URI belongs to that managed client by checking:
+
+- normalized public origin root
 - normalized app path base
 
 This allows:
@@ -128,4 +138,5 @@ Deactivation is implemented as a soft delete to preserve audit history while rem
 - origins must be absolute and pathless
 - no wildcard redirect URI behavior is introduced
 - the current admin shell client cannot be deactivated from its own host
-- runtime config still exposes only browser-safe client metadata, never issuer secrets beyond the client secret already used by the confidential first-party shell model
+- runtime config still exposes only browser-safe client metadata, never the deployment secret used to identify the current managed client
+- changing the current managed client's secret in the admin UI requires the matching `Oidc.CurrentClient` deployment secret to be updated for that deployment as well

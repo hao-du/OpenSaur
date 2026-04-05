@@ -26,7 +26,9 @@ public static class CreateOidcClientHandler
 
         var normalizedClientId = request.ClientId.Trim();
         var normalizedAppPathBase = OidcClientRequestNormalization.NormalizeAppPathBase(request.AppPathBase);
+        var normalizedCallbackPath = OidcClientRequestNormalization.NormalizeClientPath(request.CallbackPath);
         var normalizedOrigins = OidcClientRequestNormalization.NormalizeOrigins(request.Origins);
+        var normalizedPostLogoutPath = OidcClientRequestNormalization.NormalizeClientPath(request.PostLogoutPath);
         if (normalizedOrigins.Length == 0)
         {
             return Result.Validation(
@@ -58,12 +60,14 @@ public static class CreateOidcClientHandler
         var oidcClient = new OidcClient
         {
             AppPathBase = normalizedAppPathBase,
+            CallbackPath = normalizedCallbackPath,
             ClientId = normalizedClientId,
             ClientSecret = request.ClientSecret.Trim(),
             CreatedBy = currentUserContext.UserId,
             Description = request.Description.Trim(),
             DisplayName = request.DisplayName.Trim(),
             IsActive = true,
+            PostLogoutPath = normalizedPostLogoutPath,
             Scope = request.Scope.Trim(),
             Origins = OidcClientRequestNormalization.CreateOrigins(normalizedOrigins, currentUserContext.UserId)
         };

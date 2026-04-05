@@ -34,12 +34,14 @@ public static class GetOidcClientByIdHandler
         return ApiResponses.Success(
             new GetOidcClientByIdResponse(
                 oidcClient.Id,
-                oidcClient.ClientId,
-                oidcClient.DisplayName,
-                oidcClient.Description,
-                oidcClient.Scope,
                 oidcClient.AppPathBase,
+                oidcClient.CallbackPath,
+                oidcClient.ClientId,
+                oidcClient.Description,
+                oidcClient.DisplayName,
                 oidcClient.IsActive,
-                normalizedOrigins));
+                normalizedOrigins,
+                oidcClient.PostLogoutPath,
+                oidcClient.Scope));
     }
 }

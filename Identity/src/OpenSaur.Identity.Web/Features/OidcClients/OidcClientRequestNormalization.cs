@@ -13,6 +13,11 @@ internal static class OidcClientRequestNormalization
         return ManagedOidcClientResolver.NormalizePathBase(pathBase);
     }
 
+    public static string NormalizeClientPath(string path)
+    {
+        return ManagedOidcClientResolver.NormalizeRelativePath(path);
+    }
+
     public static string[] NormalizeOrigins(IEnumerable<string> origins)
     {
         return origins

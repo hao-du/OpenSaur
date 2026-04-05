@@ -7,14 +7,15 @@ The system SHALL authenticate first-party browser shells through the configured 
 #### Scenario: Current host resolves its first-party client from managed origins and path base
 
 - **WHEN** the hosted shell or backend token/session path needs the current first-party client
-- **THEN** the system resolves that client from the effective public origin root and app path base of the current request
+- **THEN** the system first identifies the current managed client from `Oidc.CurrentClient.ClientId` and `Oidc.CurrentClient.ClientSecret` for that deployment
+- **AND** the system validates that the effective public origin root and app path base of the current request belong to that managed client
 - **AND** the system does not depend on a single hardcoded redirect URI list in appsettings at runtime
 
-#### Scenario: Redirect URIs are derived from managed origins plus configured suffixes
+#### Scenario: Redirect URIs are derived from managed origins plus per-client paths
 
 - **WHEN** the system registers or serves a managed first-party client
-- **THEN** each exact redirect URI is composed from a stored public origin root, a stored app path base, and the configured callback path suffix
-- **AND** each post-logout redirect URI is composed from the same stored public origin root and app path base plus the configured post-logout suffix
+- **THEN** each exact redirect URI is composed from a stored public origin root, a stored app path base, and that managed client's callback path
+- **AND** each post-logout redirect URI is composed from the same stored public origin root and app path base plus that managed client's post-logout path
 
 #### Scenario: Inactive managed clients are removed from active issuer registration
 

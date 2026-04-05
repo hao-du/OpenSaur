@@ -67,55 +67,53 @@ public sealed class ManagedOidcClientResolver(
         var currentOrigin = NormalizeOrigin(currentAppBaseUri);
         var currentAppPathBase = NormalizePathBase(currentAppBaseUri.AbsolutePath);
 
-        var client = await dbContext.OidcClients
-            .AsNoTracking()
-            .Include(candidate => candidate.Origins.Where(origin => origin.IsActive))
-            .SingleOrDefaultAsync(
-                candidate => candidate.IsActive
-                             && candidate.AppPathBase == currentAppPathBase
-                             && candidate.Origins.Any(origin => origin.IsActive && origin.BaseUri == currentOrigin),
-                cancellationToken);
+        var client = await ResolveConfiguredClientEntityAsync(cancellationToken);
+        if (client is null
+            || !string.Equals(client.AppPathBase, currentAppPathBase, StringComparison.OrdinalIgnoreCase)
+            || !client.Origins.Any(origin => string.Equals(origin.BaseUri, currentOrigin, StringComparison.OrdinalIgnoreCase)))
+        {
+            return null;
+        }
 
-        return client is null
-            ? null
-            : MapToRuntime(client);
+        return MapToRuntime(client);
     }
 
     public async Task<ManagedOidcClientRuntime?> ResolveClientByRedirectUriAsync(
         string redirectUri,
         CancellationToken cancellationToken = default)
     {
+        var client = await ResolveConfiguredClientEntityAsync(cancellationToken);
+        if (client is null)
+        {
+            return null;
+        }
+
         if (!TryExtractClientLocatorFromRedirectUri(
                 redirectUri,
-                oidcOptionsAccessor.Value.ClientPaths.CallbackPath,
+                client.CallbackPath,
                 out var origin,
                 out var appPathBase))
         {
             return null;
         }
 
-        var client = await dbContext.OidcClients
-            .AsNoTracking()
-            .Include(candidate => candidate.Origins.Where(item => item.IsActive))
-            .SingleOrDefaultAsync(
-                candidate => candidate.IsActive
-                             && candidate.AppPathBase == appPathBase
-                             && candidate.Origins.Any(item => item.IsActive && item.BaseUri == origin),
-                cancellationToken);
+        if (!string.Equals(client.AppPathBase, appPathBase, StringComparison.OrdinalIgnoreCase)
+            || !client.Origins.Any(item => string.Equals(item.BaseUri, origin, StringComparison.OrdinalIgnoreCase)))
+        {
+            return null;
+        }
 
-        return client is null
-            ? null
-            : MapToRuntime(client);
+        return MapToRuntime(client);
     }
 
     public string BuildRedirectUri(ManagedOidcClientRuntime client, string origin)
     {
-        return CombineAbsoluteUri(origin, client.AppPathBase, oidcOptionsAccessor.Value.ClientPaths.CallbackPath);
+        return CombineAbsoluteUri(origin, client.AppPathBase, client.CallbackPath);
     }
 
     public string BuildPostLogoutRedirectUri(ManagedOidcClientRuntime client, string origin)
     {
-        return CombineAbsoluteUri(origin, client.AppPathBase, oidcOptionsAccessor.Value.ClientPaths.PostLogoutPath);
+        return CombineAbsoluteUri(origin, client.AppPathBase, client.PostLogoutPath);
     }
 
     private ManagedOidcClientRuntime MapToRuntime(OidcClient client)
@@ -135,22 +133,45 @@ public sealed class ManagedOidcClientResolver(
             client.Description,
             client.Scope,
             client.AppPathBase,
+            client.CallbackPath,
+            client.PostLogoutPath,
             activeOrigins,
             activeOrigins
                 .Select(
                     origin => CombineAbsoluteUri(
                         origin,
                         client.AppPathBase,
-                        oidcOptionsAccessor.Value.ClientPaths.CallbackPath))
+                        client.CallbackPath))
                 .ToArray(),
             activeOrigins
                 .Select(
                     origin => CombineAbsoluteUri(
                         origin,
                         client.AppPathBase,
-                        oidcOptionsAccessor.Value.ClientPaths.PostLogoutPath))
+                        client.PostLogoutPath))
                 .ToArray(),
             client.IsActive);
+    }
+
+    private async Task<OidcClient?> ResolveConfiguredClientEntityAsync(CancellationToken cancellationToken)
+    {
+        var currentClient = oidcOptionsAccessor.Value.CurrentClient;
+        var configuredClientId = currentClient.ClientId.Trim();
+        if (configuredClientId.Length == 0)
+        {
+            return null;
+        }
+
+        var configuredClientSecret = currentClient.ClientSecret.Trim();
+
+        return await dbContext.OidcClients
+            .AsNoTracking()
+            .Include(candidate => candidate.Origins.Where(origin => origin.IsActive))
+            .SingleOrDefaultAsync(
+                candidate => candidate.IsActive
+                             && candidate.ClientId == configuredClientId
+                             && candidate.ClientSecret == configuredClientSecret,
+                cancellationToken);
     }
     public static string NormalizeOrigin(string origin)
     {

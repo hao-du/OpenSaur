@@ -23,7 +23,7 @@ The frontend SHALL expose a protected OIDC client administration route for super
 
 - **WHEN** a super administrator navigates to the OIDC clients route
 - **THEN** the hosted shell loads the managed OIDC client list successfully
-- **AND** the page shows the stored origins plus the derived redirect URIs for each client
+- **AND** the page shows the stored origins, callback path, post-logout path, and the derived redirect URIs for each client
 
 #### Scenario: Super administrator updates a managed OIDC client
 

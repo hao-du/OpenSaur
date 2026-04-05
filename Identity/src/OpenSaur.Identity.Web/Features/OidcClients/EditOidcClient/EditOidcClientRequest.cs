@@ -2,11 +2,13 @@ namespace OpenSaur.Identity.Web.Features.OidcClients.EditOidcClient;
 
 public sealed record EditOidcClientRequest(
     Guid Id,
+    string AppPathBase,
+    string CallbackPath,
     string ClientId,
     string ClientSecret,
-    string DisplayName,
     string Description,
-    string Scope,
-    string AppPathBase,
+    string DisplayName,
     bool IsActive,
-    string[] Origins);
+    string[] Origins,
+    string PostLogoutPath,
+    string Scope);

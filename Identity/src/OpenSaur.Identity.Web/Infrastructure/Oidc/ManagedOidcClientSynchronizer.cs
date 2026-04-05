@@ -100,12 +100,14 @@ public sealed class ManagedOidcClientSynchronizer(
         var managedClient = new OidcClient
         {
             AppPathBase = ManagedOidcClientResolver.NormalizePathBase(bootstrapClient.AppPathBase),
+            CallbackPath = ManagedOidcClientResolver.NormalizeRelativePath(bootstrapClient.CallbackPath),
             ClientId = bootstrapClient.ClientId.Trim(),
             ClientSecret = bootstrapClient.ClientSecret.Trim(),
             Description = "Bootstrapped from OIDC configuration.",
             DisplayName = string.IsNullOrWhiteSpace(bootstrapClient.DisplayName)
                 ? bootstrapClient.ClientId.Trim()
                 : bootstrapClient.DisplayName.Trim(),
+            PostLogoutPath = ManagedOidcClientResolver.NormalizeRelativePath(bootstrapClient.PostLogoutPath),
             Scope = string.IsNullOrWhiteSpace(bootstrapClient.Scope)
                 ? "openid profile email roles offline_access api"
                 : bootstrapClient.Scope.Trim(),

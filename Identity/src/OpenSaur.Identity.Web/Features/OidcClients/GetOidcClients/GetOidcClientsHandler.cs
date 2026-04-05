@@ -15,15 +15,17 @@ public static class GetOidcClientsHandler
             clients.Select(
                     client => new OidcClientSummaryResponse(
                         client.Id,
-                        client.ClientId,
-                        client.DisplayName,
-                        client.Description,
-                        client.Scope,
                         client.AppPathBase,
+                        client.CallbackPath,
+                        client.ClientId,
+                        client.Description,
+                        client.DisplayName,
                         client.IsActive,
                         client.Origins.ToArray(),
+                        client.PostLogoutPath,
                         client.RedirectUris.ToArray(),
-                        client.PostLogoutRedirectUris.ToArray()))
+                        client.PostLogoutRedirectUris.ToArray(),
+                        client.Scope))
                 .ToArray());
     }
 }

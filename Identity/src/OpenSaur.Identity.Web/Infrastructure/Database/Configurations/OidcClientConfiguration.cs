@@ -21,8 +21,14 @@ internal sealed class OidcClientConfiguration : IEntityTypeConfiguration<OidcCli
         builder.Property(client => client.AppPathBase)
             .HasMaxLength(200)
             .IsRequired();
+        builder.Property(client => client.CallbackPath)
+            .HasMaxLength(200)
+            .IsRequired();
         builder.Property(client => client.Scope)
             .HasMaxLength(512)
+            .IsRequired();
+        builder.Property(client => client.PostLogoutPath)
+            .HasMaxLength(200)
             .IsRequired();
         builder.Property(client => client.Description)
             .HasMaxLength(255);

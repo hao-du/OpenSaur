@@ -22,12 +22,14 @@ type OidcClientFormDrawerProps = {
   onClose: () => void;
   onSubmit: (values: {
     appPathBase: string;
+    callbackPath: string;
     clientId: string;
     clientSecret: string;
     description: string;
     displayName: string;
     isActive: boolean;
     origins: string[];
+    postLogoutPath: string;
     scope: string;
   }) => Promise<void>;
 };
@@ -80,12 +82,14 @@ export function OidcClientFormDrawer({
               errorMessage={errorMessage}
               initialValues={{
                 appPathBase: initialValues?.appPathBase ?? "/identity",
+                callbackPath: initialValues?.callbackPath ?? "/auth/callback",
                 clientId: initialValues?.clientId ?? "",
                 clientSecret: "",
                 description: initialValues?.description ?? "",
                 displayName: initialValues?.displayName ?? "",
                 isActive: initialValues?.isActive ?? true,
                 originsText: (initialValues?.origins ?? []).join("\n"),
+                postLogoutPath: initialValues?.postLogoutPath ?? "/login",
                 scope: initialValues?.scope ?? "openid profile email roles offline_access api"
               }}
               isEditMode={isEditMode}

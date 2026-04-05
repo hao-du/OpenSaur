@@ -6,6 +6,18 @@ public sealed class CreateOidcClientRequestValidator : AbstractValidator<CreateO
 {
     public CreateOidcClientRequestValidator()
     {
+        RuleFor(request => request.AppPathBase)
+            .NotEmpty()
+            .WithMessage("Application path base is required.")
+            .MaximumLength(200)
+            .WithMessage("Application path base must be 200 characters or fewer.");
+
+        RuleFor(request => request.CallbackPath)
+            .NotEmpty()
+            .WithMessage("Callback path is required.")
+            .MaximumLength(200)
+            .WithMessage("Callback path must be 200 characters or fewer.");
+
         RuleFor(request => request.ClientId)
             .NotEmpty()
             .WithMessage("Client id is required.")
@@ -28,22 +40,22 @@ public sealed class CreateOidcClientRequestValidator : AbstractValidator<CreateO
             .MaximumLength(255)
             .WithMessage("Description must be 255 characters or fewer.");
 
-        RuleFor(request => request.Scope)
-            .NotEmpty()
-            .WithMessage("Scope is required.")
-            .MaximumLength(512)
-            .WithMessage("Scope must be 512 characters or fewer.");
-
-        RuleFor(request => request.AppPathBase)
-            .NotEmpty()
-            .WithMessage("Application path base is required.")
-            .MaximumLength(200)
-            .WithMessage("Application path base must be 200 characters or fewer.");
-
         RuleFor(request => request.Origins)
             .NotNull()
             .WithMessage("At least one origin is required.")
             .Must(origins => origins.Length > 0)
             .WithMessage("At least one origin is required.");
+
+        RuleFor(request => request.PostLogoutPath)
+            .NotEmpty()
+            .WithMessage("Post-logout path is required.")
+            .MaximumLength(200)
+            .WithMessage("Post-logout path must be 200 characters or fewer.");
+
+        RuleFor(request => request.Scope)
+            .NotEmpty()
+            .WithMessage("Scope is required.")
+            .MaximumLength(512)
+            .WithMessage("Scope must be 512 characters or fewer.");
     }
 }

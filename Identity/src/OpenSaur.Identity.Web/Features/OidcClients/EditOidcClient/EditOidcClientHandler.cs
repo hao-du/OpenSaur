@@ -37,7 +37,9 @@ public static class EditOidcClientHandler
 
         var normalizedClientId = request.ClientId.Trim();
         var normalizedAppPathBase = OidcClientRequestNormalization.NormalizeAppPathBase(request.AppPathBase);
+        var normalizedCallbackPath = OidcClientRequestNormalization.NormalizeClientPath(request.CallbackPath);
         var normalizedOrigins = OidcClientRequestNormalization.NormalizeOrigins(request.Origins);
+        var normalizedPostLogoutPath = OidcClientRequestNormalization.NormalizeClientPath(request.PostLogoutPath);
         if (normalizedOrigins.Length == 0)
         {
             return Result.Validation(
@@ -68,6 +70,7 @@ public static class EditOidcClientHandler
         }
 
         oidcClient.AppPathBase = normalizedAppPathBase;
+        oidcClient.CallbackPath = normalizedCallbackPath;
         oidcClient.ClientId = normalizedClientId;
         if (!string.IsNullOrWhiteSpace(request.ClientSecret))
         {
@@ -77,6 +80,7 @@ public static class EditOidcClientHandler
         oidcClient.Description = request.Description.Trim();
         oidcClient.DisplayName = request.DisplayName.Trim();
         oidcClient.IsActive = request.IsActive;
+        oidcClient.PostLogoutPath = normalizedPostLogoutPath;
         oidcClient.Scope = request.Scope.Trim();
         oidcClient.UpdatedBy = currentUserContext.UserId;
 
