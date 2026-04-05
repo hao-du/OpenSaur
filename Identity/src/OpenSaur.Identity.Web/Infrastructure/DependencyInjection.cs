@@ -167,6 +167,7 @@ public static class DependencyInjection
             options.KnownProxies.Clear();
         });
         services.Configure<OidcOptions>(configuration.GetRequiredSection(OidcOptions.SectionName));
+        services.Configure<GoogleRecaptchaOptions>(configuration.GetSection(GoogleRecaptchaOptions.SectionName));
         services.Configure<EndpointResilienceOptions>(configuration.GetSection(EndpointResilienceOptions.SectionName));
         services.AddSingleton(endpointResilienceOptions);
 
@@ -284,6 +285,10 @@ public static class DependencyInjection
         services.AddScoped<IAuthorizationHandler, PermissionAuthorizationHandler>();
         services.AddScoped<FirstPartyImpersonationBridge>();
         services.AddScoped<FirstPartyOidcClientRegistrar>();
+        services.AddHttpClient<IGoogleRecaptchaVerifier, GoogleRecaptchaVerifier>(client =>
+        {
+            client.BaseAddress = new Uri("https://www.google.com/recaptcha/api/");
+        });
         services.AddHttpClient<IFirstPartyOidcTokenClient, FirstPartyOidcTokenClient>((serviceProvider, client) =>
         {
             var oidcOptions = serviceProvider.GetRequiredService<IOptions<OidcOptions>>().Value;

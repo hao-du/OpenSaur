@@ -1,4 +1,5 @@
 using FluentValidation;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using OpenSaur.Identity.Web.Domain.Identity;
 using OpenSaur.Identity.Web.Infrastructure.Database.Repositories.Users;
@@ -8,6 +9,7 @@ using OpenSaur.Identity.Web.Infrastructure.Database.Repositories.Workspaces.Dtos
 using OpenSaur.Identity.Web.Infrastructure.Database;
 using OpenSaur.Identity.Web.Infrastructure.Http.Responses;
 using OpenSaur.Identity.Web.Infrastructure.Results;
+using OpenSaur.Identity.Web.Infrastructure.Security;
 using OpenSaur.Identity.Web.Infrastructure.Validation;
 
 namespace OpenSaur.Identity.Web.Features.Auth.Login;
@@ -21,11 +23,33 @@ public static class LoginHandler
         WorkspaceRepository workspaceRepository,
         UserManager<ApplicationUser> userManager,
         SignInManager<ApplicationUser> signInManager,
+        IGoogleRecaptchaVerifier googleRecaptchaVerifier,
+        HttpContext httpContext,
         CancellationToken cancellationToken)
     {
         if (await validator.ValidateRequestAsync(request, cancellationToken) is { } validationFailure)
         {
             return validationFailure;
+        }
+
+        var recaptchaResult = await googleRecaptchaVerifier.VerifyLoginAsync(
+            request.RecaptchaToken,
+            httpContext.Connection.RemoteIpAddress?.ToString(),
+            cancellationToken);
+        if (!recaptchaResult.IsVerified)
+        {
+            return recaptchaResult.IsServiceFailure
+                ? Result.Failure(
+                        StatusCodes.Status503ServiceUnavailable,
+                        ResultErrors.Server(
+                            "Authentication is temporarily unavailable.",
+                            "The sign-in verification service could not be reached. Please try again shortly."))
+                    .ToApiErrorResult()
+                : Result.Unauthorized(
+                        ApiErrorCodes.AuthCaptchaFailed,
+                        "Authentication failed.",
+                        "The sign-in request could not be verified. Refresh and try again.")
+                    .ToApiErrorResult();
         }
 
         var normalizedUserName = userManager.NormalizeName(request.UserName);

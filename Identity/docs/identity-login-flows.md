@@ -117,7 +117,7 @@ Backend:
 The first-party shell no longer relies on build-time frontend host defaults for issuer authority or callback ownership.
 
 - the backend serves `/identity/app-config.js` from the current host
-- that bootstrap payload contains the configured issuer, first-party client id, scope, current-host callback URI, and whether the current host is the issuer
+- that bootstrap payload contains the configured issuer, first-party client id, scope, current-host callback URI, whether the current host is the issuer, and the public Google reCAPTCHA v3 login settings when enabled
 - the frontend reads that payload through `shared/config/env.ts` before it decides whether to reuse the issuer cookie or start `/connect/authorize`
 - the backend also serves the hosted shell HTML with no-store headers for the same reason
 
@@ -209,8 +209,10 @@ Step-by-step:
 8. On the hosted login page, credentials are posted to `/api/auth/login`.
    - `LoginPage.tsx`
    - `LoginHandler.cs`
+   - when `GoogleRecaptchaV3` is configured, the hosted login page first acquires a Google reCAPTCHA v3 token from the browser and includes it in the same login payload
 
 9. `SignInManager.SignInAsync(...)` establishes the issuer cookie.
+   - before password validation, `LoginHandler.cs` verifies the Google reCAPTCHA v3 token when the feature is configured
 
 10. After login succeeds, hosted mode navigates directly back to the preserved return URL.
     - no self-`/connect/authorize`

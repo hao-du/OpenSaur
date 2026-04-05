@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Options;
 using OpenSaur.Identity.Web.Infrastructure.Oidc;
+using OpenSaur.Identity.Web.Infrastructure.Security;
 
 namespace OpenSaur.Identity.Web.Infrastructure.Hosting;
 
@@ -53,9 +54,13 @@ public static class FrontendAppRoutes
         return app;
     }
 
-    private static IResult ServeRuntimeConfigAsync(HttpContext httpContext, IOptions<OidcOptions> oidcOptionsAccessor)
+    private static IResult ServeRuntimeConfigAsync(
+        HttpContext httpContext,
+        IOptions<OidcOptions> oidcOptionsAccessor,
+        IOptions<GoogleRecaptchaOptions> googleRecaptchaOptionsAccessor)
     {
         var oidcOptions = oidcOptionsAccessor.Value;
+        var googleRecaptchaOptions = googleRecaptchaOptionsAccessor.Value;
         var firstPartyClient = oidcOptions.GetFirstPartyClient();
         var currentAppBaseUri = oidcOptions.GetCurrentAppBaseUri(httpContext.Request);
         ApplyNoStoreHeaders(httpContext.Response);
@@ -67,7 +72,11 @@ public static class FrontendAppRoutes
                 firstPartyClient.ClientId,
                 httpContext.BuildFirstPartyRedirectUri(oidcOptions),
                 firstPartyClient.Scope,
-                oidcOptions.IsIssuerHostedRequest(httpContext.Request)));
+                oidcOptions.IsIssuerHostedRequest(httpContext.Request)),
+            GoogleRecaptchaV3: new FrontendRuntimeGoogleRecaptchaV3(
+                googleRecaptchaOptions.IsConfigured,
+                googleRecaptchaOptions.IsConfigured ? googleRecaptchaOptions.SiteKey : string.Empty,
+                googleRecaptchaOptions.LoginAction));
 
         return TypedResults.Text(
             $"window.__OPENSAUR_IDENTITY_CONFIG__ = Object.freeze({JsonSerializer.Serialize(runtimeConfig, RuntimeConfigSerializerOptions)});",
@@ -119,7 +128,8 @@ public static class FrontendAppRoutes
     private sealed record FrontendRuntimeConfig(
         string AppName,
         string BasePath,
-        FrontendRuntimeFirstPartyAuth FirstPartyAuth);
+        FrontendRuntimeFirstPartyAuth FirstPartyAuth,
+        FrontendRuntimeGoogleRecaptchaV3 GoogleRecaptchaV3);
 
     private sealed record FrontendRuntimeFirstPartyAuth(
         string Issuer,
@@ -127,4 +137,9 @@ public static class FrontendAppRoutes
         string RedirectUri,
         string Scope,
         bool IsIssuerHostedApp);
+
+    private sealed record FrontendRuntimeGoogleRecaptchaV3(
+        bool Enabled,
+        string SiteKey,
+        string LoginAction);
 }

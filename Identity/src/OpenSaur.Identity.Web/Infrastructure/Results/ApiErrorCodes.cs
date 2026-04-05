@@ -9,6 +9,7 @@ public static class ApiErrorCodes
     public const string Conflict = "conflict";
     public const string Server = "server_error";
 
+    public const string AuthCaptchaFailed = "auth_captcha_failed";
     public const string AuthInvalidCredentials = "auth_invalid_credentials";
     public const string UserWorkspaceCapacityReached = "user_workspace_capacity_reached";
 }

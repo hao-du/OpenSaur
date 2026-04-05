@@ -11,6 +11,7 @@ internal static class AuthSessionPrincipalFactory
     public static ClaimsPrincipal Create(
         ApplicationUser user,
         IEnumerable<string> normalizedRoles,
+        IEnumerable<string> permissionCodes,
         IEnumerable<string> scopes,
         Guid? workspaceOverrideId = null,
         bool isImpersonating = false,
@@ -59,6 +60,13 @@ internal static class AuthSessionPrincipalFactory
             identity.AddClaim(new Claim(ApplicationClaimTypes.Role, role));
         }
 
+        foreach (var permissionCode in permissionCodes
+                     .Where(static permissionCode => !string.IsNullOrWhiteSpace(permissionCode))
+                     .Distinct(StringComparer.Ordinal))
+        {
+            identity.AddClaim(new Claim(ApplicationClaimTypes.Permissions, permissionCode));
+        }
+
         var principal = new ClaimsPrincipal(identity);
         var scopeArray = scopes
             .Where(static scope => !string.IsNullOrWhiteSpace(scope))
@@ -88,6 +96,10 @@ internal static class AuthSessionPrincipalFactory
                 when claim.Subject is ClaimsIdentity roleIdentity
                      && roleIdentity.HasScope(OpenIddictConstants.Scopes.Roles)
                 => [OpenIddictConstants.Destinations.AccessToken, OpenIddictConstants.Destinations.IdentityToken],
+            ApplicationClaimTypes.Permissions
+                when claim.Subject is ClaimsIdentity permissionIdentity
+                     && permissionIdentity.HasScope("api")
+                => [OpenIddictConstants.Destinations.AccessToken],
             ApplicationClaimTypes.WorkspaceId
                 or ApplicationClaimTypes.RequirePasswordChange
                 or ApplicationClaimTypes.ImpersonationActive

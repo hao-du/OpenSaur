@@ -2,6 +2,7 @@ import { httpClient } from "../../../shared/api/httpClient";
 
 export type LoginRequest = {
   password: string;
+  recaptchaToken?: string;
   userName: string;
 };
 

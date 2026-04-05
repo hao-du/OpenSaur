@@ -7,4 +7,5 @@ export {
   readFirstPartyAuthorizationReturnUrl,
   startFirstPartyAuthorization
 } from "./firstPartyOidc";
+export { executeGoogleRecaptchaAction, prefetchGoogleRecaptcha } from "./googleRecaptcha";
 export { shouldEnforcePasswordChange } from "./shouldEnforcePasswordChange";

@@ -172,6 +172,24 @@ public sealed class PermissionAuthorizationService
         return CanManageWorkspaceAsync(principal, targetWorkspaceId, (int)requiredPermissionCode, cancellationToken);
     }
 
+    public Task<IReadOnlyCollection<string>> GetGrantedPermissionCodesAsync(
+        Guid userId,
+        Guid? workspaceId,
+        CancellationToken cancellationToken = default)
+    {
+        return GetGrantedPermissionCodesCoreAsync(userId, workspaceId, cancellationToken);
+    }
+
+    public Task<IReadOnlyCollection<string>> GetGrantedPermissionCodesAsync(
+        CurrentUserContext currentUserContext,
+        CancellationToken cancellationToken = default)
+    {
+        return GetGrantedPermissionCodesCoreAsync(
+            currentUserContext.UserId,
+            currentUserContext.WorkspaceId,
+            cancellationToken);
+    }
+
     private Task<PermissionSnapshot> GetPermissionSnapshotAsync(Guid userId, CancellationToken cancellationToken)
     {
         return GetPermissionSnapshotCoreAsync(userId, workspaceId: null, cancellationToken);
@@ -246,6 +264,33 @@ public sealed class PermissionAuthorizationService
         var grantedCodeIds = await ExpandGrantedPermissionCodeIdsAsync(directlyAssignedPermissions, cancellationToken);
 
         return new PermissionSnapshot(false, grantedCodeIds);
+    }
+
+    private async Task<IReadOnlyCollection<string>> GetGrantedPermissionCodesCoreAsync(
+        Guid userId,
+        Guid? workspaceId,
+        CancellationToken cancellationToken)
+    {
+        var permissionSnapshot = await GetPermissionSnapshotCoreAsync(userId, workspaceId, cancellationToken);
+        IQueryable<Permission> query = _dbContext.Permissions
+            .AsNoTracking()
+            .Where(permission => permission.IsActive);
+
+        if (!permissionSnapshot.IsSuperAdministrator)
+        {
+            if (permissionSnapshot.GrantedCodeIds.Count == 0)
+            {
+                return Array.Empty<string>();
+            }
+
+            query = query.Where(permission => permissionSnapshot.GrantedCodeIds.Contains(permission.CodeId));
+        }
+
+        return await query
+            .OrderBy(permission => permission.CodeId)
+            .Select(permission => permission.Code)
+            .Distinct()
+            .ToArrayAsync(cancellationToken);
     }
 
     private Task<PermissionMetadata[]> GetDirectlyAssignedPermissionsAsync(

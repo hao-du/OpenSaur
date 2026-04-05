@@ -8,6 +8,7 @@ using OpenIddict.Abstractions;
 using OpenIddict.Server.AspNetCore;
 using OpenSaur.Identity.Web.Domain.Identity;
 using OpenSaur.Identity.Web.Infrastructure.Database;
+using OpenSaur.Identity.Web.Infrastructure.Authorization.Services;
 using OpenSaur.Identity.Web.Infrastructure.Database.Repositories.UserRoles;
 using OpenSaur.Identity.Web.Infrastructure.Database.Repositories.UserRoles.Dtos;
 using OpenSaur.Identity.Web.Infrastructure.Http.Metadata;
@@ -26,6 +27,7 @@ public static class OidcEndpoints
             async Task<IResult>(
                 HttpContext httpContext,
                 ApplicationDbContext dbContext,
+                PermissionAuthorizationService permissionAuthorizationService,
                 UserRoleRepository userRoleRepository,
                 UserManager<ApplicationUser> userManager) =>
             {
@@ -61,9 +63,14 @@ public static class OidcEndpoints
                 var rolesResult = await userRoleRepository.GetActiveNormalizedRoleNamesForUserAsync(
                     new GetActiveNormalizedRoleNamesForUserRequest(user.Id, effectiveWorkspaceId),
                     httpContext.RequestAborted);
+                var permissionCodes = await permissionAuthorizationService.GetGrantedPermissionCodesAsync(
+                    user.Id,
+                    effectiveWorkspaceId,
+                    httpContext.RequestAborted);
                 var principal = AuthSessionPrincipalFactory.Create(
                     user,
                     rolesResult.Value?.NormalizedRoleNames ?? [],
+                    permissionCodes,
                     request.GetScopes(),
                     workspaceOverrideId: effectiveWorkspaceId,
                     isImpersonating: AuthPrincipalReader.IsImpersonating(authenticationResult.Principal),

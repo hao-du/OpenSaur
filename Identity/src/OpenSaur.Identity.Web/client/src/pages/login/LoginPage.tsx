@@ -1,21 +1,25 @@
-import { useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Button, CircularProgress, Stack, Typography } from "@mui/material";
 import { useSearchParams } from "react-router-dom";
 import { LoginForm } from "../../components/organisms";
 import { AuthPageTemplate } from "../../components/templates";
+import { getApiErrorMessage } from "../../shared/api/getApiErrorMessage";
 import type { LoginRequest } from "../../features/auth/api/authApi";
 import { useLogin } from "../../features/auth/hooks";
 import { authSessionStore } from "../../features/auth/state/authSessionStore";
 import {
-  buildFirstPartyAuthorizeUrl,
+    buildFirstPartyAuthorizeUrl,
   createFirstPartyAuthorizationState,
+  executeGoogleRecaptchaAction,
   isIssuerAuthenticationContinuationReturnUrl,
   isCurrentAppHostedByIssuer,
   normalizeAuthReturnUrl,
+  prefetchGoogleRecaptcha,
   startFirstPartyAuthorization
 } from "../../features/auth/utils";
 import { usePreferences } from "../../features/preferences/PreferenceProvider";
 import { resolveAppBrowserPath } from "../../shared/config/appBasePath";
+import { appEnvironment } from "../../shared/config/env";
 
 export function LoginPage() {
   const [searchParams] = useSearchParams();
@@ -41,11 +45,35 @@ export function LoginPage() {
     startFirstPartyAuthorization(authorizeUrl);
   }, [authorizeUrl, normalizedReturnUrl, shouldAutoRedirect]);
 
+  useEffect(() => {
+    if (!isIssuerHostedLogin || !appEnvironment.googleRecaptchaV3.enabled) {
+      return;
+    }
+
+    prefetchGoogleRecaptcha(appEnvironment.googleRecaptchaV3.siteKey);
+  }, [isIssuerHostedLogin]);
+
   async function handleSubmit(values: LoginRequest) {
     setErrorMessage(null);
 
+    let recaptchaToken: string | undefined;
+    if (isIssuerHostedLogin && appEnvironment.googleRecaptchaV3.enabled) {
+      try {
+        recaptchaToken = await executeGoogleRecaptchaAction(
+          appEnvironment.googleRecaptchaV3.siteKey,
+          appEnvironment.googleRecaptchaV3.loginAction
+        );
+      } catch {
+        setErrorMessage(t("login.captchaUnavailable"));
+        return;
+      }
+    }
+
     try {
-      await login(values);
+      await login({
+        ...values,
+        recaptchaToken
+      });
 
       if (isIssuerAuthenticationContinuationReturnUrl(normalizedReturnUrl)) {
         window.location.assign(normalizedReturnUrl);
@@ -58,8 +86,8 @@ export function LoginPage() {
       }
 
       startFirstPartyAuthorization(authorizeUrl);
-    } catch {
-      setErrorMessage(t("login.error"));
+    } catch (error) {
+      setErrorMessage(getApiErrorMessage(error, t("login.error")));
     }
   }
 

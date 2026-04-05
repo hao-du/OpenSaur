@@ -9,6 +9,8 @@ public static class ApplicationClaimTypes
 
     public const string Name = JwtRegisteredClaimNames.Name;
 
+    public const string Permissions = "permissions";
+
     public const string Role = "roles";
 
     public const string PreferredUserName = "preferred_username";

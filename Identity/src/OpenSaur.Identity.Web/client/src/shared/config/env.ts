@@ -8,6 +8,11 @@ type OpenSaurIdentityRuntimeConfig = {
     scope: string;
     isIssuerHostedApp: boolean;
   };
+  googleRecaptchaV3: {
+    enabled: boolean;
+    siteKey: string;
+    loginAction: string;
+  };
 };
 
 declare global {
@@ -42,6 +47,11 @@ function getRuntimeConfig(): OpenSaurIdentityRuntimeConfig {
         redirectUri: "http://localhost/identity/auth/callback",
         scope: "openid profile email roles offline_access api",
         isIssuerHostedApp: false
+      },
+      googleRecaptchaV3: {
+        enabled: false,
+        siteKey: "",
+        loginAction: "login"
       }
     };
   }
@@ -65,5 +75,10 @@ export const appEnvironment = {
     redirectUri: runtimeConfig.firstPartyAuth.redirectUri,
     scope: runtimeConfig.firstPartyAuth.scope,
     isIssuerHostedApp: runtimeConfig.firstPartyAuth.isIssuerHostedApp
+  },
+  googleRecaptchaV3: {
+    enabled: runtimeConfig.googleRecaptchaV3.enabled,
+    siteKey: runtimeConfig.googleRecaptchaV3.siteKey,
+    loginAction: runtimeConfig.googleRecaptchaV3.loginAction
   }
 };
