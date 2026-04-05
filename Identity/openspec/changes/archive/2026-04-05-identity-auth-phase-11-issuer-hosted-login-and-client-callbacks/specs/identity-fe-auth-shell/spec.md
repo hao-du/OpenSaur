@@ -22,6 +22,12 @@ The first-party frontend SHALL start authorization against the configured issuer
 - **THEN** runtime auth configuration uses an explicitly configured public base URI for callback generation and issuer-hosted-mode detection
 - **AND** internal proxy hostnames are not emitted into `/connect/authorize` redirect URIs
 
+#### Scenario: Runtime auth bootstrap is not edge-cached
+
+- **WHEN** the current host serves runtime auth configuration or hosted shell entry HTML for auth flows
+- **THEN** those responses are marked non-cacheable
+- **AND** intermediaries do not replay stale `redirectUri`, issuer-hosted-mode, or app-base routing values across deployments
+
 #### Scenario: Non-issuer callback completes backend-assisted exchange successfully
 
 - **WHEN** a non-issuer first-party host receives a valid authorization callback on its registered callback route

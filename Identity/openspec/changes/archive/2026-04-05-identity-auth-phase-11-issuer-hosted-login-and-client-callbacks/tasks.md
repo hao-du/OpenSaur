@@ -23,5 +23,5 @@
 ## 4. Verification
 
 - [x] 4.1 Verify exact redirect-uri handling and rejection of unregistered redirect URIs
-- [ ] 4.2 Validate hosted-session reuse across at least two registered callback URIs for the shared first-party client (`Identity-hzb`)
+- [x] 4.2 Validate hosted-session reuse across at least two registered callback URIs for the shared first-party client (`Identity-hzb`)
 - [x] 4.3 Update implementation guidance or docs for downstream browser clients that integrate with the shared issuer

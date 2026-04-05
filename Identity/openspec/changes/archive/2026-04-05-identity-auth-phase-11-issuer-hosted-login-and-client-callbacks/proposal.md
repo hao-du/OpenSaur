@@ -10,6 +10,7 @@ Standard OIDC usage is cleaner: the issuer owns the hosted login experience and 
 - Replace the current single `Oidc:FirstPartyWeb` callback assumption with an explicit first-party client configuration that allows multiple exact registered redirect URI(s) and post-logout redirect URI(s).
 - Update the hosted first-party auth shell so non-issuer hosts use OIDC authorization against the configured issuer while the issuer host itself reuses its local ASP.NET Identity cookie directly instead of running `/connect/authorize` against itself.
 - Serve issuer/client runtime auth settings from the backend so the frontend shell does not hardcode deployment-specific issuer hostnames or callback defaults at build time.
+- Serve the runtime auth bootstrap and hosted shell entry HTML as non-cacheable responses so CDNs and reverse proxies do not replay stale callback ownership or issuer-hosted-mode values.
 - Document the client categories explicitly so future SPA, same-origin different-path, subdomain, and backend-managed apps all follow the same issuer/client contract instead of host-specific one-off rules.
 - Preserve hosted SSO across registered callback URIs by reusing the issuer session when policy allows.
 - Route impersonation start and exit through issuer-hosted browser round-trips so the issuer remains the only source of truth for session mutation.
@@ -26,4 +27,4 @@ Standard OIDC usage is cleaner: the issuer owns the hosted login experience and 
 
 - Affected backend code spans OIDC configuration, client registration, and first-party token-exchange assumptions in `src/OpenSaur.Identity.Web/**`.
 - Affected frontend code spans auth-start, callback, return-url, and logout orchestration in `src/OpenSaur.Identity.Web/client/**`.
-- Additional verification is needed for exact redirect-uri matching, rejection of unregistered redirect URIs, and hosted-session reuse across more than one registered callback URI.
+- Live validation now covers exact redirect-uri rejection and hosted-session reuse across the registered hosted and localhost callback URIs for the shared first-party shell.

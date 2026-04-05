@@ -119,6 +119,8 @@ This keeps frontend auth-start behavior aligned with backend OIDC configuration 
 
 When the app runs behind one or more reverse proxies, the current public base URI can be pinned explicitly with `Oidc:CurrentAppBaseUri`. That avoids leaking internal proxy or container hostnames into generated callback URIs when forwarded-host metadata is incomplete or rewritten upstream.
 
+The runtime auth bootstrap and hosted shell HTML routes must be treated as non-cacheable content by the app and by any intermediary CDN or reverse proxy. If `/identity/app-config.js` or the hosted shell entry HTML is cached across deployments, the browser can receive stale `redirectUri` or `isIssuerHostedApp` values and start the wrong auth flow.
+
 ## Browser Client Registration
 
 The shared first-party browser client is currently:
@@ -201,6 +203,7 @@ Step-by-step:
 10. After login succeeds, hosted mode navigates directly back to the preserved return URL.
     - no self-`/connect/authorize`
     - no self-callback exchange
+    - app-relative routes stay under the configured app base, so `/` resolves back to `/identity/` for the hosted shell instead of the domain root
 
 ## External First-Party Flow
 

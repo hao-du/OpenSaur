@@ -173,3 +173,7 @@ Use this rule:
 For the current Identity shell, the backend serves a runtime bootstrap script for the frontend. That keeps hosted and localhost deployments on the same codebase without hardcoding one deployment's issuer hostname into another deployment's frontend build.
 
 If a deployment sits behind reverse proxies, tunnels, or gateways that may not preserve the browser-visible host reliably, configure the current app's public base URI explicitly. The shell should generate callback URIs and issuer-hosted-mode detection from that configured public base URI, not from an internal proxy hostname.
+
+That runtime bootstrap and the hosted shell entry HTML must not be edge-cached. CDNs, tunnels, and reverse proxies should bypass cache for those responses or honor `no-store` headers so stale `redirectUri`, issuer-hosted-mode, or app-base routing values are not replayed after deployment changes.
+
+When a client runs under a path base, preserve and restore routes within that app base. A hosted shell mounted at `/identity` should return to `/identity/` or `/identity/...`, not to the domain root.

@@ -96,6 +96,8 @@ This keeps frontend auth-start behavior aligned with backend configuration acros
 
 When reverse proxies do not preserve the browser-visible host reliably, the deployment should be able to pin the current app's public base URI explicitly. Generated callback URIs and issuer-hosted-mode detection should then use that configured public base URI instead of the raw incoming transport host.
 
+That runtime auth bootstrap must be served as non-cacheable content, and the hosted shell entry HTML must also avoid edge caching. Otherwise a CDN or reverse proxy can replay stale `redirectUri`, issuer-hosted-mode, or app-base routing values after a deployment or config change.
+
 ### 5. Hosted SSO remains session-based at the issuer, not callback-based
 
 Hosted SSO should continue to come from the issuer's hosted authentication session. If the user has already authenticated on the issuer and policy does not require re-prompting, the issuer should complete a new authorization request for another registered callback URI without asking for credentials again.

@@ -27,28 +27,37 @@ The system SHALL provide JSON-based authentication endpoints inside `OpenSaur.Id
 - **THEN** the system rejects the request instead of clearing the hosted session
 
 ### Requirement: First-party web SHALL use the configured issuer as the source of trust for browser auth
-The system SHALL support the first-party web client as an OpenIddict client when it is running on a host different from the configured issuer, while keeping first-party browser token handling backend-assisted for that mode. On non-issuer hosts, the first-party frontend SHALL complete the callback flow on a same-host frontend route, SHALL send the authorization `code` to a first-party backend web-session exchange endpoint, SHALL receive the resulting JWT access token for FE API use, SHALL keep the access token in memory only, and SHALL rely on a backend-managed `httpOnly` refresh token cookie for refresh operations. When the first-party frontend is running on the configured issuer host, it SHALL reuse the issuer-hosted ASP.NET Identity cookie directly for authenticated `/api/auth/*` access instead of running the authorization-code callback exchange against itself. The first-party frontend SHALL redirect the user back to the previously requested route after successful login/bootstrap completion, SHALL return the user to login when no valid hosted-session or access/refresh path remains, and SHALL support issuer-hosted impersonation start/exit flows. Third-party clients SHALL continue to use the standard authorization-code and token endpoints directly.
 
-#### Scenario: Issuer-hosted shell authenticates through the hosted session cookie
+The system SHALL authenticate the first-party browser shell through the configured issuer instead of assuming the current browser host owns credential entry. The shared first-party client SHALL use only exact registered redirect URI(s), SHALL send authorization requests to the configured issuer from non-issuer hosts, and SHALL receive authorization responses only at a redirect URI registered for that client. First-party hosts MAY continue to use backend-assisted authorization-code exchange and refresh-cookie handling, but that token custody SHALL remain scoped to the host that owns the registered callback URI. When the first-party shell is running on the issuer host itself, the shell SHALL reuse the issuer-hosted ASP.NET Identity cookie directly for `/api/auth/*` access instead of running the authorization-code callback exchange against itself.
+
+#### Scenario: Anonymous browser client is redirected to issuer-hosted login
+
+- **WHEN** an anonymous user starts an authorization request from a registered browser client and no reusable hosted session exists
+- **THEN** the system presents credential entry on the issuer host instead of requiring the requesting app host to collect credentials itself
+- **AND** after successful authentication the issuer continues the authorization code flow for that requesting client
+
+#### Scenario: Existing hosted session is reused across registered callback URIs
+
+- **WHEN** a user with a valid hosted identity session starts a new authorization request for another registered callback URI on the shared first-party client
+- **THEN** the system reuses the hosted session and returns the authorization response to that registered callback URI without requiring new credential entry unless policy requires it
+
+#### Scenario: Issuer-hosted shell reuses the issuer cookie directly
+
 - **WHEN** the first-party shell is running on the configured issuer host and the browser already has a valid issuer login session
-- **THEN** authenticated `/api/auth/*` helpers succeed through that hosted session cookie
-- **AND** the shell does not need to self-run `/connect/authorize` or `/connect/token` for ordinary hosted sign-in
+- **THEN** the shell restores authenticated access through `/api/auth/*` helpers using that hosted session cookie
+- **AND** the shell does not need to self-run `/connect/authorize` or `/api/auth/web-session/exchange` for ordinary hosted sign-in
 
-#### Scenario: Non-issuer first-party host completes callback exchange
-- **WHEN** the first-party shell is running on a non-issuer host and receives a valid authorization callback
-- **THEN** the backend exchanges the authorization `code` with the configured issuer and returns a JWT access token to the frontend
-- **AND** the backend stores the refresh token in a host-owned `httpOnly` cookie
+#### Scenario: Authorization request with an unregistered redirect URI is rejected
 
-#### Scenario: Impersonation start mutates only the issuer-hosted session first
-- **WHEN** an authenticated `SuperAdministrator` successfully starts impersonation
-- **THEN** the backend returns an issuer redirect URL instead of replacement first-party tokens directly
-- **AND** the issuer updates its hosted session first
-- **AND** the browser completes either a non-issuer callback exchange or a direct hosted-shell return depending on where the first-party shell is running
+- **WHEN** a first-party host sends an authorization request with a redirect URI that is not registered for the shared first-party client
+- **THEN** the system rejects the request instead of redirecting the browser to that unregistered URI
 
-#### Scenario: Impersonation exit restores the original issuer-hosted session first
-- **WHEN** an authenticated impersonated session exits impersonation successfully
-- **THEN** the backend returns an issuer redirect URL instead of replacement first-party tokens directly
-- **AND** the issuer restores the original administrator session before the browser returns to the first-party shell
+#### Scenario: Impersonation re-enters the issuer-backed authorization flow
+
+- **WHEN** a user starts or exits impersonation from a first-party host
+- **THEN** the system updates the issuer-hosted authentication session on the issuer host first
+- **AND** the browser is redirected either through the standard authorization-code flow for non-issuer hosts or directly back to the hosted issuer shell route when the shell is running on the issuer host
+- **AND** the local impersonation endpoint does not mint replacement session tokens directly
 
 ### Requirement: Bootstrap administrator login SHALL force password rotation
 The system SHALL seed a deterministic bootstrap `SystemAdministrator` account for first-time environment access with the initial password `P@ssword1`, SHALL return a `RequirePasswordChange` indicator after successful login for that account until its password is rotated, and SHALL clear that indicator only after the user completes a successful self-service password change.
@@ -147,3 +156,4 @@ The system SHALL keep backend datetime persistence in UTC and SHALL treat the sa
 - **WHEN** an authenticated user updates the saved timezone preference
 - **THEN** the system stores the timezone identifier as a user setting
 - **AND** the system does not convert persisted backend datetimes away from UTC
+

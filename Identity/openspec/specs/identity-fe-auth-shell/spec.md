@@ -37,28 +37,58 @@ The frontend login flow SHALL preserve the originally requested protected route 
 - **THEN** the frontend navigates the user back to the preserved `returnUrl` instead of leaving the user on the login or callback page
 
 ### Requirement: First-party frontend SHALL use issuer-hosted auth with host-appropriate session completion
-The first-party frontend SHALL use the configured issuer as the source of trust for browser login. When the current host differs from the configured issuer, the frontend SHALL complete the authorization-code flow on a same-host callback route, SHALL send the returned authorization `code` to a first-party backend web-session exchange endpoint, and SHALL receive a JWT access token for authenticated API access without receiving the refresh token in browser JavaScript. When the current host equals the configured issuer, the frontend SHALL reuse the issuer-hosted ASP.NET Identity cookie directly for authenticated `/api/auth/*` access instead of self-running the callback exchange flow.
 
-#### Scenario: Non-issuer callback completes successfully
-- **WHEN** the frontend on a non-issuer host receives a valid first-party authorization callback
-- **THEN** the frontend posts the authorization `code` to the backend web-session exchange endpoint
-- **AND** the backend returns a JWT access token payload to the frontend
-- **AND** the backend stores the refresh token in a secure `httpOnly` cookie instead of returning it to browser JavaScript
+The first-party frontend SHALL start authorization against the configured issuer and SHALL use only exact redirect URI(s) registered for the shared first-party client when the current host is not the configured issuer. The frontend MAY derive the current host's callback candidate from the active browser origin, but the flow SHALL succeed only when that callback matches a registered URI. When the current host equals the configured issuer, the frontend SHALL reuse the issuer-hosted ASP.NET Identity cookie directly for authenticated `/api/auth/*` access instead of running an authorization-code callback exchange against itself.
 
-#### Scenario: Frontend auth settings are served from the current host at runtime
+#### Scenario: Hosted auth shell starts authorization with configured issuer and registered callback
+
+- **WHEN** a non-issuer first-party host starts a browser authorization request
+- **THEN** the authorize URL targets the configured issuer
+- **AND** the request uses a registered redirect URI for the current host on the shared first-party client
+
+#### Scenario: Hosted auth shell reads issuer settings from backend-served runtime config
+
 - **WHEN** the first-party shell bootstraps in the browser
 - **THEN** the current host serves the issuer authority, first-party client id, scopes, callback URI, and issuer-hosted-mode flag through runtime configuration
-- **AND** the built frontend bundle does not depend on deployment-specific hostname defaults for auth-start behavior
+- **AND** the built frontend bundle does not rely on deployment-specific hostname defaults to decide where auth should start
 
 #### Scenario: Reverse-proxied deployment pins its public base URI explicitly
+
 - **WHEN** the first-party shell runs behind reverse proxies that do not reliably preserve the browser-visible host
 - **THEN** runtime auth configuration uses an explicitly configured public base URI for callback generation and issuer-hosted-mode detection
 - **AND** internal proxy hostnames are not emitted into `/connect/authorize` redirect URIs
 
-#### Scenario: Issuer-hosted shell bootstraps from the issuer cookie
-- **WHEN** the frontend is running on the configured issuer host and the browser already has a valid issuer session cookie
-- **THEN** the frontend restores protected access through authenticated `/api/auth/*` helpers
-- **AND** the frontend does not self-run `/connect/authorize` or `/api/auth/web-session/exchange` for ordinary hosted sign-in
+#### Scenario: Runtime auth bootstrap is not edge-cached
+
+- **WHEN** the current host serves runtime auth configuration or hosted shell entry HTML for auth flows
+- **THEN** those responses are marked non-cacheable
+- **AND** intermediaries do not replay stale `redirectUri`, issuer-hosted-mode, or app-base routing values across deployments
+
+#### Scenario: Non-issuer callback completes backend-assisted exchange successfully
+
+- **WHEN** a non-issuer first-party host receives a valid authorization callback on its registered callback route
+- **THEN** the frontend posts the authorization `code` to the backend web-session exchange endpoint
+- **AND** the backend returns a JWT access token payload to the frontend
+- **AND** the backend stores the refresh token in a secure `httpOnly` cookie instead of returning it to browser JavaScript
+
+#### Scenario: Issuer-hosted shell reuses the issuer cookie directly
+
+- **WHEN** the first-party shell is running on the configured issuer host
+- **THEN** protected-session bootstrap uses the issuer cookie through authenticated `/api/auth/*` helpers
+- **AND** the frontend does not self-start `/connect/authorize` or `/api/auth/web-session/exchange` for ordinary hosted sign-in
+
+#### Scenario: Impersonation triggers a full issuer/browser redirect flow
+
+- **WHEN** the first-party frontend starts or exits impersonation
+- **THEN** the frontend requests an issuer redirect URL from the backend instead of expecting replacement access tokens directly
+- **AND** the browser performs a full-page navigation to the issuer-hosted impersonation bridge
+- **AND** the updated session returns either through the normal authorization callback route for non-issuer hosts or directly back to the hosted issuer shell route when the shell is running on the issuer host
+
+#### Scenario: Issuer handoff states render with the current host's cached preferences
+
+- **WHEN** the first-party frontend renders issuer-handoff, callback, or exchange-failure retry states on a given host
+- **THEN** the UI uses that host's cached locale/time-zone preferences instead of hard-coded English copy
+- **AND** after a successful callback the frontend synchronizes `/api/auth/settings` back into that same host's preference cache for later handoff screens
 
 ### Requirement: Frontend SHALL refresh access tokens before expiry through a backend-managed refresh-cookie path
 The frontend SHALL monitor access-token expiry, SHALL check the server for a still-valid session before expiry, and SHALL use a first-party backend refresh endpoint to obtain a replacement access token before the current token expires when the server still accepts the session.
@@ -97,3 +127,4 @@ The first frontend phase SHALL provide mobile, tablet, and desktop responsive au
 #### Scenario: Auth UI reuses atomic layers
 - **WHEN** frontend auth pages are implemented
 - **THEN** the UI is composed from reusable atomic layers rather than page-local one-off controls
+
