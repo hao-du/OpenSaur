@@ -50,6 +50,11 @@ The first-party frontend SHALL use the configured issuer as the source of trust 
 - **THEN** the current host serves the issuer authority, first-party client id, scopes, callback URI, and issuer-hosted-mode flag through runtime configuration
 - **AND** the built frontend bundle does not depend on deployment-specific hostname defaults for auth-start behavior
 
+#### Scenario: Reverse-proxied deployment pins its public base URI explicitly
+- **WHEN** the first-party shell runs behind reverse proxies that do not reliably preserve the browser-visible host
+- **THEN** runtime auth configuration uses an explicitly configured public base URI for callback generation and issuer-hosted-mode detection
+- **AND** internal proxy hostnames are not emitted into `/connect/authorize` redirect URIs
+
 #### Scenario: Issuer-hosted shell bootstraps from the issuer cookie
 - **WHEN** the frontend is running on the configured issuer host and the browser already has a valid issuer session cookie
 - **THEN** the frontend restores protected access through authenticated `/api/auth/*` helpers

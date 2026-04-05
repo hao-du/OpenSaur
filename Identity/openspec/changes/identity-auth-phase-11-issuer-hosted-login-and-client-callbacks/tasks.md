@@ -18,6 +18,7 @@
 - [x] 3.5 Localize issuer handoff, callback, and exchange-failure states from the current host's preference cache and document the origin-scoped preference boundary
 - [x] 3.6 Reuse the issuer cookie directly when the current host equals `Oidc:Issuer`, and reserve backend-assisted callback exchange for non-issuer hosts
 - [x] 3.7 Serve frontend auth runtime settings from the backend so issuer/client behavior does not depend on build-time hostname defaults
+- [x] 3.8 Support an explicit current-app public base URI so proxy-internal hosts do not leak into generated callback URIs
 
 ## 4. Verification
 

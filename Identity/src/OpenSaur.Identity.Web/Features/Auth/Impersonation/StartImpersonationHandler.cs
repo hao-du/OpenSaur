@@ -3,6 +3,7 @@ using FluentValidation;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using OpenSaur.Identity.Web.Domain.Identity;
 using OpenSaur.Identity.Web.Features.Auth.Oidc;
 using OpenSaur.Identity.Web.Infrastructure.Database;
@@ -23,6 +24,7 @@ public static class StartImpersonationHandler
         ApplicationDbContext dbContext,
         UserManager<ApplicationUser> userManager,
         FirstPartyImpersonationBridge impersonationBridge,
+        IOptions<OidcOptions> oidcOptionsAccessor,
         HttpContext httpContext,
         CancellationToken cancellationToken)
     {
@@ -40,7 +42,7 @@ public static class StartImpersonationHandler
             currentUserContext.UserId,
             request.WorkspaceId,
             request.UserId,
-            httpContext.BuildFirstPartyRedirectUri(),
+            httpContext.BuildFirstPartyRedirectUri(oidcOptionsAccessor.Value),
             request.ReturnUrl);
 
         return Result<ImpersonationRedirectResponse>.Success(new ImpersonationRedirectResponse(redirectUrl))

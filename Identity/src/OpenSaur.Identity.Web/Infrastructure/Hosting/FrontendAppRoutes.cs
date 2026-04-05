@@ -57,13 +57,14 @@ public static class FrontendAppRoutes
     {
         var oidcOptions = oidcOptionsAccessor.Value;
         var firstPartyClient = oidcOptions.GetFirstPartyClient();
+        var currentAppBaseUri = oidcOptions.GetCurrentAppBaseUri(httpContext.Request);
         var runtimeConfig = new FrontendRuntimeConfig(
             AppName: "OpenSaur Identity",
-            BasePath: NormalizeBasePath(httpContext.Request.PathBase.Value),
+            BasePath: NormalizeBasePath(currentAppBaseUri.AbsolutePath),
             FirstPartyAuth: new FrontendRuntimeFirstPartyAuth(
                 oidcOptions.Issuer,
                 firstPartyClient.ClientId,
-                httpContext.BuildFirstPartyRedirectUri(),
+                httpContext.BuildFirstPartyRedirectUri(oidcOptions),
                 firstPartyClient.Scope,
                 oidcOptions.IsIssuerHostedRequest(httpContext.Request)));
 

@@ -16,6 +16,12 @@ The first-party frontend SHALL start authorization against the configured issuer
 - **THEN** the current host serves the issuer authority, first-party client id, scopes, callback URI, and issuer-hosted-mode flag through runtime configuration
 - **AND** the built frontend bundle does not rely on deployment-specific hostname defaults to decide where auth should start
 
+#### Scenario: Reverse-proxied deployment pins its public base URI explicitly
+
+- **WHEN** the first-party shell runs behind reverse proxies that do not reliably preserve the browser-visible host
+- **THEN** runtime auth configuration uses an explicitly configured public base URI for callback generation and issuer-hosted-mode detection
+- **AND** internal proxy hostnames are not emitted into `/connect/authorize` redirect URIs
+
 #### Scenario: Non-issuer callback completes backend-assisted exchange successfully
 
 - **WHEN** a non-issuer first-party host receives a valid authorization callback on its registered callback route

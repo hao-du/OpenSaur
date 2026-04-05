@@ -6,6 +6,8 @@ public sealed class OidcOptions
 
     public string Issuer { get; set; } = string.Empty;
 
+    public string? CurrentAppBaseUri { get; set; }
+
     public FirstPartyClientOidcOptions FirstPartyClient { get; set; } = new();
 
     public string? SigningCertificatePath { get; set; }

@@ -94,6 +94,8 @@ The frontend should not carry that authority contract as a build-time hostname d
 
 This keeps frontend auth-start behavior aligned with backend configuration across hosted and localhost deployments of the same codebase.
 
+When reverse proxies do not preserve the browser-visible host reliably, the deployment should be able to pin the current app's public base URI explicitly. Generated callback URIs and issuer-hosted-mode detection should then use that configured public base URI instead of the raw incoming transport host.
+
 ### 5. Hosted SSO remains session-based at the issuer, not callback-based
 
 Hosted SSO should continue to come from the issuer's hosted authentication session. If the user has already authenticated on the issuer and policy does not require re-prompting, the issuer should complete a new authorization request for another registered callback URI without asking for credentials again.

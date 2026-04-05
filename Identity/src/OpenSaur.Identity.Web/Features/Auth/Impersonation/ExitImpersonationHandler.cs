@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Options;
 using OpenSaur.Identity.Web.Domain.Identity;
 using OpenSaur.Identity.Web.Features.Auth.Oidc;
 using OpenSaur.Identity.Web.Infrastructure.Http.Responses;
@@ -17,6 +18,7 @@ public static class ExitImpersonationHandler
         ClaimsPrincipal user,
         UserManager<ApplicationUser> userManager,
         FirstPartyImpersonationBridge impersonationBridge,
+        IOptions<OidcOptions> oidcOptionsAccessor,
         HttpContext httpContext)
     {
         if (await ValidateExitRequestAsync(user, userManager) is { } validationResult)
@@ -27,7 +29,7 @@ public static class ExitImpersonationHandler
         var originalUserId = AuthPrincipalReader.GetImpersonationOriginalUserId(user);
         var redirectUrl = impersonationBridge.BuildExitRedirectUrl(
             originalUserId!.Value,
-            httpContext.BuildFirstPartyRedirectUri(),
+            httpContext.BuildFirstPartyRedirectUri(oidcOptionsAccessor.Value),
             request.ReturnUrl);
 
         return Result<ImpersonationRedirectResponse>.Success(new ImpersonationRedirectResponse(redirectUrl))

@@ -10,17 +10,9 @@ public static class OidcOptionsExtensions
             .Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
     }
 
-    public static string BuildFirstPartyRedirectUri(this HttpContext httpContext)
+    public static string BuildFirstPartyRedirectUri(this HttpContext httpContext, OidcOptions oidcOptions)
     {
-        var redirectPath = httpContext.Request.PathBase.Add("/auth/callback");
-
-        return new UriBuilder(
-            httpContext.Request.Scheme,
-            httpContext.Request.Host.Host,
-            httpContext.Request.Host.Port ?? -1)
-        {
-            Path = redirectPath.Value
-        }.Uri.AbsoluteUri;
+        return new Uri(oidcOptions.GetCurrentAppBaseUri(httpContext.Request), "auth/callback").AbsoluteUri;
     }
 
     public static Uri GetIssuerBaseUri(this OidcOptions oidcOptions)
@@ -35,21 +27,54 @@ public static class OidcOptionsExtensions
             : new Uri($"{issuerUri.AbsoluteUri}/", UriKind.Absolute);
     }
 
+    public static Uri GetCurrentAppBaseUri(this OidcOptions oidcOptions, HttpRequest request)
+    {
+        if (!string.IsNullOrWhiteSpace(oidcOptions.CurrentAppBaseUri))
+        {
+            if (!Uri.TryCreate(oidcOptions.CurrentAppBaseUri, UriKind.Absolute, out var currentAppBaseUri))
+            {
+                throw new InvalidOperationException("OIDC current app base URI configuration is invalid.");
+            }
+
+            return currentAppBaseUri.AbsoluteUri.EndsWith("/", StringComparison.Ordinal)
+                ? currentAppBaseUri
+                : new Uri($"{currentAppBaseUri.AbsoluteUri}/", UriKind.Absolute);
+        }
+
+        return BuildRequestBaseUri(request);
+    }
+
     public static bool IsIssuerHostedRequest(this OidcOptions oidcOptions, HttpRequest request)
     {
+        var currentAppBaseUri = oidcOptions.GetCurrentAppBaseUri(request);
         var issuerUri = oidcOptions.GetIssuerBaseUri();
-        var requestPort = request.Host.Port ?? GetDefaultPort(request.Scheme);
+        var currentAppPort = currentAppBaseUri.IsDefaultPort
+            ? GetDefaultPort(currentAppBaseUri.Scheme)
+            : currentAppBaseUri.Port;
         var issuerPort = issuerUri.IsDefaultPort
             ? GetDefaultPort(issuerUri.Scheme)
             : issuerUri.Port;
 
-        return string.Equals(request.Scheme, issuerUri.Scheme, StringComparison.OrdinalIgnoreCase)
-               && string.Equals(request.Host.Host, issuerUri.Host, StringComparison.OrdinalIgnoreCase)
-               && requestPort == issuerPort
+        return string.Equals(currentAppBaseUri.Scheme, issuerUri.Scheme, StringComparison.OrdinalIgnoreCase)
+               && string.Equals(currentAppBaseUri.Host, issuerUri.Host, StringComparison.OrdinalIgnoreCase)
+               && currentAppPort == issuerPort
                && string.Equals(
-                   NormalizeBasePath(request.PathBase.Value),
+                   NormalizeBasePath(currentAppBaseUri.AbsolutePath),
                    NormalizeBasePath(issuerUri.AbsolutePath),
                    StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static Uri BuildRequestBaseUri(HttpRequest request)
+    {
+        var normalizedPathBase = NormalizeBasePath(request.PathBase.Value);
+
+        return new UriBuilder(
+            request.Scheme,
+            request.Host.Host,
+            request.Host.Port ?? -1)
+        {
+            Path = normalizedPathBase
+        }.Uri;
     }
 
     private static string NormalizeBasePath(string? path)

@@ -117,6 +117,8 @@ The first-party shell no longer relies on build-time frontend host defaults for 
 
 This keeps frontend auth-start behavior aligned with backend OIDC configuration and avoids hardcoding deployment-specific issuer hostnames into the built shell bundle.
 
+When the app runs behind one or more reverse proxies, the current public base URI can be pinned explicitly with `Oidc:CurrentAppBaseUri`. That avoids leaking internal proxy or container hostnames into generated callback URIs when forwarded-host metadata is incomplete or rewritten upstream.
+
 ## Browser Client Registration
 
 The shared first-party browser client is currently:
