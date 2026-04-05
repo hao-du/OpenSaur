@@ -73,16 +73,14 @@ export function LoginPage() {
           <Stack direction="row" spacing={1.5} alignItems="center">
             {shouldAutoRedirect ? <CircularProgress size={20} /> : null}
             <Typography color="text.secondary">
-              {t(shouldAutoRedirect ? "auth.preparingSession" : "login.error")}
+              {t(shouldAutoRedirect ? "auth.preparingSession" : "auth.issuerExchangeFailedTitle")}
             </Typography>
           </Stack>
           <Typography color="text.secondary" variant="body2">
-            {shouldAutoRedirect
-              ? "Continue on the issuer-hosted sign-in page if the browser does not redirect automatically."
-              : "The hosted sign-in completed, but the local app could not finish the issuer-backed session exchange. Review the issuer URL, client registration, and token-endpoint reachability, then retry manually."}
+            {t(shouldAutoRedirect ? "auth.issuerRedirectHint" : "auth.issuerExchangeFailedDetail")}
           </Typography>
           <Button href={authorizeUrl} variant="contained">
-            Continue to Sign In
+            {t("auth.continueIssuerLogin")}
           </Button>
         </Stack>
       )}

@@ -21,8 +21,7 @@ function normalizeRoleValue(role: string) {
 export type ProtectedShellRoute = {
   hideWhenImpersonating?: boolean;
   icon: LucideIcon;
-  label: string;
-  labelKey?: TranslationKey;
+  labelKey: TranslationKey;
   path: string;
   requiresImpersonation?: boolean;
   requiresSuperAdministrator?: boolean;
@@ -32,13 +31,11 @@ export type ProtectedShellRoute = {
 export const protectedShellRoutes: ProtectedShellRoute[] = [
   {
     icon: LayoutDashboard,
-    label: "Dashboard",
     labelKey: "nav.dashboard",
     path: "/"
   },
   {
     icon: Building2,
-    label: "Workspace",
     labelKey: "nav.workspaces",
     path: "/workspaces",
     hideWhenImpersonating: true,
@@ -46,21 +43,18 @@ export const protectedShellRoutes: ProtectedShellRoute[] = [
   },
   {
     icon: Users,
-    label: "Users",
     labelKey: "nav.users",
     path: "/users",
     requiresUserManagement: true
   },
   {
     icon: ShieldUser,
-    label: "Roles",
     labelKey: "nav.roles",
     path: "/roles",
     requiresSuperAdministrator: true
   },
   {
     icon: ShieldCheck,
-    label: "Role Assignments",
     labelKey: "nav.roleAssignments",
     path: "/role-assignments",
     requiresUserManagement: true

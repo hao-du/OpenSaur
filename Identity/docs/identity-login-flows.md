@@ -10,6 +10,7 @@ It covers:
 - the token and cookie boundaries between issuer and client hosts
 - the backend-assisted refresh flow
 - the standard third-party OpenID Connect flow
+- the preference and localization behavior for issuer handoff screens
 
 ## Purpose
 
@@ -69,6 +70,27 @@ These are configured in:
 - `src/OpenSaur.Identity.Web/appsettings.json`
 
 At runtime, the frontend always uses `first-party-web`, while `resolveFirstPartyRedirectUri()` in `src/OpenSaur.Identity.Web/client/src/shared/config/env.ts` chooses the callback URI from the current origin.
+
+## Localization And Preferences
+
+The first-party auth shell localizes login, callback, and issuer-handoff screens through the frontend preference provider:
+
+- provider: `src/OpenSaur.Identity.Web/client/src/features/preferences/PreferenceProvider.tsx`
+- translation resources: `src/OpenSaur.Identity.Web/client/src/features/localization/resources.ts`
+- auth handoff UI: `src/OpenSaur.Identity.Web/client/src/pages/login/LoginPage.tsx`
+- callback UI: `src/OpenSaur.Identity.Web/client/src/pages/auth-callback/AuthCallbackPage.tsx`
+
+Important boundary:
+
+- preference cache is stored in `window.localStorage` under `opensaur.identity.preferences`
+- localStorage is origin-scoped, so `https://app.duchihao.com` and `http://localhost:5220` do not share the same cached preference entry
+- after a successful callback on a host, `useSyncAuthenticatedPreferences()` fetches `/api/auth/settings` and persists the authenticated user's locale/time zone into that host's localStorage
+
+That means:
+
+- the issuer-handoff screen on `localhost` can only use the last locale that `localhost` itself stored, or its local fallback
+- the hosted issuer shell on `app.duchihao.com` can only use the last locale that host stored, or its local fallback
+- once a host completes a successful sign-in and settings sync, later auth handoff screens on that same host should render with that host's cached locale
 
 ## High-Level Comparison
 
@@ -209,6 +231,7 @@ sequenceDiagram
     - `fetchCurrentUser()` from `useCurrentUserQuery()` in `src/OpenSaur.Identity.Web/client/src/features/auth/hooks/useCurrentUserQuery.ts`
     - `GET /api/auth/me` implemented by `GetCurrentUserHandler.Handle()` in `src/OpenSaur.Identity.Web/Features/Auth/Me/GetCurrentUserHandler.cs`
     - local APIs trust the configured issuer token through JWT bearer validation configured in `src/OpenSaur.Identity.Web/Infrastructure/DependencyInjection.cs`
+    - `useSyncAuthenticatedPreferences()` then fetches `/api/auth/settings` and updates the current host's `opensaur.identity.preferences` cache
 
 20. The SPA navigates to the remembered return URL.
     - `navigate(rememberedReturnUrl, { replace: true })` in `AuthCallbackPage.tsx`
@@ -352,6 +375,7 @@ This means impersonation no longer depends on local in-process token issuance. T
 - `AuthCallbackPage()` clears local auth state
 - `AuthCallbackPage()` redirects to `/login?returnUrl=...&authError=exchange_failed`
 - `LoginPage()` shows a manual retry state and does not auto-loop back into authorize
+- that retry state is localized through the current host's cached preferences, not through another host's localStorage
 
 ### Refresh failure
 

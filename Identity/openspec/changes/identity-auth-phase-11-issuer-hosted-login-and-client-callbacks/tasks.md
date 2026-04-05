@@ -15,6 +15,7 @@
 - [x] 3.2 Remove the dependency on current-origin-derived issuer selection while keeping callback ownership constrained to exact registered URIs
 - [x] 3.3 Preserve return-url, callback completion, refresh-cookie custody, and logout behavior for the hosted Identity admin shell under the new issuer/client contract
 - [x] 3.4 Route impersonation start and exit through issuer-hosted browser round-trips instead of local token issuance shortcuts
+- [x] 3.5 Localize issuer handoff, callback, and exchange-failure states from the current host's preference cache and document the origin-scoped preference boundary
 
 ## 4. Verification
 

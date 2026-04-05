@@ -11,13 +11,14 @@ Standard OIDC usage is cleaner: the issuer owns the hosted login experience and 
 - Update the hosted first-party auth shell so OIDC authorization requests always target the configured issuer and only use callback URIs that are explicitly registered for the shared first-party client.
 - Preserve hosted SSO across registered callback URIs by reusing the issuer session when policy allows.
 - Route impersonation start and exit through issuer-hosted browser round-trips so the issuer remains the only source of truth for session mutation.
+- Keep issuer-handoff, callback, and exchange-failure UI states localized from the current host's cached preferences, and sync authenticated user settings back into that host after callback completion.
 - Keep the solution standards-based: no shared broker callback for all apps, and no custom non-OIDC browser-login protocol.
 
 ## Capabilities
 
 ### Modified Capabilities
 - `identity-authentication`: Browser authentication moves to an issuer-hosted login model with exact registered first-party callback URIs, hosted-session reuse across those callback URIs, and issuer-hosted impersonation round-trips.
-- `identity-fe-auth-shell`: The hosted auth shell targets the configured issuer, uses only registered callback URIs, and treats impersonation as a full issuer/browser redirect flow instead of an in-place token swap.
+- `identity-fe-auth-shell`: The hosted auth shell targets the configured issuer, uses only registered callback URIs, treats impersonation as a full issuer/browser redirect flow instead of an in-place token swap, and keeps issuer-handoff states localized from the current host's preference cache.
 
 ## Impact
 

@@ -23,3 +23,9 @@ The first-party frontend SHALL start authorization against the configured issuer
 - **THEN** the frontend requests an issuer redirect URL from the backend instead of expecting replacement access tokens directly
 - **AND** the browser performs a full-page navigation to the issuer-hosted impersonation bridge
 - **AND** the updated session returns through the normal authorization callback route and backend-assisted web-session exchange
+
+#### Scenario: Issuer handoff states render with the current host's cached preferences
+
+- **WHEN** the first-party frontend renders issuer-handoff, callback, or exchange-failure retry states on a given host
+- **THEN** the UI uses that host's cached locale/time-zone preferences instead of hard-coded English copy
+- **AND** after a successful callback the frontend synchronizes `/api/auth/settings` back into that same host's preference cache for later handoff screens

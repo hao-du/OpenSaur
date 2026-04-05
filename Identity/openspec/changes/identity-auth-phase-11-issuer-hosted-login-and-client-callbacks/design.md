@@ -94,12 +94,19 @@ Starting or exiting impersonation must update the issuer-hosted authentication s
 
 This keeps session mutation in the same trust boundary as normal sign-in and removes the last local-only token issuance shortcut from the first-party flow.
 
+### 8. Auth handoff screens use the current host's preference cache
+
+The issuer-handoff login screen, callback screen, and exchange-failure retry state must render through the frontend localization system instead of hard-coded English copy.
+
+Preferences remain origin-scoped because they are cached in browser localStorage on the current host. `app.duchihao.com` and `localhost:5220` therefore do not share a localStorage bucket even when they run the same codebase. After a successful callback, the current host should fetch `/api/auth/settings` and persist the authenticated user's locale/time zone into that host's preference cache so later auth handoff screens on that same host render with the expected locale.
+
 ## Risks / Trade-offs
 
 - [Configuration becomes more explicit] -> Accept the extra configuration because exact redirect contracts are safer than inferred origin behavior.
 - [Current hosted login UX and auth-start logic are tightly coupled] -> Split the responsibilities carefully: issuer-hosted credential entry stays in Identity, while auth-start logic uses configured issuer authority plus exact registered callback URIs.
 - [Impersonation now depends on a full browser round-trip] -> Accept the extra redirect because it keeps issuer session mutation and token issuance in one trust boundary.
 - [Logout and post-logout redirect behavior can lag behind login changes] -> Treat post-logout redirect support as part of the registration model and verify it explicitly before rollout.
+- [Preference cache is origin-scoped] -> Accept that cross-origin hosts do not share localStorage automatically, and rely on post-callback settings sync plus current-host fallback behavior.
 
 ## Migration Plan
 

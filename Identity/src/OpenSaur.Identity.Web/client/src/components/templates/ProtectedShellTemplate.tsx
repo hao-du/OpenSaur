@@ -151,7 +151,7 @@ export function ProtectedShellTemplate({
               >
                 <Icon size={18} />
               </ListItemIcon>
-              <ListItemText primary={route.labelKey ? t(route.labelKey) : route.label} />
+              <ListItemText primary={t(route.labelKey)} />
             </ListItemButton>
           );
         })}
