@@ -1,0 +1,7 @@
+{
+  "database": "dolt",
+  "backend": "dolt",
+  "dolt_mode": "server",
+  "dolt_database": "Umbraco",
+  "project_id": "612d916d-49c1-4c8e-b846-42f5375f1ca0"
+}
