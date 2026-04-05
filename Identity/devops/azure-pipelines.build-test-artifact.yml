@@ -1,22 +1,18 @@
-trigger: none
-pr: none
-
-pool:
-  vmImage: ubuntu-latest
-
-variables:
-  buildConfiguration: Release
-  dotnetSdkVersion: 10.0.x
-  nodeVersion: 20.x
-  projectRoot: Identity
-  webProject: Identity/src/OpenSaur.Identity.Web/OpenSaur.Identity.Web.csproj
-  clientWorkingDirectory: Identity/src/OpenSaur.Identity.Web/client
-  publishOutputDirectory: $(Build.ArtifactStagingDirectory)/webapp-publish
-  publishArtifactName: webapp-publish
+parameters:
+  - name: buildConfiguration
+    type: string
+  - name: dotnetSdkVersion
+    type: string
+  - name: nodeVersion
+    type: string
+  - name: webProject
+    type: string
+  - name: clientWorkingDirectory
+    type: string
 
 stages:
   - stage: Build
-    displayName: Build
+    displayName: Build FE And BE
     jobs:
       - job: BackendBuild
         displayName: Build Backend
@@ -25,21 +21,21 @@ stages:
             displayName: Install .NET SDK
             inputs:
               packageType: sdk
-              version: $(dotnetSdkVersion)
+              version: ${{ parameters.dotnetSdkVersion }}
 
           - task: DotNetCoreCLI@2
             displayName: 'Restore backend dependencies'
             inputs:
               command: 'restore'
-              projects: '$(webProject)'
+              projects: '${{ parameters.webProject }}'
               feedsToUse: 'select'
 
           - task: DotNetCoreCLI@2
             displayName: 'Build backend'
             inputs:
               command: 'build'
-              projects: '$(webProject)'
-              arguments: '--configuration $(buildConfiguration) --no-restore'
+              projects: '${{ parameters.webProject }}'
+              arguments: '--configuration ${{ parameters.buildConfiguration }} --no-restore'
 
       - job: FrontendBuild
         displayName: Build Frontend
@@ -47,42 +43,17 @@ stages:
           - task: UseNode@1
             displayName: Install Node.js
             inputs:
-              version: $(nodeVersion)
+              version: ${{ parameters.nodeVersion }}
 
           - task: Npm@1
             displayName: Install frontend dependencies
             inputs:
               command: install
-              workingDir: $(clientWorkingDirectory)
+              workingDir: ${{ parameters.clientWorkingDirectory }}
 
           - task: Npm@1
             displayName: Build frontend
             inputs:
               command: custom
-              workingDir: $(clientWorkingDirectory)
+              workingDir: ${{ parameters.clientWorkingDirectory }}
               customCommand: run build
-
-  - stage: Publish
-    displayName: Publish Artifact
-    dependsOn: Build
-    condition: succeeded()
-    jobs:
-      - job: Publish
-        displayName: Publish Application
-        steps:
-          - task: DotNetCoreCLI@2
-            displayName: Publish web application
-            inputs:
-              command: 'publish'
-              publishWebProjects: false
-              projects: '$(webProject)'
-              arguments: '--configuration $(buildConfiguration) --output $(publishOutputDirectory) /p:CompressionEnabled=false'
-              zipAfterPublish: false
-              modifyOutputPath: false
-
-          - task: PublishPipelineArtifact@1
-            displayName: Publish to artifact
-            inputs:
-              targetPath: $(publishOutputDirectory)
-              artifact: $(publishArtifactName)
-              publishLocation: pipeline

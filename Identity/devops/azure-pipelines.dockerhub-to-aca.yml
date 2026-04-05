@@ -1,71 +1,28 @@
-trigger: none
-pr: none
-
 parameters:
-  - name: imageReference
-    displayName: Optional full image reference override
+  - name: azureServiceConnection
     type: string
-    default: ''
-  - name: sourceContainerizeRunId
-    displayName: Optional container pipeline run ID
+  - name: containerAppResourceGroup
     type: string
-    default: ''
-
-pool:
-  vmImage: ubuntu-latest
-
-variables:
-  azureServiceConnection: REPLACE_WITH_AZURE_SERVICE_CONNECTION
-  sourceProject: REPLACE_WITH_AZURE_DEVOPS_PROJECT_NAME
-  sourcePipelineDefinitionId: REPLACE_WITH_CONTAINER_PIPELINE_DEFINITION_ID
-  sourceBranchRef: refs/heads/main
-  imageMetadataArtifactName: docker-image-metadata
-  imageMetadataDownloadPath: $(Pipeline.Workspace)/docker-image-metadata
-  imageMetadataFile: $(Pipeline.Workspace)/docker-image-metadata/image-reference.txt
-  containerAppResourceGroup: REPLACE_WITH_CONTAINER_APP_RESOURCE_GROUP
-  containerAppName: REPLACE_WITH_CONTAINER_APP_NAME
+  - name: containerAppName
+    type: string
 
 stages:
   - stage: DeployToAzureContainerApps
     displayName: Update Existing Azure Container App
+    dependsOn: PublishDocker
+    condition: succeeded()
+    variables:
+      resolvedImageReference: $[ stageDependencies.PublishDocker.PublishImage.outputs['setImageReference.imageReference'] ]
     jobs:
       - job: Deploy
         displayName: Deploy Docker Hub Image To ACA
         steps:
           - checkout: none
 
-          - task: DownloadPipelineArtifact@2
-            displayName: Download image metadata by specific run
-            condition: and(eq('${{ parameters.imageReference }}', ''), ne('${{ parameters.sourceContainerizeRunId }}', ''))
-            inputs:
-              buildType: specific
-              project: $(sourceProject)
-              definition: $(sourcePipelineDefinitionId)
-              buildVersionToDownload: specific
-              pipelineId: ${{ parameters.sourceContainerizeRunId }}
-              artifactName: $(imageMetadataArtifactName)
-              targetPath: $(imageMetadataDownloadPath)
-
-          - task: DownloadPipelineArtifact@2
-            displayName: Download latest image metadata from main
-            condition: and(eq('${{ parameters.imageReference }}', ''), eq('${{ parameters.sourceContainerizeRunId }}', ''))
-            inputs:
-              buildType: specific
-              project: $(sourceProject)
-              definition: $(sourcePipelineDefinitionId)
-              buildVersionToDownload: latestFromBranch
-              branchName: $(sourceBranchRef)
-              artifactName: $(imageMetadataArtifactName)
-              targetPath: $(imageMetadataDownloadPath)
-
           - bash: |
               set -euo pipefail
 
-              if [ -n "${{ parameters.imageReference }}" ]; then
-                RESOLVED_IMAGE='${{ parameters.imageReference }}'
-              else
-                RESOLVED_IMAGE="$(tr -d '\r\n' < '$(imageMetadataFile)')"
-              fi
+              RESOLVED_IMAGE='$(resolvedImageReference)'
 
               if [ -z "$RESOLVED_IMAGE" ]; then
                 echo "Resolved image reference is empty."
@@ -79,13 +36,13 @@ stages:
           - task: AzureCLI@2
             displayName: Update Azure Container App image
             inputs:
-              azureSubscription: $(azureServiceConnection)
+              azureSubscription: ${{ parameters.azureServiceConnection }}
               scriptType: bash
               scriptLocation: inlineScript
               inlineScript: |
                 set -euo pipefail
 
                 az containerapp update \
-                  --name "$(containerAppName)" \
-                  --resource-group "$(containerAppResourceGroup)" \
+                  --name "${{ parameters.containerAppName }}" \
+                  --resource-group "${{ parameters.containerAppResourceGroup }}" \
                   --image "$(resolvedImageReference)"
