@@ -6,8 +6,10 @@ For generic downstream client integration guidance, see `docs/identity-client-in
 
 The important rule is:
 
-- if the current host is the configured `Oidc:Issuer`, the hosted shell uses the issuer's ASP.NET Identity cookie directly
-- if the current host is not the configured issuer, the shell behaves like a normal first-party OIDC client and uses the authorization-code callback flow
+- if the current app's effective public base URI exactly matches `Oidc:Issuer`, the hosted shell uses the issuer's ASP.NET Identity cookie directly
+- if the current app's effective public base URI does not match the configured issuer, the shell behaves like a normal first-party OIDC client and uses the authorization-code callback flow
+
+`Oidc:CurrentAppBaseUri` exists to make that comparison stable when the app is running behind proxies, gateways, tunnels, or CDNs.
 
 ## Scenario Matrix
 
@@ -28,6 +30,7 @@ Important clarification:
 - `https://<issuer-host>/<issuer-app-base>` is the issuer
 - any other host or path base is a client, even if it shares the same domain origin
 - the identity of the issuer is determined by exact issuer base URI, not by "same domain" alone
+- when reverse proxies rewrite or hide the browser-visible host, `Oidc:CurrentAppBaseUri` becomes the source of truth for callback generation and issuer-hosted-mode detection
 
 ## Runtime Modes
 
@@ -88,13 +91,14 @@ Frontend:
 - login page: `src/OpenSaur.Identity.Web/client/src/pages/login/LoginPage.tsx`
 - callback page: `src/OpenSaur.Identity.Web/client/src/pages/auth-callback/AuthCallbackPage.tsx`
 - OIDC helpers: `src/OpenSaur.Identity.Web/client/src/features/auth/utils/firstPartyOidc.ts`
-- runtime auth config bootstrap: `src/OpenSaur.Identity.Web/Infrastructure/Hosting/FrontendAppRoutes.cs`
 - runtime auth config consumer: `src/OpenSaur.Identity.Web/client/src/shared/config/env.ts`
+- app-base-aware browser navigation: `src/OpenSaur.Identity.Web/client/src/shared/config/appBasePath.ts`
 - in-memory session state: `src/OpenSaur.Identity.Web/client/src/features/auth/state/authSessionStore.ts`
 
 Backend:
 
 - endpoint wiring: `src/OpenSaur.Identity.Web/Program.cs`
+- runtime auth config bootstrap and shell route serving: `src/OpenSaur.Identity.Web/Infrastructure/Hosting/FrontendAppRoutes.cs`
 - auth helpers: `src/OpenSaur.Identity.Web/Features/Auth/AuthEndpoints.cs`
 - login API: `src/OpenSaur.Identity.Web/Features/Auth/Login/LoginHandler.cs`
 - current-user API: `src/OpenSaur.Identity.Web/Features/Auth/Me/GetCurrentUserHandler.cs`
@@ -105,6 +109,7 @@ Backend:
 - cookie claim enrichment for hosted mode: `src/OpenSaur.Identity.Web/Infrastructure/Security/IdentitySessionClaimsTransformation.cs`
 - token client for non-issuer hosts: `src/OpenSaur.Identity.Web/Infrastructure/Oidc/FirstPartyOidcTokenClient.cs`
 - first-party client config: `src/OpenSaur.Identity.Web/Infrastructure/Oidc/OidcOptions.cs`
+- public-base-uri and redirect helpers: `src/OpenSaur.Identity.Web/Infrastructure/Oidc/OidcOptionsExtensions.cs`
 - impersonation bridge: `src/OpenSaur.Identity.Web/Features/Auth/Impersonation/FirstPartyImpersonationBridge.cs`
 
 ## Runtime Configuration Contract
@@ -114,12 +119,18 @@ The first-party shell no longer relies on build-time frontend host defaults for 
 - the backend serves `/identity/app-config.js` from the current host
 - that bootstrap payload contains the configured issuer, first-party client id, scope, current-host callback URI, and whether the current host is the issuer
 - the frontend reads that payload through `shared/config/env.ts` before it decides whether to reuse the issuer cookie or start `/connect/authorize`
+- the backend also serves the hosted shell HTML with no-store headers for the same reason
 
 This keeps frontend auth-start behavior aligned with backend OIDC configuration and avoids hardcoding deployment-specific issuer hostnames into the built shell bundle.
 
 When the app runs behind one or more reverse proxies, the current public base URI can be pinned explicitly with `Oidc:CurrentAppBaseUri`. That avoids leaking internal proxy or container hostnames into generated callback URIs when forwarded-host metadata is incomplete or rewritten upstream.
 
 The runtime auth bootstrap and hosted shell HTML routes must be treated as non-cacheable content by the app and by any intermediary CDN or reverse proxy. If `/identity/app-config.js` or the hosted shell entry HTML is cached across deployments, the browser can receive stale `redirectUri` or `isIssuerHostedApp` values and start the wrong auth flow.
+
+For the current Identity shell, the browser-visible runtime config should always satisfy:
+
+- hosted issuer deployment: `redirectUri = https://<issuer-host>/<issuer-app-base>/auth/callback` and `isIssuerHostedApp = true`
+- localhost or another non-issuer client deployment: `redirectUri = http://localhost:<port>/<issuer-app-base>/auth/callback` (or that client's own registered callback) and `isIssuerHostedApp = false`
 
 ## Browser Client Registration
 
@@ -184,6 +195,7 @@ Step-by-step:
    - route: `AuthEndpoints.cs`
    - handler: `GetCurrentUserHandler.cs`
    - API policy accepts both cookie and bearer auth in `DependencyInjection.cs`
+   - issuer-hosted-mode detection comes from runtime config served by `FrontendAppRoutes.cs`
 
 5. Cookie-authenticated principals are enriched with application claims before authorization-sensitive handlers read them.
    - `IdentitySessionClaimsTransformation.cs`
@@ -238,6 +250,8 @@ Code path:
 4. `AuthCallbackPage.tsx` posts the authorization `code` to `ExchangeWebSessionHandler.cs`.
 5. `FirstPartyOidcTokenClient.cs` exchanges the code against the configured issuer `/connect/token`.
 6. `RefreshWebSessionHandler.cs` rotates the client-host refresh cookie for later refresh.
+
+The hosted login page may still appear on the issuer during a localhost or other non-issuer flow, but the callback ownership stays with the requesting client host. The issuer only returns a one-time authorization code; it does not transfer its cookie or localStorage state to the client host.
 
 ## Impersonation Flow
 
@@ -331,3 +345,13 @@ Why:
 - the issuer host no longer acts as an OIDC client of itself during ordinary sign-in
 - only non-issuer hosts need the `/connect/token` backchannel exchange path
 - those non-issuer hosts call the configured public issuer directly
+
+## Deployment Checklist
+
+For a healthy deployment, keep these aligned:
+
+- `Oidc:Issuer` must point to the public issuer base URI
+- each deployment should set `Oidc:CurrentAppBaseUri` to its own browser-visible public base URI
+- the shared first-party client must include the exact callback URI for each supported host
+- `/identity/app-config.js` and hosted shell HTML must not be edge-cached
+- hosted-shell login success should return to the app base route, not the domain root
