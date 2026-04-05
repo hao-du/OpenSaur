@@ -1,13 +1,11 @@
 using System.Security.Claims;
 using FluentValidation;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
 using OpenSaur.Identity.Web.Domain.Identity;
-using OpenSaur.Identity.Web.Features.Auth.WebSession;
+using OpenSaur.Identity.Web.Features.Auth.Oidc;
 using OpenSaur.Identity.Web.Infrastructure.Database;
-using OpenSaur.Identity.Web.Infrastructure.Database.Repositories.UserRoles;
-using OpenSaur.Identity.Web.Infrastructure.Database.Repositories.UserRoles.Dtos;
 using OpenSaur.Identity.Web.Infrastructure.Http.Responses;
 using OpenSaur.Identity.Web.Infrastructure.Oidc;
 using OpenSaur.Identity.Web.Infrastructure.Results;
@@ -20,27 +18,118 @@ public static class StartImpersonationHandler
 {
     public static async Task<IResult> HandleAsync(
         StartImpersonationRequest request,
-        ClaimsPrincipal user,
         CurrentUserContext currentUserContext,
         IValidator<StartImpersonationRequest> validator,
         ApplicationDbContext dbContext,
-        UserRoleRepository userRoleRepository,
         UserManager<ApplicationUser> userManager,
-        SignInManager<ApplicationUser> signInManager,
-        IFirstPartyOidcTokenClient tokenClient,
-        IOptions<OidcOptions> oidcOptions,
+        FirstPartyImpersonationBridge impersonationBridge,
         HttpContext httpContext,
         CancellationToken cancellationToken)
     {
-        var normalizedSuperAdministrator = SystemRoles.NormalizedSuperAdministrator;
-        var spacedNormalizedSuperAdministrator = SystemRoles.SuperAdministrator.ToUpperInvariant();
-
         if (await validator.ValidateRequestAsync(request, cancellationToken) is { } validationFailure)
         {
             return validationFailure;
         }
 
-        if (AuthPrincipalReader.IsImpersonating(user))
+        if (await ValidateStartRequestAsync(request, currentUserContext, dbContext, userManager, cancellationToken) is { } validationResult)
+        {
+            return validationResult;
+        }
+
+        var redirectUrl = impersonationBridge.BuildStartRedirectUrl(
+            currentUserContext.UserId,
+            request.WorkspaceId,
+            request.UserId,
+            httpContext.BuildFirstPartyRedirectUri(),
+            request.ReturnUrl);
+
+        return Result<ImpersonationRedirectResponse>.Success(new ImpersonationRedirectResponse(redirectUrl))
+            .ToApiResult();
+    }
+
+    public static async Task<IResult> HandleRedirectAsync(
+        string command,
+        HttpContext httpContext,
+        ApplicationDbContext dbContext,
+        UserManager<ApplicationUser> userManager,
+        SignInManager<ApplicationUser> signInManager,
+        FirstPartyImpersonationBridge impersonationBridge,
+        CancellationToken cancellationToken)
+    {
+        var bridgeCommand = impersonationBridge.ReadCommand(command);
+        if (bridgeCommand is null || bridgeCommand.Action != "start" || !bridgeCommand.WorkspaceId.HasValue)
+        {
+            return Result.Validation(
+                    ResultErrors.Validation(
+                        "Impersonation request is invalid.",
+                        "The issuer could not resume the requested impersonation flow."))
+                .ToApiErrorResult();
+        }
+
+        var authenticationResult = await httpContext.AuthenticateAsync(IdentityConstants.ApplicationScheme);
+        if (!authenticationResult.Succeeded || authenticationResult.Principal is null)
+        {
+            return IssuerAuthenticationFlow.ChallengeIssuerLogin(httpContext);
+        }
+
+        var currentUserContext = CurrentUserContext.Create(authenticationResult.Principal);
+        if (currentUserContext is null)
+        {
+            return await IssuerAuthenticationFlow.SignOutAndChallengeIssuerLoginAsync(httpContext);
+        }
+
+        if (currentUserContext.UserId != bridgeCommand.ActorUserId)
+        {
+            return Result.Unauthorized(
+                    "Authentication failed.",
+                    "The issuer login did not match the impersonation request.")
+                .ToApiErrorResult();
+        }
+
+        if (await ValidateStartRequestAsync(
+                new StartImpersonationRequest(bridgeCommand.WorkspaceId.Value, bridgeCommand.UserId, bridgeCommand.ReturnUrl),
+                currentUserContext,
+                dbContext,
+                userManager,
+                cancellationToken) is { } validationResult)
+        {
+            return validationResult;
+        }
+
+        var effectiveUser = await ResolveEffectiveUserAsync(
+            bridgeCommand.WorkspaceId.Value,
+            bridgeCommand.UserId,
+            currentUserContext.UserId,
+            userManager,
+            cancellationToken);
+        if (effectiveUser is null)
+        {
+            return Result.NotFound(
+                    "User not found.",
+                    "No active workspace user or super administrator matched the provided identifier.")
+                .ToApiErrorResult();
+        }
+
+        var additionalClaims = new List<Claim>
+        {
+            new(ApplicationClaimTypes.ImpersonationActive, bool.TrueString.ToLowerInvariant()),
+            new(ApplicationClaimTypes.ImpersonationOriginalUserId, currentUserContext.UserId.ToString()),
+            new(ApplicationClaimTypes.ImpersonationWorkspaceId, bridgeCommand.WorkspaceId.Value.ToString())
+        };
+
+        await signInManager.SignInWithClaimsAsync(effectiveUser, isPersistent: false, additionalClaims);
+
+        return Results.Redirect(impersonationBridge.BuildAuthorizeUrl(bridgeCommand));
+    }
+
+    private static async Task<IResult?> ValidateStartRequestAsync(
+        StartImpersonationRequest request,
+        CurrentUserContext currentUserContext,
+        ApplicationDbContext dbContext,
+        UserManager<ApplicationUser> userManager,
+        CancellationToken cancellationToken)
+    {
+        if (currentUserContext.IsImpersonating)
         {
             return Result.Conflict(
                     "Impersonation already active.",
@@ -70,19 +159,12 @@ public static class StartImpersonationHandler
                 .ToApiErrorResult();
         }
 
-        var effectiveUser = request.UserId.HasValue
-            ? await userManager.Users.SingleOrDefaultAsync(
-                candidate => candidate.Id == request.UserId.Value
-                             && candidate.IsActive
-                             && (candidate.WorkspaceId == request.WorkspaceId
-                                 || candidate.UserRoles.Any(
-                                     assignment => assignment.IsActive
-                                                   && assignment.Role != null
-                                                   && assignment.Role.IsActive
-                                                   && (assignment.Role.NormalizedName == normalizedSuperAdministrator
-                                                       || assignment.Role.NormalizedName == spacedNormalizedSuperAdministrator))),
-                cancellationToken)
-            : originalUser;
+        var effectiveUser = await ResolveEffectiveUserAsync(
+            request.WorkspaceId,
+            request.UserId,
+            currentUserContext.UserId,
+            userManager,
+            cancellationToken);
         if (effectiveUser is null)
         {
             return Result.NotFound(
@@ -91,52 +173,34 @@ public static class StartImpersonationHandler
                 .ToApiErrorResult();
         }
 
-        var effectiveRolesResult = await userRoleRepository.GetActiveNormalizedRoleNamesForUserAsync(
-            new GetActiveNormalizedRoleNamesForUserRequest(effectiveUser.Id, request.WorkspaceId),
-            cancellationToken);
-        var additionalClaims = new List<Claim>
-        {
-            new(ApplicationClaimTypes.ImpersonationActive, bool.TrueString.ToLowerInvariant()),
-            new(ApplicationClaimTypes.ImpersonationOriginalUserId, currentUserContext.UserId.ToString()),
-            new(ApplicationClaimTypes.ImpersonationWorkspaceId, request.WorkspaceId.ToString())
-        };
+        return null;
+    }
 
-        await signInManager.SignInWithClaimsAsync(effectiveUser, isPersistent: false, additionalClaims);
+    private static async Task<ApplicationUser?> ResolveEffectiveUserAsync(
+        Guid workspaceId,
+        Guid? userId,
+        Guid currentUserId,
+        UserManager<ApplicationUser> userManager,
+        CancellationToken cancellationToken)
+    {
+        var normalizedSuperAdministrator = SystemRoles.NormalizedSuperAdministrator;
+        var spacedNormalizedSuperAdministrator = SystemRoles.SuperAdministrator.ToUpperInvariant();
 
-        var tokenPrincipal = AuthSessionPrincipalFactory.Create(
-            effectiveUser,
-            effectiveRolesResult.Value?.NormalizedRoleNames ?? [],
-            oidcOptions.Value.GetFirstPartyScopes(),
-            workspaceOverrideId: request.WorkspaceId,
-            isImpersonating: true,
-            impersonationOriginalUserId: currentUserContext.UserId);
-        var tokenResult = await tokenClient.IssueTokensAsync(
-            tokenPrincipal,
-            httpContext.BuildFirstPartyRedirectUri(),
-            cancellationToken);
-        if (tokenResult is null)
+        if (!userId.HasValue)
         {
-            return Result.Failure(
-                    StatusCodes.Status500InternalServerError,
-                    ResultErrors.Server(
-                        "Impersonation failed.",
-                        "The impersonated first-party session could not be established."))
-                .ToApiErrorResult();
+            return await userManager.FindByIdAsync(currentUserId.ToString());
         }
 
-        httpContext.Response.Cookies.Append(
-            AuthCookieNames.Refresh,
-            tokenResult.RefreshToken,
-            new CookieOptions
-            {
-                HttpOnly = true,
-                IsEssential = true,
-                SameSite = SameSiteMode.Lax,
-                Secure = httpContext.Request.IsHttps
-            });
-
-        return Result<ExchangeWebSessionResponse>.Success(
-                new ExchangeWebSessionResponse(tokenResult.AccessToken, tokenResult.ExpiresAt))
-            .ToApiResult();
+        return await userManager.Users.SingleOrDefaultAsync(
+            candidate => candidate.Id == userId.Value
+                         && candidate.IsActive
+                         && (candidate.WorkspaceId == workspaceId
+                             || candidate.UserRoles.Any(
+                                 assignment => assignment.IsActive
+                                               && assignment.Role != null
+                                               && assignment.Role.IsActive
+                                               && (assignment.Role.NormalizedName == normalizedSuperAdministrator
+                                                   || assignment.Role.NormalizedName == spacedNormalizedSuperAdministrator))),
+            cancellationToken);
     }
 }

@@ -1,26 +1,26 @@
 ## Why
 
-The current hosted browser flow in `OpenSaur.Identity.Web` assumes the app that starts authentication also collects credentials locally and can derive its OIDC callback from the current browser origin. That works for the current same-host identity app, but it does not scale cleanly to multiple browser apps on different origins.
+The current hosted browser flow in `OpenSaur.Identity.Web` assumes the app that starts authentication also collects credentials locally and can derive its effective callback behavior from the current browser origin. That works for the current same-host identity app, but it does not scale cleanly when the trusted issuer host and the consuming browser host are different.
 
-Standard OIDC usage is cleaner: the issuer owns the hosted login experience and browser session, while each client app owns its own exact registered callback URI. We need to move the current identity slice toward that model before more apps depend on the current same-origin assumptions.
+Standard OIDC usage is cleaner: the issuer owns the hosted login experience and browser session, while the consuming first-party app owns an exact registered callback URI on its own host. We also need impersonation to follow that same issuer-owned session model instead of mutating local tokens directly.
 
 ## What Changes
 
 - Move browser credential-entry responsibility to the issuer configured by `Oidc:Issuer` instead of assuming each app collects credentials on its own host.
-- Require each browser client to use its own exact registered redirect URI(s) and optional post-logout redirect URI(s) instead of deriving them from `window.location.origin`.
-- Replace the current single `Oidc:FirstPartyWeb` redirect-uri assumption with a browser-client registration model that can represent multiple web clients.
-- Update the hosted first-party auth shell so OIDC authorization requests target the configured issuer and use the registered callback URI for that client.
-- Preserve hosted SSO across registered browser clients by reusing the identity-server session when policy allows.
+- Replace the current single `Oidc:FirstPartyWeb` callback assumption with an explicit first-party client configuration that allows multiple exact registered redirect URI(s) and post-logout redirect URI(s).
+- Update the hosted first-party auth shell so OIDC authorization requests always target the configured issuer and only use callback URIs that are explicitly registered for the shared first-party client.
+- Preserve hosted SSO across registered callback URIs by reusing the issuer session when policy allows.
+- Route impersonation start and exit through issuer-hosted browser round-trips so the issuer remains the only source of truth for session mutation.
 - Keep the solution standards-based: no shared broker callback for all apps, and no custom non-OIDC browser-login protocol.
 
 ## Capabilities
 
 ### Modified Capabilities
-- `identity-authentication`: Browser authentication moves to an issuer-hosted login model with client-owned exact redirect URIs and hosted-session reuse across registered browser clients.
-- `identity-fe-auth-shell`: The hosted auth shell stops deriving its redirect URI from the current browser origin and instead uses configured issuer/client registration settings.
+- `identity-authentication`: Browser authentication moves to an issuer-hosted login model with exact registered first-party callback URIs, hosted-session reuse across those callback URIs, and issuer-hosted impersonation round-trips.
+- `identity-fe-auth-shell`: The hosted auth shell targets the configured issuer, uses only registered callback URIs, and treats impersonation as a full issuer/browser redirect flow instead of an in-place token swap.
 
 ## Impact
 
 - Affected backend code spans OIDC configuration, client registration, and first-party token-exchange assumptions in `src/OpenSaur.Identity.Web/**`.
 - Affected frontend code spans auth-start, callback, return-url, and logout orchestration in `src/OpenSaur.Identity.Web/client/**`.
-- Additional verification is needed for exact redirect-uri matching, rejection of unregistered redirect URIs, and hosted-session reuse across more than one browser client.
+- Additional verification is needed for exact redirect-uri matching, rejection of unregistered redirect URIs, and hosted-session reuse across more than one registered callback URI.

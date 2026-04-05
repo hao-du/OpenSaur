@@ -7,15 +7,16 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Caching.Hybrid;
 using Microsoft.Extensions.Options;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
+using Microsoft.IdentityModel.Tokens;
 using OpenIddict.Abstractions;
-using OpenIddict.Server;
-using OpenIddict.Validation.AspNetCore;
 using OpenSaur.Identity.Web.Features.Auth;
+using OpenSaur.Identity.Web.Features.Auth.Impersonation;
 using OpenSaur.Identity.Web.Features.Auth.Login;
 using OpenSaur.Identity.Web.Features.Auth.Oidc;
 using OpenSaur.Identity.Web.Features.PermissionScopes;
@@ -64,7 +65,7 @@ public static class DependencyInjection
         services.AddDeveloperExperienceServices()
             .AddCacheAndHostServices(configuration, redisConnectionString, endpointResilienceOptions)
             .AddPersistenceServices(connectionString)
-            .AddIdentityAndAuthorizationServices()
+            .AddIdentityAndAuthorizationServices(oidcOptions)
             .AddValidationServices()
             .AddApplicationServices()
             .AddRateLimitingServices();
@@ -190,7 +191,9 @@ public static class DependencyInjection
         return services;
     }
 
-    private static IServiceCollection AddIdentityAndAuthorizationServices(this IServiceCollection services)
+    private static IServiceCollection AddIdentityAndAuthorizationServices(
+        this IServiceCollection services,
+        OidcOptions oidcOptions)
     {
         services.AddIdentity<ApplicationUser, ApplicationRole>(options =>
             {
@@ -230,6 +233,18 @@ public static class DependencyInjection
                 options.DefaultChallengeScheme = IdentityConstants.ApplicationScheme;
                 options.DefaultScheme = IdentityConstants.ApplicationScheme;
                 options.DefaultSignInScheme = IdentityConstants.ApplicationScheme;
+            })
+            .AddJwtBearer(options =>
+            {
+                options.Authority = oidcOptions.Issuer;
+                options.MapInboundClaims = false;
+                options.RequireHttpsMetadata = !oidcOptions.Issuer.StartsWith("http://", StringComparison.OrdinalIgnoreCase);
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    NameClaimType = ApplicationClaimTypes.Name,
+                    RoleClaimType = ApplicationClaimTypes.Role,
+                    ValidateAudience = false
+                };
             });
         services.AddAuthorization(options =>
         {
@@ -237,7 +252,7 @@ public static class DependencyInjection
                 AuthorizationPolicies.Api,
                 policy =>
                 {
-                    policy.AddAuthenticationSchemes(OpenIddictValidationAspNetCoreDefaults.AuthenticationScheme);
+                    policy.AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme);
                     policy.RequireAuthenticatedUser();
                 });
         });
@@ -253,8 +268,13 @@ public static class DependencyInjection
         services.AddScoped<PermissionAuthorizationService>();
         services.AddScoped<UserAuthorizationService>();
         services.AddScoped<IAuthorizationHandler, PermissionAuthorizationHandler>();
+        services.AddScoped<FirstPartyImpersonationBridge>();
         services.AddScoped<FirstPartyOidcClientRegistrar>();
-        services.AddScoped<IFirstPartyOidcTokenClient, FirstPartyOidcTokenClient>();
+        services.AddHttpClient<IFirstPartyOidcTokenClient, FirstPartyOidcTokenClient>((serviceProvider, client) =>
+        {
+            var oidcOptions = serviceProvider.GetRequiredService<IOptions<OidcOptions>>().Value;
+            client.BaseAddress = BuildIssuerBaseUri(oidcOptions.Issuer);
+        });
         services.AddSingleton<IdempotencyCacheStore>();
         services.AddSingleton<IdempotencyRequestLockProvider>();
         services.AddSingleton<EndpointResilienceContextResolver>();
@@ -273,7 +293,8 @@ public static class DependencyInjection
         RedirectContext<CookieAuthenticationOptions> context,
         OidcOptions oidcOptions)
     {
-        if (!Uri.TryCreate(oidcOptions.Issuer, UriKind.Absolute, out var issuerUri))
+        var issuerUri = TryBuildIssuerBaseUri(oidcOptions.Issuer);
+        if (issuerUri is null)
         {
             return context.RedirectUri;
         }
@@ -290,6 +311,24 @@ public static class DependencyInjection
         };
 
         return issuerHostedLoginUri.Uri.AbsoluteUri;
+    }
+
+    private static Uri BuildIssuerBaseUri(string issuer)
+    {
+        return TryBuildIssuerBaseUri(issuer)
+            ?? throw new InvalidOperationException("OIDC issuer configuration is invalid.");
+    }
+
+    private static Uri? TryBuildIssuerBaseUri(string issuer)
+    {
+        if (!Uri.TryCreate(issuer, UriKind.Absolute, out var issuerUri))
+        {
+            return null;
+        }
+
+        return issuerUri.AbsoluteUri.EndsWith("/", StringComparison.Ordinal)
+            ? issuerUri
+            : new Uri($"{issuerUri.AbsoluteUri}/", UriKind.Absolute);
     }
 
     private static string CombinePathSegments(string? left, string? right)
@@ -375,20 +414,10 @@ public static class DependencyInjection
                 // shared signing material. Token encryption is not part of the current model.
                 options.DisableAccessTokenEncryption();
                 ConfigureOidcKeyMaterial(options, oidcOptions, environment);
-                options.AddEventHandler<OpenIddictServerEvents.ApplyTokenResponseContext>(builder =>
-                    builder.UseScopedHandler<InternalFirstPartyTokenResponseHandler>()
-                        .SetOrder(int.MaxValue)
-                        .SetType(OpenIddictServerHandlerType.Custom));
                 options.UseAspNetCore()
                     .DisableTransportSecurityRequirement()
                     .EnableAuthorizationEndpointPassthrough()
                     .EnableEndSessionEndpointPassthrough();
-            })
-            .AddValidation(options =>
-            {
-                options.UseLocalServer();
-                options.UseAspNetCore();
-                options.EnableTokenEntryValidation();
             });
 
         return services;

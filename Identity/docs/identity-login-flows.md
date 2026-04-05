@@ -1,278 +1,402 @@
 # Identity Login Flows
 
-This document explains how login works for:
+This document explains the login flows currently implemented in `OpenSaur.Identity.Web`.
 
-- the first-party web application hosted by this service
-- third-party applications that integrate with this Identity server through OpenID Connect
+It covers:
 
-It also explains where tokens and cookies live, which endpoints are involved, and how the two flows differ.
+- the first-party hosted app flow on `https://app.duchihao.com/identity`
+- the localhost-initiated first-party flow on `http://localhost:5220/identity`
+- the issuer-hosted impersonation round-trip for first-party apps
+- the token and cookie boundaries between issuer and client hosts
+- the backend-assisted refresh flow
+- the standard third-party OpenID Connect flow
 
 ## Purpose
 
-The system supports two different client patterns:
+This service plays two roles at the same time:
 
-- **First-party web app**
-  - the React app hosted on the same domain as the identity service
-  - uses backend-assisted token handling
-  - receives the JWT access token in the frontend
-  - keeps the refresh token only in a backend-managed `httpOnly` cookie
+- **OIDC issuer**
+  - exposes `/connect/authorize`, `/connect/token`, and related endpoints
+  - authenticates the user with ASP.NET Core Identity
+  - issues authorization codes and tokens
 
-- **Third-party client**
-  - an external app integrating with this Identity server
-  - uses the standard OpenID Connect authorization code flow
-  - exchanges the authorization code directly through the token endpoint
-  - manages its own tokens
+- **first-party browser app host**
+  - serves the React shell under `/identity`
+  - stores the access token in frontend memory
+  - keeps the refresh token in an `HttpOnly` cookie
 
-The first-party flow is intentionally safer for browser JavaScript because the refresh token is never exposed to the frontend runtime.
+The first-party browser flow is intentionally different from a normal third-party OIDC client because the frontend must never receive the refresh token directly.
 
-## Key Terms
+## Main Runtime Pieces
 
-- **Authorization code**
-  - a short-lived code returned after successful login and consent
-  - must be exchanged for tokens
+### Frontend
 
-- **Access token**
-  - the JWT used to call protected API endpoints
-  - in the first-party FE flow, this is stored in memory only
+- router: `src/OpenSaur.Identity.Web/client/src/app/router/AppRouter.tsx`
+- auth guard: `src/OpenSaur.Identity.Web/client/src/features/auth/components/ProtectedRoute.tsx`
+- bootstrap boundary: `src/OpenSaur.Identity.Web/client/src/features/auth/components/AuthBootstrapBoundary.tsx`
+- login page: `src/OpenSaur.Identity.Web/client/src/pages/login/LoginPage.tsx`
+- callback page: `src/OpenSaur.Identity.Web/client/src/pages/auth-callback/AuthCallbackPage.tsx`
+- OIDC URL builder: `src/OpenSaur.Identity.Web/client/src/features/auth/utils/firstPartyOidc.ts`
+- runtime client/redirect selection: `src/OpenSaur.Identity.Web/client/src/shared/config/env.ts`
+- in-memory auth state: `src/OpenSaur.Identity.Web/client/src/features/auth/state/authSessionStore.ts`
 
-- **Refresh token**
-  - a longer-lived token used to get a new access token
-  - in the first-party FE flow, this is kept only in a backend-managed `httpOnly` cookie
+### Backend
 
-- **Identity application session cookie**
-  - the server-side login session created by ASP.NET Core Identity
-  - used so the authorize endpoint can reuse the hosted login session
+- app path-base and endpoint wiring: `src/OpenSaur.Identity.Web/Program.cs`
+- OIDC authorize endpoint: `src/OpenSaur.Identity.Web/Features/Auth/Oidc/OidcEndpoints.cs`
+- login API: `src/OpenSaur.Identity.Web/Features/Auth/Login/LoginHandler.cs`
+- auth endpoint map: `src/OpenSaur.Identity.Web/Features/Auth/AuthEndpoints.cs`
+- code exchange API: `src/OpenSaur.Identity.Web/Features/Auth/WebSession/ExchangeWebSessionHandler.cs`
+- refresh API: `src/OpenSaur.Identity.Web/Features/Auth/WebSession/RefreshWebSessionHandler.cs`
+- issuer-hosted login redirect policy: `src/OpenSaur.Identity.Web/Infrastructure/DependencyInjection.cs`
+- first-party token backchannel: `src/OpenSaur.Identity.Web/Infrastructure/Oidc/FirstPartyOidcTokenClient.cs`
+- redirect-uri helpers: `src/OpenSaur.Identity.Web/Infrastructure/Oidc/OidcOptionsExtensions.cs`
+- OIDC client registration: `src/OpenSaur.Identity.Web/Infrastructure/Oidc/FirstPartyOidcClientRegistrar.cs`
+- first-party client configuration: `src/OpenSaur.Identity.Web/Infrastructure/Oidc/OidcOptions.cs`
 
-- **Return URL**
-  - the protected page the user originally tried to open
-  - preserved so the user can be redirected back after login
+## Browser Client
+
+The current implementation registers one first-party browser client:
+
+- `first-party-web`
+  - hosted app callback: `https://app.duchihao.com/identity/auth/callback`
+  - localhost callback: `http://localhost:5220/identity/auth/callback`
+
+These are configured in:
+
+- `src/OpenSaur.Identity.Web/appsettings.Development.json`
+- `src/OpenSaur.Identity.Web/appsettings.Production.json`
+- `src/OpenSaur.Identity.Web/appsettings.json`
+
+At runtime, the frontend always uses `first-party-web`, while `resolveFirstPartyRedirectUri()` in `src/OpenSaur.Identity.Web/client/src/shared/config/env.ts` chooses the callback URI from the current origin.
 
 ## High-Level Comparison
 
-| Topic | First-party web app | Third-party client |
-|---|---|---|
-| Browser app hosted by this service | Yes | No |
-| Uses `/api/auth/login` | Yes | No |
-| Uses `/connect/authorize` | Yes | Yes |
-| Uses `/connect/token` directly from client | No | Yes |
-| Backend-assisted token exchange | Yes | No |
-| Access token returned to browser JS | Yes | Usually yes |
-| Refresh token returned to browser JS | No | Depends on client implementation |
-| Refresh token stored in backend `httpOnly` cookie | Yes | No |
-| Redirect back to previous protected page | Yes | Managed by third party |
+| Topic | Hosted first-party app | Localhost first-party app | Third-party client |
+|---|---|---|---|
+| Browser app served by this service | Yes | Yes | No |
+| Starts at `/identity/login` | Yes | Yes | No |
+| Uses `/connect/authorize` | Yes | Yes | Yes |
+| Uses backend-assisted `/api/auth/web-session/exchange` | Yes | Yes | No |
+| Uses backend-assisted `/api/auth/web-session/refresh` | Yes | Yes | No |
+| Access token returned to browser JS | Yes | Yes | Usually yes |
+| Refresh token exposed to browser JS | No | No | Depends on client |
+| Refresh token stored in `HttpOnly` cookie | Yes | Yes | Client-owned |
 
-## First-Party Login Flow
+## Localhost-Initiated First-Party Flow
 
-This is the intended FE phase design for the hosted React app.
+This is the flow when the browser starts on `http://localhost:5220/identity`.
 
-### Goal
+### Sequence Diagram
 
-Let the frontend receive and use a JWT access token while keeping the refresh token out of browser JavaScript.
+```mermaid
+sequenceDiagram
+    participant Browser
+    participant LocalSPA as Local SPA
+    participant Issuer as app.duchihao.com issuer
+    participant HostedLogin as Hosted login page
+    participant LocalAPI as localhost web-session API
 
-### Step-by-Step Flow
+    Browser->>LocalSPA: Open http://localhost:5220/identity/
+    LocalSPA->>Issuer: Redirect to /connect/authorize with localhost redirect_uri
+    Issuer->>HostedLogin: Redirect to /identity/login if issuer cookie missing
+    HostedLogin->>Issuer: Submit credentials
+    Issuer->>Browser: 302 to http://localhost:5220/identity/auth/callback?code=...
+    Browser->>LocalSPA: Open localhost callback route
+    LocalSPA->>LocalAPI: POST /api/auth/web-session/exchange { code }
+    LocalAPI->>Issuer: Redeem code for localhost browser client
+    Issuer-->>LocalAPI: Access token + refresh token
+    LocalAPI-->>Browser: Set localhost refresh cookie + return access token JSON
+    LocalSPA->>LocalSPA: Store access token in memory
+    LocalSPA->>LocalAPI: GET /api/auth/me
+    LocalSPA->>Browser: Navigate to remembered returnUrl
+```
 
-1. The user opens a protected frontend route.
-   - Example: `/`
-   - The frontend sees there is no valid in-memory access token.
-   - The frontend preserves the requested route as `returnUrl`.
-   - The frontend redirects the user to `/login?returnUrl=/`.
+### Step-by-Step With Code References
 
-2. The user submits credentials on the hosted login page.
-   - Frontend calls `POST /api/auth/login`.
-   - Backend validates username/password.
-   - Backend creates the ASP.NET Core Identity application session cookie.
+1. Browser opens `http://localhost:5220/identity/`.
+   - Path-base `/identity` is applied in `Program.cs`.
+   - SPA routes are defined in `AppRouter.createAppRouter()` in `src/OpenSaur.Identity.Web/client/src/app/router/AppRouter.tsx`.
 
-3. The frontend starts the first-party OpenID Connect authorize flow.
-   - Frontend redirects the browser to `/connect/authorize?...`.
-   - Because the hosted login session already exists, the authorize endpoint can continue without asking for credentials again.
+2. The auth guard detects there is no authenticated first-party access token.
+   - `ProtectedRoute()` in `src/OpenSaur.Identity.Web/client/src/features/auth/components/ProtectedRoute.tsx`
+   - `AuthBootstrapBoundary()` and `useAuthBootstrap()` in:
+     - `src/OpenSaur.Identity.Web/client/src/features/auth/components/AuthBootstrapBoundary.tsx`
+     - `src/OpenSaur.Identity.Web/client/src/features/auth/hooks/useAuthBootstrap.ts`
 
-4. The authorize endpoint returns an authorization code to the frontend callback route.
-   - Browser is redirected to `/auth/callback?code=...&state=...`.
+3. The SPA navigates to `/login?returnUrl=...`.
+   - `ProtectedRoute()` writes the current route into `authSessionStore.rememberReturnUrl(...)`.
+   - State store lives in `src/OpenSaur.Identity.Web/client/src/features/auth/state/authSessionStore.ts`.
 
-5. The frontend sends the authorization code to a backend helper endpoint.
-   - Frontend calls `POST /api/auth/web-session/exchange`.
-   - Request contains the authorization `code`.
+4. `LoginPage()` builds the first-party authorize URL.
+   - `LoginPage()` in `src/OpenSaur.Identity.Web/client/src/pages/login/LoginPage.tsx`
+   - `buildFirstPartyAuthorizeUrl()` and `createFirstPartyAuthorizationState()` in `src/OpenSaur.Identity.Web/client/src/features/auth/utils/firstPartyOidc.ts`
+   - `resolveFirstPartyRedirectUri()` in `src/OpenSaur.Identity.Web/client/src/shared/config/env.ts`
 
-6. The backend exchanges the code for tokens.
-   - Backend calls `/connect/token` on behalf of the first-party client.
-   - Backend receives:
-     - access token
-     - refresh token
-     - other token payload fields if applicable
+5. The browser is redirected to the issuer authorize endpoint.
+   - `startFirstPartyAuthorization()` in `src/OpenSaur.Identity.Web/client/src/features/auth/utils/firstPartyOidc.ts`
+   - Browser receives:
+     - `client_id=first-party-web`
+     - `redirect_uri=http://localhost:5220/identity/auth/callback`
 
-7. The backend stores the refresh token in a secure cookie.
-   - The cookie should be:
-     - `httpOnly`
-     - `secure`
-     - same-site according to the same-host deployment rules
-   - JavaScript cannot read this cookie.
+6. The issuer receives the authorize request at `/connect/authorize`.
+   - Endpoint mapping: `MapOidcEndpoints()` in `src/OpenSaur.Identity.Web/Features/Auth/Oidc/OidcEndpoints.cs`
+   - Current OIDC request is resolved via `httpContext.GetOpenIddictServerRequest()`
 
-8. The backend returns the access token to the frontend.
-   - Frontend stores the access token in memory only.
-   - Frontend does not write the access token to `localStorage` or `sessionStorage`.
+7. If the user is not signed in on the issuer host, the authorize endpoint challenges the ASP.NET Identity cookie scheme.
+   - `AuthenticateAsync(IdentityConstants.ApplicationScheme)` in `OidcEndpoints.cs`
+   - If authentication fails, `Results.Challenge(...)` is returned from `OidcEndpoints.cs`
 
-9. The frontend bootstraps authenticated state.
-   - Frontend can call `/api/auth/me` with the access token.
-   - If the user requires password rotation, frontend redirects to `/change-password`.
-   - Otherwise frontend returns the user to the preserved `returnUrl`.
+8. The cookie middleware rewrites the challenge to the issuer-hosted login page.
+   - `OnRedirectToLogin` in `src/OpenSaur.Identity.Web/Infrastructure/DependencyInjection.cs`
+   - `BuildIssuerHostedLoginRedirectUri(...)` in the same file preserves the interrupted authorize request as `returnUrl`
 
-### Where State Lives In The First-Party Flow
+9. The hosted login page renders on `https://app.duchihao.com/identity/login`.
+   - Route `/login` in `AppRouter.tsx`
+   - `LoginPage()` detects issuer-hosted mode with `isCurrentAppHostedByIssuer()`
 
-**Frontend memory**
-- access token
-- access token expiry time
-- lightweight auth state
+10. The user submits credentials.
+    - `handleSubmit()` in `src/OpenSaur.Identity.Web/client/src/pages/login/LoginPage.tsx`
+    - `useLogin()` in `src/OpenSaur.Identity.Web/client/src/features/auth/hooks/useLogin.ts`
+    - `login()` in `src/OpenSaur.Identity.Web/client/src/features/auth/api/authApi.ts`
+    - backend route `POST /api/auth/login` mapped in `src/OpenSaur.Identity.Web/Features/Auth/AuthEndpoints.cs`
+    - backend handler `LoginHandler.HandleAsync()` in `src/OpenSaur.Identity.Web/Features/Auth/Login/LoginHandler.cs`
 
-**Browser cookies**
-- Identity application session cookie
-- refresh-token cookie managed by backend
+11. The issuer-hosted Identity cookie is established.
+    - `signInManager.SignInAsync(...)` in `LoginHandler.cs`
+    - cookie scheme is configured in `src/OpenSaur.Identity.Web/Infrastructure/DependencyInjection.cs`
+    - this is framework-backed ASP.NET Identity cookie issuance
 
-**Not stored in browser JavaScript**
-- refresh token
+12. The hosted login page resumes the interrupted authorize request.
+    - `isFirstPartyAuthorizeReturnUrl()` in `firstPartyOidc.ts`
+    - `window.location.assign(normalizedReturnUrl)` in `LoginPage.tsx`
 
-### First-Party Refresh Flow
+13. The issuer authorize endpoint runs again, now with an authenticated Identity cookie.
+    - `OidcEndpoints.cs` loads the user, workspace, and roles
+    - `AuthSessionPrincipalFactory.Create(...)` builds the claims principal
+    - `Results.SignIn(..., OpenIddictServerAspNetCoreDefaults.AuthenticationScheme)` tells OpenIddict to finish the authorize flow
 
-1. The frontend monitors access token expiry.
-2. Before expiry, the frontend calls `POST /api/auth/web-session/refresh`.
-3. The browser automatically sends the secure refresh cookie with that request.
-4. The backend reads the refresh token from the cookie.
-5. The backend calls `/connect/token` with `grant_type=refresh_token`.
-6. The backend receives a new access token and rotated refresh token.
-7. The backend rewrites the refresh cookie.
-8. The backend returns the new access token to the frontend.
-9. The frontend replaces the old in-memory access token.
+14. OpenIddict issues an authorization code and redirects the browser to localhost.
+    - The callback URL used is the exact `redirect_uri` from the authorize request:
+      `http://localhost:5220/identity/auth/callback?code=...&state=...`
+    - Code issuance and redirect are framework behavior driven by `Results.SignIn(...)`
 
-### First-Party Failure Cases
+15. The localhost callback page starts session completion.
+    - `AuthCallbackPage()` in `src/OpenSaur.Identity.Web/client/src/pages/auth-callback/AuthCallbackPage.tsx`
+    - It reads `code` and OIDC `state`
+    - It uses `readFirstPartyAuthorizationReturnUrl(...)` from `firstPartyOidc.ts`
 
-**Login failure**
-- `POST /api/auth/login` returns unauthorized
-- frontend stays on `/login`
+16. The callback page posts the code to same-origin localhost backend.
+    - `useExchangeWebSession()` in `src/OpenSaur.Identity.Web/client/src/features/auth/hooks/useExchangeWebSession.ts`
+    - `exchangeWebSession()` in `src/OpenSaur.Identity.Web/client/src/features/auth/api/authApi.ts`
+    - HTTP client is same-origin with `withCredentials: true` in `src/OpenSaur.Identity.Web/client/src/shared/api/httpClient.ts`
 
-**Code exchange failure**
-- `/api/auth/web-session/exchange` fails
-- frontend clears temporary auth state and returns to `/login`
+17. The localhost backend redeems the code for the localhost browser client.
+    - route: `POST /api/auth/web-session/exchange`
+    - map: `src/OpenSaur.Identity.Web/Features/Auth/AuthEndpoints.cs`
+    - handler: `src/OpenSaur.Identity.Web/Features/Auth/WebSession/ExchangeWebSessionHandler.cs`
+    - callback URI is reconstructed from current host by `BuildFirstPartyRedirectUri()` in `src/OpenSaur.Identity.Web/Infrastructure/Oidc/OidcOptionsExtensions.cs`
+    - token redemption is performed by `ExchangeAuthorizationCodeAsync(...)` in `src/OpenSaur.Identity.Web/Infrastructure/Oidc/FirstPartyOidcTokenClient.cs`
+    - the local backend calls the configured issuer's `/connect/token` endpoint over HTTP instead of using in-process OpenIddict server internals
+    - the callback URI is validated against the configured first-party client by `GetFirstPartyClient(redirectUri)` in `src/OpenSaur.Identity.Web/Infrastructure/Oidc/OidcOptions.cs`
 
-**Refresh failure**
-- `/api/auth/web-session/refresh` fails because the refresh token is expired, missing, revoked, or invalid
-- frontend clears in-memory auth state
-- frontend redirects to `/login?returnUrl=currentRoute`
+18. The localhost backend sets the localhost refresh cookie and returns the access token.
+    - refresh cookie set in `ExchangeWebSessionHandler.cs`
+    - access token JSON response also returned from `ExchangeWebSessionHandler.cs`
 
-**Password change required**
-- `/api/auth/me` shows `RequirePasswordChange = true`
-- frontend redirects to `/change-password`
-- after successful password change, frontend restarts the auth/bootstrap flow
+19. The SPA stores the access token in memory and bootstraps current user state.
+    - `authSessionStore.setAuthenticatedSession(...)` in `src/OpenSaur.Identity.Web/client/src/features/auth/state/authSessionStore.ts`
+    - `fetchCurrentUser()` from `useCurrentUserQuery()` in `src/OpenSaur.Identity.Web/client/src/features/auth/hooks/useCurrentUserQuery.ts`
+    - `GET /api/auth/me` implemented by `GetCurrentUserHandler.Handle()` in `src/OpenSaur.Identity.Web/Features/Auth/Me/GetCurrentUserHandler.cs`
+    - local APIs trust the configured issuer token through JWT bearer validation configured in `src/OpenSaur.Identity.Web/Infrastructure/DependencyInjection.cs`
 
-## Third-Party Login Flow
-
-This is the normal OpenID Connect integration flow for external applications.
-
-### Goal
-
-Allow third-party applications to authenticate users with this Identity server using a standard OIDC client contract.
-
-### Step-by-Step Flow
-
-1. The third-party application redirects the browser to the authorize endpoint.
-   - Browser goes to `/connect/authorize?...`.
-   - The request includes that client's own:
-     - `client_id`
-     - `redirect_uri`
-     - `response_type=code`
-     - scopes
-     - state
-     - PKCE values if the client uses PKCE
-
-2. The Identity server authenticates the user.
-   - If the user is not signed in, the hosted login flow runs.
-   - If the user already has a valid Identity application session cookie, login can be reused.
-
-3. The authorize endpoint redirects back to the third-party callback.
-   - Browser is redirected to the third-party `redirect_uri`.
-   - The redirect contains an authorization `code`.
-
-4. The third-party client exchanges the authorization code directly.
-   - Third party calls `/connect/token`.
-   - This exchange is part of the standard OIDC client contract.
-
-5. The Identity server returns tokens to the third party.
-   - access token
-   - refresh token if allowed
-   - other token fields as appropriate
-
-6. The third-party application manages its own tokens.
-   - Token storage and refresh strategy are owned by that client.
-   - The first-party backend helper endpoints are not used for third-party clients.
+20. The SPA navigates to the remembered return URL.
+    - `navigate(rememberedReturnUrl, { replace: true })` in `AuthCallbackPage.tsx`
 
 ### Important Boundary
 
-Third-party clients should continue to use:
+In this localhost flow:
 
-- `/connect/authorize`
-- `/connect/token`
+- `app.duchihao.com` owns the issuer-side ASP.NET Identity cookie
+- `localhost:5220` owns the local refresh cookie
+- the SPA on localhost stores only the access token in memory
+- the thing that crosses from issuer host to localhost is the one-time authorization `code`, not a raw token
 
-Third-party clients should **not** use first-party-only helper endpoints such as:
+## Hosted First-Party Flow
+
+This is the simpler version when the browser starts directly on `https://app.duchihao.com/identity`.
+
+1. The hosted SPA builds the authorize request with:
+   - `client_id=first-party-web`
+   - `redirect_uri=https://app.duchihao.com/identity/auth/callback`
+
+2. The issuer authorize endpoint is still `/connect/authorize`, but now the callback host and the issuer host are the same.
+
+3. If login is required, the same hosted login page is used.
+
+4. After authorize completes, the browser returns to:
+   - `https://app.duchihao.com/identity/auth/callback?code=...`
+
+5. `AuthCallbackPage()` posts that code to:
+   - `POST /identity/api/auth/web-session/exchange`
+
+6. Backend redeems the code for the hosted browser client and sets the hosted refresh cookie.
+
+7. The SPA stores the access token in memory and fetches `/api/auth/me`.
+
+The code paths are the same as the localhost flow, but `resolveFirstPartyRedirectUri()` points back to `https://app.duchihao.com/identity/auth/callback` instead of localhost.
+
+## Refresh Flow
+
+Once the SPA has an in-memory access token, refresh is backend-assisted.
+
+1. The frontend watches token expiry in `useAuthBootstrap()`:
+   - `src/OpenSaur.Identity.Web/client/src/features/auth/hooks/useAuthBootstrap.ts`
+
+2. Before expiry, the SPA calls:
+   - `POST /api/auth/web-session/refresh`
+
+3. The browser automatically sends the refresh cookie for the current host.
+
+4. `RefreshWebSessionHandler.HandleAsync()` reads the refresh cookie.
+   - file: `src/OpenSaur.Identity.Web/Features/Auth/WebSession/RefreshWebSessionHandler.cs`
+
+5. `FirstPartyOidcTokenClient.RefreshAccessTokenAsync(...)` redeems the refresh token against the configured issuer for the shared first-party browser client.
+   - file: `src/OpenSaur.Identity.Web/Infrastructure/Oidc/FirstPartyOidcTokenClient.cs`
+   - refresh uses the configured issuer's `/connect/token` endpoint over HTTP
+
+6. The backend rotates the refresh cookie and returns a new access token payload to the SPA.
+
+7. The SPA replaces its in-memory access token and continues.
+
+## Impersonation Flow
+
+Impersonation now follows the same issuer-backed browser contract as normal login. The local app no longer receives replacement tokens directly from `/api/auth/impersonation/start` or `/api/auth/impersonation/exit`.
+
+1. The SPA calls:
+   - `POST /api/auth/impersonation/start`, or
+   - `POST /api/auth/impersonation/exit`
+
+2. The local backend validates the request and returns an issuer redirect URL instead of tokens.
+   - `StartImpersonationHandler.HandleAsync()` and `ExitImpersonationHandler.HandleAsync()`
+   - response model: `ImpersonationRedirectResponse`
+
+3. `FirstPartyImpersonationBridge` creates a short-lived signed command for the issuer.
+   - file: `src/OpenSaur.Identity.Web/Features/Auth/Impersonation/FirstPartyImpersonationBridge.cs`
+   - the command carries:
+     - the original super-administrator identity
+     - the browser-client callback URI
+     - the final SPA return URL
+     - the requested impersonation target, when starting impersonation
+
+4. The browser performs a full-page navigation to the issuer-hosted bridge endpoint.
+   - `GET /api/auth/impersonation/start?command=...`, or
+   - `GET /api/auth/impersonation/exit?command=...`
+
+5. The issuer validates the signed command and requires the issuer-side ASP.NET Identity cookie.
+   - if the issuer cookie is missing, the browser is challenged back through the hosted login page first
+   - helper: `IssuerAuthenticationFlow`
+
+6. The issuer mutates only the issuer-side Identity cookie.
+   - start: `signInManager.SignInWithClaimsAsync(...)` in `StartImpersonationHandler.HandleRedirectAsync()`
+   - exit: `signInManager.SignInAsync(...)` in `ExitImpersonationHandler.HandleRedirectAsync()`
+
+7. After the issuer cookie is updated, the issuer redirects the browser into the normal `/connect/authorize` flow for the original client callback URI.
+   - authorize URL is built by `FirstPartyImpersonationBridge.BuildAuthorizeUrl(...)`
+
+8. The browser returns to the first-party callback route with a fresh authorization code.
+   - `http://localhost:5220/identity/auth/callback?code=...`, or
+   - `https://app.duchihao.com/identity/auth/callback?code=...`
+
+9. `AuthCallbackPage()` completes the same `/api/auth/web-session/exchange` flow used by ordinary sign-in.
+
+This means impersonation no longer depends on local in-process token issuance. The issuer remains the only trusted place that changes the authenticated browser identity, and every client receives the updated session through a normal OIDC authorization-code round-trip.
+
+## Token and Cookie Ownership
+
+### Hosted issuer cookie
+
+- created by `signInManager.SignInAsync(...)` in `LoginHandler.cs`
+- belongs to the issuer host
+- used by `/connect/authorize` so the hosted login page does not need to prompt again
+
+### First-party refresh cookie
+
+- created by `ExchangeWebSessionHandler.cs` and rotated by `RefreshWebSessionHandler.cs`
+- belongs to the current browser client host
+- stored as `HttpOnly`
+- not readable by browser JavaScript
+
+### Access token
+
+- returned in JSON to the SPA
+- stored only in `authSessionStore` memory
+- added to API requests by `applyRequestPolicies()` in `src/OpenSaur.Identity.Web/client/src/shared/api/httpClient.ts`
+
+### Authorization code
+
+- returned by OpenIddict from `/connect/authorize`
+- used only once
+- exchanged immediately by `/api/auth/web-session/exchange`
+
+## Failure Cases
+
+### Login failure
+
+- `POST /api/auth/login` returns unauthorized
+- `LoginPage()` stays on the hosted login form
+
+### Code exchange failure
+
+- `POST /api/auth/web-session/exchange` fails
+- `AuthCallbackPage()` clears local auth state
+- `AuthCallbackPage()` redirects to `/login?returnUrl=...&authError=exchange_failed`
+- `LoginPage()` shows a manual retry state and does not auto-loop back into authorize
+
+### Refresh failure
+
+- `POST /api/auth/web-session/refresh` fails
+- `useAuthBootstrap()` clears local auth state
+- user is sent back to `/login?returnUrl=currentRoute`
+
+### Password change required
+
+- after callback, `GET /api/auth/me` indicates `RequirePasswordChange = true`
+- SPA redirects to `/change-password`
+- after success, login/bootstrap starts again
+
+## Third-Party OIDC Flow
+
+Third-party clients use the standard OIDC contract directly.
+
+1. Third-party redirects the browser to `/connect/authorize` with its own:
+   - `client_id`
+   - `redirect_uri`
+   - `state`
+   - scopes
+   - PKCE values when applicable
+
+2. Identity server authenticates the user through the hosted login flow if needed.
+
+3. OpenIddict redirects the browser back to the third-party `redirect_uri` with a code.
+
+4. The third-party client exchanges the code directly at `/connect/token`.
+
+5. The third-party client owns its own token storage and refresh behavior.
+
+Third-party clients do **not** use:
 
 - `POST /api/auth/web-session/exchange`
 - `POST /api/auth/web-session/refresh`
 
-Those helper endpoints exist only for the hosted first-party web app.
+Those endpoints exist only for the first-party browser applications hosted by this service.
 
-## Why The First-Party Flow Is Different
+## Environment Requirement For Localhost
 
-The first-party web app has a stricter security goal:
+For the localhost callback flow to work correctly, localhost must:
 
-- the browser frontend must receive a JWT access token
-- the refresh token must stay backend-managed in an `httpOnly` cookie
+- register its callback URI on the shared first-party browser client
+- reach the configured issuer's `/connect/token` endpoint over HTTP
+- trust JWTs issued by the configured issuer
 
-If the frontend exchanged the code directly at `/connect/token`, the refresh token would normally be visible to browser JavaScript. The backend-assisted web-session flow avoids that exposure.
-
-## Endpoint Summary
-
-### First-party web app
-
-- `POST /api/auth/login`
-  - validate credentials
-  - create hosted login session
-
-- `GET or POST /connect/authorize`
-  - issue authorization code for the first-party client
-
-- `POST /api/auth/web-session/exchange`
-  - backend exchanges code for tokens
-  - backend sets refresh cookie
-  - frontend receives access token
-
-- `POST /api/auth/web-session/refresh`
-  - backend uses refresh cookie to rotate access token
-
-- `GET /api/auth/me`
-  - bootstrap authenticated user state
-
-- `POST /api/auth/change-password`
-  - self-service password rotation
-
-- `POST /api/auth/logout`
-  - clear hosted session
-  - clear refresh cookie
-
-### Third-party client
-
-- `GET or POST /connect/authorize`
-  - initiate auth flow
-
-- `POST /connect/token`
-  - exchange code for tokens
-  - refresh tokens later
-
-## Current Status In This Repository
-
-At the time of writing:
-
-- the backend Identity and OIDC foundation already exists
-- the first-party frontend shell is being built in `src/OpenSaur.Identity.Web/client`
-- the first-party backend-assisted web-session endpoints are part of the approved FE design and are expected to be implemented as part of the FE auth phase
-
-So this document describes:
-
-- the standard third-party flow already supported by the backend
-- the approved first-party FE target flow for the current frontend phase
+Localhost no longer needs to share the issuer's in-process OpenIddict transaction pipeline or signing/encryption key material just to complete the normal login flow.

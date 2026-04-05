@@ -6,9 +6,7 @@ public sealed class OidcOptions
 
     public string Issuer { get; set; } = string.Empty;
 
-    public string HostedIdentityClient { get; set; } = "hosted-identity";
-
-    public Dictionary<string, BrowserClientOidcOptions> BrowserClients { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+    public FirstPartyClientOidcOptions FirstPartyClient { get; set; } = new();
 
     public string? SigningCertificatePath { get; set; }
 
@@ -20,44 +18,30 @@ public sealed class OidcOptions
 
     public bool AllowEphemeralKeysInProduction { get; set; }
 
-    public BrowserClientOidcOptions GetHostedIdentityClient()
+    public FirstPartyClientOidcOptions GetFirstPartyClient(string? redirectUri = null)
     {
-        if (string.IsNullOrWhiteSpace(HostedIdentityClient))
+        if (string.IsNullOrWhiteSpace(FirstPartyClient.ClientId))
         {
-            throw new InvalidOperationException("OIDC hosted identity client configuration is required.");
+            throw new InvalidOperationException("OIDC first-party client configuration is required.");
         }
 
-        if (!BrowserClients.TryGetValue(HostedIdentityClient, out var browserClient))
-        {
-            throw new InvalidOperationException(
-                $"OIDC hosted identity client '{HostedIdentityClient}' is not configured.");
-        }
-
-        return browserClient;
-    }
-
-    public BrowserClientOidcOptions GetBrowserClientByRedirectUri(string redirectUri)
-    {
         if (string.IsNullOrWhiteSpace(redirectUri))
         {
-            throw new InvalidOperationException("OIDC redirect URI configuration is required.");
+            return FirstPartyClient;
         }
 
-        foreach (var browserClient in BrowserClients.Values)
+        if (!FirstPartyClient.RedirectUris.Any(configuredRedirectUri =>
+                string.Equals(configuredRedirectUri, redirectUri, StringComparison.OrdinalIgnoreCase)))
         {
-            if (browserClient.RedirectUris.Any(configuredRedirectUri =>
-                    string.Equals(configuredRedirectUri, redirectUri, StringComparison.OrdinalIgnoreCase)))
-            {
-                return browserClient;
-            }
+            throw new InvalidOperationException(
+                $"OIDC first-party client does not allow redirect URI '{redirectUri}'.");
         }
 
-        throw new InvalidOperationException(
-            $"OIDC browser client for redirect URI '{redirectUri}' is not configured.");
+        return FirstPartyClient;
     }
 }
 
-public sealed class BrowserClientOidcOptions
+public sealed class FirstPartyClientOidcOptions
 {
     public string ClientId { get; set; } = string.Empty;
 

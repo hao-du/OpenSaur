@@ -1,4 +1,4 @@
-import { useLayoutEffect, useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import { Button, CircularProgress, Stack, Typography } from "@mui/material";
 import { useSearchParams } from "react-router-dom";
 import { LoginForm } from "../../components/organisms";
@@ -8,7 +8,6 @@ import { useLogin } from "../../features/auth/hooks";
 import { authSessionStore } from "../../features/auth/state/authSessionStore";
 import {
   buildFirstPartyAuthorizeUrl,
-  continueFirstPartyAuthorizationReturnUrl,
   createFirstPartyAuthorizationState,
   isCurrentAppHostedByIssuer,
   isFirstPartyAuthorizeReturnUrl,
@@ -20,24 +19,26 @@ import { usePreferences } from "../../features/preferences/PreferenceProvider";
 export function LoginPage() {
   const [searchParams] = useSearchParams();
   const normalizedReturnUrl = normalizeAuthReturnUrl(searchParams.get("returnUrl"));
-  const authError = searchParams.get("authError");
+  const hasExchangeError = searchParams.get("authError") !== null;
   const isIssuerHostedLogin = isCurrentAppHostedByIssuer();
   const [authorizeUrl] = useState(() => buildFirstPartyAuthorizeUrl({
     state: createFirstPartyAuthorizationState(normalizedReturnUrl)
   }));
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [hasStartedRedirect, setHasStartedRedirect] = useState(false);
+  const hasStartedRedirectRef = useRef(false);
   const { isLoggingIn, login } = useLogin();
   const { t } = usePreferences();
-  const shouldAutoRedirect = !isIssuerHostedLogin && !authError;
+  const shouldAutoRedirect = !isIssuerHostedLogin && !hasExchangeError;
 
   useLayoutEffect(() => {
     authSessionStore.rememberReturnUrl(normalizedReturnUrl);
-    if (shouldAutoRedirect && !hasStartedRedirect) {
-      setHasStartedRedirect(true);
-      startFirstPartyAuthorization(authorizeUrl);
+    if (!shouldAutoRedirect || hasStartedRedirectRef.current) {
+      return;
     }
-  }, [authorizeUrl, hasStartedRedirect, normalizedReturnUrl, shouldAutoRedirect]);
+
+    hasStartedRedirectRef.current = true;
+    startFirstPartyAuthorization(authorizeUrl);
+  }, [authorizeUrl, normalizedReturnUrl, shouldAutoRedirect]);
 
   async function handleSubmit(values: LoginRequest) {
     setErrorMessage(null);
@@ -46,7 +47,7 @@ export function LoginPage() {
       await login(values);
 
       if (isFirstPartyAuthorizeReturnUrl(normalizedReturnUrl)) {
-        continueFirstPartyAuthorizationReturnUrl(normalizedReturnUrl);
+        window.location.assign(normalizedReturnUrl);
         return;
       }
 
@@ -78,9 +79,9 @@ export function LoginPage() {
           <Typography color="text.secondary" variant="body2">
             {shouldAutoRedirect
               ? "Continue on the issuer-hosted sign-in page if the browser does not redirect automatically."
-              : "The hosted sign-in completed, but the local callback could not establish a session. Review the local OIDC client configuration, then retry manually."}
+              : "The hosted sign-in completed, but the local app could not finish the issuer-backed session exchange. Review the issuer URL, client registration, and token-endpoint reachability, then retry manually."}
           </Typography>
-          <Button href={authorizeUrl} onClick={() => startFirstPartyAuthorization(authorizeUrl)} variant="contained">
+          <Button href={authorizeUrl} variant="contained">
             Continue to Sign In
           </Button>
         </Stack>

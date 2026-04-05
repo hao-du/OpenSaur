@@ -1,7 +1,7 @@
 import { useMutation } from "@tanstack/react-query";
 import { getApiErrorMessage } from "../../../shared/api";
 import { i18n } from "../../localization/i18n";
-import { exitImpersonation } from "../api/authApi";
+import { exitImpersonation, type ExitImpersonationRequest } from "../api/authApi";
 
 export function useExitImpersonation() {
   const mutation = useMutation({
@@ -12,7 +12,7 @@ export function useExitImpersonation() {
     errorMessage: mutation.error
       ? getApiErrorMessage(mutation.error, i18n.t("shell.exitImpersonationError"))
       : null,
-    exitImpersonation: () => mutation.mutateAsync(),
+    exitImpersonation: (request: ExitImpersonationRequest) => mutation.mutateAsync(request),
     isExitingImpersonation: mutation.isPending,
     resetError: mutation.reset
   };

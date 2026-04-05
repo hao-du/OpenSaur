@@ -27,7 +27,6 @@ import {
   useLogout
 } from "../../features/auth/hooks";
 import { authSessionStore } from "../../features/auth/state/authSessionStore";
-import { useSyncAuthenticatedPreferences } from "../../features/preferences/hooks";
 import { BrandMark } from "../atoms";
 import { Menu } from "../../shared/icons";
 import { ShellAccountMenu } from "./ShellAccountMenu";
@@ -48,11 +47,10 @@ export function ProtectedShellTemplate({
   const navigate = useNavigate();
   const isDesktop = useMediaQuery(theme.breakpoints.up("lg"));
   const [isNavigationOpen, setIsNavigationOpen] = useState(false);
-  const { clearCurrentUser, fetchCurrentUser } = useCurrentUserQuery();
+  const { clearCurrentUser } = useCurrentUserQuery();
   const { data: currentUser } = useCurrentUserState();
   const { isLoggingOut, logout } = useLogout();
   const { exitImpersonation, isExitingImpersonation } = useExitImpersonation();
-  const syncAuthenticatedPreferences = useSyncAuthenticatedPreferences();
   const { t } = usePreferences();
   const visibleRoutes = useMemo(
     () => getVisibleProtectedShellRoutes(currentUser),
@@ -89,11 +87,10 @@ export function ProtectedShellTemplate({
 
   async function handleExitImpersonation() {
     try {
-      const restoredSession = await exitImpersonation();
-      authSessionStore.setAuthenticatedSession(restoredSession);
-      await fetchCurrentUser();
-      await syncAuthenticatedPreferences();
-      authSessionStore.broadcastSessionRefresh();
+      const transition = await exitImpersonation({
+        returnUrl: `${location.pathname}${location.search}${location.hash}`
+      });
+      window.location.assign(transition.redirectUrl);
     } catch {
       // Keep the current UI state if impersonation exit fails.
     }

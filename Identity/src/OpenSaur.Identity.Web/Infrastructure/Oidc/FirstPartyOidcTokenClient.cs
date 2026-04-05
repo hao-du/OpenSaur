@@ -1,24 +1,23 @@
+using System.Net.Http.Headers;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using Microsoft.Extensions.Options;
-using OpenIddict.Abstractions;
-using OpenIddict.Server;
-using System.Security.Claims;
 using static OpenIddict.Abstractions.OpenIddictConstants;
 
 namespace OpenSaur.Identity.Web.Infrastructure.Oidc;
 
 public sealed class FirstPartyOidcTokenClient : IFirstPartyOidcTokenClient
 {
-    private readonly IOpenIddictServerDispatcher _dispatcher;
-    private readonly IOpenIddictServerFactory _factory;
+    private static readonly JsonSerializerOptions TokenResponseSerializerOptions = new(JsonSerializerDefaults.Web);
+
+    private readonly HttpClient _httpClient;
     private readonly IOptions<OidcOptions> _oidcOptions;
 
     public FirstPartyOidcTokenClient(
-        IOpenIddictServerDispatcher dispatcher,
-        IOpenIddictServerFactory factory,
+        HttpClient httpClient,
         IOptions<OidcOptions> oidcOptions)
     {
-        _dispatcher = dispatcher;
-        _factory = factory;
+        _httpClient = httpClient;
         _oidcOptions = oidcOptions;
     }
 
@@ -27,141 +26,95 @@ public sealed class FirstPartyOidcTokenClient : IFirstPartyOidcTokenClient
         string redirectUri,
         CancellationToken cancellationToken)
     {
-        var browserClient = _oidcOptions.Value.GetBrowserClientByRedirectUri(redirectUri);
-        if (string.IsNullOrWhiteSpace(browserClient.ClientId)
-            || string.IsNullOrWhiteSpace(browserClient.ClientSecret))
-        {
-            throw new InvalidOperationException("OIDC hosted identity client configuration is required.");
-        }
+        var browserClient = GetConfiguredFirstPartyClient(redirectUri, requireSecret: true);
 
-        return await ProcessTokenRequestAsync(
-            new OpenIddictRequest
+        return await SendTokenRequestAsync(
+            new Dictionary<string, string>
             {
-                GrantType = GrantTypes.AuthorizationCode,
-                ClientId = browserClient.ClientId,
-                ClientSecret = browserClient.ClientSecret,
-                RedirectUri = redirectUri,
-                Code = code
+                ["grant_type"] = GrantTypes.AuthorizationCode,
+                ["client_id"] = browserClient.ClientId,
+                ["client_secret"] = browserClient.ClientSecret,
+                ["redirect_uri"] = redirectUri,
+                ["code"] = code
             },
             cancellationToken);
     }
 
     public async Task<FirstPartyOidcTokenResult?> RefreshAccessTokenAsync(
         string refreshToken,
-        string redirectUri,
         CancellationToken cancellationToken)
     {
-        var browserClient = _oidcOptions.Value.GetBrowserClientByRedirectUri(redirectUri);
-        if (string.IsNullOrWhiteSpace(browserClient.ClientId)
-            || string.IsNullOrWhiteSpace(browserClient.ClientSecret))
-        {
-            throw new InvalidOperationException("OIDC hosted identity client configuration is required.");
-        }
+        var browserClient = GetConfiguredFirstPartyClient(requireSecret: true);
 
-        return await ProcessTokenRequestAsync(
-            new OpenIddictRequest
+        return await SendTokenRequestAsync(
+            new Dictionary<string, string>
             {
-                GrantType = GrantTypes.RefreshToken,
-                ClientId = browserClient.ClientId,
-                ClientSecret = browserClient.ClientSecret,
-                RefreshToken = refreshToken
+                ["grant_type"] = GrantTypes.RefreshToken,
+                ["client_id"] = browserClient.ClientId,
+                ["client_secret"] = browserClient.ClientSecret,
+                ["refresh_token"] = refreshToken
             },
             cancellationToken);
     }
 
-    public async Task<FirstPartyOidcTokenResult?> IssueTokensAsync(
-        ClaimsPrincipal principal,
-        string redirectUri,
+    private async Task<FirstPartyOidcTokenResult?> SendTokenRequestAsync(
+        IReadOnlyDictionary<string, string> formValues,
         CancellationToken cancellationToken)
     {
-        var browserClient = _oidcOptions.Value.GetBrowserClientByRedirectUri(redirectUri);
-        if (string.IsNullOrWhiteSpace(browserClient.ClientId))
+        using var request = new HttpRequestMessage(HttpMethod.Post, "connect/token")
         {
-            throw new InvalidOperationException("OIDC hosted identity client configuration is required.");
+            Content = new FormUrlEncodedContent(formValues)
+        };
+        request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+        using var response = await _httpClient.SendAsync(request, cancellationToken);
+        if (!response.IsSuccessStatusCode)
+        {
+            return null;
         }
 
-        var transaction = await CreateTransactionAsync(
-            new OpenIddictRequest
-            {
-                ClientId = browserClient.ClientId
-            },
+        var tokenResponse = await response.Content.ReadFromJsonAsync<OidcTokenResponse>(
+            TokenResponseSerializerOptions,
             cancellationToken);
-
-        return await ProcessSignInAsync(transaction, transaction.Request!, principal);
-    }
-
-    private async Task<FirstPartyOidcTokenResult?> ProcessTokenRequestAsync(
-        OpenIddictRequest request,
-        CancellationToken cancellationToken)
-    {
-        var transaction = await CreateTransactionAsync(request, cancellationToken);
-
-        var validateContext = new OpenIddictServerEvents.ValidateTokenRequestContext(transaction)
-        {
-            Request = request
-        };
-        await _dispatcher.DispatchAsync(validateContext);
-        if (validateContext.IsRejected)
+        if (tokenResponse is null
+            || string.IsNullOrWhiteSpace(tokenResponse.AccessToken)
+            || string.IsNullOrWhiteSpace(tokenResponse.RefreshToken))
         {
             return null;
         }
 
-        var principal = string.Equals(request.GrantType, GrantTypes.AuthorizationCode, StringComparison.Ordinal)
-            ? validateContext.AuthorizationCodePrincipal
-            : validateContext.RefreshTokenPrincipal;
-        if (principal is null)
-        {
-            return null;
-        }
-
-        return await ProcessSignInAsync(transaction, request, principal);
-    }
-
-    private async Task<OpenIddictServerTransaction> CreateTransactionAsync(
-        OpenIddictRequest request,
-        CancellationToken cancellationToken)
-    {
-        var issuer = _oidcOptions.Value.Issuer;
-        if (!Uri.TryCreate(issuer, UriKind.Absolute, out var issuerUri))
-        {
-            throw new InvalidOperationException("OIDC issuer configuration is invalid.");
-        }
-
-        var transaction = await _factory.CreateTransactionAsync();
-        transaction.CancellationToken = cancellationToken;
-        transaction.EndpointType = OpenIddictServerEndpointType.Token;
-        transaction.BaseUri = issuerUri;
-        transaction.RequestUri = new Uri(issuerUri, "/connect/token");
-        transaction.Request = request;
-        transaction.Properties[InternalFirstPartyTokenResponseHandler.TransactionPropertyName] = true;
-        return transaction;
-    }
-
-    private async Task<FirstPartyOidcTokenResult?> ProcessSignInAsync(
-        OpenIddictServerTransaction transaction,
-        OpenIddictRequest request,
-        ClaimsPrincipal principal)
-    {
-        var signInContext = new OpenIddictServerEvents.ProcessSignInContext(transaction)
-        {
-            Request = request,
-            Principal = principal,
-            Response = new OpenIddictResponse()
-        };
-        await _dispatcher.DispatchAsync(signInContext);
-        if (signInContext.IsRejected
-            || string.IsNullOrWhiteSpace(signInContext.AccessToken)
-            || string.IsNullOrWhiteSpace(signInContext.RefreshToken))
-        {
-            return null;
-        }
-
-        var expiresAt = signInContext.AccessTokenPrincipal?.GetExpirationDate()
-            ?? DateTimeOffset.UtcNow.Add(OidcDefaults.AccessTokenLifetime);
+        var expiresAt = tokenResponse.ExpiresIn > 0
+            ? DateTimeOffset.UtcNow.AddSeconds(tokenResponse.ExpiresIn)
+            : DateTimeOffset.UtcNow.Add(OidcDefaults.AccessTokenLifetime);
 
         return new FirstPartyOidcTokenResult(
-            signInContext.AccessToken,
-            signInContext.RefreshToken,
+            tokenResponse.AccessToken,
+            tokenResponse.RefreshToken,
             expiresAt);
+    }
+
+    private FirstPartyClientOidcOptions GetConfiguredFirstPartyClient(
+        string? redirectUri = null,
+        bool requireSecret = false)
+    {
+        var browserClient = _oidcOptions.Value.GetFirstPartyClient(redirectUri);
+        if (string.IsNullOrWhiteSpace(browserClient.ClientId)
+            || requireSecret && string.IsNullOrWhiteSpace(browserClient.ClientSecret))
+        {
+            throw new InvalidOperationException("OIDC first-party client configuration is required.");
+        }
+
+        return browserClient;
+    }
+    private sealed class OidcTokenResponse
+    {
+        [JsonPropertyName("access_token")]
+        public string? AccessToken { get; init; }
+
+        [JsonPropertyName("expires_in")]
+        public long ExpiresIn { get; init; }
+
+        [JsonPropertyName("refresh_token")]
+        public string? RefreshToken { get; init; }
     }
 }

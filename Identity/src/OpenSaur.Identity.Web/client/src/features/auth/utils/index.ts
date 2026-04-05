@@ -1,7 +1,6 @@
 export { normalizeAuthReturnUrl } from "./normalizeAuthReturnUrl";
 export {
   buildFirstPartyAuthorizeUrl,
-  continueFirstPartyAuthorizationReturnUrl,
   createFirstPartyAuthorizationState,
   isCurrentAppHostedByIssuer,
   isFirstPartyAuthorizeReturnUrl,

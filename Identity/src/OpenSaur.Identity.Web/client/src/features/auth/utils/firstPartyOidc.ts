@@ -18,28 +18,24 @@ function createAuthorizationNonce() {
   return `auth-${Date.now()}`;
 }
 
-function normalizePath(path: string) {
+function trimTrailingSlash(path: string) {
   const trimmedPath = path.trim();
   if (trimmedPath.length === 0 || trimmedPath === "/") {
     return "/";
   }
 
-  const withoutTrailingSlash = trimmedPath.endsWith("/")
+  return trimmedPath.endsWith("/")
     ? trimmedPath.slice(0, -1)
     : trimmedPath;
-
-  return withoutTrailingSlash.startsWith("/")
-    ? withoutTrailingSlash
-    : `/${withoutTrailingSlash}`;
 }
 
-function combinePath(basePath: string, segment: string) {
-  const normalizedBasePath = normalizePath(basePath);
-  const normalizedSegment = segment.replace(/^\/+/, "");
+function getIssuerBaseUri() {
+  const issuer = appEnvironment.firstPartyAuth.issuer;
+  return new URL(issuer.endsWith("/") ? issuer : `${issuer}/`);
+}
 
-  return normalizedBasePath === "/"
-    ? `/${normalizedSegment}`
-    : `${normalizedBasePath}/${normalizedSegment}`;
+function getIssuerAuthorizePath() {
+  return new URL("connect/authorize", getIssuerBaseUri()).pathname;
 }
 
 function parseAuthorizationState(state: string | null | undefined) {
@@ -94,10 +90,11 @@ export function isCurrentAppHostedByIssuer() {
     return false;
   }
 
-  const issuerUrl = new URL(appEnvironment.firstPartyAuth.issuer);
+  const issuerUrl = getIssuerBaseUri();
+  const currentBasePath = new URL(appEnvironment.basePath, window.location.origin).pathname;
 
   return window.location.origin === issuerUrl.origin
-    && normalizePath(appEnvironment.basePath) === normalizePath(issuerUrl.pathname);
+    && trimTrailingSlash(currentBasePath) === trimTrailingSlash(issuerUrl.pathname);
 }
 
 export function isFirstPartyAuthorizeReturnUrl(returnUrl: string) {
@@ -106,17 +103,12 @@ export function isFirstPartyAuthorizeReturnUrl(returnUrl: string) {
   }
 
   try {
-    const issuerUrl = new URL(appEnvironment.firstPartyAuth.issuer);
-    const resolvedReturnUrl = new URL(returnUrl, issuerUrl.origin);
+    const resolvedReturnUrl = new URL(returnUrl, getIssuerBaseUri().origin);
 
-    return resolvedReturnUrl.pathname === combinePath(issuerUrl.pathname, "connect/authorize");
+    return resolvedReturnUrl.pathname === getIssuerAuthorizePath();
   } catch {
     return false;
   }
-}
-
-export function continueFirstPartyAuthorizationReturnUrl(returnUrl: string) {
-  window.location.assign(returnUrl);
 }
 
 export function startFirstPartyAuthorization(authorizeUrl?: string) {

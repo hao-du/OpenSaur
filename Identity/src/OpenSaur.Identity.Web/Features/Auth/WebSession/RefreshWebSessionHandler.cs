@@ -23,19 +23,10 @@ public static class RefreshWebSessionHandler
 
         var tokenResult = await tokenClient.RefreshAccessTokenAsync(
             refreshToken,
-            httpContext.BuildFirstPartyRedirectUri(),
             cancellationToken);
         if (tokenResult is null)
         {
-            httpContext.Response.Cookies.Delete(
-                AuthCookieNames.Refresh,
-                new CookieOptions
-                {
-                    HttpOnly = true,
-                    IsEssential = true,
-                    SameSite = SameSiteMode.Lax,
-                    Secure = httpContext.Request.IsHttps
-                });
+            httpContext.DeleteFirstPartyRefreshToken();
 
             return Result.Unauthorized(
                     "Authentication failed.",
@@ -43,16 +34,7 @@ public static class RefreshWebSessionHandler
                 .ToApiErrorResult();
         }
 
-        httpContext.Response.Cookies.Append(
-            AuthCookieNames.Refresh,
-            tokenResult.RefreshToken,
-            new CookieOptions
-            {
-                HttpOnly = true,
-                IsEssential = true,
-                SameSite = SameSiteMode.Lax,
-                Secure = httpContext.Request.IsHttps
-            });
+        httpContext.AppendFirstPartyRefreshToken(tokenResult.RefreshToken);
 
         return Result<ExchangeWebSessionResponse>.Success(
                 new ExchangeWebSessionResponse(tokenResult.AccessToken, tokenResult.ExpiresAt))

@@ -12,24 +12,19 @@ import {
   WorkspaceTable
 } from "../../features/workspaces/components";
 import {
-  useCurrentUserQuery,
   useImpersonationOptionsQuery,
   useStartImpersonation
 } from "../../features/auth/hooks";
 import { useRolesQuery } from "../../features/roles/hooks";
 import { usePreferences } from "../../features/preferences/PreferenceProvider";
-import { useSyncAuthenticatedPreferences } from "../../features/preferences/hooks";
 import {
   useCreateWorkspace,
   useEditWorkspace,
   useWorkspaceQuery,
   useWorkspacesQuery
 } from "../../features/workspaces/hooks";
-import { authSessionStore } from "../../features/auth/state/authSessionStore";
-import { useNavigate } from "react-router-dom";
 
 export function WorkspacesPage() {
-  const navigate = useNavigate();
   const [filters, setFilters] = useState<WorkspaceFilterValues>({
     search: "",
     status: "active"
@@ -38,9 +33,7 @@ export function WorkspacesPage() {
   const [isCreateDrawerOpen, setIsCreateDrawerOpen] = useState(false);
   const [selectedWorkspaceId, setSelectedWorkspaceId] = useState<string | null>(null);
   const [impersonationWorkspaceId, setImpersonationWorkspaceId] = useState<string | null>(null);
-  const { fetchCurrentUser } = useCurrentUserQuery();
   const { t } = usePreferences();
-  const syncAuthenticatedPreferences = useSyncAuthenticatedPreferences();
   const { data: roles = [], isLoading: isRolesLoading } = useRolesQuery();
   const {
     data: workspaces = [],
@@ -142,13 +135,12 @@ export function WorkspacesPage() {
   }
 
   async function handleStartImpersonation(values: { userId: string | null; workspaceId: string; }) {
-    const session = await startImpersonation(values);
-    authSessionStore.setAuthenticatedSession(session);
-    await fetchCurrentUser();
-    await syncAuthenticatedPreferences();
-    authSessionStore.broadcastSessionRefresh();
+    const transition = await startImpersonation({
+      ...values,
+      returnUrl: "/"
+    });
     setImpersonationWorkspaceId(null);
-    navigate("/", { replace: true });
+    window.location.assign(transition.redirectUrl);
   }
 
   return (

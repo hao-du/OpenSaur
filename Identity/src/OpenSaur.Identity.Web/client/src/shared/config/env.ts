@@ -9,24 +9,12 @@ function resolveFirstPartyRedirectUri() {
   return new URL("auth/callback", new URL(import.meta.env.BASE_URL ?? "/", window.location.origin)).toString();
 }
 
-function resolveFirstPartyClientId() {
-  const defaultClientId = import.meta.env.VITE_FIRST_PARTY_OIDC_CLIENT_ID ?? "first-party-web";
-
-  if (typeof window === "undefined") {
-    return defaultClientId;
-  }
-
-  return window.location.hostname === "localhost"
-    ? import.meta.env.VITE_FIRST_PARTY_OIDC_LOCAL_CLIENT_ID ?? "first-party-web-local"
-    : defaultClientId;
-}
-
 export const appEnvironment = {
   appName: "OpenSaur Identity",
   basePath: import.meta.env.BASE_URL ?? "/",
   firstPartyAuth: {
     issuer: import.meta.env.VITE_FIRST_PARTY_OIDC_ISSUER ?? "https://app.duchihao.com/identity",
-    clientId: resolveFirstPartyClientId(),
+    clientId: import.meta.env.VITE_FIRST_PARTY_OIDC_CLIENT_ID ?? "first-party-web",
     redirectUri: resolveFirstPartyRedirectUri(),
     scope: import.meta.env.VITE_FIRST_PARTY_OIDC_SCOPE ?? "openid profile email roles offline_access api"
   }

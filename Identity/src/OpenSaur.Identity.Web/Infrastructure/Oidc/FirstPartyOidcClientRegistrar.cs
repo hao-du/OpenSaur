@@ -12,49 +12,46 @@ public sealed class FirstPartyOidcClientRegistrar(
 {
     public async Task EnsureConfiguredClientAsync(CancellationToken cancellationToken = default)
     {
-        foreach (var browserClient in oidcOptions.Value.BrowserClients.Values)
+        var firstPartyClient = oidcOptions.Value.FirstPartyClient;
+        if (string.IsNullOrWhiteSpace(firstPartyClient.ClientId)
+            || firstPartyClient.RedirectUris.Count == 0)
         {
-            if (string.IsNullOrWhiteSpace(browserClient.ClientId)
-                || browserClient.RedirectUris.Count == 0)
-            {
-                continue;
-            }
+            return;
+        }
 
-            try
+        try
+        {
+            var descriptor = CreateDescriptor(firstPartyClient);
+            var application = await applicationManager.FindByClientIdAsync(firstPartyClient.ClientId, cancellationToken);
+            if (application is null)
             {
-                var descriptor = CreateDescriptor(browserClient);
-                var application = await applicationManager.FindByClientIdAsync(browserClient.ClientId, cancellationToken);
-                if (application is null)
-                {
-                    await applicationManager.CreateAsync(descriptor, cancellationToken);
-                    continue;
-                }
-
-                await applicationManager.UpdateAsync(application, descriptor, cancellationToken);
-            }
-            catch (DbException exception)
-            {
-                logger.LogWarning(
-                    exception,
-                    "Skipping browser OIDC client registration because the OpenIddict store is not ready.");
+                await applicationManager.CreateAsync(descriptor, cancellationToken);
                 return;
             }
+
+            await applicationManager.UpdateAsync(application, descriptor, cancellationToken);
+        }
+        catch (DbException exception)
+        {
+            logger.LogWarning(
+                exception,
+                "Skipping first-party OIDC client registration because the OpenIddict store is not ready.");
         }
     }
 
-    private static OpenIddictApplicationDescriptor CreateDescriptor(BrowserClientOidcOptions browserClient)
+    private static OpenIddictApplicationDescriptor CreateDescriptor(FirstPartyClientOidcOptions firstPartyClient)
     {
         var descriptor = new OpenIddictApplicationDescriptor
         {
-            ClientId = browserClient.ClientId,
-            ClientSecret = browserClient.ClientSecret,
-            ClientType = string.IsNullOrWhiteSpace(browserClient.ClientSecret)
+            ClientId = firstPartyClient.ClientId,
+            ClientSecret = firstPartyClient.ClientSecret,
+            ClientType = string.IsNullOrWhiteSpace(firstPartyClient.ClientSecret)
                 ? OpenIddictConstants.ClientTypes.Public
                 : OpenIddictConstants.ClientTypes.Confidential,
             ConsentType = OpenIddictConstants.ConsentTypes.Implicit,
-            DisplayName = string.IsNullOrWhiteSpace(browserClient.DisplayName)
-                ? browserClient.ClientId
-                : browserClient.DisplayName
+            DisplayName = string.IsNullOrWhiteSpace(firstPartyClient.DisplayName)
+                ? firstPartyClient.ClientId
+                : firstPartyClient.DisplayName
         };
 
         descriptor.Permissions.Add(OpenIddictConstants.Permissions.Endpoints.Authorization);
@@ -67,12 +64,12 @@ public sealed class FirstPartyOidcClientRegistrar(
         descriptor.Permissions.Add(OpenIddictConstants.Permissions.Scopes.Roles);
         descriptor.Permissions.Add(OpenIddictConstants.Permissions.Prefixes.Scope + "api");
 
-        foreach (var redirectUri in browserClient.RedirectUris.Where(uri => !string.IsNullOrWhiteSpace(uri)))
+        foreach (var redirectUri in firstPartyClient.RedirectUris.Where(uri => !string.IsNullOrWhiteSpace(uri)))
         {
             descriptor.RedirectUris.Add(new Uri(redirectUri));
         }
 
-        foreach (var postLogoutRedirectUri in browserClient.PostLogoutRedirectUris.Where(uri => !string.IsNullOrWhiteSpace(uri)))
+        foreach (var postLogoutRedirectUri in firstPartyClient.PostLogoutRedirectUris.Where(uri => !string.IsNullOrWhiteSpace(uri)))
         {
             descriptor.Permissions.Add(OpenIddictConstants.Permissions.Endpoints.EndSession);
             descriptor.PostLogoutRedirectUris.Add(new Uri(postLogoutRedirectUri));

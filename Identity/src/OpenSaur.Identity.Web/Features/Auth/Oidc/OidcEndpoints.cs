@@ -35,38 +35,19 @@ public static class OidcEndpoints
                 var authenticationResult = await httpContext.AuthenticateAsync(IdentityConstants.ApplicationScheme);
                 if (!authenticationResult.Succeeded || authenticationResult.Principal is null)
                 {
-                    return Results.Challenge(
-                        new AuthenticationProperties
-                        {
-                            RedirectUri = BuildCurrentRequestPathAndQuery(httpContext)
-                        },
-                        [IdentityConstants.ApplicationScheme]);
+                    return IssuerAuthenticationFlow.ChallengeIssuerLogin(httpContext);
                 }
 
                 var userId = AuthPrincipalReader.GetUserId(authenticationResult.Principal);
                 if (string.IsNullOrWhiteSpace(userId))
                 {
-                    await httpContext.SignOutAsync(IdentityConstants.ApplicationScheme);
-
-                    return Results.Challenge(
-                        new AuthenticationProperties
-                        {
-                            RedirectUri = BuildCurrentRequestPathAndQuery(httpContext)
-                        },
-                        [IdentityConstants.ApplicationScheme]);
+                    return await IssuerAuthenticationFlow.SignOutAndChallengeIssuerLoginAsync(httpContext);
                 }
 
                 var user = await userManager.FindByIdAsync(userId);
                 if (user is null || !user.IsActive)
                 {
-                    await httpContext.SignOutAsync(IdentityConstants.ApplicationScheme);
-
-                    return Results.Challenge(
-                        new AuthenticationProperties
-                        {
-                            RedirectUri = BuildCurrentRequestPathAndQuery(httpContext)
-                        },
-                        [IdentityConstants.ApplicationScheme]);
+                    return await IssuerAuthenticationFlow.SignOutAndChallengeIssuerLoginAsync(httpContext);
                 }
 
                 var effectiveWorkspaceId = AuthPrincipalReader.GetImpersonationWorkspaceId(authenticationResult.Principal)
@@ -74,14 +55,7 @@ public static class OidcEndpoints
                 var workspace = await dbContext.Workspaces.FindAsync(effectiveWorkspaceId);
                 if (workspace is null || !workspace.IsActive)
                 {
-                    await httpContext.SignOutAsync(IdentityConstants.ApplicationScheme);
-
-                    return Results.Challenge(
-                        new AuthenticationProperties
-                        {
-                            RedirectUri = BuildCurrentRequestPathAndQuery(httpContext)
-                        },
-                        [IdentityConstants.ApplicationScheme]);
+                    return await IssuerAuthenticationFlow.SignOutAndChallengeIssuerLoginAsync(httpContext);
                 }
 
                 var rolesResult = await userRoleRepository.GetActiveNormalizedRoleNamesForUserAsync(
@@ -105,8 +79,4 @@ public static class OidcEndpoints
         return app;
     }
 
-    private static string BuildCurrentRequestPathAndQuery(HttpContext httpContext)
-    {
-        return $"{httpContext.Request.PathBase}{httpContext.Request.Path}{httpContext.Request.QueryString}";
-    }
 }

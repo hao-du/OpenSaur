@@ -66,8 +66,17 @@ export type ImpersonationOptionsUser = {
 };
 
 export type StartImpersonationRequest = {
+  returnUrl: string;
   userId: string | null;
   workspaceId: string;
+};
+
+export type ExitImpersonationRequest = {
+  returnUrl: string;
+};
+
+export type ImpersonationRedirectResponse = {
+  redirectUrl: string;
 };
 
 type ApiEnvelope<TData> = {
@@ -132,14 +141,14 @@ export async function getImpersonationOptions(workspaceId: string) {
 }
 
 export async function startImpersonation(request: StartImpersonationRequest) {
-  return await unwrapData<ExchangeWebSessionResponse>(
+  return await unwrapData<ImpersonationRedirectResponse>(
     httpClient.post("/api/auth/impersonation/start", request)
   );
 }
 
-export async function exitImpersonation() {
-  return await unwrapData<ExchangeWebSessionResponse>(
-    httpClient.post("/api/auth/impersonation/exit")
+export async function exitImpersonation(request: ExitImpersonationRequest) {
+  return await unwrapData<ImpersonationRedirectResponse>(
+    httpClient.post("/api/auth/impersonation/exit", request)
   );
 }
 

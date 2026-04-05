@@ -53,8 +53,16 @@ public static class AuthEndpoints
             .RequireWorkspaceAccess(restrictToSuperAdministrator: true)
             .WithResilienceScope(EndpointResiliencePolicyScope.Auth);
 
+        auth.MapGet("/impersonation/start", StartImpersonationHandler.HandleRedirectAsync)
+            .AllowAnonymous()
+            .WithResilienceScope(EndpointResiliencePolicyScope.Auth);
+
         auth.MapPost("/impersonation/exit", ExitImpersonationHandler.HandleAsync)
             .RequireAuthorization(AuthorizationPolicies.Api)
+            .WithResilienceScope(EndpointResiliencePolicyScope.Auth);
+
+        auth.MapGet("/impersonation/exit", ExitImpersonationHandler.HandleRedirectAsync)
+            .AllowAnonymous()
             .WithResilienceScope(EndpointResiliencePolicyScope.Auth);
 
         auth.MapPost("/web-session/exchange", ExchangeWebSessionHandler.HandleAsync)

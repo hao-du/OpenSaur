@@ -1,12 +1,8 @@
 using System.Security.Claims;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
 using OpenSaur.Identity.Web.Domain.Identity;
-using OpenSaur.Identity.Web.Features.Auth.WebSession;
-using OpenSaur.Identity.Web.Infrastructure.Database;
-using OpenSaur.Identity.Web.Infrastructure.Database.Repositories.UserRoles;
-using OpenSaur.Identity.Web.Infrastructure.Database.Repositories.UserRoles.Dtos;
+using OpenSaur.Identity.Web.Features.Auth.Oidc;
 using OpenSaur.Identity.Web.Infrastructure.Http.Responses;
 using OpenSaur.Identity.Web.Infrastructure.Oidc;
 using OpenSaur.Identity.Web.Infrastructure.Results;
@@ -17,18 +13,103 @@ namespace OpenSaur.Identity.Web.Features.Auth.Impersonation;
 public static class ExitImpersonationHandler
 {
     public static async Task<IResult> HandleAsync(
+        ExitImpersonationRequest request,
         ClaimsPrincipal user,
-        ApplicationDbContext dbContext,
-        UserRoleRepository userRoleRepository,
+        UserManager<ApplicationUser> userManager,
+        FirstPartyImpersonationBridge impersonationBridge,
+        HttpContext httpContext)
+    {
+        if (await ValidateExitRequestAsync(user, userManager) is { } validationResult)
+        {
+            return validationResult;
+        }
+
+        var originalUserId = AuthPrincipalReader.GetImpersonationOriginalUserId(user);
+        var redirectUrl = impersonationBridge.BuildExitRedirectUrl(
+            originalUserId!.Value,
+            httpContext.BuildFirstPartyRedirectUri(),
+            request.ReturnUrl);
+
+        return Result<ImpersonationRedirectResponse>.Success(new ImpersonationRedirectResponse(redirectUrl))
+            .ToApiResult();
+    }
+
+    public static async Task<IResult> HandleRedirectAsync(
+        string command,
+        HttpContext httpContext,
         UserManager<ApplicationUser> userManager,
         SignInManager<ApplicationUser> signInManager,
-        IFirstPartyOidcTokenClient tokenClient,
-        IOptions<OidcOptions> oidcOptions,
-        HttpContext httpContext,
-        CancellationToken cancellationToken)
+        FirstPartyImpersonationBridge impersonationBridge)
+    {
+        var bridgeCommand = impersonationBridge.ReadCommand(command);
+        if (bridgeCommand is null || bridgeCommand.Action != "exit")
+        {
+            return Result.Validation(
+                    ResultErrors.Validation(
+                        "Impersonation request is invalid.",
+                        "The issuer could not resume the requested impersonation flow."))
+                .ToApiErrorResult();
+        }
+
+        var authenticationResult = await httpContext.AuthenticateAsync(IdentityConstants.ApplicationScheme);
+        if (!authenticationResult.Succeeded || authenticationResult.Principal is null)
+        {
+            return IssuerAuthenticationFlow.ChallengeIssuerLogin(httpContext);
+        }
+
+        if (await ValidateExitRequestAsync(authenticationResult.Principal, userManager, bridgeCommand.ActorUserId) is { } validationResult)
+        {
+            return validationResult;
+        }
+
+        var originalUser = await userManager.FindByIdAsync(bridgeCommand.ActorUserId.ToString());
+        if (originalUser is null)
+        {
+            return Result.Unauthorized(
+                    "Authentication failed.",
+                    "The original super administrator session could not be restored.")
+                .ToApiErrorResult();
+        }
+
+        if (AuthPrincipalReader.IsImpersonating(authenticationResult.Principal))
+        {
+            await signInManager.SignInAsync(originalUser, isPersistent: false);
+        }
+
+        return Results.Redirect(impersonationBridge.BuildAuthorizeUrl(bridgeCommand));
+    }
+
+    private static async Task<IResult?> ValidateExitRequestAsync(
+        ClaimsPrincipal user,
+        UserManager<ApplicationUser> userManager,
+        Guid? expectedOriginalUserId = null)
     {
         var originalUserId = AuthPrincipalReader.GetImpersonationOriginalUserId(user);
-        if (!AuthPrincipalReader.IsImpersonating(user) || !originalUserId.HasValue)
+        var currentUserId = AuthPrincipalReader.GetUserId(user);
+        var expectedOriginalUserIdString = expectedOriginalUserId?.ToString();
+
+        if (AuthPrincipalReader.IsImpersonating(user))
+        {
+            if (!originalUserId.HasValue
+                || expectedOriginalUserId.HasValue && originalUserId.Value != expectedOriginalUserId.Value)
+            {
+                return Result.Unauthorized(
+                        "Authentication failed.",
+                        "The issuer impersonation session did not match the original administrator.")
+                    .ToApiErrorResult();
+            }
+        }
+        else if (expectedOriginalUserId.HasValue)
+        {
+            if (!string.Equals(currentUserId, expectedOriginalUserIdString, StringComparison.OrdinalIgnoreCase))
+            {
+                return Result.Unauthorized(
+                        "Authentication failed.",
+                        "The issuer login did not match the original administrator.")
+                    .ToApiErrorResult();
+            }
+        }
+        else
         {
             return Result.Validation(
                     ResultErrors.Validation(
@@ -37,7 +118,8 @@ public static class ExitImpersonationHandler
                 .ToApiErrorResult();
         }
 
-        var originalUser = await userManager.FindByIdAsync(originalUserId.Value.ToString());
+        var resolvedOriginalUserId = expectedOriginalUserId ?? originalUserId!.Value;
+        var originalUser = await userManager.FindByIdAsync(resolvedOriginalUserId.ToString());
         if (originalUser is null || !originalUser.IsActive)
         {
             return Result.Unauthorized(
@@ -46,42 +128,6 @@ public static class ExitImpersonationHandler
                 .ToApiErrorResult();
         }
 
-        var originalRolesResult = await userRoleRepository.GetActiveNormalizedRoleNamesForUserAsync(
-            new GetActiveNormalizedRoleNamesForUserRequest(originalUser.Id, originalUser.WorkspaceId),
-            cancellationToken);
-        await signInManager.SignInAsync(originalUser, isPersistent: false);
-
-        var tokenPrincipal = AuthSessionPrincipalFactory.Create(
-            originalUser,
-            originalRolesResult.Value?.NormalizedRoleNames ?? [],
-            oidcOptions.Value.GetFirstPartyScopes());
-        var tokenResult = await tokenClient.IssueTokensAsync(
-            tokenPrincipal,
-            httpContext.BuildFirstPartyRedirectUri(),
-            cancellationToken);
-        if (tokenResult is null)
-        {
-            return Result.Failure(
-                    StatusCodes.Status500InternalServerError,
-                    ResultErrors.Server(
-                        "Impersonation failed.",
-                        "The original first-party session could not be restored."))
-                .ToApiErrorResult();
-        }
-
-        httpContext.Response.Cookies.Append(
-            AuthCookieNames.Refresh,
-            tokenResult.RefreshToken,
-            new CookieOptions
-            {
-                HttpOnly = true,
-                IsEssential = true,
-                SameSite = SameSiteMode.Lax,
-                Secure = httpContext.Request.IsHttps
-            });
-
-        return Result<ExchangeWebSessionResponse>.Success(
-                new ExchangeWebSessionResponse(tokenResult.AccessToken, tokenResult.ExpiresAt))
-            .ToApiResult();
+        return null;
     }
 }

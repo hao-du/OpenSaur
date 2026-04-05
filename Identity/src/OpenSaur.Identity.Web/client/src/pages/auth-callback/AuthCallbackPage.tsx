@@ -35,10 +35,28 @@ function exchangeSessionOnce(
   return request;
 }
 
+function resolveRememberedReturnUrl(searchParams: URLSearchParams) {
+  return readFirstPartyAuthorizationReturnUrl(searchParams.get("state"))
+    ?? normalizeAuthReturnUrl(authSessionStore.getRememberedReturnUrl());
+}
+
+function buildLoginRedirectUrl(returnUrl: string, authError?: string) {
+  const loginSearchParams = new URLSearchParams({
+    returnUrl
+  });
+
+  if (authError) {
+    loginSearchParams.set("authError", authError);
+  }
+
+  return `/login?${loginSearchParams.toString()}`;
+}
+
 export function AuthCallbackPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const authorizationCode = searchParams.get("code");
+  const rememberedReturnUrl = resolveRememberedReturnUrl(searchParams);
   const { clearCurrentUser, fetchCurrentUser } = useCurrentUserQuery();
   const { exchangeSession } = useExchangeWebSession();
   const syncAuthenticatedPreferences = useSyncAuthenticatedPreferences();
@@ -48,15 +66,9 @@ export function AuthCallbackPage() {
     let isCancelled = false;
 
     async function completeSignIn() {
-      const rememberedReturnUrl = readFirstPartyAuthorizationReturnUrl(searchParams.get("state"))
-        ?? normalizeAuthReturnUrl(authSessionStore.getRememberedReturnUrl());
-      const loginSearchParams = new URLSearchParams({
-        returnUrl: rememberedReturnUrl
-      });
-
       if (!authorizationCode) {
         authSessionStore.clearRememberedReturnUrl();
-        navigate(`/login?${loginSearchParams.toString()}`, {
+        navigate(buildLoginRedirectUrl(rememberedReturnUrl), {
           replace: true
         });
         return;
@@ -87,8 +99,7 @@ export function AuthCallbackPage() {
       } catch {
         clearCurrentUser();
         authSessionStore.clearSession();
-        loginSearchParams.set("authError", "exchange_failed");
-        navigate(`/login?${loginSearchParams.toString()}`, {
+        navigate(buildLoginRedirectUrl(rememberedReturnUrl, "exchange_failed"), {
           replace: true
         });
       }
@@ -99,7 +110,7 @@ export function AuthCallbackPage() {
     return () => {
       isCancelled = true;
     };
-  }, [authorizationCode, clearCurrentUser, exchangeSession, fetchCurrentUser, navigate, searchParams, syncAuthenticatedPreferences]);
+  }, [authorizationCode, clearCurrentUser, exchangeSession, fetchCurrentUser, navigate, rememberedReturnUrl, syncAuthenticatedPreferences]);
 
   return (
     <AuthPageTemplate

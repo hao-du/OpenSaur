@@ -35,16 +35,7 @@ public static class ExchangeWebSessionHandler
                 .ToApiErrorResult();
         }
 
-        httpContext.Response.Cookies.Append(
-            AuthCookieNames.Refresh,
-            tokenResult.RefreshToken,
-            new CookieOptions
-            {
-                HttpOnly = true,
-                IsEssential = true,
-                SameSite = SameSiteMode.Lax,
-                Secure = httpContext.Request.IsHttps
-            });
+        httpContext.AppendFirstPartyRefreshToken(tokenResult.RefreshToken);
 
         return Result<ExchangeWebSessionResponse>.Success(
                 new ExchangeWebSessionResponse(tokenResult.AccessToken, tokenResult.ExpiresAt))

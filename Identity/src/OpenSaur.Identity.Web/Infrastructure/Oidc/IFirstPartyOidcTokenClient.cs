@@ -1,5 +1,3 @@
-using System.Security.Claims;
-
 namespace OpenSaur.Identity.Web.Infrastructure.Oidc;
 
 public interface IFirstPartyOidcTokenClient
@@ -9,14 +7,8 @@ public interface IFirstPartyOidcTokenClient
         string redirectUri,
         CancellationToken cancellationToken);
 
-    Task<FirstPartyOidcTokenResult?> IssueTokensAsync(
-        ClaimsPrincipal principal,
-        string redirectUri,
-        CancellationToken cancellationToken);
-
     Task<FirstPartyOidcTokenResult?> RefreshAccessTokenAsync(
         string refreshToken,
-        string redirectUri,
         CancellationToken cancellationToken);
 }
 
