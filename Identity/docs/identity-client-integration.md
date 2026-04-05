@@ -160,6 +160,22 @@ Each client should own:
 
 This keeps the platform stable while allowing different app types to integrate cleanly.
 
+## Access Token Permission Claims
+
+Downstream clients should prefer permission claims from the issuer access token over direct database reads.
+
+Current contract:
+
+- claim type: `permissions`
+- repeated claim values
+- each value is a canonical permission-code string, for example `Administrator.CanManage`
+
+Guidance:
+
+- use `roles` and `permissions` from the access token for routine authorization decisions
+- treat those claims as the issuer's effective permission snapshot for the current workspace or impersonation context
+- do not couple downstream apps to Identity permission table ids or internal database joins unless there is a separate reporting/admin need
+
 ## Runtime Configuration Boundary
 
 Clients that reuse this shell code should not bake issuer hostnames or callback assumptions into a static frontend bundle.

@@ -301,6 +301,21 @@ External first-party mode:
 - in-memory access token: yes, on the client host
 - client refresh cookie: yes, on the client host
 
+## Access Token Claims
+
+When the issued token includes the `api` scope, the access token now carries:
+
+- `sub`
+- `name`
+- `preferred_username`
+- `email` when email scope is granted
+- repeated `roles` claims when roles scope is granted
+- repeated `permissions` claims with canonical permission-code strings such as `Administrator.CanManage`
+- `workspace_id`
+- password-change and impersonation state claims when applicable
+
+The `permissions` claim is emitted from the issuer's effective DB-backed permission model and respects the active workspace or impersonation context. This lets downstream apps authorize against the token itself without querying the Identity database directly.
+
 Important boundary:
 
 - the issuer host and a localhost client do not share cookies or localStorage
