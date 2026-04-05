@@ -5,7 +5,7 @@ import { useCurrentUserQuery } from "./useCurrentUserQuery";
 import { useRefreshWebSession } from "./useRefreshWebSession";
 import { authSessionStore, sessionSyncStorageKey } from "../state/authSessionStore";
 import { useAuthSession } from "../state/useAuthSession";
-import { normalizeAuthReturnUrl, shouldEnforcePasswordChange } from "../utils";
+import { isCurrentAppHostedByIssuer, normalizeAuthReturnUrl, shouldEnforcePasswordChange } from "../utils";
 import { useSyncAuthenticatedPreferences } from "../../preferences/hooks";
 
 const refreshLeadTimeInMilliseconds = 5 * 60 * 1000;
@@ -28,17 +28,25 @@ export function useAuthBootstrap() {
   const { clearCurrentUser, fetchCurrentUser } = useCurrentUserQuery();
   const { refreshSession } = useRefreshWebSession();
   const syncAuthenticatedPreferences = useSyncAuthenticatedPreferences();
+  const isIssuerHostedApp = isCurrentAppHostedByIssuer();
   const [isBootstrapping, setIsBootstrapping] = useState(
     () => session.status !== "authenticated" && !isPublicAuthRoute(location.pathname)
   );
 
-  const refreshAuthenticatedUser = useCallback(async () => {
-    const refreshedSession = await refreshSession();
-    authSessionStore.setAuthenticatedSession(refreshedSession);
+  const restoreAuthenticatedUser = useCallback(async () => {
+    if (!isIssuerHostedApp) {
+      const refreshedSession = await refreshSession();
+      authSessionStore.setAuthenticatedSession(refreshedSession);
+    }
+
     const currentUser = await fetchCurrentUser();
+    if (isIssuerHostedApp) {
+      authSessionStore.setCookieAuthenticatedSession();
+    }
+
     await syncAuthenticatedPreferences();
     return currentUser;
-  }, [fetchCurrentUser, refreshSession, syncAuthenticatedPreferences]);
+  }, [fetchCurrentUser, isIssuerHostedApp, refreshSession, syncAuthenticatedPreferences]);
 
   useEffect(() => {
     if (authSessionStore.getSnapshot().status === "authenticated" || isPublicAuthRoute(location.pathname)) {
@@ -51,7 +59,7 @@ export function useAuthBootstrap() {
 
     async function bootstrapProtectedRoute() {
       try {
-        const currentUser = await refreshAuthenticatedUser();
+        const currentUser = await restoreAuthenticatedUser();
         if (isCancelled) {
           return;
         }
@@ -91,7 +99,7 @@ export function useAuthBootstrap() {
     return () => {
       isCancelled = true;
     };
-  }, [clearCurrentUser, location, navigate, refreshAuthenticatedUser]);
+  }, [clearCurrentUser, location, navigate, restoreAuthenticatedUser]);
 
   useEffect(() => {
     if (session.status !== "authenticated" || !session.expiresAt) {
@@ -111,7 +119,7 @@ export function useAuthBootstrap() {
     let isCancelled = false;
     const timeoutId = window.setTimeout(async () => {
       try {
-        const currentUser = await refreshAuthenticatedUser();
+        const currentUser = await restoreAuthenticatedUser();
         if (isCancelled) {
           return;
         }
@@ -143,7 +151,7 @@ export function useAuthBootstrap() {
       isCancelled = true;
       window.clearTimeout(timeoutId);
     };
-  }, [clearCurrentUser, location, navigate, refreshAuthenticatedUser, session.expiresAt, session.status]);
+  }, [clearCurrentUser, location, navigate, restoreAuthenticatedUser, session.expiresAt, session.status]);
 
   useEffect(() => {
     async function handleStorageEvent(event: StorageEvent) {
@@ -178,7 +186,7 @@ export function useAuthBootstrap() {
       }
 
       try {
-        const currentUser = await refreshAuthenticatedUser();
+        const currentUser = await restoreAuthenticatedUser();
 
         if (shouldEnforcePasswordChange(currentUser) && location.pathname !== changePasswordRoute) {
           const returnUrl = resolvePostLoginReturnUrl(location);
@@ -204,7 +212,7 @@ export function useAuthBootstrap() {
     return () => {
       window.removeEventListener("storage", handleStorageEvent);
     };
-  }, [clearCurrentUser, location, navigate, refreshAuthenticatedUser]);
+  }, [clearCurrentUser, location, navigate, restoreAuthenticatedUser]);
 
   return {
     isBootstrapping,

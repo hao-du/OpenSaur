@@ -95,10 +95,17 @@ public sealed class FirstPartyImpersonationBridge(IOptions<OidcOptions> oidcOpti
         };
     }
 
+    public string BuildCompletionUrl(ImpersonationBridgeCommand command)
+    {
+        return IsIssuerHostedRedirectUri(command.RedirectUri)
+            ? BuildIssuerHostedReturnUrl(command.ReturnUrl)
+            : BuildAuthorizeUrl(command);
+    }
+
     public string BuildAuthorizeUrl(ImpersonationBridgeCommand command)
     {
         var firstPartyClient = oidcOptions.Value.GetFirstPartyClient(command.RedirectUri);
-        var authorizeUri = new Uri(GetIssuerBaseUri(), "connect/authorize");
+        var authorizeUri = new Uri(oidcOptions.Value.GetIssuerBaseUri(), "connect/authorize");
         var query = new QueryBuilder
         {
             { "client_id", firstPartyClient.ClientId },
@@ -114,9 +121,35 @@ public sealed class FirstPartyImpersonationBridge(IOptions<OidcOptions> oidcOpti
         }.Uri.AbsoluteUri;
     }
 
+    private string BuildIssuerHostedReturnUrl(string returnUrl)
+    {
+        return new Uri(oidcOptions.Value.GetIssuerBaseUri(), returnUrl.TrimStart('/')).AbsoluteUri;
+    }
+
+    private bool IsIssuerHostedRedirectUri(string redirectUri)
+    {
+        if (!Uri.TryCreate(redirectUri, UriKind.Absolute, out var redirectUriValue))
+        {
+            return false;
+        }
+
+        var issuerBaseUri = oidcOptions.Value.GetIssuerBaseUri();
+        var hostedCallbackBasePath = redirectUriValue.AbsolutePath.EndsWith("/auth/callback", StringComparison.OrdinalIgnoreCase)
+            ? redirectUriValue.AbsolutePath[..^"/auth/callback".Length]
+            : redirectUriValue.AbsolutePath;
+
+        return string.Equals(redirectUriValue.Scheme, issuerBaseUri.Scheme, StringComparison.OrdinalIgnoreCase)
+               && string.Equals(redirectUriValue.Host, issuerBaseUri.Host, StringComparison.OrdinalIgnoreCase)
+               && redirectUriValue.Port == issuerBaseUri.Port
+               && string.Equals(
+                   TrimTrailingSlash(hostedCallbackBasePath),
+                   TrimTrailingSlash(issuerBaseUri.AbsolutePath),
+                   StringComparison.OrdinalIgnoreCase);
+    }
+
     private string BuildIssuerCommandUrl(string relativePath, string token)
     {
-        var commandUri = new Uri(GetIssuerBaseUri(), relativePath);
+        var commandUri = new Uri(oidcOptions.Value.GetIssuerBaseUri(), relativePath);
         var query = new QueryBuilder
         {
             { "command", token }
@@ -145,18 +178,6 @@ public sealed class FirstPartyImpersonationBridge(IOptions<OidcOptions> oidcOpti
         var signatureBytes = Sign(payloadBytes);
 
         return $"{Base64UrlTextEncoder.Encode(payloadBytes)}.{Base64UrlTextEncoder.Encode(signatureBytes)}";
-    }
-
-    private Uri GetIssuerBaseUri()
-    {
-        if (!Uri.TryCreate(oidcOptions.Value.Issuer, UriKind.Absolute, out var issuerUri))
-        {
-            throw new InvalidOperationException("OIDC issuer configuration is invalid.");
-        }
-
-        return issuerUri.AbsoluteUri.EndsWith("/", StringComparison.Ordinal)
-            ? issuerUri
-            : new Uri($"{issuerUri.AbsoluteUri}/", UriKind.Absolute);
     }
 
     private static string CreateAuthorizeState(string returnUrl)
@@ -188,6 +209,17 @@ public sealed class FirstPartyImpersonationBridge(IOptions<OidcOptions> oidcOpti
         {
             return "/";
         }
+    }
+
+    private static string TrimTrailingSlash(string path)
+    {
+        var trimmedPath = path.Trim();
+        if (trimmedPath.Length == 0 || trimmedPath == "/")
+        {
+            return "/";
+        }
+
+        return trimmedPath.TrimEnd('/');
     }
 
     public sealed record ImpersonationBridgeCommand(

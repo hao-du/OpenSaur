@@ -76,7 +76,7 @@ public static class ExitImpersonationHandler
             await signInManager.SignInAsync(originalUser, isPersistent: false);
         }
 
-        return Results.Redirect(impersonationBridge.BuildAuthorizeUrl(bridgeCommand));
+        return Results.Redirect(impersonationBridge.BuildCompletionUrl(bridgeCommand));
     }
 
     private static async Task<IResult?> ValidateExitRequestAsync(

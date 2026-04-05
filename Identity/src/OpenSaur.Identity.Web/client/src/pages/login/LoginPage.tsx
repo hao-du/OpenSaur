@@ -51,6 +51,11 @@ export function LoginPage() {
         return;
       }
 
+      if (isIssuerHostedLogin) {
+        window.location.assign(normalizedReturnUrl);
+        return;
+      }
+
       startFirstPartyAuthorization(authorizeUrl);
     } catch {
       setErrorMessage(t("login.error"));

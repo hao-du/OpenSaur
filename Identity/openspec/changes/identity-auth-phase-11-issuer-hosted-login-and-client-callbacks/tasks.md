@@ -16,6 +16,8 @@
 - [x] 3.3 Preserve return-url, callback completion, refresh-cookie custody, and logout behavior for the hosted Identity admin shell under the new issuer/client contract
 - [x] 3.4 Route impersonation start and exit through issuer-hosted browser round-trips instead of local token issuance shortcuts
 - [x] 3.5 Localize issuer handoff, callback, and exchange-failure states from the current host's preference cache and document the origin-scoped preference boundary
+- [x] 3.6 Reuse the issuer cookie directly when the current host equals `Oidc:Issuer`, and reserve backend-assisted callback exchange for non-issuer hosts
+- [x] 3.7 Serve frontend auth runtime settings from the backend so issuer/client behavior does not depend on build-time hostname defaults
 
 ## 4. Verification
 

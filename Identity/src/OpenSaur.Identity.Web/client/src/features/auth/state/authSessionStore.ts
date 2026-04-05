@@ -102,6 +102,16 @@ export const authSessionStore = {
     broadcastSessionChange("refresh");
   },
 
+  setCookieAuthenticatedSession() {
+    snapshot = {
+      accessToken: null,
+      expiresAt: null,
+      status: "authenticated"
+    };
+
+    notifyListeners();
+  },
+
   setAuthenticatedSession(session: AuthenticatedSession) {
     snapshot = {
       accessToken: session.accessToken,

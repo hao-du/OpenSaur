@@ -53,6 +53,7 @@ app.UseRateLimiter();
 app.UseMiddleware<IdempotencyMiddleware>();
 
 app.MapOpenSaurEndpoints();
+app.MapShellRuntimeConfig();
 if (serveBuiltShell)
 {
     app.MapShellRoutes();

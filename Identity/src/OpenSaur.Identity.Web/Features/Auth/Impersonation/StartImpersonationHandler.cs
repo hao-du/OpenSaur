@@ -131,7 +131,7 @@ public static class StartImpersonationHandler
 
         await signInManager.SignInWithClaimsAsync(effectiveUser, isPersistent: false, additionalClaims);
 
-        return Results.Redirect(impersonationBridge.BuildAuthorizeUrl(bridgeCommand));
+        return Results.Redirect(impersonationBridge.BuildCompletionUrl(bridgeCommand));
     }
 
     private static async Task<IResult?> ValidateStartRequestAsync(

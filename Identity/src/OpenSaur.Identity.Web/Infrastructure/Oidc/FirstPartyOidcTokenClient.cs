@@ -1,6 +1,7 @@
 using System.Net.Http.Headers;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using static OpenIddict.Abstractions.OpenIddictConstants;
 
@@ -11,13 +12,16 @@ public sealed class FirstPartyOidcTokenClient : IFirstPartyOidcTokenClient
     private static readonly JsonSerializerOptions TokenResponseSerializerOptions = new(JsonSerializerDefaults.Web);
 
     private readonly HttpClient _httpClient;
+    private readonly ILogger<FirstPartyOidcTokenClient> _logger;
     private readonly IOptions<OidcOptions> _oidcOptions;
 
     public FirstPartyOidcTokenClient(
         HttpClient httpClient,
+        ILogger<FirstPartyOidcTokenClient> logger,
         IOptions<OidcOptions> oidcOptions)
     {
         _httpClient = httpClient;
+        _logger = logger;
         _oidcOptions = oidcOptions;
     }
 
@@ -67,30 +71,52 @@ public sealed class FirstPartyOidcTokenClient : IFirstPartyOidcTokenClient
         };
         request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
-        using var response = await _httpClient.SendAsync(request, cancellationToken);
-        if (!response.IsSuccessStatusCode)
+        HttpResponseMessage response;
+        try
         {
-            return null;
+            response = await _httpClient.SendAsync(request, cancellationToken);
+        }
+        catch (Exception exception)
+        {
+            _logger.LogError(
+                exception,
+                "OIDC first-party token request to {TokenEndpoint} failed.",
+                new Uri(_httpClient.BaseAddress!, request.RequestUri!).AbsoluteUri);
+            throw;
         }
 
-        var tokenResponse = await response.Content.ReadFromJsonAsync<OidcTokenResponse>(
-            TokenResponseSerializerOptions,
-            cancellationToken);
-        if (tokenResponse is null
-            || string.IsNullOrWhiteSpace(tokenResponse.AccessToken)
-            || string.IsNullOrWhiteSpace(tokenResponse.RefreshToken))
+        using (response)
         {
-            return null;
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogWarning(
+                    "OIDC first-party token request to {TokenEndpoint} failed with status code {StatusCode}.",
+                    request.RequestUri is null
+                        ? "connect/token"
+                        : new Uri(_httpClient.BaseAddress!, request.RequestUri).AbsoluteUri,
+                    (int)response.StatusCode);
+                return null;
+            }
+
+            var tokenResponse = await response.Content.ReadFromJsonAsync<OidcTokenResponse>(
+                TokenResponseSerializerOptions,
+                cancellationToken);
+            if (tokenResponse is null
+                || string.IsNullOrWhiteSpace(tokenResponse.AccessToken)
+                || string.IsNullOrWhiteSpace(tokenResponse.RefreshToken))
+            {
+                return null;
+            }
+
+            var expiresAt = tokenResponse.ExpiresIn > 0
+                ? DateTimeOffset.UtcNow.AddSeconds(tokenResponse.ExpiresIn)
+                : DateTimeOffset.UtcNow.Add(OidcDefaults.AccessTokenLifetime);
+
+            return new FirstPartyOidcTokenResult(
+                tokenResponse.AccessToken,
+                tokenResponse.RefreshToken,
+                expiresAt);
         }
-
-        var expiresAt = tokenResponse.ExpiresIn > 0
-            ? DateTimeOffset.UtcNow.AddSeconds(tokenResponse.ExpiresIn)
-            : DateTimeOffset.UtcNow.Add(OidcDefaults.AccessTokenLifetime);
-
-        return new FirstPartyOidcTokenResult(
-            tokenResponse.AccessToken,
-            tokenResponse.RefreshToken,
-            expiresAt);
     }
 
     private FirstPartyClientOidcOptions GetConfiguredFirstPartyClient(
@@ -106,6 +132,7 @@ public sealed class FirstPartyOidcTokenClient : IFirstPartyOidcTokenClient
 
         return browserClient;
     }
+
     private sealed class OidcTokenResponse
     {
         [JsonPropertyName("access_token")]

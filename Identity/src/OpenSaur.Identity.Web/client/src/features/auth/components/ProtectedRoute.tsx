@@ -11,7 +11,7 @@ export function ProtectedRoute({ children }: PropsWithChildren) {
   const location = useLocation();
   const session = useAuthSession();
 
-  if (session.status !== "authenticated" || !session.accessToken) {
+  if (session.status !== "authenticated") {
     const returnUrl = buildReturnUrl(location);
     authSessionStore.rememberReturnUrl(returnUrl);
 

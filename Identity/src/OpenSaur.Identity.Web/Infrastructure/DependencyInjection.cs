@@ -221,12 +221,24 @@ public static class DependencyInjection
             {
                 OnRedirectToLogin = context =>
                 {
+                    if (ShouldReturnApiStatusCode(context.Request.Path, context.Request.Method))
+                    {
+                        context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                        return Task.CompletedTask;
+                    }
+
                     var oidcOptions = context.HttpContext.RequestServices.GetRequiredService<IOptions<OidcOptions>>().Value;
                     context.Response.Redirect(BuildIssuerHostedLoginRedirectUri(context, oidcOptions));
+                    return Task.CompletedTask;
+                },
+                OnRedirectToAccessDenied = context =>
+                {
+                    context.Response.StatusCode = StatusCodes.Status403Forbidden;
                     return Task.CompletedTask;
                 }
             };
         });
+        services.AddScoped<IClaimsTransformation, IdentitySessionClaimsTransformation>();
         services.AddAuthentication(options =>
             {
                 options.DefaultAuthenticateScheme = IdentityConstants.ApplicationScheme;
@@ -252,7 +264,9 @@ public static class DependencyInjection
                 AuthorizationPolicies.Api,
                 policy =>
                 {
-                    policy.AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme);
+                    policy.AddAuthenticationSchemes(
+                        IdentityConstants.ApplicationScheme,
+                        JwtBearerDefaults.AuthenticationScheme);
                     policy.RequireAuthenticatedUser();
                 });
         });
@@ -273,7 +287,7 @@ public static class DependencyInjection
         services.AddHttpClient<IFirstPartyOidcTokenClient, FirstPartyOidcTokenClient>((serviceProvider, client) =>
         {
             var oidcOptions = serviceProvider.GetRequiredService<IOptions<OidcOptions>>().Value;
-            client.BaseAddress = BuildIssuerBaseUri(oidcOptions.Issuer);
+            client.BaseAddress = oidcOptions.GetIssuerBaseUri();
         });
         services.AddSingleton<IdempotencyCacheStore>();
         services.AddSingleton<IdempotencyRequestLockProvider>();
@@ -293,16 +307,11 @@ public static class DependencyInjection
         RedirectContext<CookieAuthenticationOptions> context,
         OidcOptions oidcOptions)
     {
-        var issuerUri = TryBuildIssuerBaseUri(oidcOptions.Issuer);
-        if (issuerUri is null)
-        {
-            return context.RedirectUri;
-        }
-
         var originalRedirectUri = new Uri(context.RedirectUri, UriKind.Absolute);
         var issuerHostedLoginPath = CombinePathSegments(
-            context.Request.PathBase.HasValue ? context.Request.PathBase.Value : issuerUri.AbsolutePath,
+            oidcOptions.GetIssuerBaseUri().AbsolutePath,
             context.Options.LoginPath.Value);
+        var issuerUri = oidcOptions.GetIssuerBaseUri();
 
         var issuerHostedLoginUri = new UriBuilder(issuerUri.Scheme, issuerUri.Host, issuerUri.IsDefaultPort ? -1 : issuerUri.Port)
         {
@@ -313,22 +322,15 @@ public static class DependencyInjection
         return issuerHostedLoginUri.Uri.AbsoluteUri;
     }
 
-    private static Uri BuildIssuerBaseUri(string issuer)
+    private static bool ShouldReturnApiStatusCode(PathString requestPath, string requestMethod)
     {
-        return TryBuildIssuerBaseUri(issuer)
-            ?? throw new InvalidOperationException("OIDC issuer configuration is invalid.");
-    }
-
-    private static Uri? TryBuildIssuerBaseUri(string issuer)
-    {
-        if (!Uri.TryCreate(issuer, UriKind.Absolute, out var issuerUri))
+        if (!requestPath.StartsWithSegments("/api", StringComparison.OrdinalIgnoreCase))
         {
-            return null;
+            return false;
         }
 
-        return issuerUri.AbsoluteUri.EndsWith("/", StringComparison.Ordinal)
-            ? issuerUri
-            : new Uri($"{issuerUri.AbsoluteUri}/", UriKind.Absolute);
+        return !string.Equals(requestMethod, HttpMethods.Get, StringComparison.OrdinalIgnoreCase)
+               || !requestPath.StartsWithSegments("/api/auth/impersonation", StringComparison.OrdinalIgnoreCase);
     }
 
     private static string CombinePathSegments(string? left, string? right)

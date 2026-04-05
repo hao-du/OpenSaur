@@ -1,11 +1,15 @@
+using System.Text.Json;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.FileProviders;
+using Microsoft.Extensions.Options;
+using OpenSaur.Identity.Web.Infrastructure.Oidc;
 
 namespace OpenSaur.Identity.Web.Infrastructure.Hosting;
 
 public static class FrontendAppRoutes
 {
+    private static readonly JsonSerializerOptions RuntimeConfigSerializerOptions = new(JsonSerializerDefaults.Web);
     private static readonly string[] ShellRoutes =
     [
         "/",
@@ -30,6 +34,14 @@ public static class FrontendAppRoutes
         return !environment.IsDevelopment() || HasBuiltShell(environment);
     }
 
+    public static IEndpointRouteBuilder MapShellRuntimeConfig(this IEndpointRouteBuilder app)
+    {
+        app.MapGet("/app-config.js", ServeRuntimeConfigAsync)
+            .AllowAnonymous();
+
+        return app;
+    }
+
     public static IEndpointRouteBuilder MapShellRoutes(this IEndpointRouteBuilder app)
     {
         foreach (var route in ShellRoutes)
@@ -39,6 +51,25 @@ public static class FrontendAppRoutes
         }
 
         return app;
+    }
+
+    private static IResult ServeRuntimeConfigAsync(HttpContext httpContext, IOptions<OidcOptions> oidcOptionsAccessor)
+    {
+        var oidcOptions = oidcOptionsAccessor.Value;
+        var firstPartyClient = oidcOptions.GetFirstPartyClient();
+        var runtimeConfig = new FrontendRuntimeConfig(
+            AppName: "OpenSaur Identity",
+            BasePath: NormalizeBasePath(httpContext.Request.PathBase.Value),
+            FirstPartyAuth: new FrontendRuntimeFirstPartyAuth(
+                oidcOptions.Issuer,
+                firstPartyClient.ClientId,
+                httpContext.BuildFirstPartyRedirectUri(),
+                firstPartyClient.Scope,
+                oidcOptions.IsIssuerHostedRequest(httpContext.Request)));
+
+        return TypedResults.Text(
+            $"window.__OPENSAUR_IDENTITY_CONFIG__ = Object.freeze({JsonSerializer.Serialize(runtimeConfig, RuntimeConfigSerializerOptions)});",
+            "application/javascript; charset=utf-8");
     }
 
     private static Task<IResult> ServeShellAsync(IWebHostEnvironment environment)
@@ -61,4 +92,29 @@ public static class FrontendAppRoutes
     {
         return environment.WebRootFileProvider.GetFileInfo("index.html");
     }
+
+    private static string NormalizeBasePath(string? basePath)
+    {
+        var trimmedBasePath = basePath?.Trim() ?? string.Empty;
+        if (trimmedBasePath.Length == 0 || trimmedBasePath == "/")
+        {
+            return "/";
+        }
+
+        return trimmedBasePath.StartsWith("/", StringComparison.Ordinal)
+            ? trimmedBasePath.TrimEnd('/')
+            : $"/{trimmedBasePath.TrimEnd('/')}";
+    }
+
+    private sealed record FrontendRuntimeConfig(
+        string AppName,
+        string BasePath,
+        FrontendRuntimeFirstPartyAuth FirstPartyAuth);
+
+    private sealed record FrontendRuntimeFirstPartyAuth(
+        string Issuer,
+        string ClientId,
+        string RedirectUri,
+        string Scope,
+        bool IsIssuerHostedApp);
 }

@@ -1,21 +1,69 @@
-function resolveFirstPartyRedirectUri() {
-  const fallbackRedirectUri = import.meta.env.VITE_FIRST_PARTY_OIDC_REDIRECT_URI
-    ?? "https://app.duchihao.com/identity/auth/callback";
+type OpenSaurIdentityRuntimeConfig = {
+  appName: string;
+  basePath: string;
+  firstPartyAuth: {
+    issuer: string;
+    clientId: string;
+    redirectUri: string;
+    scope: string;
+    isIssuerHostedApp: boolean;
+  };
+};
 
-  if (typeof window === "undefined") {
-    return fallbackRedirectUri;
+declare global {
+  interface Window {
+    __OPENSAUR_IDENTITY_CONFIG__?: OpenSaurIdentityRuntimeConfig;
   }
-
-  return new URL("auth/callback", new URL(import.meta.env.BASE_URL ?? "/", window.location.origin)).toString();
 }
 
+function normalizeBasePath(basePath: string) {
+  const trimmedBasePath = basePath.trim();
+  if (trimmedBasePath.length === 0 || trimmedBasePath === "/") {
+    return "/";
+  }
+
+  const withoutTrailingSlash = trimmedBasePath.endsWith("/")
+    ? trimmedBasePath.slice(0, -1)
+    : trimmedBasePath;
+
+  return withoutTrailingSlash.startsWith("/")
+    ? withoutTrailingSlash
+    : `/${withoutTrailingSlash}`;
+}
+
+function getRuntimeConfig(): OpenSaurIdentityRuntimeConfig {
+  if (typeof window === "undefined") {
+    return {
+      appName: "OpenSaur Identity",
+      basePath: "/identity",
+      firstPartyAuth: {
+        issuer: "http://localhost/identity",
+        clientId: "first-party-web",
+        redirectUri: "http://localhost/identity/auth/callback",
+        scope: "openid profile email roles offline_access api",
+        isIssuerHostedApp: false
+      }
+    };
+  }
+
+  const runtimeConfig = window.__OPENSAUR_IDENTITY_CONFIG__;
+  if (!runtimeConfig) {
+    throw new Error("OpenSaur Identity runtime configuration is missing.");
+  }
+
+  return runtimeConfig;
+}
+
+const runtimeConfig = getRuntimeConfig();
+
 export const appEnvironment = {
-  appName: "OpenSaur Identity",
-  basePath: import.meta.env.BASE_URL ?? "/",
+  appName: runtimeConfig.appName,
+  basePath: normalizeBasePath(runtimeConfig.basePath),
   firstPartyAuth: {
-    issuer: import.meta.env.VITE_FIRST_PARTY_OIDC_ISSUER ?? "https://app.duchihao.com/identity",
-    clientId: import.meta.env.VITE_FIRST_PARTY_OIDC_CLIENT_ID ?? "first-party-web",
-    redirectUri: resolveFirstPartyRedirectUri(),
-    scope: import.meta.env.VITE_FIRST_PARTY_OIDC_SCOPE ?? "openid profile email roles offline_access api"
+    issuer: runtimeConfig.firstPartyAuth.issuer,
+    clientId: runtimeConfig.firstPartyAuth.clientId,
+    redirectUri: runtimeConfig.firstPartyAuth.redirectUri,
+    scope: runtimeConfig.firstPartyAuth.scope,
+    isIssuerHostedApp: runtimeConfig.firstPartyAuth.isIssuerHostedApp
   }
 };

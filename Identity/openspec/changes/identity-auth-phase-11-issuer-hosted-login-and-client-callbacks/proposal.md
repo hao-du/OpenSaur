@@ -8,7 +8,9 @@ Standard OIDC usage is cleaner: the issuer owns the hosted login experience and 
 
 - Move browser credential-entry responsibility to the issuer configured by `Oidc:Issuer` instead of assuming each app collects credentials on its own host.
 - Replace the current single `Oidc:FirstPartyWeb` callback assumption with an explicit first-party client configuration that allows multiple exact registered redirect URI(s) and post-logout redirect URI(s).
-- Update the hosted first-party auth shell so OIDC authorization requests always target the configured issuer and only use callback URIs that are explicitly registered for the shared first-party client.
+- Update the hosted first-party auth shell so non-issuer hosts use OIDC authorization against the configured issuer while the issuer host itself reuses its local ASP.NET Identity cookie directly instead of running `/connect/authorize` against itself.
+- Serve issuer/client runtime auth settings from the backend so the frontend shell does not hardcode deployment-specific issuer hostnames or callback defaults at build time.
+- Document the client categories explicitly so future SPA, same-origin different-path, subdomain, and backend-managed apps all follow the same issuer/client contract instead of host-specific one-off rules.
 - Preserve hosted SSO across registered callback URIs by reusing the issuer session when policy allows.
 - Route impersonation start and exit through issuer-hosted browser round-trips so the issuer remains the only source of truth for session mutation.
 - Keep issuer-handoff, callback, and exchange-failure UI states localized from the current host's cached preferences, and sync authenticated user settings back into that host after callback completion.
@@ -17,8 +19,8 @@ Standard OIDC usage is cleaner: the issuer owns the hosted login experience and 
 ## Capabilities
 
 ### Modified Capabilities
-- `identity-authentication`: Browser authentication moves to an issuer-hosted login model with exact registered first-party callback URIs, hosted-session reuse across those callback URIs, and issuer-hosted impersonation round-trips.
-- `identity-fe-auth-shell`: The hosted auth shell targets the configured issuer, uses only registered callback URIs, treats impersonation as a full issuer/browser redirect flow instead of an in-place token swap, and keeps issuer-handoff states localized from the current host's preference cache.
+- `identity-authentication`: Browser authentication moves to an issuer-hosted login model with exact registered first-party callback URIs, hosted-session reuse across those callback URIs, direct issuer-cookie reuse on the issuer host, and issuer-hosted impersonation round-trips.
+- `identity-fe-auth-shell`: The hosted auth shell targets the configured issuer for non-issuer hosts, reuses the local issuer cookie directly when it is running on the issuer host, treats impersonation as a full issuer/browser redirect flow instead of an in-place token swap, and keeps issuer-handoff states localized from the current host's preference cache.
 
 ## Impact
 

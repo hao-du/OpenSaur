@@ -18,17 +18,6 @@ function createAuthorizationNonce() {
   return `auth-${Date.now()}`;
 }
 
-function trimTrailingSlash(path: string) {
-  const trimmedPath = path.trim();
-  if (trimmedPath.length === 0 || trimmedPath === "/") {
-    return "/";
-  }
-
-  return trimmedPath.endsWith("/")
-    ? trimmedPath.slice(0, -1)
-    : trimmedPath;
-}
-
 function getIssuerBaseUri() {
   const issuer = appEnvironment.firstPartyAuth.issuer;
   return new URL(issuer.endsWith("/") ? issuer : `${issuer}/`);
@@ -83,41 +72,20 @@ export function readFirstPartyAuthorizationReturnUrl(state: string | null | unde
 export function buildFirstPartyAuthorizeUrl({
   state
 }: BuildFirstPartyAuthorizeUrlOptions) {
-  const query = new URLSearchParams({
+  const authorizeUri = new URL("connect/authorize", getIssuerBaseUri());
+  authorizeUri.search = new URLSearchParams({
     client_id: appEnvironment.firstPartyAuth.clientId,
     redirect_uri: appEnvironment.firstPartyAuth.redirectUri,
     response_type: "code",
     scope: appEnvironment.firstPartyAuth.scope,
     state
-  });
+  }).toString();
 
-  return `${appEnvironment.firstPartyAuth.issuer}/connect/authorize?${query.toString()}`;
+  return authorizeUri.toString();
 }
 
 export function isCurrentAppHostedByIssuer() {
-  if (typeof window === "undefined") {
-    return false;
-  }
-
-  const issuerUrl = getIssuerBaseUri();
-  const currentBasePath = new URL(appEnvironment.basePath, window.location.origin).pathname;
-
-  return window.location.origin === issuerUrl.origin
-    && trimTrailingSlash(currentBasePath) === trimTrailingSlash(issuerUrl.pathname);
-}
-
-export function isFirstPartyAuthorizeReturnUrl(returnUrl: string) {
-  if (!returnUrl.startsWith("/")) {
-    return false;
-  }
-
-  try {
-    const resolvedReturnUrl = new URL(returnUrl, getIssuerBaseUri().origin);
-
-    return resolvedReturnUrl.pathname === getIssuerAuthorizePath();
-  } catch {
-    return false;
-  }
+  return appEnvironment.firstPartyAuth.isIssuerHostedApp;
 }
 
 export function isIssuerAuthenticationContinuationReturnUrl(returnUrl: string) {

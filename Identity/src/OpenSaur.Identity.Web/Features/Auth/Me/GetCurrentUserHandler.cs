@@ -6,6 +6,7 @@ using OpenSaur.Identity.Web.Infrastructure.Security;
 using OpenSaur.Identity.Web.Domain.Identity;
 using Microsoft.EntityFrameworkCore;
 using OpenSaur.Identity.Web.Infrastructure.Authorization.Services;
+using OpenSaur.Identity.Web.Infrastructure.Results;
 
 namespace OpenSaur.Identity.Web.Features.Auth.Me;
 
@@ -23,28 +24,35 @@ public static class GetCurrentUserHandler
         var isImpersonating = AuthPrincipalReader.IsImpersonating(user);
         var currentUserContext = CurrentUserContext.Create(user);
         var currentUserProfile = await ResolveCurrentUserProfileAsync(user, dbContext, cancellationToken);
+        if (currentUserContext is null || currentUserProfile is null)
+        {
+            return Result.Unauthorized(
+                    "Authentication is required.",
+                    "The request requires a valid authenticated API session or bearer token.")
+                .ToApiErrorResult();
+        }
+
         var workspaceName = await ResolveWorkspaceNameAsync(
             user,
             roles,
             dbContext,
             cancellationToken);
-        var canManageUsers = currentUserContext is not null
-                             && await userAuthorizationService.CanManageUsersAsync(
-                                 currentUserContext,
-                                 cancellationToken);
+        var canManageUsers = await userAuthorizationService.CanManageUsersAsync(
+            currentUserContext,
+            cancellationToken);
 
         return ApiResponses.Success(
             new AuthMeResponse(
                 AuthPrincipalReader.GetUserId(user),
-                currentUserProfile?.UserName ?? user.Identity?.Name,
-                currentUserProfile?.Email ?? user.FindFirstValue(OpenIddictConstants.Claims.Email),
+                currentUserProfile.UserName ?? user.Identity?.Name,
+                currentUserProfile.Email ?? user.FindFirstValue(OpenIddictConstants.Claims.Email),
                 roles,
                 AuthPrincipalReader.GetRequirePasswordChange(user),
                 workspaceName,
                 isImpersonating,
                 canManageUsers,
-                currentUserProfile?.FirstName,
-                currentUserProfile?.LastName));
+                currentUserProfile.FirstName,
+                currentUserProfile.LastName));
     }
 
     private static async Task<CurrentUserProfile?> ResolveCurrentUserProfileAsync(

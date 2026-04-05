@@ -21,7 +21,12 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: "0.0.0.0",
     port: 5173,
-    proxy: {
+            proxy: {
+      "/identity/app-config.js": {
+        changeOrigin: true,
+        secure: false,
+        target: backendTarget
+      },
       "/identity/.well-known": {
         changeOrigin: true,
         secure: false,

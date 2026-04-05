@@ -66,6 +66,15 @@ The current `Oidc:FirstPartyWeb` options shape is too narrow because it assumes 
 
 The initial implementation stays configuration-driven; moving client registration to an admin-managed data model can remain a later change.
 
+The architectural rule should stay generic:
+
+- exact issuer base URI == issuer-hosted shell mode
+- any other host or path base == client mode
+
+That rule must not depend on product-specific path names. App names are only examples of client categories.
+
+For maintainability, shared client registrations should be limited to hosts that are truly the same shell with the same callback and permission behavior. Future apps that diverge in purpose or framework should generally receive their own client registrations even if they authenticate against the same issuer.
+
 ### 4. The hosted first-party auth shell uses the configured issuer and a registered callback URI for the current host
 
 The current hosted frontend must always send authorization requests to the configured issuer. The callback URI may still be selected from the current host, but only as the candidate callback for the shared first-party client, and the backend must reject any callback URI that is not explicitly registered.
@@ -76,21 +85,40 @@ The current hosted frontend must always send authorization requests to the confi
 
 This removes the hidden assumption that the current browser host also owns issuer authority or can use arbitrary callback values.
 
+The frontend should not carry that authority contract as a build-time hostname default. The current host should serve a runtime auth bootstrap payload that contains:
+
+- the configured issuer
+- the configured first-party client id and scope
+- the current host's callback URI
+- whether the current host is the issuer host
+
+This keeps frontend auth-start behavior aligned with backend configuration across hosted and localhost deployments of the same codebase.
+
 ### 5. Hosted SSO remains session-based at the issuer, not callback-based
 
 Hosted SSO should continue to come from the issuer's hosted authentication session. If the user has already authenticated on the issuer and policy does not require re-prompting, the issuer should complete a new authorization request for another registered callback URI without asking for credentials again.
 
 This keeps reuse where it belongs: in the issuer session, not in a shared callback endpoint.
 
-### 6. Backend-assisted token exchange remains allowed, but custody stays with the host that owns the callback
+### 6. Backend-assisted token exchange remains allowed only for non-issuer hosts
 
-The existing first-party pattern keeps the access token in FE memory and the refresh token in a backend-managed `httpOnly` cookie. That pattern can continue, but it belongs to the client application that owns the registered callback URI and refresh cookie path. This slice should not assume that some other host can receive the code, exchange it, and impersonate callback ownership for every browser app.
+The existing first-party pattern keeps the access token in FE memory and the refresh token in a backend-managed `httpOnly` cookie. That pattern can continue, but only for browser hosts that are acting as OIDC clients of another issuer host. This slice should not assume that the issuer host itself must run an authorization-code callback exchange against itself just because it also serves the first-party shell.
 
-For the hosted Identity admin shell, that means the existing backend-assisted exchange can remain, but its authorize request and callback URI must still follow the explicit issuer/client registration contract.
+That means the model splits cleanly:
 
-### 7. Impersonation becomes an issuer-hosted browser round-trip
+- when `current host != Oidc:Issuer`, the current host owns the callback URI, access token, and refresh cookie
+- when `current host == Oidc:Issuer`, the hosted shell reuses the issuer's ASP.NET Identity cookie directly for `/api/auth/*` instead of self-authorizing and self-exchanging a code
 
-Starting or exiting impersonation must update the issuer-hosted authentication session first, then send the browser through the normal `/connect/authorize` and callback flow for the requesting host. The local app must not mint replacement access/refresh tokens directly from impersonation endpoints.
+This removes the self-referential hosted-shell backchannel path and keeps backend-assisted token exchange only where it is actually needed.
+
+### 7. Impersonation becomes an issuer-hosted browser round-trip with two completion modes
+
+Starting or exiting impersonation must update the issuer-hosted authentication session first. After that, completion depends on where the requesting shell is running:
+
+- issuer host: return directly to the hosted shell route and let hosted bootstrap reuse the updated issuer cookie
+- non-issuer host: send the browser through the normal `/connect/authorize` and callback flow for the requesting host
+
+The local app must not mint replacement access/refresh tokens directly from impersonation endpoints.
 
 This keeps session mutation in the same trust boundary as normal sign-in and removes the last local-only token issuance shortcut from the first-party flow.
 
@@ -98,12 +126,12 @@ This keeps session mutation in the same trust boundary as normal sign-in and rem
 
 The issuer-handoff login screen, callback screen, and exchange-failure retry state must render through the frontend localization system instead of hard-coded English copy.
 
-Preferences remain origin-scoped because they are cached in browser localStorage on the current host. `app.duchihao.com` and `localhost:5220` therefore do not share a localStorage bucket even when they run the same codebase. After a successful callback, the current host should fetch `/api/auth/settings` and persist the authenticated user's locale/time zone into that host's preference cache so later auth handoff screens on that same host render with the expected locale.
+Preferences remain origin-scoped because they are cached in browser localStorage on the current host. The issuer host and any localhost client therefore do not share a localStorage bucket even when they run the same codebase. After a successful callback, the current host should fetch `/api/auth/settings` and persist the authenticated user's locale/time zone into that host's preference cache so later auth handoff screens on that same host render with the expected locale.
 
 ## Risks / Trade-offs
 
 - [Configuration becomes more explicit] -> Accept the extra configuration because exact redirect contracts are safer than inferred origin behavior.
-- [Current hosted login UX and auth-start logic are tightly coupled] -> Split the responsibilities carefully: issuer-hosted credential entry stays in Identity, while auth-start logic uses configured issuer authority plus exact registered callback URIs.
+- [Current hosted login UX and auth-start logic are tightly coupled] -> Split the responsibilities carefully: issuer-hosted credential entry stays in Identity, non-issuer hosts use configured issuer authority plus exact registered callback URIs, and the issuer host reuses its cookie session directly.
 - [Impersonation now depends on a full browser round-trip] -> Accept the extra redirect because it keeps issuer session mutation and token issuance in one trust boundary.
 - [Logout and post-logout redirect behavior can lag behind login changes] -> Treat post-logout redirect support as part of the registration model and verify it explicitly before rollout.
 - [Preference cache is origin-scoped] -> Accept that cross-origin hosts do not share localStorage automatically, and rely on post-callback settings sync plus current-host fallback behavior.
@@ -113,9 +141,10 @@ Preferences remain origin-scoped because they are cached in browser localStorage
 1. Update the authentication OpenSpec to define issuer-hosted login plus client-owned exact callback URIs.
 2. Replace the narrow callback assumption with explicit first-party client registration that lists exact callback URIs.
 3. Refactor the hosted Identity auth shell so it starts OIDC against the configured issuer and uses an exact registered callback URI for the current host.
-4. Move impersonation start and exit to issuer-hosted browser round-trips.
-5. Validate exact redirect-uri matching, rejection of unregistered redirects, and hosted-session reuse across at least two registered callback URIs.
-6. Document how downstream first-party hosts should register their callback URIs with the shared issuer.
+4. Reuse the issuer cookie directly when the hosted shell runs on the issuer host, while keeping backend-assisted code exchange only for non-issuer hosts.
+5. Move impersonation start and exit to issuer-hosted browser round-trips.
+6. Validate exact redirect-uri matching, rejection of unregistered redirects, and hosted-session reuse across at least two registered callback URIs.
+7. Document how downstream first-party hosts should register their callback URIs with the shared issuer.
 
 Rollback can restore the single-client same-origin assumptions, but doing so would preserve the current scaling constraint for additional browser apps.
 

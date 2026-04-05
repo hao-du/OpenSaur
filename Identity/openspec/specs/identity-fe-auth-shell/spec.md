@@ -36,14 +36,24 @@ The frontend login flow SHALL preserve the originally requested protected route 
 - **WHEN** the user completes login and the first-party callback succeeds
 - **THEN** the frontend navigates the user back to the preserved `returnUrl` instead of leaving the user on the login or callback page
 
-### Requirement: First-party frontend SHALL receive JWT access tokens through a backend-assisted web-session exchange
-The first-party frontend SHALL complete the authorization-code flow through the same identity host, SHALL send the returned authorization `code` to a first-party backend web-session exchange endpoint, and SHALL receive a JWT access token for authenticated API access without receiving the refresh token in browser JavaScript.
+### Requirement: First-party frontend SHALL use issuer-hosted auth with host-appropriate session completion
+The first-party frontend SHALL use the configured issuer as the source of trust for browser login. When the current host differs from the configured issuer, the frontend SHALL complete the authorization-code flow on a same-host callback route, SHALL send the returned authorization `code` to a first-party backend web-session exchange endpoint, and SHALL receive a JWT access token for authenticated API access without receiving the refresh token in browser JavaScript. When the current host equals the configured issuer, the frontend SHALL reuse the issuer-hosted ASP.NET Identity cookie directly for authenticated `/api/auth/*` access instead of self-running the callback exchange flow.
 
-#### Scenario: Callback completes successfully
-- **WHEN** the frontend receives a valid first-party authorization callback
+#### Scenario: Non-issuer callback completes successfully
+- **WHEN** the frontend on a non-issuer host receives a valid first-party authorization callback
 - **THEN** the frontend posts the authorization `code` to the backend web-session exchange endpoint
 - **AND** the backend returns a JWT access token payload to the frontend
 - **AND** the backend stores the refresh token in a secure `httpOnly` cookie instead of returning it to browser JavaScript
+
+#### Scenario: Frontend auth settings are served from the current host at runtime
+- **WHEN** the first-party shell bootstraps in the browser
+- **THEN** the current host serves the issuer authority, first-party client id, scopes, callback URI, and issuer-hosted-mode flag through runtime configuration
+- **AND** the built frontend bundle does not depend on deployment-specific hostname defaults for auth-start behavior
+
+#### Scenario: Issuer-hosted shell bootstraps from the issuer cookie
+- **WHEN** the frontend is running on the configured issuer host and the browser already has a valid issuer session cookie
+- **THEN** the frontend restores protected access through authenticated `/api/auth/*` helpers
+- **AND** the frontend does not self-run `/connect/authorize` or `/api/auth/web-session/exchange` for ordinary hosted sign-in
 
 ### Requirement: Frontend SHALL refresh access tokens before expiry through a backend-managed refresh-cookie path
 The frontend SHALL monitor access-token expiry, SHALL check the server for a still-valid session before expiry, and SHALL use a first-party backend refresh endpoint to obtain a replacement access token before the current token expires when the server still accepts the session.
@@ -82,4 +92,3 @@ The first frontend phase SHALL provide mobile, tablet, and desktop responsive au
 #### Scenario: Auth UI reuses atomic layers
 - **WHEN** frontend auth pages are implemented
 - **THEN** the UI is composed from reusable atomic layers rather than page-local one-off controls
-

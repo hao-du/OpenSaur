@@ -4,7 +4,6 @@ export {
   createFirstPartyAuthorizationState,
   isIssuerAuthenticationContinuationReturnUrl,
   isCurrentAppHostedByIssuer,
-  isFirstPartyAuthorizeReturnUrl,
   readFirstPartyAuthorizationReturnUrl,
   startFirstPartyAuthorization
 } from "./firstPartyOidc";
