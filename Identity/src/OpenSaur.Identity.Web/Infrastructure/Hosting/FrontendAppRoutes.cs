@@ -58,6 +58,7 @@ public static class FrontendAppRoutes
         var oidcOptions = oidcOptionsAccessor.Value;
         var firstPartyClient = oidcOptions.GetFirstPartyClient();
         var currentAppBaseUri = oidcOptions.GetCurrentAppBaseUri(httpContext.Request);
+        ApplyNoStoreHeaders(httpContext.Response);
         var runtimeConfig = new FrontendRuntimeConfig(
             AppName: "OpenSaur Identity",
             BasePath: NormalizeBasePath(currentAppBaseUri.AbsolutePath),
@@ -73,8 +74,9 @@ public static class FrontendAppRoutes
             "application/javascript; charset=utf-8");
     }
 
-    private static Task<IResult> ServeShellAsync(IWebHostEnvironment environment)
+    private static Task<IResult> ServeShellAsync(HttpContext httpContext, IWebHostEnvironment environment)
     {
+        ApplyNoStoreHeaders(httpContext.Response);
         IFileInfo indexFile = GetShellIndexFile(environment);
         if (!indexFile.Exists || string.IsNullOrWhiteSpace(indexFile.PhysicalPath))
         {
@@ -92,6 +94,13 @@ public static class FrontendAppRoutes
     private static IFileInfo GetShellIndexFile(IWebHostEnvironment environment)
     {
         return environment.WebRootFileProvider.GetFileInfo("index.html");
+    }
+
+    private static void ApplyNoStoreHeaders(HttpResponse response)
+    {
+        response.Headers.CacheControl = "no-store, no-cache, must-revalidate";
+        response.Headers.Pragma = "no-cache";
+        response.Headers.Expires = "0";
     }
 
     private static string NormalizeBasePath(string? basePath)
