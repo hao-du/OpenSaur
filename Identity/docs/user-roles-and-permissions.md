@@ -238,6 +238,120 @@ What happens:
    - `/oidc-clients`
 3. Route visibility is therefore a UI convenience layered on top of the backend authorization model, not a replacement for backend policy checks.
 
+## How To Add A New Permission
+
+The normal add flow has four parts:
+
+1. Define the canonical permission code in code.
+2. Register the permission metadata in the catalog.
+3. Seed the permission into the database with a stable GUID.
+4. Use the permission in endpoint policies or service checks where needed.
+
+### 1. Add the code constant
+
+Code location:
+
+- `src/OpenSaur.Identity.Web/Domain/Permissions/PermissionCode.cs`
+
+What to do:
+
+1. Add a new enum value.
+2. Add a `Description` attribute with the canonical string that should appear in the database and JWT `permissions` claims.
+
+Example shape:
+
+```csharp
+[Description("Umbraco.CanManage")]
+Umbraco_CanManage = 3
+```
+
+### 2. Register the permission metadata
+
+Code locations:
+
+- `src/OpenSaur.Identity.Web/Domain/Permissions/PermissionCatalog.cs`
+- `src/OpenSaur.Identity.Web/Domain/Permissions/PermissionScopeCatalog.cs`
+
+What to do:
+
+1. Add the new permission to `PermissionCatalog.CreateDefinitions()`.
+2. Choose:
+   - the permission scope
+   - display name
+   - description
+   - rank
+3. If the permission belongs to a brand-new scope, add that scope first in `PermissionScopeCatalog.cs`.
+
+Important rule:
+
+- permissions only imply other permissions inside the same scope
+- higher rank implies lower rank in that scope
+
+### 3. Seed the database row
+
+Code location:
+
+- `src/OpenSaur.Identity.Web/Infrastructure/Database/Seeding/IdentitySeedData.cs`
+
+What to do:
+
+1. Add a stable GUID to the `PermissionIds` dictionary for the new `PermissionCode`.
+2. If a default seeded role should receive that permission, add a `RolePermission` seed entry in `GetRolePermissions()`.
+
+Important detail:
+
+- this project uses EF Core `HasData(...)` seeding
+- adding a permission is not complete until the seed change is carried by a migration
+
+### 4. Create a migration
+
+Code locations:
+
+- `src/OpenSaur.Identity.Web/Infrastructure/Database/Configurations/PermissionConfiguration.cs`
+- `src/OpenSaur.Identity.Web/Infrastructure/Database/Seeding/IdentitySeedData.cs`
+- `src/OpenSaur.Identity.Web/Infrastructure/Database/Migrations/`
+
+What to do:
+
+1. Generate a new EF Core migration after updating the enum, catalog, and seed data.
+2. Generate SQL if you use manual migration scripts in deployments.
+3. Apply the migration manually to the database.
+
+### 5. Enforce the permission in the app
+
+Code locations:
+
+- `src/OpenSaur.Identity.Web/Infrastructure/Authorization/Builders/PermissionEndpointConventionBuilderExtensions.cs`
+- `src/OpenSaur.Identity.Web/Infrastructure/Authorization/Services/PermissionAuthorizationService.cs`
+- endpoint files such as:
+  - `src/OpenSaur.Identity.Web/Features/Users/UserEndpoints.cs`
+  - `src/OpenSaur.Identity.Web/Features/Roles/RoleEndpoints.cs`
+  - `src/OpenSaur.Identity.Web/Features/Permissions/PermissionEndpoints.cs`
+
+What to do:
+
+1. Add `.RequirePermission(PermissionCode.Your_New_Code)` on protected endpoints.
+2. Or call `PermissionAuthorizationService.HasPermissionAsync(...)` directly when the check belongs in business logic or a filter.
+
+### 6. JWT claims happen automatically
+
+Code locations:
+
+- `src/OpenSaur.Identity.Web/Features/Auth/Oidc/OidcEndpoints.cs`
+- `src/OpenSaur.Identity.Web/Features/Auth/AuthSessionPrincipalFactory.cs`
+- `src/OpenSaur.Identity.Web/Infrastructure/Security/IdentitySessionClaimsTransformation.cs`
+
+What happens:
+
+1. Once the permission exists in the active database data and is granted through roles, `PermissionAuthorizationService.GetGrantedPermissionCodesAsync(...)` includes it automatically.
+2. Access tokens then emit it as a repeated `permissions` claim when the `api` scope is present.
+3. Issuer-hosted cookie sessions project the same effective permission claims.
+
+Important result:
+
+- you do not need a separate JWT-specific code change for each new permission
+- the main work is adding the permission definition, seed data, and role assignment
+
 ## If You Want To Change The Implication Rule
 
 The main levers are:
