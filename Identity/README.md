@@ -254,8 +254,11 @@ In this mode, Vite proxies these paths back to the ASP.NET Core host:
 - `/login`
 - `/auth/callback`
 - `/change-password`
+- `/profile`
+- `/settings`
 - `/users`
 - `/workspaces`
+- `/oidc-clients`
 - `/roles`
 - `/role-assignments`
 

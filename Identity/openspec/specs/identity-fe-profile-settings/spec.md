@@ -1,7 +1,7 @@
 # identity-fe-profile-settings Specification
 
 ## Purpose
-TBD - created by archiving change identity-fe-phase-8-profile-and-settings. Update Purpose after archive.
+Define the protected profile and settings pages and how they present the current user's account, locale, and timezone preferences.
 ## Requirements
 ### Requirement: Authenticated shell SHALL expose real Profile and Settings routes
 The hosted frontend SHALL replace the placeholder `My Profile` and `Settings` account-menu entries with real protected routes at `/profile` and `/settings`.

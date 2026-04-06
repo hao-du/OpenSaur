@@ -8,6 +8,7 @@ import {
   Typography
 } from "@mui/material";
 import { X } from "../../../shared/icons";
+import { FormSupportText } from "../../../components/molecules";
 import { RoleForm } from "./RoleForm";
 import type { PermissionSummary, RoleDetails } from "../types";
 import { usePreferences } from "../../preferences/PreferenceProvider";
@@ -68,9 +69,7 @@ export function RoleFormDrawer({
         {isLoading ? (
           <Stack alignItems="center" justifyContent="center" spacing={2} sx={{ flex: 1 }}>
             <CircularProgress size={28} />
-            <Typography color="text.secondary">
-              {t("roles.form.loading")}
-            </Typography>
+            <FormSupportText>{t("roles.form.loading")}</FormSupportText>
           </Stack>
         ) : (
           <Box sx={{ flex: 1 }}>

@@ -7,7 +7,8 @@ import {
   Stack,
   Typography
 } from "@mui/material";
-import { X } from "lucide-react";
+import { X } from "../../../shared/icons";
+import { FormSupportText } from "../../../components/molecules";
 import { WorkspaceForm } from "./WorkspaceForm";
 import type { WorkspaceDetails } from "../types";
 import type { RoleSummary } from "../../roles/types";
@@ -90,9 +91,7 @@ export function WorkspaceFormDrawer({
             sx={{ flex: 1 }}
           >
             <CircularProgress size={28} />
-            <Typography color="text.secondary">
-              {t("workspaces.form.loading")}
-            </Typography>
+            <FormSupportText>{t("workspaces.form.loading")}</FormSupportText>
           </Stack>
         ) : (
           <Box sx={{ flex: 1 }}>

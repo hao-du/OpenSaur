@@ -1,10 +1,10 @@
 # identity-authentication Specification
 
 ## Purpose
-TBD - created by archiving change identity-service-phase-1-foundation. Update Purpose after archive.
+Define the authentication, issuer-hosted browser flow, token issuance, and session-helper contracts for the OpenSaur Identity service.
 ## Requirements
 ### Requirement: Custom auth APIs SHALL authenticate users for the shared identity server
-The system SHALL provide JSON-based authentication endpoints inside `OpenSaur.Identity.Web` that validate ASP.NET Core Identity credentials and apply account/workspace eligibility checks before issuing the shared identity-server session cookie. The actual login page UI SHALL be implemented in the FE phase and can post credentials to the backend API on the same host.
+The system SHALL provide JSON-based authentication endpoints inside `OpenSaur.Identity.Web` that validate ASP.NET Core Identity credentials and apply account/workspace eligibility checks before issuing the shared identity-server session cookie. The issuer-hosted login UI SHALL post credentials to these same-host backend helpers. When Google reCAPTCHA v3 is configured for the hosted login form, the login API SHALL verify the submitted reCAPTCHA token before checking credentials and issuing the shared identity cookie.
 
 #### Scenario: Successful API login
 - **WHEN** a valid user submits JSON login credentials with the correct password and the user account and workspace are active
@@ -18,6 +18,11 @@ The system SHALL provide JSON-based authentication endpoints inside `OpenSaur.Id
 - **WHEN** a user with `IsActive = false` or a workspace with `IsActive = false` attempts to authenticate
 - **THEN** the system rejects the login attempt and does not issue any session or token artifacts
 
+#### Scenario: Hosted login requires successful reCAPTCHA verification when configured
+- **WHEN** Google reCAPTCHA v3 is enabled for the issuer-hosted login flow and the submitted login request is missing a valid reCAPTCHA token
+- **THEN** the system rejects the login attempt before password validation
+- **AND** no session cookie is issued
+
 #### Scenario: API logout clears the shared identity session
 - **WHEN** an authenticated user completes the logout API call
 - **THEN** the system clears the identity server session cookie and future authorization requests require a new login unless another policy-issued session exists
@@ -27,8 +32,18 @@ The system SHALL provide JSON-based authentication endpoints inside `OpenSaur.Id
 - **THEN** the system rejects the request instead of clearing the hosted session
 
 ### Requirement: First-party web SHALL use the configured issuer as the source of trust for browser auth
+The system SHALL authenticate first-party browser shells through the configured issuer instead of assuming the current browser host owns credential entry. The system SHALL resolve the active first-party client from managed database records using the effective public origin and app path base for the current host. Managed client records SHALL store origin roots and app path base, while exact redirect and post-logout redirect URIs SHALL be derived by combining those values with configured suffix paths. Only active managed clients SHALL be synchronized into OpenIddict applications. First-party browser hosts SHALL use only exact registered redirect URI(s), SHALL send authorization requests to the configured issuer from non-issuer hosts, and SHALL receive authorization responses only at a redirect URI registered for the resolved client. First-party hosts MAY continue to use backend-assisted authorization-code exchange and refresh-cookie handling, but that token custody SHALL remain scoped to the host that owns the registered callback URI. When the first-party shell is running on the issuer host itself, the shell SHALL reuse the issuer-hosted ASP.NET Identity cookie directly for `/api/auth/*` access instead of running the authorization-code callback exchange against itself.
 
-The system SHALL authenticate the first-party browser shell through the configured issuer instead of assuming the current browser host owns credential entry. The shared first-party client SHALL use only exact registered redirect URI(s), SHALL send authorization requests to the configured issuer from non-issuer hosts, and SHALL receive authorization responses only at a redirect URI registered for that client. First-party hosts MAY continue to use backend-assisted authorization-code exchange and refresh-cookie handling, but that token custody SHALL remain scoped to the host that owns the registered callback URI. When the first-party shell is running on the issuer host itself, the shell SHALL reuse the issuer-hosted ASP.NET Identity cookie directly for `/api/auth/*` access instead of running the authorization-code callback exchange against itself.
+#### Scenario: Current host resolves its first-party client from managed origins and path base
+- **WHEN** the hosted shell or backend token/session path needs the current first-party client
+- **THEN** the system first identifies the current managed client from `Oidc.CurrentClient.ClientId` and `Oidc.CurrentClient.ClientSecret` for that deployment
+- **AND** the system validates that the effective public origin root and app path base of the current request belong to that managed client
+- **AND** the system does not depend on a single hardcoded redirect URI list in appsettings at runtime
+
+#### Scenario: Redirect URIs are derived from managed origins plus per-client paths
+- **WHEN** the system registers or serves a managed first-party client
+- **THEN** each exact redirect URI is composed from a stored public origin root, a stored app path base, and that managed client's callback path
+- **AND** each post-logout redirect URI is composed from the same stored public origin root and app path base plus that managed client's post-logout path
 
 #### Scenario: Anonymous browser client is redirected to issuer-hosted login
 
@@ -47,6 +62,10 @@ The system SHALL authenticate the first-party browser shell through the configur
 - **THEN** the shell restores authenticated access through `/api/auth/*` helpers using that hosted session cookie
 - **AND** the shell does not need to self-run `/connect/authorize` or `/api/auth/web-session/exchange` for ordinary hosted sign-in
 
+#### Scenario: Issuer-hosted shell session enrichment includes effective permission claims
+- **WHEN** the first-party shell is running on the configured issuer host and a valid issuer login session is transformed into the application principal used by `/api/auth/*`
+- **THEN** the resulting authenticated principal includes repeated `permissions` claims containing canonical effective permission codes for the current workspace and impersonation context
+
 #### Scenario: Authorization request with an unregistered redirect URI is rejected
 
 - **WHEN** a first-party host sends an authorization request with a redirect URI that is not registered for the shared first-party client
@@ -58,6 +77,11 @@ The system SHALL authenticate the first-party browser shell through the configur
 - **THEN** the system updates the issuer-hosted authentication session on the issuer host first
 - **AND** the browser is redirected either through the standard authorization-code flow for non-issuer hosts or directly back to the hosted issuer shell route when the shell is running on the issuer host
 - **AND** the local impersonation endpoint does not mint replacement session tokens directly
+
+#### Scenario: Inactive managed clients are removed from active issuer registration
+- **WHEN** a managed OIDC client is deactivated
+- **THEN** the system removes or disables the matching active OpenIddict application registration
+- **AND** that client can no longer start new authorization flows until reactivated
 
 ### Requirement: Bootstrap administrator login SHALL force password rotation
 The system SHALL seed a deterministic bootstrap `SystemAdministrator` account for first-time environment access with the initial password `P@ssword1`, SHALL return a `RequirePasswordChange` indicator after successful login for that account until its password is rotated, and SHALL clear that indicator only after the user completes a successful self-service password change.
@@ -76,10 +100,27 @@ The system SHALL act as an OpenIddict authorization server for third-party clien
 #### Scenario: Third-party client exchanges authorization code
 - **WHEN** a registered third-party client exchanges a valid authorization code at the token endpoint
 - **THEN** the system returns a client-bound JWT access token and rotating refresh token for that client
+- **AND** the access token includes repeated `permissions` claims containing canonical effective permission codes when the granted scope includes `api`
 
 #### Scenario: Third-party client refreshes tokens
 - **WHEN** a registered third-party client presents a valid refresh token at the token endpoint
 - **THEN** the system issues a new JWT access token, rotates the refresh token, and rejects reuse of the redeemed refresh token
+
+### Requirement: Managed OIDC clients SHALL be restricted to super-administrator management
+The system SHALL expose application APIs for managed OIDC client administration, and only authenticated super administrators SHALL be allowed to create, read, update, or deactivate those clients.
+
+#### Scenario: Super administrator creates a managed OIDC client
+- **WHEN** an authenticated super administrator submits a valid managed OIDC client definition
+- **THEN** the system persists the client and its origins
+- **AND** the system synchronizes the active registration into OpenIddict
+
+#### Scenario: Non-super-administrator is denied OIDC client administration
+- **WHEN** an authenticated caller without the `SuperAdministrator` role invokes a managed OIDC client administration endpoint
+- **THEN** the system rejects the request
+
+#### Scenario: Current admin-shell client cannot be deactivated from its own host
+- **WHEN** a super administrator attempts to deactivate the currently resolved admin-shell client from that same host
+- **THEN** the system rejects the request instead of breaking the active management surface
 
 ### Requirement: The hosted identity server session SHALL be reusable across clients
 The system SHALL allow a user who already has a valid identity server login session to complete new authorization requests without re-entering credentials when no additional prompt or consent step is required.

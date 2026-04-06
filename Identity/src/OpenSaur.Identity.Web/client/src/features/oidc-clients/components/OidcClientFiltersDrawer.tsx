@@ -17,36 +17,32 @@ import {
 } from "../../../components/molecules";
 import { ControlledTextField } from "../../../components/molecules/controlled";
 import { usePreferences } from "../../preferences/PreferenceProvider";
+import type { OidcClientFilterValues } from "../utils/filterOidcClients";
 
-export type RoleFilterValues = {
-  search: string;
-  status: "active" | "all" | "inactive";
-};
-
-type RoleFiltersDrawerProps = {
-  initialValues: RoleFilterValues;
+type OidcClientFiltersDrawerProps = {
+  initialValues: OidcClientFilterValues;
   isOpen: boolean;
-  onApply: (values: RoleFilterValues) => Promise<void> | void;
+  onApply: (values: OidcClientFilterValues) => Promise<void> | void;
   onClose: () => void;
 };
 
-const defaultFilterValues: RoleFilterValues = {
-  search: "",
+const defaultFilterValues: OidcClientFilterValues = {
+  clientId: "",
   status: "active"
 };
 
-export function RoleFiltersDrawer({
+export function OidcClientFiltersDrawer({
   initialValues,
   isOpen,
   onApply,
   onClose
-}: RoleFiltersDrawerProps) {
+}: OidcClientFiltersDrawerProps) {
   const { t } = usePreferences();
   const {
     control,
     handleSubmit,
     reset
-  } = useForm<RoleFilterValues>({
+  } = useForm<OidcClientFilterValues>({
     values: initialValues
   });
   const [isApplying, setIsApplying] = useState(false);
@@ -64,18 +60,11 @@ export function RoleFiltersDrawer({
       }}
     >
       <Stack spacing={3} sx={{ height: "100%" }}>
-        <Stack
-          alignItems="center"
-          direction="row"
-          justifyContent="space-between"
-        >
+        <Stack alignItems="center" direction="row" justifyContent="space-between">
           <Typography component="h2" variant="h5">
-            {t("roles.filters.title")}
+            {t("oidcClients.filters.title")}
           </Typography>
-          <IconButton
-            aria-label={t("roles.filters.close")}
-            onClick={onClose}
-          >
+          <IconButton aria-label={t("oidcClients.filters.close")} onClick={onClose}>
             <X size={18} />
           </IconButton>
         </Stack>
@@ -101,14 +90,14 @@ export function RoleFiltersDrawer({
             <FormFieldBlock>
               <ControlledTextField
                 control={control}
-                label={t("roles.filters.search")}
-                name="search"
+                label={t("oidcClients.filters.clientId")}
+                name="clientId"
               />
             </FormFieldBlock>
             <FormFieldBlock>
               <ControlledTextField
                 control={control}
-                label={t("roles.filters.status")}
+                label={t("oidcClients.filters.status")}
                 name="status"
                 select
               >

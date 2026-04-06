@@ -1,7 +1,7 @@
 # identity-fe-users Specification
 
 ## Purpose
-TBD - created by archiving change identity-fe-phase-6-users. Update Purpose after archive.
+Define the workspace-scoped users management experience for listing, creating, editing, and assigning roles to users.
 ## Requirements
 ### Requirement: Users SHALL be a workspace-scoped management route
 The hosted frontend SHALL expose a `Users` page only when the current authenticated session can manage users in a specific workspace context, and SHALL not expose `Users` for `All workspaces`.

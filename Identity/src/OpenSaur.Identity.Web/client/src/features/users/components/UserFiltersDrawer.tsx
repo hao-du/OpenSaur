@@ -10,6 +10,10 @@ import {
   Stack,
   Typography
 } from "@mui/material";
+import {
+  FormFieldBlock,
+  FormFieldList
+} from "../../../components/molecules";
 import { ControlledTextField } from "../../../components/molecules/controlled";
 import { X } from "../../../shared/icons";
 import { usePreferences } from "../../preferences/PreferenceProvider";
@@ -86,21 +90,27 @@ export function UserFiltersDrawer({
           spacing={3}
           sx={{ flex: 1 }}
         >
-          <ControlledTextField
-            control={control}
-            label={t("users.filters.search")}
-            name="search"
-          />
-          <ControlledTextField
-            control={control}
-            label={t("users.filters.status")}
-            name="status"
-            select
-          >
-            <MenuItem value="all">{t("common.all")}</MenuItem>
-            <MenuItem value="active">{t("common.active")}</MenuItem>
-            <MenuItem value="inactive">{t("common.inactive")}</MenuItem>
-          </ControlledTextField>
+          <FormFieldList>
+            <FormFieldBlock>
+              <ControlledTextField
+                control={control}
+                label={t("users.filters.search")}
+                name="search"
+              />
+            </FormFieldBlock>
+            <FormFieldBlock>
+              <ControlledTextField
+                control={control}
+                label={t("users.filters.status")}
+                name="status"
+                select
+              >
+                <MenuItem value="all">{t("common.all")}</MenuItem>
+                <MenuItem value="active">{t("common.active")}</MenuItem>
+                <MenuItem value="inactive">{t("common.inactive")}</MenuItem>
+              </ControlledTextField>
+            </FormFieldBlock>
+          </FormFieldList>
           <Stack
             direction="row"
             justifyContent="space-between"
@@ -125,7 +135,7 @@ export function UserFiltersDrawer({
               type="submit"
               variant="contained"
             >
-              {isApplying ? t("common.applyingFilters") : t("common.filter")}
+              {isApplying ? t("common.applyingFilters") : t("common.applyFilters")}
             </Button>
           </Stack>
         </Stack>

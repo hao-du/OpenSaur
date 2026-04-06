@@ -1,7 +1,7 @@
 # identity-permissions Specification
 
 ## Purpose
-TBD - created by archiving change identity-service-phase-1-foundation. Update Purpose after archive.
+Define the permission catalog, scopes, hierarchy, and authorization rules used across the Identity service.
 ## Requirements
 ### Requirement: Permission catalog SHALL use stable code identifiers and display-friendly metadata
 The system SHALL store permissions with a stable integer `CodeId`, a display-friendly `Name`, a human-readable `Description`, and the standard audit columns, while the canonical permission code remains defined in application code.

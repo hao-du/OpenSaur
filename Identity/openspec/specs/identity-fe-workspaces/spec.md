@@ -1,7 +1,7 @@
 # identity-fe-workspaces Specification
 
 ## Purpose
-TBD - created by archiving change identity-fe-phase-3-workspaces. Update Purpose after archive.
+Define the hosted workspaces management UI, filter behavior, and capacity-aware workspace summaries.
 ## Requirements
 ### Requirement: Workspace management SHALL default the status filter to Active
 The frontend workspace management page SHALL default its status filter to `Active` when the route first loads and when filters are reset.

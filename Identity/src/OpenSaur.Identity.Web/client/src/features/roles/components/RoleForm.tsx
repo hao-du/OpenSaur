@@ -16,6 +16,11 @@ import {
   ControlledTextArea,
   ControlledTextField
 } from "../../../components/molecules/controlled";
+import {
+  FormFieldBlock,
+  FormFieldList,
+  FormSupportText
+} from "../../../components/molecules";
 import type { PermissionSummary } from "../types";
 import { usePreferences } from "../../preferences/PreferenceProvider";
 
@@ -87,40 +92,48 @@ export function RoleForm({
       {errorMessage ? <Alert severity="error">{errorMessage}</Alert> : null}
       <Stack spacing={2}>
         <Typography variant="h6">{t("roles.form.role")}</Typography>
-        <ControlledTextField
-          control={control}
-          disabled={isSubmitting}
-          label={t("roles.form.name")}
-          name="name"
-          rules={{
-            required: t("roles.form.nameRequired")
-          }}
-        />
-        <ControlledTextArea
-          control={control}
-          disabled={isSubmitting}
-          label={t("roles.form.description")}
-          name="description"
-        />
-        {isEditMode ? (
-          <ControlledCheckbox
-            control={control}
-            disabled={isSubmitting}
-            inputProps={{ "aria-label": t("roles.form.activeAriaLabel") }}
-            label={t("roles.form.activeLabel")}
-            name="isActive"
-          />
-        ) : null}
+        <FormFieldList>
+          <FormFieldBlock>
+            <ControlledTextField
+              control={control}
+              disabled={isSubmitting}
+              label={t("roles.form.name")}
+              name="name"
+              rules={{
+                required: t("roles.form.nameRequired")
+              }}
+            />
+          </FormFieldBlock>
+          <FormFieldBlock>
+            <ControlledTextArea
+              control={control}
+              disabled={isSubmitting}
+              label={t("roles.form.description")}
+              name="description"
+            />
+          </FormFieldBlock>
+          {isEditMode ? (
+            <FormFieldBlock>
+              <ControlledCheckbox
+                control={control}
+                disabled={isSubmitting}
+                inputProps={{ "aria-label": t("roles.form.activeAriaLabel") }}
+                label={t("roles.form.activeLabel")}
+                name="isActive"
+              />
+            </FormFieldBlock>
+          ) : null}
+        </FormFieldList>
       </Stack>
       <Divider />
       <Stack spacing={2}>
         <Typography variant="h6">{t("roles.form.permissions")}</Typography>
-        <Stack spacing={2}>
+        <FormFieldList>
           {groupedPermissions.map(([scopeName, scopedPermissions]) => (
-            <Stack key={scopeName} spacing={1.25}>
-              <Typography color="text.secondary" variant="body2">
+            <FormFieldBlock key={scopeName}>
+              <FormSupportText>
                 {t("roles.form.permissionScope")}: {scopeName}
-              </Typography>
+              </FormSupportText>
               <Box
                 sx={{
                   border: "1px solid rgba(11,110,79,0.12)",
@@ -140,22 +153,23 @@ export function RoleForm({
                           }}
                         />
                       )}
+                      disableTypography
                       key={permission.id}
                       label={(
                         <Stack spacing={0.25}>
                           <Typography>{permission.name}</Typography>
-                          <Typography color="text.secondary" variant="body2">
-                            {permission.description}
-                          </Typography>
+                          {permission.description ? (
+                            <FormSupportText>{permission.description}</FormSupportText>
+                          ) : null}
                         </Stack>
                       )}
                     />
                   ))}
                 </Stack>
               </Box>
-            </Stack>
+            </FormFieldBlock>
           ))}
-        </Stack>
+        </FormFieldList>
       </Stack>
       <Stack direction="row" justifyContent="flex-end" spacing={1.5}>
         <Button

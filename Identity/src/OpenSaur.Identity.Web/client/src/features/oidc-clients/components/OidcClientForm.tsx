@@ -13,6 +13,11 @@ import {
   ControlledTextArea,
   ControlledTextField
 } from "../../../components/molecules/controlled";
+import {
+  FormFieldBlock,
+  FormFieldList,
+  FormSupportText
+} from "../../../components/molecules";
 import { usePreferences } from "../../preferences/PreferenceProvider";
 
 type OidcClientFormValues = {
@@ -98,123 +103,137 @@ export function OidcClientForm({
       {errorMessage ? <Alert severity="error">{errorMessage}</Alert> : null}
       <Stack spacing={2}>
         <Typography variant="h6">{t("oidcClients.form.client")}</Typography>
-        <ControlledTextField
-          control={control}
-          disabled={isSubmitting}
-          label={t("oidcClients.form.displayName")}
-          name="displayName"
-          rules={{
-            required: t("oidcClients.form.displayNameRequired")
-          }}
-        />
-        <ControlledTextField
-          control={control}
-          disabled={isSubmitting}
-          label={t("oidcClients.form.clientId")}
-          name="clientId"
-          rules={{
-            required: t("oidcClients.form.clientIdRequired")
-          }}
-        />
-        <ControlledTextField
-          control={control}
-          disabled={isSubmitting}
-          label={t("oidcClients.form.clientSecret")}
-          name="clientSecret"
-          rules={isEditMode
-            ? undefined
-            : {
-                required: t("oidcClients.form.clientSecretRequired")
+        <FormFieldList>
+          <FormFieldBlock>
+            <ControlledTextField
+              control={control}
+              disabled={isSubmitting}
+              label={t("oidcClients.form.displayName")}
+              name="displayName"
+              rules={{
+                required: t("oidcClients.form.displayNameRequired")
               }}
-        />
-        <Typography color="text.secondary" variant="body2">
-          {isEditMode ? t("oidcClients.form.clientSecretOptional") : t("oidcClients.form.clientSecretRequired")}
-        </Typography>
-        <ControlledTextField
-          control={control}
-          disabled={isSubmitting}
-          label={t("oidcClients.form.scope")}
-          name="scope"
-          rules={{
-            required: t("oidcClients.form.scopeRequired")
-          }}
-        />
-        <Typography color="text.secondary" variant="body2">
-          {t("oidcClients.form.scopeHelp")}
-        </Typography>
-        <ControlledTextField
-          control={control}
-          disabled={isSubmitting}
-          label={t("oidcClients.form.appPathBase")}
-          name="appPathBase"
-          rules={{
-            required: t("oidcClients.form.appPathBaseRequired")
-          }}
-        />
-        <Typography color="text.secondary" variant="body2">
-          {t("oidcClients.form.appPathBaseHelp")}
-        </Typography>
-        <ControlledTextField
-          control={control}
-          disabled={isSubmitting}
-          label={t("oidcClients.form.callbackPath")}
-          name="callbackPath"
-          rules={{
-            required: t("oidcClients.form.callbackPathRequired")
-          }}
-        />
-        <Typography color="text.secondary" variant="body2">
-          {t("oidcClients.form.callbackPathHelp")}
-        </Typography>
-        <ControlledTextArea
-          control={control}
-          disabled={isSubmitting}
-          label={t("oidcClients.form.origins")}
-          minRows={4}
-          name="originsText"
-          rules={{
-            required: t("oidcClients.form.originsRequired"),
-            validate: value => splitOrigins(String(value)).length > 0 || t("oidcClients.form.originsRequired")
-          }}
-        />
-        <Typography color="text.secondary" variant="body2">
-          {t("oidcClients.form.originsHelp")}
-        </Typography>
-        {originPreview.length > 0 ? (
-          <Alert severity="info">
-            <strong>{t("oidcClients.form.originPreviewTitle")}</strong>
-            <br />
-            {originPreview.join(", ")}
-          </Alert>
-        ) : null}
-        <ControlledTextField
-          control={control}
-          disabled={isSubmitting}
-          label={t("oidcClients.form.postLogoutPath")}
-          name="postLogoutPath"
-          rules={{
-            required: t("oidcClients.form.postLogoutPathRequired")
-          }}
-        />
-        <Typography color="text.secondary" variant="body2">
-          {t("oidcClients.form.postLogoutPathHelp")}
-        </Typography>
-        <ControlledTextArea
-          control={control}
-          disabled={isSubmitting}
-          label={t("oidcClients.form.description")}
-          minRows={3}
-          name="description"
-        />
-        {isEditMode ? (
-          <ControlledCheckbox
-            control={control}
-            disabled={isSubmitting}
-            inputProps={{ "aria-label": t("oidcClients.form.activeAriaLabel") }}
-            label={t("oidcClients.form.activeLabel")}
-            name="isActive"
-          />
-        ) : null}
+            />
+          </FormFieldBlock>
+          <FormFieldBlock>
+            <ControlledTextField
+              control={control}
+              disabled={isSubmitting}
+              label={t("oidcClients.form.clientId")}
+              name="clientId"
+              rules={{
+                required: t("oidcClients.form.clientIdRequired")
+              }}
+            />
+          </FormFieldBlock>
+          <FormFieldBlock
+            supportContent={isEditMode
+              ? t("oidcClients.form.clientSecretOptional")
+              : t("oidcClients.form.clientSecretRequired")}
+          >
+            <ControlledTextField
+              control={control}
+              disabled={isSubmitting}
+              label={t("oidcClients.form.clientSecret")}
+              name="clientSecret"
+              rules={isEditMode
+                ? undefined
+                : {
+                    required: t("oidcClients.form.clientSecretRequired")
+                  }}
+            />
+          </FormFieldBlock>
+          <FormFieldBlock supportContent={t("oidcClients.form.scopeHelp")}>
+            <ControlledTextField
+              control={control}
+              disabled={isSubmitting}
+              label={t("oidcClients.form.scope")}
+              name="scope"
+              rules={{
+                required: t("oidcClients.form.scopeRequired")
+              }}
+            />
+          </FormFieldBlock>
+          <FormFieldBlock supportContent={t("oidcClients.form.appPathBaseHelp")}>
+            <ControlledTextField
+              control={control}
+              disabled={isSubmitting}
+              label={t("oidcClients.form.appPathBase")}
+              name="appPathBase"
+              rules={{
+                required: t("oidcClients.form.appPathBaseRequired")
+              }}
+            />
+          </FormFieldBlock>
+          <FormFieldBlock supportContent={t("oidcClients.form.callbackPathHelp")}>
+            <ControlledTextField
+              control={control}
+              disabled={isSubmitting}
+              label={t("oidcClients.form.callbackPath")}
+              name="callbackPath"
+              rules={{
+                required: t("oidcClients.form.callbackPathRequired")
+              }}
+            />
+          </FormFieldBlock>
+          <FormFieldBlock supportContent={t("oidcClients.form.postLogoutPathHelp")}>
+            <ControlledTextField
+              control={control}
+              disabled={isSubmitting}
+              label={t("oidcClients.form.postLogoutPath")}
+              name="postLogoutPath"
+              rules={{
+                required: t("oidcClients.form.postLogoutPathRequired")
+              }}
+            />
+          </FormFieldBlock>
+          <FormFieldBlock
+            supportContent={(
+              <>
+                <FormSupportText>{t("oidcClients.form.originsHelp")}</FormSupportText>
+                {originPreview.length > 0 ? (
+                  <Alert severity="info">
+                    <strong>{t("oidcClients.form.originPreviewTitle")}</strong>
+                    <br />
+                    {originPreview.join(", ")}
+                  </Alert>
+                ) : null}
+              </>
+            )}
+          >
+            <ControlledTextArea
+              control={control}
+              disabled={isSubmitting}
+              label={t("oidcClients.form.origins")}
+              minRows={4}
+              name="originsText"
+              rules={{
+                required: t("oidcClients.form.originsRequired"),
+                validate: value => splitOrigins(String(value)).length > 0 || t("oidcClients.form.originsRequired")
+              }}
+            />
+          </FormFieldBlock>
+          <FormFieldBlock>
+            <ControlledTextArea
+              control={control}
+              disabled={isSubmitting}
+              label={t("oidcClients.form.description")}
+              minRows={3}
+              name="description"
+            />
+          </FormFieldBlock>
+          {isEditMode ? (
+            <FormFieldBlock>
+              <ControlledCheckbox
+                control={control}
+                disabled={isSubmitting}
+                inputProps={{ "aria-label": t("oidcClients.form.activeAriaLabel") }}
+                label={t("oidcClients.form.activeLabel")}
+                name="isActive"
+              />
+            </FormFieldBlock>
+          ) : null}
+        </FormFieldList>
       </Stack>
       <Divider />
       <Stack direction="row" justifyContent="flex-end" spacing={1.5}>

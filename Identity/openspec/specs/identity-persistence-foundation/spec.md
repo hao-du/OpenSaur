@@ -1,7 +1,7 @@
 # identity-persistence-foundation Specification
 
 ## Purpose
-TBD - created by archiving change identity-service-phase-1-foundation. Update Purpose after archive.
+Define the PostgreSQL, EF Core, ASP.NET Core Identity, and OpenIddict persistence foundation for the Identity service.
 ## Requirements
 ### Requirement: The service SHALL use PostgreSQL with EF Core, ASP.NET Core Identity, and OpenIddict
 The system SHALL persist identity, authorization server, and custom domain data in PostgreSQL using EF Core with ASP.NET Core Identity and OpenIddict entity mappings.

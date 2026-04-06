@@ -5,6 +5,7 @@ import {
   Autocomplete,
   Button,
   CircularProgress,
+  Divider,
   Stack,
   TextField,
   Typography
@@ -14,6 +15,11 @@ import {
   ControlledTextArea,
   ControlledTextField
 } from "../../../components/molecules/controlled";
+import {
+  FormFieldBlock,
+  FormFieldList,
+  FormSupportText
+} from "../../../components/molecules";
 import type { RoleSummary } from "../../roles/types";
 import { isSuperAdministrator } from "../../../app/router/protectedShellRoutes";
 import { usePreferences } from "../../preferences/PreferenceProvider";
@@ -73,84 +79,102 @@ export function WorkspaceForm({
       spacing={3}
     >
       {errorMessage ? <Alert severity="error">{errorMessage}</Alert> : null}
-      <ControlledTextField
-        control={control}
-        label={t("workspaces.form.name")}
-        name="name"
-        rules={{
-          required: t("workspaces.form.nameRequired")
-        }}
-      />
-      <ControlledTextArea
-        control={control}
-        label={t("workspaces.form.description")}
-        name="description"
-      />
-      <ControlledTextField
-        control={control}
-        disabled={isSubmitting}
-        inputProps={{ min: 0, step: 1 }}
-        label={t("workspaces.form.maxActiveUsers")}
-        name="maxActiveUsers"
-        rules={{
-          validate: rawValue => {
-            const value = String(rawValue ?? "");
-            if (value.trim().length === 0) {
-              return true;
-            }
+      <FormFieldList>
+        <FormFieldBlock>
+          <ControlledTextField
+            control={control}
+            disabled={isSubmitting}
+            label={t("workspaces.form.name")}
+            name="name"
+            rules={{
+              required: t("workspaces.form.nameRequired")
+            }}
+          />
+        </FormFieldBlock>
+        <FormFieldBlock>
+          <ControlledTextArea
+            control={control}
+            disabled={isSubmitting}
+            label={t("workspaces.form.description")}
+            name="description"
+          />
+        </FormFieldBlock>
+        <FormFieldBlock>
+          <ControlledTextField
+            control={control}
+            disabled={isSubmitting}
+            inputProps={{ min: 0, step: 1 }}
+            label={t("workspaces.form.maxActiveUsers")}
+            name="maxActiveUsers"
+            rules={{
+              validate: rawValue => {
+                const value = String(rawValue ?? "");
+                if (value.trim().length === 0) {
+                  return true;
+                }
 
-            const parsedValue = Number(value);
-            return Number.isInteger(parsedValue) && parsedValue >= 0
-              ? true
-              : t("workspaces.form.maxActiveUsersValidation");
-          }
-        }}
-        type="number"
-      />
+                const parsedValue = Number(value);
+                return Number.isInteger(parsedValue) && parsedValue >= 0
+                  ? true
+                  : t("workspaces.form.maxActiveUsersValidation");
+              }
+            }}
+            type="number"
+          />
+        </FormFieldBlock>
+      </FormFieldList>
+      <Divider />
       <Stack spacing={2}>
         <Typography variant="h6">{t("workspaces.form.assignedRoles")}</Typography>
-        <Autocomplete
-          disableCloseOnSelect
-          disabled={isSubmitting}
-          filterSelectedOptions
-          fullWidth
-          getOptionLabel={option => option.name}
-          isOptionEqualToValue={(option, value) => option.id === value.id}
-          multiple
-          onChange={(_, value) => {
-            setValue("selectedRoleIds", value.map(option => option.id), {
-              shouldDirty: true
-            });
-          }}
-          options={assignableRoles}
-          renderInput={params => (
-            <TextField
-              {...params}
-              label={t("workspaces.form.assignedRoles")}
-              placeholder={t("workspaces.form.searchRoles")}
+        <FormFieldList>
+          <FormFieldBlock>
+            <Autocomplete
+              disableCloseOnSelect
+              disabled={isSubmitting}
+              filterSelectedOptions
+              fullWidth
+              getOptionLabel={option => option.name}
+              isOptionEqualToValue={(option, value) => option.id === value.id}
+              multiple
+              onChange={(_, value) => {
+                setValue("selectedRoleIds", value.map(option => option.id), {
+                  shouldDirty: true
+                });
+              }}
+              options={assignableRoles}
+              renderInput={params => (
+                <TextField
+                  {...params}
+                  label={t("workspaces.form.assignedRoles")}
+                  placeholder={t("workspaces.form.searchRoles")}
+                />
+              )}
+              renderOption={(props, option) => (
+                <li {...props} key={option.id}>
+                  <Stack spacing={0.25}>
+                    <Typography>{option.name}</Typography>
+                    {option.description ? (
+                      <FormSupportText>{option.description}</FormSupportText>
+                    ) : null}
+                  </Stack>
+                </li>
+              )}
+              value={selectedRoles}
             />
-          )}
-          renderOption={(props, option) => (
-            <li {...props} key={option.id}>
-              <Stack spacing={0.25}>
-                <Typography>{option.name}</Typography>
-                <Typography color="text.secondary" variant="body2">
-                  {option.description}
-                </Typography>
-              </Stack>
-            </li>
-          )}
-          value={selectedRoles}
-        />
+          </FormFieldBlock>
+        </FormFieldList>
       </Stack>
       {isEditMode ? (
+        <FormFieldBlock>
           <ControlledCheckbox
             control={control}
+            disabled={isSubmitting}
             inputProps={{ "aria-label": t("workspaces.form.activeAriaLabel") }}
             label={t("workspaces.form.activeLabel")}
             name="isActive"
           />
-        ) : null}
+        </FormFieldBlock>
+      ) : null}
       <Stack
         direction="row"
         justifyContent="flex-end"

@@ -1,7 +1,7 @@
 # identity-fe-auth-shell Specification
 
 ## Purpose
-TBD - created by archiving change identity-fe-phase-1-auth-shell. Update Purpose after archive.
+Define the hosted login, callback, password-change, and browser auth-bootstrap behavior for the Identity React shell across issuer-hosted and non-issuer deployments.
 ## Requirements
 ### Requirement: First-party web SHALL be served from the identity host on the same domain
 The system SHALL provide a first-party React web app under the identity service host, where `/api/*` remains backend API traffic and non-API routes are served by the frontend application. The frontend source SHALL live under `src/OpenSaur.Identity.Web/client`, SHALL use Vite for development, and SHALL be served by ASP.NET Core from built assets in same-host deployment.
@@ -14,8 +14,8 @@ The system SHALL provide a first-party React web app under the identity service 
 - **WHEN** a browser or client requests `/api/*`
 - **THEN** the identity host routes that request to the backend API surface instead of the frontend application
 
-### Requirement: Frontend auth-only phase SHALL expose the minimal route set
-The first frontend phase SHALL expose an auth-only route set consisting of `/login`, `/auth/callback`, `/change-password`, and one protected shell route.
+### Requirement: Frontend auth routes SHALL expose the hosted login, callback, password-change, and protected-shell entry points
+The hosted frontend SHALL expose `/login`, `/auth/callback`, and `/change-password` alongside the protected shell entry route so the browser can complete both issuer-hosted and non-issuer first-party auth flows.
 
 #### Scenario: Anonymous user opens the login page
 - **WHEN** an anonymous user navigates to `/login`
@@ -24,6 +24,11 @@ The first frontend phase SHALL expose an auth-only route set consisting of `/log
 #### Scenario: Authenticated user opens the protected shell
 - **WHEN** a user with a valid first-party session navigates to the protected shell route
 - **THEN** the system renders the protected shell instead of redirecting back to login
+
+#### Scenario: Hosted login acquires reCAPTCHA v3 from runtime config when configured
+- **WHEN** the first-party shell is running on the issuer-hosted login page and Google reCAPTCHA v3 is configured
+- **THEN** the current host serves the public site key and login action through runtime config
+- **AND** the hosted login page acquires a reCAPTCHA token before submitting credentials to `/api/auth/login`
 
 ### Requirement: Login UI SHALL redirect the user back to the requested page after successful authentication
 The frontend login flow SHALL preserve the originally requested protected route and SHALL return the user to that route after successful login and callback completion.
@@ -118,7 +123,7 @@ The frontend SHALL redirect users who require password rotation to `/change-pass
 - **THEN** the frontend sends the user through a fresh login/callback cycle before returning them to the protected route they were trying to reach
 
 ### Requirement: Frontend auth UI SHALL be responsive and follow atomic design composition
-The first frontend phase SHALL provide mobile, tablet, and desktop responsive auth UI and SHALL organize reusable UI building blocks using atomic design layers.
+The frontend SHALL provide mobile, tablet, and desktop responsive auth UI and SHALL organize reusable UI building blocks using atomic design layers.
 
 #### Scenario: Auth UI renders on smaller screens
 - **WHEN** a user opens the login or password-change UI on a mobile or tablet viewport
@@ -127,4 +132,12 @@ The first frontend phase SHALL provide mobile, tablet, and desktop responsive au
 #### Scenario: Auth UI reuses atomic layers
 - **WHEN** frontend auth pages are implemented
 - **THEN** the UI is composed from reusable atomic layers rather than page-local one-off controls
+
+### Requirement: Frontend-integrated downstream clients SHALL trust permission claims from issuer access tokens
+Frontend-integrated non-issuer shells and downstream clients SHALL be able to use the issuer access token as the source of effective permission claims when the `api` scope is granted.
+
+#### Scenario: Frontend-integrated downstream clients can trust permission claims from the issuer access token
+- **WHEN** a non-issuer first-party shell or downstream client receives an access token from the shared issuer with the `api` scope
+- **THEN** the token contains repeated `permissions` claims with canonical permission-code strings
+- **AND** the client does not need direct Identity database access to evaluate those permissions
 

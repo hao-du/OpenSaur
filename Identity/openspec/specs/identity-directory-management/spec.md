@@ -1,7 +1,7 @@
 # identity-directory-management Specification
 
 ## Purpose
-TBD - created by archiving change identity-service-phase-1-foundation. Update Purpose after archive.
+Define the audited workspace, user, role, and permission-management model and APIs used by the Identity service and hosted admin shell.
 ## Requirements
 ### Requirement: App-owned identity management tables SHALL use the standard audit shape
 The system SHALL store app-owned identity management records with `Id`, `Description`, `IsActive`, `UpdatedBy`, `UpdatedOn`, `CreatedBy`, and `CreatedOn` columns, and runtime-created rows SHALL use version 7 GUID identifiers.

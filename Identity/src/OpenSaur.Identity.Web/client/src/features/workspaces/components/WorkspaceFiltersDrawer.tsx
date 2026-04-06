@@ -10,7 +10,11 @@ import {
   Stack,
   Typography
 } from "@mui/material";
-import { X } from "lucide-react";
+import { X } from "../../../shared/icons";
+import {
+  FormFieldBlock,
+  FormFieldList
+} from "../../../components/molecules";
 import { ControlledTextField } from "../../../components/molecules/controlled";
 import { usePreferences } from "../../preferences/PreferenceProvider";
 
@@ -99,21 +103,27 @@ export function WorkspaceFiltersDrawer({
           spacing={3}
           sx={{ flex: 1 }}
         >
-          <ControlledTextField
-            control={control}
-            label={t("workspaces.filters.search")}
-            name="search"
-          />
-          <ControlledTextField
-            control={control}
-            label={t("workspaces.filters.status")}
-            name="status"
-            select
-          >
-            <MenuItem value="all">{t("common.all")}</MenuItem>
-            <MenuItem value="active">{t("common.active")}</MenuItem>
-            <MenuItem value="inactive">{t("common.inactive")}</MenuItem>
-          </ControlledTextField>
+          <FormFieldList>
+            <FormFieldBlock>
+              <ControlledTextField
+                control={control}
+                label={t("workspaces.filters.search")}
+                name="search"
+              />
+            </FormFieldBlock>
+            <FormFieldBlock>
+              <ControlledTextField
+                control={control}
+                label={t("workspaces.filters.status")}
+                name="status"
+                select
+              >
+                <MenuItem value="all">{t("common.all")}</MenuItem>
+                <MenuItem value="active">{t("common.active")}</MenuItem>
+                <MenuItem value="inactive">{t("common.inactive")}</MenuItem>
+              </ControlledTextField>
+            </FormFieldBlock>
+          </FormFieldList>
           <Stack
             direction="row"
             justifyContent="space-between"

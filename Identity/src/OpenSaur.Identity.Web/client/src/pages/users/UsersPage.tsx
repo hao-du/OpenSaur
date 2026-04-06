@@ -154,11 +154,12 @@ export function UsersPage() {
           justifyContent="space-between"
           spacing={2}
         >
-          <Stack direction="row" spacing={2}>
+          <Stack direction="row" spacing={2} sx={{ width: { md: "auto", xs: "100%" } }}>
             <Button
               onClick={() => {
                 setIsFilterDrawerOpen(true);
               }}
+              sx={{ width: { md: "auto", xs: "100%" } }}
               variant="outlined"
             >
               {t("common.filter")}
@@ -170,6 +171,7 @@ export function UsersPage() {
               resetSaveAssignmentsError();
               setIsCreateDrawerOpen(true);
             }}
+            sx={{ width: { md: "auto", xs: "100%" } }}
             variant="contained"
           >
             {t("common.create")}

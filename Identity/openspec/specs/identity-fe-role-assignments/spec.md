@@ -1,7 +1,7 @@
 # identity-fe-role-assignments Specification
 
 ## Purpose
-TBD - created by archiving change identity-fe-phase-5-roles-and-assignments. Update Purpose after archive.
+Define the workspace-scoped role-assignment UI for managing which users hold each role in the current administration context.
 ## Requirements
 ### Requirement: Role Assignments SHALL be a separate impersonation-only route
 The hosted frontend SHALL expose `Role Assignments` as a separate left-navigation item only when the current session is an impersonated super-admin session.

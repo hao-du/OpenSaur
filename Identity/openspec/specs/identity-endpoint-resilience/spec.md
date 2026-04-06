@@ -1,7 +1,7 @@
 # identity-endpoint-resilience Specification
 
 ## Purpose
-TBD - created by archiving change identity-service-phase-1-foundation. Update Purpose after archive.
+Define the inbound HTTP resilience rules for the Identity service, including rate limiting, idempotent retries, and endpoint-metadata-driven protection scopes.
 ## Requirements
 ### Requirement: All endpoints SHALL participate in rate limiting
 The system SHALL apply a default rate-limit policy to every HTTP endpoint exposed by the identity service, and SHALL allow stricter policies to be attached to sensitive authentication and token routes.

@@ -1,7 +1,7 @@
 # identity-fe-roles Specification
 
 ## Purpose
-TBD - created by archiving change identity-fe-phase-5-roles-and-assignments. Update Purpose after archive.
+Define the hosted roles management UI for viewing and editing global role definitions and their permission assignments.
 ## Requirements
 ### Requirement: Super-admin sessions SHALL access a global roles page
 The hosted frontend SHALL provide a `Roles` page for authenticated super-admin sessions, including impersonated super-admin sessions, and SHALL not expose that page to non-superadmin sessions.

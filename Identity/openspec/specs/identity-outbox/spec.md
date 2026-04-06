@@ -1,7 +1,7 @@
 # identity-outbox Specification
 
 ## Purpose
-TBD - created by archiving change identity-service-phase-1-foundation. Update Purpose after archive.
+Define the outbox events that accompany identity-management writes so downstream consumers can process those changes reliably.
 ## Requirements
 ### Requirement: User, user-role, and role-permission assignment create/update operations SHALL record outbox events
 The system SHALL write an outbox message in the same transaction as every successful create or update operation for users, user-role assignments, and role-permission assignments.

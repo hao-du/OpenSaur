@@ -14,6 +14,11 @@ import {
   Typography
 } from "@mui/material";
 import { X } from "../../../shared/icons";
+import {
+  FormFieldBlock,
+  FormFieldList,
+  FormSupportText
+} from "../../../components/molecules";
 import type { RoleSummary } from "../../roles/types";
 import type {
   AssignmentCandidate,
@@ -102,9 +107,7 @@ export function RoleAssignmentsEditorDrawer({
         {isLoadingAssignments || isLoadingCandidates ? (
           <Stack alignItems="center" justifyContent="center" spacing={2} sx={{ flex: 1 }}>
             <CircularProgress size={28} />
-            <Typography color="text.secondary">
-              {t("roleAssignments.drawer.loading")}
-            </Typography>
+            <FormSupportText>{t("roleAssignments.drawer.loading")}</FormSupportText>
           </Stack>
         ) : (
           <Stack spacing={3} sx={{ flex: 1 }}>
@@ -113,95 +116,97 @@ export function RoleAssignmentsEditorDrawer({
                 {assignmentErrorMessage}
               </Alert>
             ) : null}
-            <Autocomplete
-              autoHighlight
-              disabled={!role}
-              filterOptions={(availableUsers, state) => {
-                const normalizedInput = state.inputValue.trim().toLowerCase();
-                if (!normalizedInput) {
-                  return availableUsers;
-                }
-
-                return availableUsers.filter(user =>
-                  user.userName.toLowerCase().includes(normalizedInput)
-                  || user.email.toLowerCase().includes(normalizedInput)
-                  || user.workspaceName.toLowerCase().includes(normalizedInput));
-              }}
-              fullWidth
-              getOptionLabel={option => option.userName}
-              isOptionEqualToValue={(option, value) => option.userId === value.userId}
-              noOptionsText={t("roleAssignments.drawer.noMatchingUsers")}
-              onChange={(_, value) => {
-                if (!value) {
-                  return;
-                }
-
-                setSelectedUserIds(current => current.includes(value.userId) ? current : [...current, value.userId]);
-              }}
-              openOnFocus
-              options={availableCandidates}
-              renderInput={params => (
-                <TextField
-                  {...params}
-                  label={t("roleAssignments.drawer.user")}
-                  placeholder={t("roleAssignments.drawer.searchUsers")}
-                />
-              )}
-              renderOption={(props, option) => (
-                <li {...props} key={option.userId}>
-                  <Stack spacing={0.25}>
-                    <Typography>{option.userName}</Typography>
-                    <Typography color="text.secondary" variant="body2">
-                      {option.workspaceName}
-                    </Typography>
-                  </Stack>
-                </li>
-              )}
-              slotProps={{
-                popper: {
-                  modifiers: [
-                    {
-                      enabled: false,
-                      name: "flip"
+            <FormFieldList>
+              <FormFieldBlock>
+                <Autocomplete
+                  autoHighlight
+                  disabled={!role}
+                  filterOptions={(availableUsers, state) => {
+                    const normalizedInput = state.inputValue.trim().toLowerCase();
+                    if (!normalizedInput) {
+                      return availableUsers;
                     }
-                  ],
-                  placement: "bottom-start"
-                }
-              }}
-              value={null}
-            />
-            <Stack spacing={1.5}>
-              {selectedUsers.map(user => {
-                const workspaceName = "workspaceName" in user ? user.workspaceName : "";
 
-                return (
-                  <Box
-                    key={user.userId}
-                    sx={{
-                      border: "1px solid rgba(11,110,79,0.12)",
-                      borderRadius: 1,
-                      p: 1.5
-                    }}
-                  >
-                    <Stack alignItems="center" direction="row" justifyContent="space-between" spacing={1.5}>
+                    return availableUsers.filter(user =>
+                      user.userName.toLowerCase().includes(normalizedInput)
+                      || user.email.toLowerCase().includes(normalizedInput)
+                      || user.workspaceName.toLowerCase().includes(normalizedInput));
+                  }}
+                  fullWidth
+                  getOptionLabel={option => option.userName}
+                  isOptionEqualToValue={(option, value) => option.userId === value.userId}
+                  noOptionsText={t("roleAssignments.drawer.noMatchingUsers")}
+                  onChange={(_, value) => {
+                    if (!value) {
+                      return;
+                    }
+
+                    setSelectedUserIds(current => current.includes(value.userId) ? current : [...current, value.userId]);
+                  }}
+                  openOnFocus
+                  options={availableCandidates}
+                  renderInput={params => (
+                    <TextField
+                      {...params}
+                      label={t("roleAssignments.drawer.user")}
+                      placeholder={t("roleAssignments.drawer.searchUsers")}
+                    />
+                  )}
+                  renderOption={(props, option) => (
+                    <li {...props} key={option.userId}>
                       <Stack spacing={0.25}>
-                        <Typography>{user.userName}</Typography>
-                        <Typography color="text.secondary" variant="body2">
-                          {workspaceName}
-                        </Typography>
+                        <Typography>{option.userName}</Typography>
+                        <FormSupportText>{option.workspaceName}</FormSupportText>
                       </Stack>
-                      <Chip
-                        label={t("roleAssignments.drawer.remove")}
-                        onDelete={() => {
-                          setSelectedUserIds(current => current.filter(candidateId => candidateId !== user.userId));
+                    </li>
+                  )}
+                  slotProps={{
+                    popper: {
+                      modifiers: [
+                        {
+                          enabled: false,
+                          name: "flip"
+                        }
+                      ],
+                      placement: "bottom-start"
+                    }
+                  }}
+                  value={null}
+                />
+              </FormFieldBlock>
+              <FormFieldBlock>
+                <Stack spacing={1.5}>
+                  {selectedUsers.map(user => {
+                    const workspaceName = "workspaceName" in user ? user.workspaceName : "";
+
+                    return (
+                      <Box
+                        key={user.userId}
+                        sx={{
+                          border: "1px solid rgba(11,110,79,0.12)",
+                          borderRadius: 1,
+                          p: 1.5
                         }}
-                        variant="outlined"
-                      />
-                    </Stack>
-                  </Box>
-                );
-              })}
-            </Stack>
+                      >
+                        <Stack alignItems="center" direction="row" justifyContent="space-between" spacing={1.5}>
+                          <Stack spacing={0.25}>
+                            <Typography>{user.userName}</Typography>
+                            {workspaceName ? <FormSupportText>{workspaceName}</FormSupportText> : null}
+                          </Stack>
+                          <Chip
+                            label={t("roleAssignments.drawer.remove")}
+                            onDelete={() => {
+                              setSelectedUserIds(current => current.filter(candidateId => candidateId !== user.userId));
+                            }}
+                            variant="outlined"
+                          />
+                        </Stack>
+                      </Box>
+                    );
+                  })}
+                </Stack>
+              </FormFieldBlock>
+            </FormFieldList>
             <Box sx={{ flexGrow: 1 }} />
             <Stack direction="row" justifyContent="flex-end" spacing={1.5}>
               <Button

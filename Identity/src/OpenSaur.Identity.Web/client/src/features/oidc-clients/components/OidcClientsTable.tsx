@@ -2,6 +2,7 @@ import {
   Alert,
   Button,
   Chip,
+  CircularProgress,
   Paper,
   Stack,
   Table,
@@ -39,8 +40,11 @@ export function OidcClientsTable({
 
   if (isLoading) {
     return (
-      <Paper sx={{ p: 4 }}>
-        <Typography color="text.secondary">{t("oidcClients.loading")}</Typography>
+      <Paper elevation={0} sx={{ border: "1px solid rgba(11,110,79,0.12)", p: 4 }}>
+        <Stack alignItems="center" spacing={2}>
+          <CircularProgress size={28} />
+          <Typography color="text.secondary">{t("oidcClients.loading")}</Typography>
+        </Stack>
       </Paper>
     );
   }
@@ -62,7 +66,7 @@ export function OidcClientsTable({
 
   if (clients.length === 0) {
     return (
-      <Paper sx={{ p: 4 }}>
+      <Paper elevation={0} sx={{ border: "1px dashed rgba(11,110,79,0.24)", p: 4 }}>
         <Stack spacing={1.5}>
           <Typography variant="h6">{t("oidcClients.empty.title")}</Typography>
           <Typography color="text.secondary">
@@ -78,18 +82,12 @@ export function OidcClientsTable({
       {actionErrorMessage ? (
         <Alert severity="error">{actionErrorMessage}</Alert>
       ) : null}
-      <Paper sx={{ overflowX: "auto" }}>
+      <Paper elevation={0} sx={{ border: "1px solid rgba(11,110,79,0.12)", overflowX: "auto" }}>
         <Table>
           <TableHead>
             <TableRow>
               <TableCell>{t("oidcClients.table.displayName")}</TableCell>
               <TableCell>{t("oidcClients.table.clientId")}</TableCell>
-              <TableCell>{t("oidcClients.table.appPathBase")}</TableCell>
-              <TableCell>{t("oidcClients.table.callbackPath")}</TableCell>
-              <TableCell>{t("oidcClients.table.origins")}</TableCell>
-              <TableCell>{t("oidcClients.table.redirectUris")}</TableCell>
-              <TableCell>{t("oidcClients.table.postLogoutPath")}</TableCell>
-              <TableCell>{t("oidcClients.table.postLogoutRedirectUris")}</TableCell>
               <TableCell>{t("oidcClients.table.status")}</TableCell>
               <TableCell align="right">{t("oidcClients.table.actions")}</TableCell>
             </TableRow>
@@ -106,39 +104,12 @@ export function OidcClientsTable({
                   </Stack>
                 </TableCell>
                 <TableCell>{client.clientId}</TableCell>
-                <TableCell>{client.appPathBase}</TableCell>
-                <TableCell>{client.callbackPath}</TableCell>
-                <TableCell>
-                  <Stack direction="row" flexWrap="wrap" gap={1}>
-                    {client.origins.map(origin => (
-                      <Chip key={origin} label={origin} size="small" variant="outlined" />
-                    ))}
-                  </Stack>
-                </TableCell>
-                <TableCell>
-                  <Stack spacing={0.75}>
-                    {client.redirectUris.map(redirectUri => (
-                      <Typography key={redirectUri} variant="body2">
-                        {redirectUri}
-                      </Typography>
-                    ))}
-                  </Stack>
-                </TableCell>
-                <TableCell>{client.postLogoutPath}</TableCell>
-                <TableCell>
-                  <Stack spacing={0.75}>
-                    {client.postLogoutRedirectUris.map(postLogoutRedirectUri => (
-                      <Typography key={postLogoutRedirectUri} variant="body2">
-                        {postLogoutRedirectUri}
-                      </Typography>
-                    ))}
-                  </Stack>
-                </TableCell>
                 <TableCell>
                   <Chip
                     color={client.isActive ? "success" : "default"}
                     label={client.isActive ? t("common.active") : t("common.inactive")}
                     size="small"
+                    variant={client.isActive ? "filled" : "outlined"}
                   />
                 </TableCell>
                 <TableCell align="right">

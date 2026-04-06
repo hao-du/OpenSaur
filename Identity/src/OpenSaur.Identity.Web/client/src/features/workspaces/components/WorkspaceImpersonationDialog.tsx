@@ -11,6 +11,11 @@ import {
   TextField,
   Typography
 } from "@mui/material";
+import {
+  FormFieldBlock,
+  FormFieldList,
+  FormSupportText
+} from "../../../components/molecules";
 import type {
   ImpersonationOptionsResponse,
   ImpersonationOptionsUser
@@ -65,14 +70,14 @@ export function WorkspaceImpersonationDialog({
     >
       <DialogTitle>{t("workspaces.impersonation.title")}</DialogTitle>
       <DialogContent dividers>
-        <Stack spacing={3}>
+        <FormFieldList>
           {options ? (
-            <Stack spacing={0.75}>
+            <FormFieldBlock>
               <Typography color="primary.main" variant="overline">
                 {t("workspaces.impersonation.workspace")}
               </Typography>
               <Typography variant="h6">{options.workspaceName}</Typography>
-            </Stack>
+            </FormFieldBlock>
           ) : null}
           {errorMessage ? (
             <Alert severity="error">
@@ -80,62 +85,60 @@ export function WorkspaceImpersonationDialog({
             </Alert>
           ) : null}
           {isLoading ? (
-            <Typography color="text.secondary">
-              {t("workspaces.impersonation.loadingUsers")}
-            </Typography>
+            <FormSupportText>{t("workspaces.impersonation.loadingUsers")}</FormSupportText>
           ) : (
-            <Autocomplete
-              autoHighlight
-              filterOptions={(availableUsers, state) => {
-                const normalizedInput = state.inputValue.trim().toLowerCase();
-                if (!normalizedInput) {
-                  return availableUsers;
-                }
+            <FormFieldBlock>
+              <Autocomplete
+                autoHighlight
+                filterOptions={(availableUsers, state) => {
+                  const normalizedInput = state.inputValue.trim().toLowerCase();
+                  if (!normalizedInput) {
+                    return availableUsers;
+                  }
 
-                return availableUsers.filter(user =>
-                  user.userName.toLowerCase().includes(normalizedInput)
-                  || user.email.toLowerCase().includes(normalizedInput));
-              }}
-              fullWidth
-              getOptionLabel={option => option.userName}
-              isOptionEqualToValue={(option, value) => option.id === value.id}
-              noOptionsText={t("workspaces.impersonation.noMatchingUsers")}
-              onChange={(_, value) => {
-                setSelectedUser(value);
-              }}
-              options={options?.users ?? []}
-              renderInput={params => (
-                <TextField
-                  {...params}
-                  label={t("workspaces.impersonation.user")}
-                  placeholder={t("workspaces.impersonation.searchUsers")}
-                />
-              )}
-              renderOption={(props, option) => (
-                <li {...props} key={option.id}>
-                  <Stack spacing={0.25}>
-                    <Typography>{option.userName}</Typography>
-                    <Typography color="text.secondary" variant="body2">
-                      {option.email}
-                    </Typography>
-                  </Stack>
-                </li>
-              )}
-              slotProps={{
-                popper: {
-                  modifiers: [
-                    {
-                      enabled: false,
-                      name: "flip"
-                    }
-                  ],
-                  placement: "bottom-start"
-                }
-              }}
-              value={selectedUser}
-            />
+                  return availableUsers.filter(user =>
+                    user.userName.toLowerCase().includes(normalizedInput)
+                    || user.email.toLowerCase().includes(normalizedInput));
+                }}
+                fullWidth
+                getOptionLabel={option => option.userName}
+                isOptionEqualToValue={(option, value) => option.id === value.id}
+                noOptionsText={t("workspaces.impersonation.noMatchingUsers")}
+                onChange={(_, value) => {
+                  setSelectedUser(value);
+                }}
+                options={options?.users ?? []}
+                renderInput={params => (
+                  <TextField
+                    {...params}
+                    label={t("workspaces.impersonation.user")}
+                    placeholder={t("workspaces.impersonation.searchUsers")}
+                  />
+                )}
+                renderOption={(props, option) => (
+                  <li {...props} key={option.id}>
+                    <Stack spacing={0.25}>
+                      <Typography>{option.userName}</Typography>
+                      <FormSupportText>{option.email}</FormSupportText>
+                    </Stack>
+                  </li>
+                )}
+                slotProps={{
+                  popper: {
+                    modifiers: [
+                      {
+                        enabled: false,
+                        name: "flip"
+                      }
+                    ],
+                    placement: "bottom-start"
+                  }
+                }}
+                value={selectedUser}
+              />
+            </FormFieldBlock>
           )}
-        </Stack>
+        </FormFieldList>
       </DialogContent>
       <DialogActions>
         <Button

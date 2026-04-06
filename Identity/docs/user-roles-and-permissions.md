@@ -1,398 +1,252 @@
 # User Roles And Permissions
 
-This document explains how user roles, permissions, permission scopes, and authorization checks work in the Identity service today.
+This document explains how roles, permissions, workspace access, and claim projection work in the Identity service today.
 
-It is written against the current implementation in:
+The important rule is:
 
-- `src/OpenSaur.Identity.Web/Domain/Permissions/*`
-- `src/OpenSaur.Identity.Web/Domain/Identity/*`
-- `src/OpenSaur.Identity.Web/Infrastructure/Authorization/*`
-- `src/OpenSaur.Identity.Web/Features/Roles/*`
-- `src/OpenSaur.Identity.Web/Features/UserRoles/*`
+- endpoints authorize against permissions and access filters, not just UI role names
+- roles grant direct permissions
+- permissions expand within the same scope by rank
+- `SuperAdministrator` is a special bypass and workspace-access case
 
-## The Short Version
+## Main Code Paths
 
-The current model is:
+Domain and seed data:
 
-- a `user` gets one or more `roles`
-- a `role` gets one or more `permissions`
-- a `permission` belongs to a `permission scope`
-- endpoint authorization checks required permissions, not role names
-
-One important detail:
-
-- `Administrator.CanManage` also grants `Administrator.CanView`
-
-That behavior does not come from a hidden role override.
-
-It now comes from the permission metadata stored in the `Permissions` table:
-
-- `PermissionScopeId`
-- `Rank`
-- `Code`
-
-## Main Tables And Relationships
-
-The main entities are:
-
-- `ApplicationRole`
-  - file: `src/OpenSaur.Identity.Web/Domain/Identity/ApplicationRole.cs`
-  - represents a role such as `Administrator` or `SuperAdministrator`
-
-- `ApplicationUserRole`
-  - file: `src/OpenSaur.Identity.Web/Domain/Identity/ApplicationUserRole.cs`
-  - links a user to a role
-  - stored in table `UserRoles`
-
-- `Permission`
-  - file: `src/OpenSaur.Identity.Web/Domain/Permissions/Permission.cs`
-  - represents a concrete permission code such as `Administrator.CanManage`
-
-- `PermissionScope`
-  - file: `src/OpenSaur.Identity.Web/Domain/Permissions/PermissionScope.cs`
-  - groups permissions into a named scope such as `Administrator`
-
-- `RolePermission`
-  - file: `src/OpenSaur.Identity.Web/Domain/Permissions/RolePermission.cs`
-  - links a role to a permission
-  - stored in table `RolePermissions`
-
-So the runtime chain is:
-
-`User -> UserRoles -> Role -> RolePermissions -> Permission`
-
-## Current Permission Metadata
-
-The current permission set is still small and intentionally explicit.
-
-Files:
-
-- `src/OpenSaur.Identity.Web/Domain/Permissions/PermissionCode.cs`
+- `src/OpenSaur.Identity.Web/Domain/Identity/ApplicationRole.cs`
+- `src/OpenSaur.Identity.Web/Domain/Identity/ApplicationUserRole.cs`
 - `src/OpenSaur.Identity.Web/Domain/Permissions/Permission.cs`
 - `src/OpenSaur.Identity.Web/Domain/Permissions/PermissionScope.cs`
-
-Today the system defines:
-
-- `Administrator.CanManage`
-- `Administrator.CanView`
-
-Both belong to the `Administrator` permission scope.
-
-Each permission row has a `Rank`.
-
-Current ranks:
-
-- `Administrator.CanManage` -> rank `2`
-- `Administrator.CanView` -> rank `1`
-
-## Where `CanManage` Also Grants `CanView`
-
-This is the part you asked about most directly.
-
-The behavior is implemented in:
-
-- `src/OpenSaur.Identity.Web/Infrastructure/Authorization/Services/PermissionAuthorizationService.cs`
-
-Specifically:
-
-- `GetPermissionSnapshotAsync(Guid userId, ...)`
-
-That method:
-
-1. loads the user's directly assigned active permissions from the database
-2. loads active candidate permissions in the same scopes from the database
-3. grants candidates whose:
-   - `PermissionScopeId` matches
-   - `Rank` is less than or equal to the assigned permission's `Rank`
-
-In plain language:
-
-- if a role has `Administrator.CanManage` with rank `2`
-- the system also grants `Administrator.CanView` with rank `1`
-
-because both permissions are in the same scope and `1 <= 2`.
-
-This is the exact reason `CanManage` implies `CanView`.
-
-It is not because:
-
-- `ApplicationRole` contains special logic
-- `RoleManager` expands permissions
-- `PermissionAuthorizationHandler` hardcodes `CanManage`
-
-Instead, the implication is now a database-backed authorization rule based on scope + rank.
-
-One important runtime nuance:
-
-- the authorization service only considers active permission rows
-- so `CanManage` only implies `CanView` when `CanView` is still active in `Permissions`
-
-## Concrete Example From Seed Data
-
-The easiest place to see this is the seed data.
-
-File:
-
+- `src/OpenSaur.Identity.Web/Domain/Permissions/RolePermission.cs`
+- `src/OpenSaur.Identity.Web/Domain/Permissions/PermissionCode.cs`
+- `src/OpenSaur.Identity.Web/Domain/Permissions/PermissionCatalog.cs`
+- `src/OpenSaur.Identity.Web/Domain/Permissions/PermissionScopeCatalog.cs`
 - `src/OpenSaur.Identity.Web/Infrastructure/Database/Seeding/IdentitySeedData.cs`
 
-The seeded `Administrator` role gets only one role-permission row:
+Authorization and access filters:
 
-- `PermissionCode.Administrator_CanManage`
+- `src/OpenSaur.Identity.Web/Infrastructure/Authorization/Builders/PermissionEndpointConventionBuilderExtensions.cs`
+- `src/OpenSaur.Identity.Web/Infrastructure/Authorization/Requirements/PermissionAuthorizationRequirement.cs`
+- `src/OpenSaur.Identity.Web/Infrastructure/Authorization/Handlers/PermissionAuthorizationHandler.cs`
+- `src/OpenSaur.Identity.Web/Infrastructure/Authorization/Builders/WorkspaceEndpointConventionBuilderExtensions.cs`
+- `src/OpenSaur.Identity.Web/Infrastructure/Authorization/Builders/UserManagementEndpointConventionBuilderExtensions.cs`
+- `src/OpenSaur.Identity.Web/Infrastructure/Authorization/Filters/WorkspaceAccessFilter.cs`
+- `src/OpenSaur.Identity.Web/Infrastructure/Authorization/Filters/UserManagementAccessFilter.cs`
+- `src/OpenSaur.Identity.Web/Infrastructure/Authorization/Services/PermissionAuthorizationService.cs`
+- `src/OpenSaur.Identity.Web/Infrastructure/Authorization/Services/UserAuthorizationService.cs`
+- `src/OpenSaur.Identity.Web/Infrastructure/Security/CurrentUserContext.cs`
 
-That happens in:
-
-- `GetRolePermissions()`
-
-Notice what is not seeded:
-
-- there is no separate seeded row for `Administrator_CanView`
-
-Even so, a user assigned to the `Administrator` role still effectively has both:
-
-- `Administrator.CanManage`
-- `Administrator.CanView`
-
-Why that works:
-
-1. the user gets the `Administrator` role through `UserRoles`
-2. the role has one direct `RolePermissions` row for `Administrator_CanManage`
-3. the authorization service loads that permission row's `PermissionScopeId` and `Rank`
-4. it loads other active permission rows in the same scope
-5. it grants those whose rank is lower than or equal to the assigned permission's rank
-6. that adds `Administrator_CanView`
-
-So the implied `CanView` is produced at authorization time, not stored as a second assignment row.
-
-## How Endpoint Authorization Works
-
-### 1. Endpoints declare required permissions
-
-Examples:
+Endpoint and frontend examples:
 
 - `src/OpenSaur.Identity.Web/Features/Roles/RoleEndpoints.cs`
 - `src/OpenSaur.Identity.Web/Features/UserRoles/UserRoleEndpoints.cs`
 - `src/OpenSaur.Identity.Web/Features/Permissions/PermissionEndpoints.cs`
-- `src/OpenSaur.Identity.Web/Features/PermissionScopes/PermissionScopeEndpoints.cs`
+- `src/OpenSaur.Identity.Web/Features/OidcClients/OidcClientEndpoints.cs`
+- `src/OpenSaur.Identity.Web/Features/Auth/Me/GetCurrentUserHandler.cs`
+- `src/OpenSaur.Identity.Web/Features/Auth/Oidc/OidcEndpoints.cs`
+- `src/OpenSaur.Identity.Web/Features/Auth/AuthSessionPrincipalFactory.cs`
+- `src/OpenSaur.Identity.Web/Infrastructure/Security/IdentitySessionClaimsTransformation.cs`
+- `src/OpenSaur.Identity.Web/client/src/app/router/protectedShellRoutes.ts`
 
-These endpoints use:
+## Current Data Model
 
-- `RequireAuthorization(AuthorizationPolicies.Api)`
-- `RequirePermission(PermissionCode.Administrator_CanManage)`
+The runtime relationship is:
 
-The extension method lives in:
+`User -> UserRoles -> Role -> RolePermissions -> Permission -> PermissionScope`
 
-- `src/OpenSaur.Identity.Web/Infrastructure/Authorization/Builders/PermissionEndpointConventionBuilderExtensions.cs`
+What each piece means:
 
-It adds a `PermissionAuthorizationRequirement` to the endpoint policy.
+- `ApplicationUserRole` links a user to a role
+- `RolePermission` links a role to a directly assigned permission
+- `Permission` stores the canonical code, rank, scope, and active state
+- `PermissionScope` groups related permissions that can imply lower-ranked permissions in the same scope
 
-### 2. The authorization handler checks the current user
+Current permission catalog:
 
-Files:
+- `Administrator.CanManage`
+- `Administrator.CanView`
 
-- `src/OpenSaur.Identity.Web/Infrastructure/Authorization/Requirements/PermissionAuthorizationRequirement.cs`
-- `src/OpenSaur.Identity.Web/Infrastructure/Authorization/Handlers/PermissionAuthorizationHandler.cs`
+Current scope and rank model:
 
-The handler:
+- both permissions belong to the `Administrator` scope
+- `Administrator.CanManage` has rank `2`
+- `Administrator.CanView` has rank `1`
 
-1. builds `CurrentUserContext` from claims
-2. asks `PermissionAuthorizationService` whether the user has the required permissions
-3. succeeds only when all required permissions are present
+The static catalogs in `PermissionCatalog.cs` and `PermissionScopeCatalog.cs` define the seed metadata, but the runtime authorization source of truth is the active database data loaded by `PermissionAuthorizationService`.
 
-### 3. The authorization service loads role-permission data
+## How Granted Permissions Are Computed
 
-The main logic lives in:
+Code locations:
 
-- `src/OpenSaur.Identity.Web/Infrastructure/Authorization/Services/PermissionAuthorizationService.cs`
+- `PermissionAuthorizationService.cs`
+- `CurrentUserContext.cs`
+- `IdentitySeedData.cs`
 
-The important method is:
+What happens:
 
-- `GetPermissionSnapshotAsync(Guid userId, ...)`
+1. `PermissionAuthorizationService` loads the caller's active user-role assignments.
+2. It joins active roles and filters them again when a workspace context is in play.
+3. If any effective role is `SuperAdministrator`, the service returns the special `PermissionSnapshot.SuperAdministrator`.
+4. Otherwise it loads the directly assigned active permissions for those effective roles.
+5. It loads the other active permissions in the same scopes.
+6. It expands the granted set to every permission whose:
+   - `PermissionScopeId` matches
+   - `Rank` is less than or equal to the assigned permission's rank
+7. Later checks use that expanded set, not just the original direct assignment rows.
 
-That method:
+This means the runtime permission model is database-backed and scope-aware.
 
-1. loads active `UserRoles` for the user
-2. joins active `Roles`
-3. joins active `RolePermissions`
-4. joins active `Permissions`
-5. builds a permission snapshot for the user
+## Why `Administrator.CanManage` Also Grants `Administrator.CanView`
 
-This means the system only considers active assignments and active role/permission records.
+Code locations:
 
-### 4. The service applies special rules
+- `PermissionCatalog.cs`
+- `IdentitySeedData.cs`
+- `PermissionAuthorizationService.cs`
 
-There are two important rules.
+What happens:
 
-#### Rule A: `SuperAdministrator` bypass
+1. `PermissionCatalog` defines `Administrator.CanManage` and `Administrator.CanView` in the same `Administrator` scope.
+2. `IdentitySeedData.GetRolePermissions()` seeds the default `Administrator` role with only one direct permission:
+   - `Administrator.CanManage`
+3. `PermissionAuthorizationService.ExpandGrantedPermissionCodeIdsAsync(...)` later expands that direct assignment to every active permission in the same scope whose rank is lower or equal.
+4. Because `CanView` has rank `1` and `CanManage` has rank `2`, the granted set ends up containing both.
 
-In `PermissionAuthorizationService.GetPermissionSnapshotAsync(...)`:
+So the `CanView` capability is implied at authorization time. It is not stored as a second `RolePermission` row and it is not hardcoded in the authorization handler.
 
-- if any assigned role name is `SystemRoles.SuperAdministrator`
-- the service returns `PermissionSnapshot.SuperAdministrator`
+## How Endpoint Authorization Works
 
-Then permission checks immediately return `true`.
+### 1. Endpoints declare the required permission
 
-So `SuperAdministrator` is a role-name-based bypass.
+Code locations:
 
-That bypass is separate from normal permission implication.
+- `RoleEndpoints.cs`
+- `UserRoleEndpoints.cs`
+- `PermissionEndpoints.cs`
+- `PermissionEndpointConventionBuilderExtensions.cs`
 
-#### Rule B: permission implication
+What happens:
 
-If the user is not a super administrator, the service does this:
+1. Protected API groups use `RequireAuthorization(AuthorizationPolicies.Api)`.
+2. They add `.RequirePermission(...)` for permission-sensitive operations.
+3. `PermissionEndpointConventionBuilderExtensions` attaches a `PermissionAuthorizationRequirement` to the endpoint policy.
 
-- read directly assigned active permissions from the database
-- read active candidate permissions in the same scopes from the database
-- compare `PermissionScopeId` and `Rank`
-- store the expanded set in `GrantedCodeIds`
+Current examples:
 
-That expanded set is what later gets checked by:
+- roles endpoints require `Administrator_CanManage`
+- user-role endpoints require `Administrator_CanManage`
+- permission endpoints require `Administrator_CanManage`
 
-- `HasPermissionsAsync(...)`
-- `HasPermissionAsync(...)`
-- `CanManageWorkspaceAsync(...)`
+### 2. The authorization handler evaluates the caller
 
-This is where `CanManage` turning into both `CanManage` and `CanView` happens.
+Code locations:
 
-## User Role Assignment Flow
+- `PermissionAuthorizationRequirement.cs`
+- `PermissionAuthorizationHandler.cs`
+- `CurrentUserContext.cs`
 
-User-role assignment is managed in:
+What happens:
 
-- `src/OpenSaur.Identity.Web/Features/UserRoles/CreateUserRole/CreateUserRoleHandler.cs`
-- `src/OpenSaur.Identity.Web/Features/UserRoles/EditUserRole/EditUserRoleHandler.cs`
+1. `PermissionAuthorizationHandler` builds `CurrentUserContext` from claims.
+2. It asks `PermissionAuthorizationService` whether the caller has every required permission.
+3. The requirement succeeds only when all requested permissions are granted in the current effective workspace context.
 
-What these handlers do:
+### 3. Access filters can add extra rules beyond permissions
 
-- validate the request
-- make sure the target user is accessible
-- make sure the requested role exists and is active
-- prevent duplicate `(UserId, RoleId)` assignments
-- create or update the `ApplicationUserRole` row
+Code locations:
 
-Important detail:
+- `WorkspaceEndpointConventionBuilderExtensions.cs`
+- `WorkspaceAccessFilter.cs`
+- `UserManagementEndpointConventionBuilderExtensions.cs`
+- `UserManagementAccessFilter.cs`
+- `UserAuthorizationService.cs`
 
-- user-role assignment does not copy permissions onto the user
+What happens:
 
-It only links:
+1. `.RequireWorkspaceAccess(...)` adds workspace-sensitive checks.
+2. `.RequireUserManagementAccess()` adds the narrower "can manage users here" check.
+3. Those filters run alongside normal permission authorization, not instead of it.
 
-- `user -> role`
+Important distinction:
 
-Permissions are still resolved later through the role at authorization time.
+- permission checks answer "does the caller have the capability?"
+- workspace filters answer "is the caller allowed to act in this workspace or this user-management context?"
 
-## Role Permission Assignment Flow
+## Workspace And Super-Administrator Rules
 
-Role-permission assignment is managed in:
+Code locations:
 
-- `src/OpenSaur.Identity.Web/Features/Roles/CreateRole/CreateRoleHandler.cs`
-- `src/OpenSaur.Identity.Web/Features/Roles/EditRole/EditRoleHandler.cs`
+- `CurrentUserContext.cs`
+- `UserAuthorizationService.cs`
+- `WorkspaceAccessFilter.cs`
 
-These handlers:
+What happens:
 
-- validate selected permission code ids
-- load active `Permission` rows for those code ids
-- create or update `RolePermission` rows for the role
+1. `CurrentUserContext.HasGlobalWorkspaceScope` is true only for a super administrator who is not impersonating.
+2. `UserAuthorizationService.HasWorkspaceAccessAsync(...)` uses that distinction to decide whether an endpoint needs:
+   - any active workspace
+   - true global super-administrator scope
+   - or a super administrator even while impersonating
+3. `RoleEndpoints.cs` uses `RequireWorkspaceAccess(restrictToSuperAdministrator: true, allowImpersonatedSuperAdministrator: true)` for role create and edit.
+4. `OidcClientEndpoints.cs` uses `RequireWorkspaceAccess(restrictToSuperAdministrator: true)` without the impersonation allowance.
+5. `UserRoleEndpoints.cs` requires normal workspace access and then adds user-management checks on the more sensitive routes.
 
-Important detail:
+One surprising but intentional detail:
 
-- the role stores direct permission assignments only
-- implied permissions are not materialized as extra `RolePermissions` rows
+- `UserAuthorizationService.CanManageUsersAsync(...)` returns `false` for a global, non-impersonating super administrator
+- the same super administrator can manage users after choosing an effective workspace through impersonation
+- ordinary workspace administrators must also have `Administrator_CanManage`, and the personal workspace is intentionally excluded
 
-So if you assign only `Administrator_CanManage` to a role, the database still contains only that direct assignment.
+## How Claims Are Projected Into Tokens And Hosted Sessions
 
-The lower permission is implied later by the database-backed scope + rank rule.
+Code locations:
 
-## Workspace-Sensitive Authorization
+- `OidcEndpoints.cs`
+- `AuthSessionPrincipalFactory.cs`
+- `IdentitySessionClaimsTransformation.cs`
+- `PermissionAuthorizationService.cs`
 
-Some endpoints also apply workspace access filters.
+What happens:
 
-Files:
+1. `OidcEndpoints.cs` resolves the effective workspace and active roles for the signing-in user.
+2. It asks `PermissionAuthorizationService.GetGrantedPermissionCodesAsync(...)` for the canonical permission-code strings.
+3. `AuthSessionPrincipalFactory` adds:
+   - repeated `roles` claims
+   - repeated `permissions` claims
+   - workspace and impersonation state claims
+4. `IdentitySessionClaimsTransformation` does the same effective-claim projection for issuer-hosted cookie sessions so hosted mode and bearer-token mode authorize against the same claim model.
 
-- `src/OpenSaur.Identity.Web/Infrastructure/Authorization/Filters/WorkspaceAccessFilter.cs`
-- `src/OpenSaur.Identity.Web/Infrastructure/Authorization/Services/UserAuthorizationService.cs`
-- `src/OpenSaur.Identity.Web/Infrastructure/Security/CurrentUserContext.cs`
+Important result:
 
-This is separate from permission implication.
+- downstream apps can use `permissions` claims from the access token instead of reading Identity permission tables directly
+- the hosted shell can use the same authorization model even when it is authenticated by cookie instead of bearer token
 
-Workspace logic answers:
+## How The Frontend Uses The Authorization Model
 
-- is the caller allowed to operate in this workspace?
+Code locations:
 
-Permission logic answers:
+- `GetCurrentUserHandler.cs`
+- `protectedShellRoutes.ts`
 
-- does the caller have the required capability?
+What happens:
 
-For example, `UserRoleEndpoints` requires both:
-
-- `Administrator_CanManage`
-- workspace access
-
-So authorization can fail because of:
-
-- missing permission
-- wrong workspace
-- inactive workspace
-
-These are different checks.
-
-## `SuperAdministrator` Versus `Administrator`
-
-The two system roles are intentionally different.
-
-### `Administrator`
-
-- normal role with direct permission assignment
-- current seed gives it `Administrator_CanManage`
-- `Administrator_CanView` is implied by the database-backed scope + rank rule
-- typically used as a workspace-scoped administrator
-
-### `SuperAdministrator`
-
-- special cross-workspace role
-- detected by role name in `PermissionAuthorizationService`
-- bypasses normal permission checks
-- also treated specially in `CurrentUserContext` and workspace authorization
-
-So:
-
-- `Administrator` works through permissions
-- `SuperAdministrator` works through an explicit bypass rule
+1. `GET /api/auth/me` returns roles, impersonation state, and `canManageUsers`.
+2. `protectedShellRoutes.ts` uses those values to decide whether the current user can see routes such as:
+   - `/users`
+   - `/role-assignments`
+   - `/roles`
+   - `/oidc-clients`
+3. Route visibility is therefore a UI convenience layered on top of the backend authorization model, not a replacement for backend policy checks.
 
 ## If You Want To Change The Implication Rule
 
-If you want to change whether `CanManage` implies `CanView`, the main place to change is:
+The main levers are:
 
-- the `Permissions` table data
-- the authorization expansion logic in `PermissionAuthorizationService`
-
-More specifically:
-
-- the permission rows' `Rank` values
-- the permission rows' `PermissionScopeId`
+- permission rows and their scope/rank metadata
+- the expansion logic in `PermissionAuthorizationService`
 
 Examples:
 
-- if you add more permissions in the same scope, rank controls which lower permissions are implied
-- if you want no implication at all, the authorization expansion rule would need different logic
-
-## Summary
-
-The current authorization model is:
-
-- endpoints require permissions
-- users get roles
-- roles get permissions
-- permission implication is resolved from database permission metadata
-- `SuperAdministrator` is a special bypass role
-
-The specific behavior where `CanManage` also grants `CanView` comes from:
-
-- the assigned permission row's `PermissionScopeId`
-- the assigned permission row's `Rank`
-- the active candidate permissions in the same scope
-- the expansion logic in `PermissionAuthorizationService`
-
-not from hidden role overrides or duplicated permission rows.
-
-One practical nuance:
-
-- the implication rule is implemented today
-- but most current administrative endpoints still require `Administrator_CanManage`
-- so `Administrator_CanView` is currently more visible in the authorization model than in a large set of separate read-only endpoints
+- adding a new lower-ranked permission in the same scope makes it eligible to be implied by higher-ranked assignments
+- moving a permission to a different scope breaks that implication chain
+- removing rank-based expansion would change the current "manage implies view" behavior

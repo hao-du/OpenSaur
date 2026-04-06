@@ -1,7 +1,7 @@
 # identity-fe-workspace-role-availability Specification
 
 ## Purpose
-TBD - created by archiving change identity-fe-phase-7-workspace-role-availability. Update Purpose after archive.
+Define how workspace create and edit flows manage which non-reserved roles are available within each workspace.
 ## Requirements
 ### Requirement: Workspace editors SHALL manage workspace role availability
 The system SHALL let an authorized super administrator manage workspace role availability from the `Workspace` create and edit flows. The available role list SHALL include only active non-reserved roles, and the `SuperAdministrator` role SHALL NOT appear in this workspace-owned assignment surface.

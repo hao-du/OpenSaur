@@ -8,6 +8,7 @@ import {
   Typography
 } from "@mui/material";
 import { X } from "../../../shared/icons";
+import { FormSupportText } from "../../../components/molecules";
 import { UserForm } from "./UserForm";
 import type {
   RoleCandidateSummary,
@@ -78,9 +79,7 @@ export function UserFormDrawer({
         {isLoading ? (
           <Stack alignItems="center" justifyContent="center" spacing={2} sx={{ flex: 1 }}>
             <CircularProgress size={28} />
-            <Typography color="text.secondary">
-              {t("users.form.loading")}
-            </Typography>
+            <FormSupportText>{t("users.form.loading")}</FormSupportText>
           </Stack>
         ) : (
           <Box sx={{ flex: 1 }}>

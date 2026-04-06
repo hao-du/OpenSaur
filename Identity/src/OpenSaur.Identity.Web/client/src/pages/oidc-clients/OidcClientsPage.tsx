@@ -1,7 +1,8 @@
 import { Button, Stack } from "@mui/material";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { ProtectedShellTemplate } from "../../components/templates";
 import {
+  OidcClientFiltersDrawer,
   OidcClientFormDrawer,
   OidcClientsTable
 } from "../../features/oidc-clients/components";
@@ -12,10 +13,19 @@ import {
   useOidcClientQuery,
   useOidcClientsQuery
 } from "../../features/oidc-clients/hooks";
+import {
+  filterOidcClients,
+  type OidcClientFilterValues
+} from "../../features/oidc-clients/utils/filterOidcClients";
 import { usePreferences } from "../../features/preferences/PreferenceProvider";
 
 export function OidcClientsPage() {
+  const [filters, setFilters] = useState<OidcClientFilterValues>({
+    clientId: "",
+    status: "active"
+  });
   const [deletingOidcClientId, setDeletingOidcClientId] = useState<string | null>(null);
+  const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
   const [isCreateDrawerOpen, setIsCreateDrawerOpen] = useState(false);
   const [selectedOidcClientId, setSelectedOidcClientId] = useState<string | null>(null);
   const { t } = usePreferences();
@@ -48,6 +58,10 @@ export function OidcClientsPage() {
     resetError: resetDeleteError
   } = useDeleteOidcClient();
   const activeFormErrorMessage = createErrorMessage ?? editErrorMessage;
+  const filteredOidcClients = useMemo(
+    () => filterOidcClients(oidcClients, filters),
+    [filters, oidcClients]
+  );
 
   return (
     <ProtectedShellTemplate
@@ -56,12 +70,23 @@ export function OidcClientsPage() {
     >
       <Stack spacing={3}>
         <Stack direction={{ md: "row", xs: "column" }} justifyContent="space-between" spacing={2}>
-          <div />
+          <Stack direction="row" spacing={2} sx={{ width: { md: "auto", xs: "100%" } }}>
+            <Button
+              onClick={() => {
+                setIsFilterDrawerOpen(true);
+              }}
+              sx={{ width: { md: "auto", xs: "100%" } }}
+              variant="outlined"
+            >
+              {t("common.filter")}
+            </Button>
+          </Stack>
           <Button
             onClick={() => {
               resetCreateError();
               setIsCreateDrawerOpen(true);
             }}
+            sx={{ width: { md: "auto", xs: "100%" } }}
             variant="contained"
           >
             {t("common.create")}
@@ -69,7 +94,7 @@ export function OidcClientsPage() {
         </Stack>
         <OidcClientsTable
           actionErrorMessage={deleteErrorMessage}
-          clients={oidcClients}
+          clients={filteredOidcClients}
           isDeletingClientId={isDeleting ? deletingOidcClientId : null}
           isError={isError}
           isLoading={isLoading}
@@ -93,6 +118,18 @@ export function OidcClientsPage() {
           }}
         />
       </Stack>
+      <OidcClientFiltersDrawer
+        initialValues={filters}
+        isOpen={isFilterDrawerOpen}
+        onApply={async nextFilters => {
+          await Promise.resolve();
+          setFilters(nextFilters);
+          setIsFilterDrawerOpen(false);
+        }}
+        onClose={() => {
+          setIsFilterDrawerOpen(false);
+        }}
+      />
       <OidcClientFormDrawer
         errorMessage={activeFormErrorMessage}
         isEditMode={false}

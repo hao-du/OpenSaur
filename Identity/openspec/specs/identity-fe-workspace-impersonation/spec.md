@@ -1,7 +1,7 @@
 # identity-fe-workspace-impersonation Specification
 
 ## Purpose
-TBD - created by archiving change identity-fe-phase-4-workspace-impersonation. Update Purpose after archive.
+Define how super administrators start and exit workspace impersonation from the hosted shell.
 ## Requirements
 ### Requirement: Workspace management SHALL let SuperAdministrator start impersonation from a workspace row
 The hosted frontend SHALL let `SuperAdministrator` start impersonation from the `Workspaces` page through a `Login as` flow bound to a selected workspace.
