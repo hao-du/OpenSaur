@@ -160,9 +160,6 @@ export function OidcClientForm({
               disabled={isSubmitting}
               label={t("oidcClients.form.appPathBase")}
               name="appPathBase"
-              rules={{
-                required: t("oidcClients.form.appPathBaseRequired")
-              }}
             />
           </FormFieldBlock>
           <FormFieldBlock supportContent={t("oidcClients.form.callbackPathHelp")}>

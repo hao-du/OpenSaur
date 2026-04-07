@@ -13,6 +13,10 @@ import type { OidcClientDetails } from "../types";
 import { OidcClientForm } from "./OidcClientForm";
 import { usePreferences } from "../../preferences/PreferenceProvider";
 
+function toFormAppPathBase(appPathBase: string | undefined) {
+  return appPathBase === "/" ? "" : (appPathBase ?? "");
+}
+
 type OidcClientFormDrawerProps = {
   errorMessage: string | null;
   initialValues?: OidcClientDetails | null;
@@ -80,7 +84,7 @@ export function OidcClientFormDrawer({
             <OidcClientForm
               errorMessage={errorMessage}
               initialValues={{
-                appPathBase: initialValues?.appPathBase ?? "/identity",
+                appPathBase: toFormAppPathBase(initialValues?.appPathBase),
                 callbackPath: initialValues?.callbackPath ?? "/auth/callback",
                 clientId: initialValues?.clientId ?? "",
                 clientSecret: "",

@@ -11,8 +11,6 @@ public sealed class EditOidcClientRequestValidator : AbstractValidator<EditOidcC
             .WithMessage("Client id is required.");
 
         RuleFor(request => request.AppPathBase)
-            .NotEmpty()
-            .WithMessage("Application path base is required.")
             .MaximumLength(200)
             .WithMessage("Application path base must be 200 characters or fewer.");
 
