@@ -76,12 +76,12 @@ export function RolesPage() {
     description: string;
     isActive: boolean;
     name: string;
-    permissionCodeIds: number[];
+    permissionCodes: string[];
   }) {
     await createRole({
       description: values.description,
       name: values.name,
-      permissionCodeIds: values.permissionCodeIds
+      permissionCodes: values.permissionCodes
     });
     setIsCreateDrawerOpen(false);
   }
@@ -90,7 +90,7 @@ export function RolesPage() {
     description: string;
     isActive: boolean;
     name: string;
-    permissionCodeIds: number[];
+    permissionCodes: string[];
   }) {
     if (!selectedRoleId) {
       return;
@@ -101,7 +101,7 @@ export function RolesPage() {
       id: selectedRoleId,
       isActive: values.isActive,
       name: values.name,
-      permissionCodeIds: values.permissionCodeIds
+      permissionCodes: values.permissionCodes
     });
     setSelectedRoleId(null);
   }

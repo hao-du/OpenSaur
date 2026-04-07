@@ -1,77 +1,52 @@
-using System.ComponentModel;
-using System.Reflection;
-
 namespace OpenSaur.Identity.Web.Domain.Permissions;
 
 public static class PermissionCatalog
 {
-    private static readonly IReadOnlyDictionary<int, PermissionDefinition> Definitions =
+    private static readonly IReadOnlyDictionary<string, PermissionDefinition> Definitions =
         CreateDefinitions();
 
     public static IReadOnlyCollection<PermissionDefinition> GetDefinitions() => Definitions.Values
-        .OrderBy(definition => definition.CodeId)
+        .OrderBy(definition => definition.PermissionScopeId)
+        .ThenByDescending(definition => definition.Rank)
+        .ThenBy(definition => definition.Code, StringComparer.Ordinal)
         .ToArray();
 
-    public static PermissionDefinition GetDefinition(int codeId)
+    public static PermissionDefinition GetDefinition(string code)
     {
-        if (!Definitions.TryGetValue(codeId, out var definition))
+        if (!Definitions.TryGetValue(code, out var definition))
         {
-            throw new KeyNotFoundException($"Permission code '{codeId}' is not registered.");
+            throw new KeyNotFoundException($"Permission code '{code}' is not registered.");
         }
 
         return definition;
     }
 
-    public static IReadOnlyCollection<int> ResolveGrantedCodeIds(int codeId)
+    private static IReadOnlyDictionary<string, PermissionDefinition> CreateDefinitions()
     {
-        var definition = GetDefinition(codeId);
-
-        return Definitions.Values
-            .Where(candidate => candidate.PermissionScopeId == definition.PermissionScopeId
-                                && candidate.Rank <= definition.Rank)
-            .OrderByDescending(candidate => candidate.Rank)
-            .ThenBy(candidate => candidate.CodeId)
-            .Select(candidate => candidate.CodeId)
-            .ToArray();
-    }
-
-    private static IReadOnlyDictionary<int, PermissionDefinition> CreateDefinitions()
-    {
-        return new Dictionary<int, PermissionDefinition>
+        return new Dictionary<string, PermissionDefinition>(StringComparer.Ordinal)
         {
-            [(int)PermissionCode.Administrator_CanManage] = CreateDefinition(
+            [PermissionCode.Administrator_CanManage] = CreateDefinition(
                 PermissionCode.Administrator_CanManage,
                 PermissionScopeCatalog.AdministratorPermissionScopeId,
                 "Can Manage",
                 "Allows administrators to manage identity configuration and records.",
-                rank: 2),
-            [(int)PermissionCode.Administrator_CanView] = CreateDefinition(
-                PermissionCode.Administrator_CanView,
-                PermissionScopeCatalog.AdministratorPermissionScopeId,
-                "Can View",
-                "Allows administrators to view identity configuration and records.",
+                rank: 1),
+            [PermissionCode.Umbraco_CanManage] = CreateDefinition(
+                PermissionCode.Umbraco_CanManage,
+                PermissionScopeCatalog.UmbracoPermissionScopeId,
+                "Can Manage",
+                "Allows users to manage Umbraco-integrated backoffice capabilities.",
                 rank: 1)
         };
     }
 
     private static PermissionDefinition CreateDefinition(
-        PermissionCode permissionCode,
+        string code,
         Guid permissionScopeId,
         string name,
         string description,
         int rank)
     {
-        var code = GetCanonicalCode(permissionCode);
-        return new PermissionDefinition((int)permissionCode, permissionScopeId, code, name, description, rank);
-    }
-
-    private static string GetCanonicalCode(PermissionCode permissionCode)
-    {
-        var member = typeof(PermissionCode).GetMember(permissionCode.ToString())
-            .Single();
-        var attribute = member.GetCustomAttribute<DescriptionAttribute>();
-
-        return attribute?.Description
-               ?? throw new InvalidOperationException($"Permission code '{permissionCode}' is missing a Description attribute.");
+        return new PermissionDefinition(code, permissionScopeId, name, description, rank);
     }
 }

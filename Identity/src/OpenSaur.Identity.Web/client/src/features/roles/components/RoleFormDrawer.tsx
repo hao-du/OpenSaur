@@ -25,7 +25,7 @@ type RoleFormDrawerProps = {
     description: string;
     isActive: boolean;
     name: string;
-    permissionCodeIds: number[];
+    permissionCodes: string[];
   }) => Promise<void>;
   permissions: PermissionSummary[];
 };
@@ -79,7 +79,7 @@ export function RoleFormDrawer({
                 description: initialValues?.description ?? "",
                 isActive: initialValues?.isActive ?? true,
                 name: initialValues?.name ?? "",
-                permissionCodeIds: initialValues?.permissionCodeIds ?? []
+                permissionCodes: initialValues?.permissionCodes ?? []
               }}
               isEditMode={isEditMode}
               isSubmitting={isSubmitting}

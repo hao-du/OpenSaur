@@ -8,7 +8,7 @@ public static class PermissionEndpointConventionBuilderExtensions
 {
     public static TBuilder RequirePermission<TBuilder>(
         this TBuilder builder,
-        params PermissionCode[] requiredPermissions)
+        params string[] requiredPermissions)
         where TBuilder : IEndpointConventionBuilder
     {
         ArgumentNullException.ThrowIfNull(builder);

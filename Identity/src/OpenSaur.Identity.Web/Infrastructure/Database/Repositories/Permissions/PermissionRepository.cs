@@ -14,37 +14,39 @@ public sealed class PermissionRepository(ApplicationDbContext dbContext)
         var permissions = await dbContext.Permissions
             .AsNoTracking()
             .Include(permission => permission.PermissionScope)
-            .OrderBy(permission => permission.CodeId)
+            .OrderBy(permission => permission.PermissionScopeId)
+            .ThenByDescending(permission => permission.Rank)
+            .ThenBy(permission => permission.Code)
             .ToListAsync(cancellationToken);
 
         return Result<GetPermissionsResponse>.Success(new GetPermissionsResponse(permissions));
     }
 
-    public async Task<Result<GetPermissionByCodeIdResponse>> GetPermissionByCodeIdAsync(
-        GetPermissionByCodeIdRequest request,
+    public async Task<Result<GetPermissionByCodeResponse>> GetPermissionByCodeAsync(
+        GetPermissionByCodeRequest request,
         CancellationToken cancellationToken)
     {
         var permission = await dbContext.Permissions
             .AsNoTracking()
             .Include(candidate => candidate.PermissionScope)
-            .SingleOrDefaultAsync(candidate => candidate.CodeId == request.CodeId, cancellationToken);
+            .SingleOrDefaultAsync(candidate => candidate.Code == request.Code, cancellationToken);
 
         return permission is null
-            ? Result<GetPermissionByCodeIdResponse>.NotFound(
+            ? Result<GetPermissionByCodeResponse>.NotFound(
                 "Permission not found.",
-                "No permission matched the provided code identifier.")
-            : Result<GetPermissionByCodeIdResponse>.Success(new GetPermissionByCodeIdResponse(permission));
+                "No permission matched the provided code.")
+            : Result<GetPermissionByCodeResponse>.Success(new GetPermissionByCodeResponse(permission));
     }
 
-    public async Task<Result<GetActivePermissionsByCodeIdsResponse>> GetActivePermissionsByCodeIdsAsync(
-        GetActivePermissionsByCodeIdsRequest request,
+    public async Task<Result<GetActivePermissionsByCodesResponse>> GetActivePermissionsByCodesAsync(
+        GetActivePermissionsByCodesRequest request,
         CancellationToken cancellationToken)
     {
         var permissions = await dbContext.Permissions
-            .Where(permission => permission.IsActive && request.CodeIds.Contains(permission.CodeId))
+            .Where(permission => permission.IsActive && request.Codes.Contains(permission.Code))
             .ToListAsync(cancellationToken);
 
-        return Result<GetActivePermissionsByCodeIdsResponse>.Success(new GetActivePermissionsByCodeIdsResponse(permissions));
+        return Result<GetActivePermissionsByCodesResponse>.Success(new GetActivePermissionsByCodesResponse(permissions));
     }
 
     public async Task<Result<GetActivePermissionsForRoleResponse>> GetActivePermissionsForRoleAsync(
@@ -59,7 +61,9 @@ public sealed class PermissionRepository(ApplicationDbContext dbContext)
                 rolePermission => rolePermission.PermissionId,
                 permission => permission.Id,
                 (_, permission) => permission)
-            .OrderBy(permission => permission.CodeId)
+            .OrderBy(permission => permission.PermissionScopeId)
+            .ThenByDescending(permission => permission.Rank)
+            .ThenBy(permission => permission.Code)
             .ToListAsync(cancellationToken);
 
         return Result<GetActivePermissionsForRoleResponse>.Success(new GetActivePermissionsForRoleResponse(permissions));

@@ -18,7 +18,6 @@ public static class GetPermissionsHandler
             response => response.Permissions.Select(
                 permission => new GetPermissionsResponse(
                     permission.Id,
-                    permission.CodeId,
                     permission.PermissionScopeId,
                     permission.PermissionScope?.Name ?? string.Empty,
                     permission.Code,

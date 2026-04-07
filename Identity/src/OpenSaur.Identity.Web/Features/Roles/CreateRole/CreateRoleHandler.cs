@@ -30,15 +30,16 @@ public static class CreateRoleHandler
             return validationFailure;
         }
 
-        var selectedCodeIds = request.PermissionCodeIds
-            .Distinct()
+        var selectedCodes = request.PermissionCodes
+            .Where(code => !string.IsNullOrWhiteSpace(code))
+            .Distinct(StringComparer.Ordinal)
             .ToArray();
-        var permissionsResult = await permissionRepository.GetActivePermissionsByCodeIdsAsync(
-            new GetActivePermissionsByCodeIdsRequest(selectedCodeIds),
+        var permissionsResult = await permissionRepository.GetActivePermissionsByCodesAsync(
+            new GetActivePermissionsByCodesRequest(selectedCodes),
             cancellationToken);
         var permissions = permissionsResult.Value?.Permissions ?? [];
 
-        if (permissions.Count != selectedCodeIds.Length)
+        if (permissions.Count != selectedCodes.Length)
         {
             return Result.Validation(RoleValidationProblems.ForPermissions()).ToApiErrorResult();
         }
@@ -71,7 +72,7 @@ public static class CreateRoleHandler
                 });
         }
 
-        outboxMessageWriter.EnqueueRolePermissionsCreated(role, selectedCodeIds, currentUserContext.UserId);
+        outboxMessageWriter.EnqueueRolePermissionsCreated(role, selectedCodes, currentUserContext.UserId);
         await dbContext.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
 

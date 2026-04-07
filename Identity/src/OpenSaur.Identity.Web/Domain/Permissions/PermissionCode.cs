@@ -1,12 +1,7 @@
-using System.ComponentModel;
-
 namespace OpenSaur.Identity.Web.Domain.Permissions;
 
-public enum PermissionCode
+public static class PermissionCode
 {
-    [Description("Administrator.CanManage")]
-    Administrator_CanManage = 1,
-
-    [Description("Administrator.CanView")]
-    Administrator_CanView = 2
+    public const string Administrator_CanManage = "Administrator.CanManage";
+    public const string Umbraco_CanManage = "Umbraco.CanManage";
 }

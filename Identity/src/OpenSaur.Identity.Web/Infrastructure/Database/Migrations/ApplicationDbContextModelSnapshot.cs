@@ -776,9 +776,6 @@ namespace OpenSaur.Identity.Web.Infrastructure.Database.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
-                    b.Property<int>("CodeId")
-                        .HasColumnType("integer");
-
                     b.Property<Guid>("CreatedBy")
                         .HasColumnType("uuid");
 
@@ -815,9 +812,6 @@ namespace OpenSaur.Identity.Web.Infrastructure.Database.Migrations
                     b.HasIndex("Code")
                         .IsUnique();
 
-                    b.HasIndex("CodeId")
-                        .IsUnique();
-
                     b.HasIndex("PermissionScopeId");
 
                     b.ToTable("Permissions", (string)null);
@@ -827,26 +821,24 @@ namespace OpenSaur.Identity.Web.Infrastructure.Database.Migrations
                         {
                             Id = new Guid("52b23446-4b62-497f-b8ef-b254be4a7570"),
                             Code = "Administrator.CanManage",
-                            CodeId = 1,
                             CreatedBy = new Guid("67be05c0-1f88-4a2c-86f4-d97ad4589135"),
                             CreatedOn = new DateTime(2026, 3, 22, 0, 0, 0, 0, DateTimeKind.Utc),
                             Description = "Allows administrators to manage identity configuration and records.",
                             IsActive = true,
                             Name = "Can Manage",
                             PermissionScopeId = new Guid("7284f832-b4f0-4508-9c96-98ce6f87db6d"),
-                            Rank = 2
+                            Rank = 1
                         },
                         new
                         {
-                            Id = new Guid("dd49a1d9-a22f-4906-9788-cd4e9f74af95"),
-                            Code = "Administrator.CanView",
-                            CodeId = 2,
+                            Id = new Guid("6a7b1568-8fed-42e5-b192-7e6f8401ae61"),
+                            Code = "Umbraco.CanManage",
                             CreatedBy = new Guid("67be05c0-1f88-4a2c-86f4-d97ad4589135"),
                             CreatedOn = new DateTime(2026, 3, 22, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Description = "Allows administrators to view identity configuration and records.",
+                            Description = "Allows users to manage Umbraco-integrated backoffice capabilities.",
                             IsActive = true,
-                            Name = "Can View",
-                            PermissionScopeId = new Guid("7284f832-b4f0-4508-9c96-98ce6f87db6d"),
+                            Name = "Can Manage",
+                            PermissionScopeId = new Guid("818c0a78-e5f3-4737-b9a1-920fb467ade8"),
                             Rank = 1
                         });
                 });
@@ -898,6 +890,15 @@ namespace OpenSaur.Identity.Web.Infrastructure.Database.Migrations
                             Description = "Administrative capabilities for managing the identity service.",
                             IsActive = true,
                             Name = "Administrator"
+                        },
+                        new
+                        {
+                            Id = new Guid("818c0a78-e5f3-4737-b9a1-920fb467ade8"),
+                            CreatedBy = new Guid("67be05c0-1f88-4a2c-86f4-d97ad4589135"),
+                            CreatedOn = new DateTime(2026, 3, 22, 0, 0, 0, 0, DateTimeKind.Utc),
+                            Description = "Capabilities for managing Umbraco-integrated backoffice access.",
+                            IsActive = true,
+                            Name = "Umbraco"
                         });
                 });
 

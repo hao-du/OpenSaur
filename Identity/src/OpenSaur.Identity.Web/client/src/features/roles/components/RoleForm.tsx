@@ -28,7 +28,7 @@ type RoleFormValues = {
   description: string;
   isActive: boolean;
   name: string;
-  permissionCodeIds: number[];
+  permissionCodes: string[];
 };
 
 type RoleFormProps = {
@@ -57,7 +57,7 @@ export function RoleForm({
   } = useForm<RoleFormValues>({
     values: initialValues
   });
-  const permissionCodeIds = watch("permissionCodeIds");
+  const permissionCodes = watch("permissionCodes");
   const groupedPermissions = useMemo(() => {
     const byScope = new Map<string, PermissionSummary[]>();
 
@@ -70,12 +70,12 @@ export function RoleForm({
     return [...byScope.entries()];
   }, [permissions]);
 
-  function togglePermission(codeId: number, checked: boolean) {
-    const nextPermissionCodeIds = checked
-      ? [...permissionCodeIds, codeId]
-      : permissionCodeIds.filter(existingCodeId => existingCodeId !== codeId);
+  function togglePermission(code: string, checked: boolean) {
+    const nextPermissionCodes = checked
+      ? [...permissionCodes, code]
+      : permissionCodes.filter(existingCode => existingCode !== code);
 
-    setValue("permissionCodeIds", [...new Set(nextPermissionCodeIds)].sort((left, right) => left - right), {
+    setValue("permissionCodes", [...new Set(nextPermissionCodes)].sort((left, right) => left.localeCompare(right)), {
       shouldDirty: true
     });
   }
@@ -146,10 +146,10 @@ export function RoleForm({
                     <FormControlLabel
                       control={(
                         <Checkbox
-                          checked={permissionCodeIds.includes(permission.codeId)}
+                          checked={permissionCodes.includes(permission.code)}
                           disabled={isSubmitting}
                           onChange={(_, checked) => {
-                            togglePermission(permission.codeId, checked);
+                            togglePermission(permission.code, checked);
                           }}
                         />
                       )}

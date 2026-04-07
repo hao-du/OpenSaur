@@ -20,12 +20,12 @@ public sealed class EditRoleRequestValidator : AbstractValidator<EditRoleRequest
             .MaximumLength(255)
             .WithMessage("Description must be 255 characters or fewer.");
 
-        RuleFor(request => request.PermissionCodeIds)
+        RuleFor(request => request.PermissionCodes)
             .NotNull()
-            .WithMessage("Permission code ids are required.");
+            .WithMessage("Permission codes are required.");
 
-        RuleForEach(request => request.PermissionCodeIds)
-            .GreaterThan(0)
-            .WithMessage("Permission code ids must be positive.");
+        RuleForEach(request => request.PermissionCodes)
+            .NotEmpty()
+            .WithMessage("Permission codes are required.");
     }
 }

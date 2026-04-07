@@ -15,10 +15,10 @@ internal static class IdentitySeedData
     private static readonly Guid PersonalWorkspaceUserRoleAssignmentId = Guid.Parse("4dba0a76-675d-487d-9d0c-7e4bdbb98b7e");
     private const string SystemAdministratorPasswordHash = "AQAAAAIAAYagAAAAEOFFiUu7B4wSzY7A4i1/VLOUnRjvSDE14MryEaaq4/og63kvvhceW3RF1F+hb+ETlg==";
 
-    private static readonly IReadOnlyDictionary<int, Guid> PermissionIds = new Dictionary<int, Guid>
+    private static readonly IReadOnlyDictionary<string, Guid> PermissionIds = new Dictionary<string, Guid>(StringComparer.Ordinal)
     {
-        [(int)PermissionCode.Administrator_CanManage] = Guid.Parse("52b23446-4b62-497f-b8ef-b254be4a7570"),
-        [(int)PermissionCode.Administrator_CanView] = Guid.Parse("dd49a1d9-a22f-4906-9788-cd4e9f74af95")
+        [PermissionCode.Administrator_CanManage] = Guid.Parse("52b23446-4b62-497f-b8ef-b254be4a7570"),
+        [PermissionCode.Umbraco_CanManage] = Guid.Parse("6a7b1568-8fed-42e5-b192-7e6f8401ae61")
     };
 
     internal static Guid PersonalWorkspaceId { get; } = Guid.Parse("e3a2d95a-9d31-4232-b617-1ea4cdc65f88");
@@ -82,8 +82,7 @@ internal static class IdentitySeedData
         {
             yield return new Permission
             {
-                Id = PermissionIds[definition.CodeId],
-                CodeId = definition.CodeId,
+                Id = PermissionIds[definition.Code],
                 Code = definition.Code,
                 Rank = definition.Rank,
                 PermissionScopeId = definition.PermissionScopeId,
@@ -118,7 +117,7 @@ internal static class IdentitySeedData
         {
             Id = AdministratorCanManageRolePermissionId,
             RoleId = AdministratorRoleId,
-            PermissionId = PermissionIds[(int)PermissionCode.Administrator_CanManage],
+            PermissionId = PermissionIds[PermissionCode.Administrator_CanManage],
             Description = "Default administrator permission assignment.",
             IsActive = true,
             CreatedBy = SystemActorId,

@@ -15,7 +15,7 @@ public static class PermissionEndpoints
             .RequirePermission(PermissionCode.Administrator_CanManage);
 
         permissions.MapGet("/get", GetPermissionsHandler.HandleAsync);
-        permissions.MapGet("/getbyid/{codeId:int}", GetPermissionByIdHandler.HandleAsync);
+        permissions.MapGet("/getbyid/{code}", GetPermissionByIdHandler.HandleAsync);
 
         return app;
     }

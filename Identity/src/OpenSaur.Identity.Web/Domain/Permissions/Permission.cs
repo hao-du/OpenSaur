@@ -4,8 +4,6 @@ namespace OpenSaur.Identity.Web.Domain.Permissions;
 
 public class Permission : AuditedEntity
 {
-    public int CodeId { get; set; }
-
     public string Code { get; set; } = string.Empty;
 
     public int Rank { get; set; }

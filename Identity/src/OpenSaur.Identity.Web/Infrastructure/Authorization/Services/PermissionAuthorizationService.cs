@@ -16,130 +16,84 @@ public sealed class PermissionAuthorizationService
         _dbContext = dbContext;
     }
 
-    public async Task<IReadOnlyDictionary<int, bool>> HasPermissionsAsync(
+    public async Task<IReadOnlyDictionary<string, bool>> HasPermissionsAsync(
         Guid userId,
-        int[] requiredCodeIds,
+        string[] requiredPermissionCodes,
         CancellationToken cancellationToken = default)
     {
-        var distinctRequiredCodeIds = requiredCodeIds
-            .Distinct()
+        var distinctRequiredCodes = requiredPermissionCodes
+            .Where(code => !string.IsNullOrWhiteSpace(code))
+            .Distinct(StringComparer.Ordinal)
             .ToArray();
 
-        if (distinctRequiredCodeIds.Length == 0)
+        if (distinctRequiredCodes.Length == 0)
         {
-            return new Dictionary<int, bool>();
+            return new Dictionary<string, bool>(StringComparer.Ordinal);
         }
 
         var permissionSnapshot = await GetPermissionSnapshotAsync(userId, cancellationToken);
         if (permissionSnapshot.IsSuperAdministrator)
         {
-            return distinctRequiredCodeIds.ToDictionary(codeId => codeId, static _ => true);
+            return distinctRequiredCodes.ToDictionary(code => code, static _ => true, StringComparer.Ordinal);
         }
 
-        return distinctRequiredCodeIds.ToDictionary(
-            codeId => codeId,
-            codeId => permissionSnapshot.GrantedCodeIds.Contains(codeId));
+        return distinctRequiredCodes.ToDictionary(
+            code => code,
+            code => permissionSnapshot.GrantedCodes.Contains(code),
+            StringComparer.Ordinal);
     }
 
-    public async Task<IReadOnlyDictionary<int, bool>> HasPermissionsAsync(
+    public async Task<IReadOnlyDictionary<string, bool>> HasPermissionsAsync(
         CurrentUserContext currentUserContext,
-        int[] requiredCodeIds,
+        string[] requiredPermissionCodes,
         CancellationToken cancellationToken = default)
     {
-        var distinctRequiredCodeIds = requiredCodeIds
-            .Distinct()
+        var distinctRequiredCodes = requiredPermissionCodes
+            .Where(code => !string.IsNullOrWhiteSpace(code))
+            .Distinct(StringComparer.Ordinal)
             .ToArray();
 
-        if (distinctRequiredCodeIds.Length == 0)
+        if (distinctRequiredCodes.Length == 0)
         {
-            return new Dictionary<int, bool>();
+            return new Dictionary<string, bool>(StringComparer.Ordinal);
         }
 
         var permissionSnapshot = await GetPermissionSnapshotAsync(currentUserContext, cancellationToken);
         if (permissionSnapshot.IsSuperAdministrator)
         {
-            return distinctRequiredCodeIds.ToDictionary(codeId => codeId, static _ => true);
+            return distinctRequiredCodes.ToDictionary(code => code, static _ => true, StringComparer.Ordinal);
         }
 
-        return distinctRequiredCodeIds.ToDictionary(
-            codeId => codeId,
-            codeId => permissionSnapshot.GrantedCodeIds.Contains(codeId));
-    }
-
-    public async Task<IReadOnlyDictionary<PermissionCode, bool>> HasPermissionsAsync(
-        Guid userId,
-        PermissionCode[] requiredPermissionCodes,
-        CancellationToken cancellationToken = default)
-    {
-        var permissions = await HasPermissionsAsync(
-            userId,
-            requiredPermissionCodes.Select(static permissionCode => (int)permissionCode).ToArray(),
-            cancellationToken);
-
-        return requiredPermissionCodes
-            .Distinct()
-            .ToDictionary(
-                permissionCode => permissionCode,
-                permissionCode => permissions[(int)permissionCode]);
-    }
-
-    public async Task<IReadOnlyDictionary<PermissionCode, bool>> HasPermissionsAsync(
-        CurrentUserContext currentUserContext,
-        PermissionCode[] requiredPermissionCodes,
-        CancellationToken cancellationToken = default)
-    {
-        var permissions = await HasPermissionsAsync(
-            currentUserContext,
-            requiredPermissionCodes.Select(static permissionCode => (int)permissionCode).ToArray(),
-            cancellationToken);
-
-        return requiredPermissionCodes
-            .Distinct()
-            .ToDictionary(
-                permissionCode => permissionCode,
-                permissionCode => permissions[(int)permissionCode]);
+        return distinctRequiredCodes.ToDictionary(
+            code => code,
+            code => permissionSnapshot.GrantedCodes.Contains(code),
+            StringComparer.Ordinal);
     }
 
     public async Task<bool> HasPermissionAsync(
         Guid userId,
-        int requiredCodeId,
+        string requiredPermissionCode,
         CancellationToken cancellationToken = default)
     {
-        var permissions = await HasPermissionsAsync(userId, [requiredCodeId], cancellationToken);
+        var permissions = await HasPermissionsAsync(userId, [requiredPermissionCode], cancellationToken);
 
-        return permissions[requiredCodeId];
+        return permissions[requiredPermissionCode];
     }
 
     public async Task<bool> HasPermissionAsync(
         CurrentUserContext currentUserContext,
-        int requiredCodeId,
+        string requiredPermissionCode,
         CancellationToken cancellationToken = default)
     {
-        var permissions = await HasPermissionsAsync(currentUserContext, [requiredCodeId], cancellationToken);
+        var permissions = await HasPermissionsAsync(currentUserContext, [requiredPermissionCode], cancellationToken);
 
-        return permissions[requiredCodeId];
-    }
-
-    public Task<bool> HasPermissionAsync(
-        Guid userId,
-        PermissionCode requiredPermissionCode,
-        CancellationToken cancellationToken = default)
-    {
-        return HasPermissionAsync(userId, (int)requiredPermissionCode, cancellationToken);
-    }
-
-    public Task<bool> HasPermissionAsync(
-        CurrentUserContext currentUserContext,
-        PermissionCode requiredPermissionCode,
-        CancellationToken cancellationToken = default)
-    {
-        return HasPermissionAsync(currentUserContext, (int)requiredPermissionCode, cancellationToken);
+        return permissions[requiredPermissionCode];
     }
 
     public async Task<bool> CanManageWorkspaceAsync(
         ClaimsPrincipal principal,
         Guid targetWorkspaceId,
-        int requiredCodeId,
+        string requiredPermissionCode,
         CancellationToken cancellationToken = default)
     {
         var currentUserContext = CurrentUserContext.Create(principal);
@@ -160,16 +114,7 @@ public sealed class PermissionAuthorizationService
             return false;
         }
 
-        return permissionSnapshot.GrantedCodeIds.Contains(requiredCodeId);
-    }
-
-    public Task<bool> CanManageWorkspaceAsync(
-        ClaimsPrincipal principal,
-        Guid targetWorkspaceId,
-        PermissionCode requiredPermissionCode,
-        CancellationToken cancellationToken = default)
-    {
-        return CanManageWorkspaceAsync(principal, targetWorkspaceId, (int)requiredPermissionCode, cancellationToken);
+        return permissionSnapshot.GrantedCodes.Contains(requiredPermissionCode);
     }
 
     public Task<IReadOnlyCollection<string>> GetGrantedPermissionCodesAsync(
@@ -261,9 +206,9 @@ public sealed class PermissionAuthorizationService
             return PermissionSnapshot.Empty;
         }
 
-        var grantedCodeIds = await ExpandGrantedPermissionCodeIdsAsync(directlyAssignedPermissions, cancellationToken);
+        var grantedCodes = await ExpandGrantedPermissionCodesAsync(directlyAssignedPermissions, cancellationToken);
 
-        return new PermissionSnapshot(false, grantedCodeIds);
+        return new PermissionSnapshot(false, grantedCodes);
     }
 
     private async Task<IReadOnlyCollection<string>> GetGrantedPermissionCodesCoreAsync(
@@ -278,16 +223,18 @@ public sealed class PermissionAuthorizationService
 
         if (!permissionSnapshot.IsSuperAdministrator)
         {
-            if (permissionSnapshot.GrantedCodeIds.Count == 0)
+            if (permissionSnapshot.GrantedCodes.Count == 0)
             {
                 return Array.Empty<string>();
             }
 
-            query = query.Where(permission => permissionSnapshot.GrantedCodeIds.Contains(permission.CodeId));
+            query = query.Where(permission => permissionSnapshot.GrantedCodes.Contains(permission.Code));
         }
 
         return await query
-            .OrderBy(permission => permission.CodeId)
+            .OrderBy(permission => permission.PermissionScopeId)
+            .ThenByDescending(permission => permission.Rank)
+            .ThenBy(permission => permission.Code)
             .Select(permission => permission.Code)
             .Distinct()
             .ToArrayAsync(cancellationToken);
@@ -305,14 +252,14 @@ public sealed class PermissionAuthorizationService
                 rolePermission => rolePermission.PermissionId,
                 permission => permission.Id,
                 (_, permission) => new PermissionMetadata(
-                    permission.CodeId,
+                    permission.Code,
                     permission.PermissionScopeId,
                     permission.Rank))
             .Distinct()
             .ToArrayAsync(cancellationToken);
     }
 
-    private async Task<HashSet<int>> ExpandGrantedPermissionCodeIdsAsync(
+    private async Task<HashSet<string>> ExpandGrantedPermissionCodesAsync(
         IReadOnlyCollection<PermissionMetadata> directlyAssignedPermissions,
         CancellationToken cancellationToken)
     {
@@ -325,7 +272,7 @@ public sealed class PermissionAuthorizationService
             .AsNoTracking()
             .Where(permission => permission.IsActive && relevantPermissionScopeIds.Contains(permission.PermissionScopeId))
             .Select(permission => new PermissionMetadata(
-                permission.CodeId,
+                permission.Code,
                 permission.PermissionScopeId,
                 permission.Rank))
             .ToListAsync(cancellationToken);
@@ -336,18 +283,18 @@ public sealed class PermissionAuthorizationService
                     candidate =>
                         candidate.PermissionScopeId == assignedPermission.PermissionScopeId
                         && candidate.Rank <= assignedPermission.Rank))
-            .Select(candidate => candidate.CodeId)
-            .ToHashSet();
+            .Select(candidate => candidate.Code)
+            .ToHashSet(StringComparer.Ordinal);
     }
 
     private sealed record AssignedRole(Guid RoleId, string RoleNormalizedName);
 
-    private sealed record PermissionMetadata(int CodeId, Guid PermissionScopeId, int Rank);
+    private sealed record PermissionMetadata(string Code, Guid PermissionScopeId, int Rank);
 
-    private sealed record PermissionSnapshot(bool IsSuperAdministrator, HashSet<int> GrantedCodeIds)
+    private sealed record PermissionSnapshot(bool IsSuperAdministrator, HashSet<string> GrantedCodes)
     {
-        public static PermissionSnapshot Empty { get; } = new(false, []);
+        public static PermissionSnapshot Empty { get; } = new(false, new HashSet<string>(StringComparer.Ordinal));
 
-        public static PermissionSnapshot SuperAdministrator { get; } = new(true, []);
+        public static PermissionSnapshot SuperAdministrator { get; } = new(true, new HashSet<string>(StringComparer.Ordinal));
     }
 }

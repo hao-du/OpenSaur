@@ -43,7 +43,7 @@ public sealed class OutboxMessageWriter(ApplicationDbContext dbContext)
 
     public void EnqueueRolePermissionsCreated(
         ApplicationRole role,
-        IReadOnlyCollection<int> permissionCodeIds,
+        IReadOnlyCollection<string> permissionCodes,
         Guid changedByUserId)
     {
         Enqueue(
@@ -55,13 +55,13 @@ public sealed class OutboxMessageWriter(ApplicationDbContext dbContext)
                 role.Id,
                 role.Name ?? string.Empty,
                 role.IsActive,
-                permissionCodeIds.ToArray()),
+                permissionCodes.Order(StringComparer.Ordinal).ToArray()),
             changedByUserId);
     }
 
     public void EnqueueRolePermissionsUpdated(
         ApplicationRole role,
-        IReadOnlyCollection<int> permissionCodeIds,
+        IReadOnlyCollection<string> permissionCodes,
         Guid changedByUserId)
     {
         Enqueue(
@@ -73,7 +73,7 @@ public sealed class OutboxMessageWriter(ApplicationDbContext dbContext)
                 role.Id,
                 role.Name ?? string.Empty,
                 role.IsActive,
-                permissionCodeIds.ToArray()),
+                permissionCodes.Order(StringComparer.Ordinal).ToArray()),
             changedByUserId);
     }
 

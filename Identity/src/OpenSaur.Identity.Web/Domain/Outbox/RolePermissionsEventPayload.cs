@@ -4,4 +4,4 @@ public sealed record RolePermissionsEventPayload(
     Guid RoleId,
     string RoleName,
     bool RoleIsActive,
-    int[] PermissionCodeIds);
+    string[] PermissionCodes);

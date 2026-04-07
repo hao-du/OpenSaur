@@ -7,12 +7,11 @@ export type RoleSummary = {
 };
 
 export type RoleDetails = RoleSummary & {
-  permissionCodeIds: number[];
+  permissionCodes: string[];
 };
 
 export type PermissionSummary = {
   code: string;
-  codeId: number;
   description: string;
   id: string;
   isActive: boolean;
@@ -24,7 +23,7 @@ export type PermissionSummary = {
 export type CreateRoleRequest = {
   description: string;
   name: string;
-  permissionCodeIds: number[];
+  permissionCodes: string[];
 };
 
 export type CreateRoleResponse = {
@@ -36,5 +35,5 @@ export type EditRoleRequest = {
   id: string;
   isActive: boolean;
   name: string;
-  permissionCodeIds: number[];
+  permissionCodes: string[];
 };

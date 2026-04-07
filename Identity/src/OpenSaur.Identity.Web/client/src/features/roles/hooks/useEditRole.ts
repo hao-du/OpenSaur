@@ -12,8 +12,9 @@ export function useEditRole() {
   const queryClient = useQueryClient();
   const mutation = useMutation({
     mutationFn: editRole,
-    onSuccess: async () => {
+    onSuccess: async (_, request) => {
       await queryClient.invalidateQueries({ exact: true, queryKey: roleQueryKeys.list() });
+      await queryClient.invalidateQueries({ exact: true, queryKey: roleQueryKeys.detail(request.id) });
       await queryClient.invalidateQueries({ queryKey: authQueryKeys.dashboardSummary() });
       await queryClient.invalidateQueries({ queryKey: userQueryKeys.roleCandidates() });
       await queryClient.invalidateQueries({ queryKey: roleAssignmentQueryKeys.availableRoles() });

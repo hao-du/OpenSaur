@@ -4,16 +4,16 @@ namespace OpenSaur.Identity.Web.Infrastructure.Database.Repositories.Permissions
 
 public sealed record GetPermissionsRequest;
 
-public sealed record GetPermissionByCodeIdRequest(int CodeId);
+public sealed record GetPermissionByCodeRequest(string Code);
 
-public sealed record GetActivePermissionsByCodeIdsRequest(IReadOnlyCollection<int> CodeIds);
+public sealed record GetActivePermissionsByCodesRequest(IReadOnlyCollection<string> Codes);
 
 public sealed record GetActivePermissionsForRoleRequest(Guid RoleId);
 
 public sealed record GetPermissionsResponse(IReadOnlyList<Permission> Permissions);
 
-public sealed record GetPermissionByCodeIdResponse(Permission Permission);
+public sealed record GetPermissionByCodeResponse(Permission Permission);
 
-public sealed record GetActivePermissionsByCodeIdsResponse(IReadOnlyList<Permission> Permissions);
+public sealed record GetActivePermissionsByCodesResponse(IReadOnlyList<Permission> Permissions);
 
 public sealed record GetActivePermissionsForRoleResponse(IReadOnlyList<Permission> Permissions);

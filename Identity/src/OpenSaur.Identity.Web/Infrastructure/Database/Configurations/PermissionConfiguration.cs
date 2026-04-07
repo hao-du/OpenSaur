@@ -15,7 +15,6 @@ internal sealed class PermissionConfiguration : IEntityTypeConfiguration<Permiss
         builder.Property(permission => permission.PermissionScopeId).IsRequired();
         builder.Property(permission => permission.Name).HasMaxLength(200).IsRequired();
         builder.Property(permission => permission.Description).HasMaxLength(255);
-        builder.HasIndex(permission => permission.CodeId).IsUnique();
         builder.HasIndex(permission => permission.Code).IsUnique();
         builder.HasIndex(permission => permission.PermissionScopeId);
         builder.HasOne(permission => permission.PermissionScope)

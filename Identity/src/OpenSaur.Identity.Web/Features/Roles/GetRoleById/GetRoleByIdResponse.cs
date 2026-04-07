@@ -6,4 +6,4 @@ public sealed record GetRoleByIdResponse(
     string NormalizedName,
     string Description,
     bool IsActive,
-    int[] PermissionCodeIds);
+    string[] PermissionCodes);

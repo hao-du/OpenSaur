@@ -5,6 +5,7 @@ This document explains how roles, permissions, workspace access, and claim proje
 The important rule is:
 
 - endpoints authorize against permissions and access filters, not just UI role names
+- permissions are identified by their canonical `Code` string, not a numeric `CodeId`
 - roles grant direct permissions
 - permissions expand within the same scope by rank
 - `SuperAdministrator` is a special bypass and workspace-access case
@@ -58,19 +59,20 @@ What each piece means:
 
 - `ApplicationUserRole` links a user to a role
 - `RolePermission` links a role to a directly assigned permission
-- `Permission` stores the canonical code, rank, scope, and active state
+- `Permission` stores the canonical string `Code`, rank, scope, and active state
 - `PermissionScope` groups related permissions that can imply lower-ranked permissions in the same scope
 
 Current permission catalog:
 
 - `Administrator.CanManage`
-- `Administrator.CanView`
+- `Umbraco.CanManage`
 
 Current scope and rank model:
 
-- both permissions belong to the `Administrator` scope
-- `Administrator.CanManage` has rank `2`
-- `Administrator.CanView` has rank `1`
+- `Administrator.CanManage` belongs to the `Administrator` scope
+- `Umbraco.CanManage` belongs to the `Umbraco` scope
+- both built-in permissions currently use rank `1`
+- the default seeded role assignment still grants only `Administrator.CanManage`
 
 The static catalogs in `PermissionCatalog.cs` and `PermissionScopeCatalog.cs` define the seed metadata, but the runtime authorization source of truth is the active database data loaded by `PermissionAuthorizationService`.
 
@@ -96,7 +98,7 @@ What happens:
 
 This means the runtime permission model is database-backed and scope-aware.
 
-## Why `Administrator.CanManage` Also Grants `Administrator.CanView`
+## How Rank-Based Expansion Works
 
 Code locations:
 
@@ -106,13 +108,12 @@ Code locations:
 
 What happens:
 
-1. `PermissionCatalog` defines `Administrator.CanManage` and `Administrator.CanView` in the same `Administrator` scope.
-2. `IdentitySeedData.GetRolePermissions()` seeds the default `Administrator` role with only one direct permission:
-   - `Administrator.CanManage`
-3. `PermissionAuthorizationService.ExpandGrantedPermissionCodeIdsAsync(...)` later expands that direct assignment to every active permission in the same scope whose rank is lower or equal.
-4. Because `CanView` has rank `1` and `CanManage` has rank `2`, the granted set ends up containing both.
+1. `PermissionCatalog` defines canonical permission codes and their ranks inside a scope.
+2. `IdentitySeedData.GetRolePermissions()` seeds direct role-to-permission assignments.
+3. `PermissionAuthorizationService.ExpandGrantedPermissionCodesAsync(...)` expands a direct assignment to every active permission in the same scope whose rank is lower or equal.
+4. The current seed data has two built-in permissions in different scopes, so no cross-scope implication occurs by default.
 
-So the `CanView` capability is implied at authorization time. It is not stored as a second `RolePermission` row and it is not hardcoded in the authorization handler.
+So rank still matters for future permission families, but the default catalog is now simpler.
 
 ## How Endpoint Authorization Works
 
@@ -255,14 +256,13 @@ Code location:
 
 What to do:
 
-1. Add a new enum value.
-2. Add a `Description` attribute with the canonical string that should appear in the database and JWT `permissions` claims.
+1. Add a new string constant.
+2. The constant value must be the canonical string that appears in the database and JWT `permissions` claims.
 
 Example shape:
 
 ```csharp
-[Description("Umbraco.CanManage")]
-Umbraco_CanManage = 3
+public const string Umbraco_CanManage = "Umbraco.CanManage";
 ```
 
 ### 2. Register the permission metadata
@@ -295,7 +295,7 @@ Code location:
 
 What to do:
 
-1. Add a stable GUID to the `PermissionIds` dictionary for the new `PermissionCode`.
+1. Add a stable GUID to the `PermissionIds` dictionary for the new permission code string.
 2. If a default seeded role should receive that permission, add a `RolePermission` seed entry in `GetRolePermissions()`.
 
 Important detail:
@@ -363,4 +363,4 @@ Examples:
 
 - adding a new lower-ranked permission in the same scope makes it eligible to be implied by higher-ranked assignments
 - moving a permission to a different scope breaks that implication chain
-- removing rank-based expansion would change the current "manage implies view" behavior
+- removing rank-based expansion would stop higher-ranked permissions from implying lower-ranked permissions in the same scope

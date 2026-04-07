@@ -7,12 +7,12 @@ namespace OpenSaur.Identity.Web.Features.Permissions.GetPermissionById;
 public static class GetPermissionByIdHandler
 {
     public static async Task<IResult> HandleAsync(
-        int codeId,
+        string code,
         PermissionRepository permissionRepository,
         CancellationToken cancellationToken)
     {
-        var permissionResult = await permissionRepository.GetPermissionByCodeIdAsync(
-            new GetPermissionByCodeIdRequest(codeId),
+        var permissionResult = await permissionRepository.GetPermissionByCodeAsync(
+            new GetPermissionByCodeRequest(code),
             cancellationToken);
         if (!permissionResult.IsSuccess || permissionResult.Value is null)
         {
@@ -22,7 +22,6 @@ public static class GetPermissionByIdHandler
         return ApiResponses.Success(
             new GetPermissionByIdResponse(
                 permissionResult.Value.Permission.Id,
-                permissionResult.Value.Permission.CodeId,
                 permissionResult.Value.Permission.PermissionScopeId,
                 permissionResult.Value.Permission.PermissionScope?.Name ?? string.Empty,
                 permissionResult.Value.Permission.Code,
