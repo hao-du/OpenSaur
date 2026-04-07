@@ -1,0 +1,24 @@
+{
+  "$schema": "../../umbraco-package-schema.json",
+  "name": "OpenSaur Identity Backoffice Auth",
+  "allowPublicAccess": true,
+  "extensions": [
+    {
+      "type": "authProvider",
+      "alias": "OpenSaur.AuthProvider.Identity",
+      "name": "OpenSaur Identity",
+      "forProviderName": "Umbraco.OpenSaur.Identity",
+      "meta": {
+        "label": "Sign in with OpenSaur Identity",
+        "defaultView": {
+          "icon": "icon-cloud",
+          "color": "default",
+          "look": "primary"
+        },
+        "behavior": {
+          "autoRedirect": true
+        }
+      }
+    }
+  ]
+}

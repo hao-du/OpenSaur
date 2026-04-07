@@ -1,9 +1,12 @@
 
+using OpenSaur.Umbraco.Web.Authentication;
+
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 builder.CreateUmbracoBuilder()
     .AddBackOffice()
     .AddWebsite()
+    .AddOpenSaurBackOfficeAuthentication()
     .AddComposers()
     .Build();
 
@@ -11,7 +14,6 @@ WebApplication app = builder.Build();
 
 
 await app.BootUmbracoAsync();
-
 
 app.UseUmbraco()
     .WithMiddleware(u =>
