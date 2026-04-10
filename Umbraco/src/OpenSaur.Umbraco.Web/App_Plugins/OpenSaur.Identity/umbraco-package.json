@@ -9,7 +9,7 @@
       "name": "OpenSaur Identity",
       "forProviderName": "Umbraco.OpenSaur.Identity",
       "meta": {
-        "label": "Sign in with OpenSaur Identity",
+        "label": "OpenSaur Identity",
         "defaultView": {
           "icon": "icon-cloud",
           "color": "default",

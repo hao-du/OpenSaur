@@ -14,7 +14,9 @@ internal sealed record OpenSaurIdentitySession(
 {
     public string WorkspaceGroupName => WorkspaceId.ToString();
 
-    public string WorkspaceGroupAlias => WorkspaceId.ToString();
+    public string WorkspaceGroupAlias => $"opensaurWorkspace{WorkspaceId:N}";
+
+    public string LegacyWorkspaceGroupAlias => WorkspaceId.ToString();
 
     public static bool TryCreate(ClaimsPrincipal principal, out OpenSaurIdentitySession? session)
     {
@@ -56,7 +58,7 @@ internal sealed record OpenSaurIdentitySession(
         }
 
         var isSuperAdministrator = principal.FindAll(OpenSaurIdentityClaimTypes.Role)
-            .Any(claim => string.Equals(claim.Value, "SUPERADMINISTRATOR", StringComparison.OrdinalIgnoreCase));
+            .Any(claim => string.Equals(claim.Value, "SUPER ADMINISTRATOR", StringComparison.OrdinalIgnoreCase));
 
         var hasUmbracoManagePermission = principal.FindAll(OpenSaurIdentityClaimTypes.Permissions)
             .Any(claim => string.Equals(claim.Value, "Umbraco.CanManage", StringComparison.Ordinal));

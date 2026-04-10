@@ -49,7 +49,7 @@ internal static class OpenSaurBackOfficeAuthenticationExtensions
                             oidcOptions.SignedOutCallbackPath = options.SignedOutCallbackPath;
                             oidcOptions.MapInboundClaims = false;
                             oidcOptions.GetClaimsFromUserInfoEndpoint = false;
-                            oidcOptions.SaveTokens = true;
+                            oidcOptions.SaveTokens = false;
                             oidcOptions.UsePkce = true;
                             oidcOptions.TokenValidationParameters = new TokenValidationParameters
                             {
@@ -91,14 +91,16 @@ internal static class OpenSaurBackOfficeAuthenticationExtensions
                                     }
 
                                     CopyClaimIfMissing(identity, accessTokenPrincipal, OpenSaurIdentityClaimTypes.Permissions);
+                                    CopyClaimIfMissing(identity, accessTokenPrincipal, OpenSaurIdentityClaimTypes.Role);
                                     CopyClaimIfMissing(identity, accessTokenPrincipal, OpenSaurIdentityClaimTypes.WorkspaceId);
                                     CopyClaimIfMissing(identity, accessTokenPrincipal, OpenSaurIdentityClaimTypes.ImpersonationActive);
                                     CopyClaimIfMissing(identity, accessTokenPrincipal, OpenSaurIdentityClaimTypes.ImpersonationOriginalUserId);
                                     CopyClaimIfMissing(identity, accessTokenPrincipal, OpenSaurIdentityClaimTypes.ImpersonationWorkspaceId);
+                                    EnsureStandardExternalLoginClaims(identity);
 
                                     if (!OpenSaurIdentitySession.TryCreate(context.Principal, out var session) || session is null)
                                     {
-                                        context.Fail("Backoffice access requires SUPERADMINISTRATOR or Umbraco.CanManage.");
+                                        context.Fail("Backoffice access requires SUPER ADMINISTRATOR or Umbraco.CanManage.");
                                         return Task.CompletedTask;
                                     }
 
@@ -113,7 +115,7 @@ internal static class OpenSaurBackOfficeAuthenticationExtensions
                 },
                 providerOptions =>
                 {
-                    providerOptions.DenyLocalLogin = true;
+                    providerOptions.DenyLocalLogin = false;
                     providerOptions.AutoLinkOptions = new ExternalSignInAutoLinkOptions(
                         autoLinkExternalAccount: true,
                         defaultUserGroups: [],
@@ -137,6 +139,38 @@ internal static class OpenSaurBackOfficeAuthenticationExtensions
         });
 
         return builder;
+    }
+
+    private static void EnsureStandardExternalLoginClaims(ClaimsIdentity identity)
+    {
+        AddClaimIfMissing(
+            identity,
+            ClaimTypes.NameIdentifier,
+            FindClaimValue(identity, OpenSaurIdentityClaimTypes.Subject));
+        AddClaimIfMissing(
+            identity,
+            ClaimTypes.Name,
+            FindClaimValue(identity, OpenSaurIdentityClaimTypes.Name)
+            ?? FindClaimValue(identity, OpenSaurIdentityClaimTypes.PreferredUserName));
+        AddClaimIfMissing(
+            identity,
+            ClaimTypes.Email,
+            FindClaimValue(identity, OpenSaurIdentityClaimTypes.Email));
+    }
+
+    private static void AddClaimIfMissing(ClaimsIdentity identity, string claimType, string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value) || identity.HasClaim(claim => claim.Type == claimType))
+        {
+            return;
+        }
+
+        identity.AddClaim(new Claim(claimType, value));
+    }
+
+    private static string? FindClaimValue(ClaimsIdentity identity, string claimType)
+    {
+        return identity.FindFirst(claimType)?.Value;
     }
 
     private static void CopyClaimIfMissing(ClaimsIdentity identity, JwtSecurityToken accessToken, string claimType)
