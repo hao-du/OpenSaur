@@ -403,19 +403,10 @@ public static class DependencyInjection
             })
             .AddServer(options =>
             {
-                var issuerUri = oidcOptions.GetIssuerBaseUri();
-
-                options.SetIssuer(issuerUri);
-                options.SetConfigurationEndpointUris(
-                        BuildIssuerEndpointUri(issuerUri, ".well-known/openid-configuration"))
-                    .SetJsonWebKeySetEndpointUris(
-                        BuildIssuerEndpointUri(issuerUri, ".well-known/jwks"))
-                    .SetAuthorizationEndpointUris(
-                        BuildIssuerEndpointUri(issuerUri, "connect/authorize"))
-                    .SetTokenEndpointUris(
-                        BuildIssuerEndpointUri(issuerUri, "connect/token"))
-                    .SetEndSessionEndpointUris(
-                        BuildIssuerEndpointUri(issuerUri, "connect/logout"));
+                options.SetIssuer(new Uri(oidcOptions.Issuer));
+                options.SetAuthorizationEndpointUris("connect/authorize")
+                    .SetTokenEndpointUris("connect/token")
+                    .SetEndSessionEndpointUris("connect/logout");
                 options.AllowAuthorizationCodeFlow()
                     .AllowRefreshTokenFlow();
                 options.RegisterScopes(
@@ -440,11 +431,6 @@ public static class DependencyInjection
             });
 
         return services;
-    }
-
-    private static Uri BuildIssuerEndpointUri(Uri issuerUri, string relativePath)
-    {
-        return new Uri(issuerUri, relativePath.TrimStart('/'));
     }
 
     private static void ConfigureOidcKeyMaterial(
