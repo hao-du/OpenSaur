@@ -15,6 +15,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using Microsoft.IdentityModel.Tokens;
 using OpenIddict.Abstractions;
+using OpenIddict.Server;
 using OpenSaur.Identity.Web.Features.Auth;
 using OpenSaur.Identity.Web.Features.Auth.Impersonation;
 using OpenSaur.Identity.Web.Features.Auth.Login;
@@ -394,6 +395,9 @@ public static class DependencyInjection
         OidcOptions oidcOptions,
         IHostEnvironment environment)
     {
+        var issuerBaseUri = oidcOptions.GetIssuerBaseUri();
+        var issuerUri = new Uri(issuerBaseUri.AbsoluteUri.TrimEnd('/'), UriKind.Absolute);
+
         services.AddOpenIddict()
             .AddCore(options =>
             {
@@ -403,10 +407,18 @@ public static class DependencyInjection
             })
             .AddServer(options =>
             {
-                options.SetIssuer(new Uri(oidcOptions.Issuer));
+                options.SetIssuer(issuerUri);
                 options.SetAuthorizationEndpointUris("connect/authorize")
                     .SetTokenEndpointUris("connect/token")
                     .SetEndSessionEndpointUris("connect/logout");
+                options.AddEventHandler<OpenIddictServerEvents.HandleConfigurationRequestContext>(
+                    builder => builder
+                        .SetOrder(OpenIddictServerHandlers.Discovery.AttachEndpoints.Descriptor.Order + 1_000)
+                        .UseInlineHandler(context =>
+                        {
+                            RewriteDiscoveryEndpointUris(context, issuerUri, issuerBaseUri);
+                            return ValueTask.CompletedTask;
+                        }));
                 options.AllowAuthorizationCodeFlow()
                     .AllowRefreshTokenFlow();
                 options.RegisterScopes(
@@ -431,6 +443,23 @@ public static class DependencyInjection
             });
 
         return services;
+    }
+
+    private static void RewriteDiscoveryEndpointUris(
+        OpenIddictServerEvents.HandleConfigurationRequestContext context,
+        Uri issuerUri,
+        Uri issuerBaseUri)
+    {
+        context.Issuer = issuerUri;
+        context.AuthorizationEndpoint = BuildIssuerEndpointUri(issuerBaseUri, "connect/authorize");
+        context.TokenEndpoint = BuildIssuerEndpointUri(issuerBaseUri, "connect/token");
+        context.EndSessionEndpoint = BuildIssuerEndpointUri(issuerBaseUri, "connect/logout");
+        context.JsonWebKeySetEndpoint = BuildIssuerEndpointUri(issuerBaseUri, ".well-known/jwks");
+    }
+
+    private static Uri BuildIssuerEndpointUri(Uri issuerBaseUri, string relativePath)
+    {
+        return new Uri(issuerBaseUri, relativePath.TrimStart('/'));
     }
 
     private static void ConfigureOidcKeyMaterial(
