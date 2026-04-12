@@ -1,55 +1,74 @@
-trigger: none
-pr: none
-
-resources:
-  pipelines:
-    - pipeline: BuildPipelineRun
-      source: 'OpenSaur Gateway - Build'
-
-pool:
-  vmImage: ubuntu-latest
-
-variables:
-  dockerHubServiceConnection: 'Docker Hub'
-  dockerRepository: 'duchihao/opensaur-gateway'
-  publishArtifactName: gateway-publish
+parameters:
+  - name: buildConfiguration
+    type: string
+  - name: dotnetSdkVersion
+    type: string
+  - name: webProject
+    type: string
+  - name: publishOutputDirectory
+    type: string
+  - name: dockerfileTemplate
+    type: string
+  - name: dockerHubServiceConnection
+    type: string
+  - name: dockerRepository
+    type: string
 
 stages:
-  - stage: ContainerizeAndPublish
-    displayName: Containerize Artifact And Publish To Docker Hub
+  - stage: PublishDocker
+    displayName: Publish Docker Image To Docker Hub
+    dependsOn: Build
+    condition: succeeded()
     jobs:
-      - job: Dockerize
+      - job: PublishImage
         displayName: Build And Push Docker Image
         steps:
           - checkout: self
             clean: true
 
-          - download: BuildPipelineRun
-            artifact: $(publishArtifactName)
-            displayName: Download Gateway artifact from selected pipeline
+          - task: UseDotNet@2
+            displayName: Install .NET SDK
+            inputs:
+              packageType: sdk
+              version: ${{ parameters.dotnetSdkVersion }}
 
-          - script: cp "$(Build.SourcesDirectory)/Gateway/devops/Dockerfile.artifact" "$(Pipeline.Workspace)/BuildPipelineRun/$(publishArtifactName)/Dockerfile.artifact"
-            displayName: Copy Dockerfile into artifact context
+          - task: DotNetCoreCLI@2
+            displayName: Restore web application dependencies
+            inputs:
+              command: restore
+              projects: ${{ parameters.webProject }}
+              feedsToUse: select
+
+          - task: DotNetCoreCLI@2
+            displayName: Publish web application
+            inputs:
+              command: publish
+              publishWebProjects: false
+              projects: ${{ parameters.webProject }}
+              arguments: --configuration ${{ parameters.buildConfiguration }} --output ${{ parameters.publishOutputDirectory }} --no-restore /p:CompressionEnabled=false
+              zipAfterPublish: false
+              modifyOutputPath: false
+
+          - script: cp "${{ parameters.dockerfileTemplate }}" "${{ parameters.publishOutputDirectory }}/Dockerfile.artifact"
+            displayName: Copy Dockerfile into publish context
 
           - task: Docker@2
             displayName: Build and push Docker image
             inputs:
               command: buildAndPush
-              containerRegistry: $(dockerHubServiceConnection)
-              repository: $(dockerRepository)
-              Dockerfile: $(Pipeline.Workspace)/BuildPipelineRun/$(publishArtifactName)/Dockerfile.artifact
-              buildContext: $(Pipeline.Workspace)/BuildPipelineRun/$(publishArtifactName)
+              containerRegistry: ${{ parameters.dockerHubServiceConnection }}
+              repository: ${{ parameters.dockerRepository }}
+              Dockerfile: ${{ parameters.publishOutputDirectory }}/Dockerfile.artifact
+              buildContext: ${{ parameters.publishOutputDirectory }}
               tags: |
                 $(Build.BuildId)
 
-          - script: |
-              mkdir -p "$(Build.ArtifactStagingDirectory)/docker-image-metadata"
-              printf '%s\n' "$(dockerRepository):$(Build.BuildId)" > "$(Build.ArtifactStagingDirectory)/docker-image-metadata/image-reference.txt"
-            displayName: Write image metadata
+          - bash: |
+              set -euo pipefail
 
-          - task: PublishPipelineArtifact@1
-            displayName: Publish image metadata artifact
-            inputs:
-              targetPath: $(Build.ArtifactStagingDirectory)/docker-image-metadata
-              artifact: docker-image-metadata
-              publishLocation: pipeline
+              IMAGE_REFERENCE="${{ parameters.dockerRepository }}:$(Build.BuildId)"
+
+              echo "Published image: $IMAGE_REFERENCE"
+              echo "##vso[task.setvariable variable=imageReference;isOutput=true]$IMAGE_REFERENCE"
+            displayName: Set published image reference
+            name: setImageReference
