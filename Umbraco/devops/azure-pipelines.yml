@@ -7,9 +7,9 @@ pool:
 variables:
   buildConfiguration: Release
   dotnetSdkVersion: 10.0.x
-  webProject: src/OpenSaur.Umbraco.Web/OpenSaur.Umbraco.Web.csproj
+  webProject: Umbraco/src/OpenSaur.Umbraco.Web/OpenSaur.Umbraco.Web.csproj
   publishOutputDirectory: $(Build.ArtifactStagingDirectory)/webapp-publish
-  dockerfileTemplate: devops/Dockerfile.artifact
+  dockerfileTemplate: Umbraco/devops/Dockerfile.artifact
   dockerHubServiceConnection: Docker Hub
   dockerRepository: duchihao/opensaur-umbraco
   azureServiceConnection: Azure Service Connection
