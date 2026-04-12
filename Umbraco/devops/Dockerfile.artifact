@@ -1,11 +1,21 @@
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
 
-USER $APP_UID
+USER root
 WORKDIR /app
 ENV ASPNETCORE_HTTP_PORTS=8080
 
 EXPOSE 8080
 
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends libgssapi-krb5-2 \
+    && rm -rf /var/lib/apt/lists/*
+
 COPY . .
+
+RUN mkdir -p /app/wwwroot/media /app/wwwroot/forms /app/wwwroot/temp /app/wwwroot/cache \
+    && chown -R $APP_UID:0 /app \
+    && chmod -R g=u /app
+
+USER $APP_UID
 
 ENTRYPOINT ["dotnet", "OpenSaur.Umbraco.Web.dll"]
