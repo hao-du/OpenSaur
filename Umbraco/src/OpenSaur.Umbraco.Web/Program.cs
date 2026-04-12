@@ -1,7 +1,19 @@
-
+using Microsoft.AspNetCore.HttpOverrides;
 using OpenSaur.Umbraco.Web.Authentication;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
+
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor
+        | ForwardedHeaders.XForwardedProto
+        | ForwardedHeaders.XForwardedHost;
+
+    // ACA terminates TLS at the ingress and forwards the original request metadata.
+    // Clear the trust lists so the forwarded headers are applied in that environment.
+    options.KnownIPNetworks.Clear();
+    options.KnownProxies.Clear();
+});
 
 builder.CreateUmbracoBuilder()
     .AddBackOffice()
@@ -12,6 +24,7 @@ builder.CreateUmbracoBuilder()
 
 WebApplication app = builder.Build();
 
+app.UseForwardedHeaders();
 
 await app.BootUmbracoAsync();
 
