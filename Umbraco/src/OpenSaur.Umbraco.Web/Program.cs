@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.HttpOverrides;
 using OpenSaur.Umbraco.Web.Authentication;
+using Umbraco.Cms.Core.DependencyInjection;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
@@ -15,12 +16,22 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
     options.KnownProxies.Clear();
 });
 
-builder.CreateUmbracoBuilder()
+var umbracoBuilder = builder.CreateUmbracoBuilder()
     .AddBackOffice()
     .AddWebsite()
     .AddOpenSaurBackOfficeAuthentication()
-    .AddComposers()
-    .Build();
+    .AddComposers();
+
+if (HasAzureBlobMediaStorageConfigured(builder.Configuration))
+{
+    // Enable external blob storage only when both required values are present.
+    // This keeps local/dev startup working before the secret-backed config is wired.
+    umbracoBuilder
+        .AddAzureBlobMediaFileSystem()
+        .AddAzureBlobImageSharpCache();
+}
+
+umbracoBuilder.Build();
 
 WebApplication app = builder.Build();
 
@@ -41,3 +52,12 @@ app.UseUmbraco()
     });
 
 await app.RunAsync();
+
+static bool HasAzureBlobMediaStorageConfigured(IConfiguration configuration)
+{
+    string? connectionString = configuration["Umbraco:Storage:AzureBlob:Media:ConnectionString"];
+    string? containerName = configuration["Umbraco:Storage:AzureBlob:Media:ContainerName"];
+
+    return string.IsNullOrWhiteSpace(connectionString) is false
+           && string.IsNullOrWhiteSpace(containerName) is false;
+}
