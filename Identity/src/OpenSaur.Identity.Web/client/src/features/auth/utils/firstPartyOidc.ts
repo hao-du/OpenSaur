@@ -15,6 +15,8 @@ function createAuthorizationNonce() {
     return window.crypto.randomUUID();
   }
 
+  // Fallback for environments where randomUUID is unavailable. This value is only used to tie
+  // together one browser authorization attempt, not as a long-term credential.
   return `auth-${Date.now()}`;
 }
 
@@ -42,6 +44,8 @@ function parseAuthorizationState(state: string | null | undefined) {
   }
 
   try {
+    // State is URL-encoded JSON so we can carry both a CSRF-style nonce and the shell returnUrl
+    // through the OIDC browser round-trip.
     const parsedState = JSON.parse(decodeURIComponent(state)) as Partial<FirstPartyAuthorizationStatePayload>;
     if (typeof parsedState.returnUrl !== "string") {
       return null;
@@ -61,6 +65,8 @@ function parseAuthorizationState(state: string | null | undefined) {
 export function createFirstPartyAuthorizationState(returnUrl = "/") {
   return encodeURIComponent(JSON.stringify({
     nonce: createAuthorizationNonce(),
+    // Normalize before persisting into state so nested auth transitions keep a stable app-relative
+    // return target instead of carrying arbitrary absolute URLs.
     returnUrl: normalizeAuthReturnUrl(returnUrl)
   } satisfies FirstPartyAuthorizationStatePayload));
 }
@@ -85,6 +91,8 @@ export function buildFirstPartyAuthorizeUrl({
 }
 
 export function isCurrentAppHostedByIssuer() {
+  // When true, the app can use the local login form and then resume the original authorize request.
+  // When false, it behaves like an external OIDC client and redirects out to the issuer immediately.
   return appEnvironment.firstPartyAuth.isIssuerHostedApp;
 }
 
@@ -96,6 +104,8 @@ export function isIssuerAuthenticationContinuationReturnUrl(returnUrl: string) {
   try {
     const resolvedReturnUrl = new URL(returnUrl, getIssuerBaseUri().origin);
 
+    // These routes are not ordinary navigation targets. They represent server-driven auth work
+    // that must be resumed exactly once after the user signs in locally.
     return resolvedReturnUrl.pathname === getIssuerAuthorizePath()
       || getIssuerImpersonationPaths().has(resolvedReturnUrl.pathname);
   } catch {

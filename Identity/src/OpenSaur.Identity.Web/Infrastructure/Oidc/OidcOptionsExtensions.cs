@@ -20,6 +20,8 @@ public static class OidcOptionsExtensions
     {
         if (!string.IsNullOrWhiteSpace(oidcOptions.CurrentAppBaseUri))
         {
+            // Prefer the configured public base URI when one is supplied. This avoids relying on
+            // proxy headers when the app is hosted behind a gateway or CDN.
             if (!Uri.TryCreate(oidcOptions.CurrentAppBaseUri, UriKind.Absolute, out var currentAppBaseUri))
             {
                 throw new InvalidOperationException("OIDC current app base URI configuration is invalid.");
@@ -44,6 +46,9 @@ public static class OidcOptionsExtensions
             ? GetDefaultPort(issuerUri.Scheme)
             : issuerUri.Port;
 
+        // The shell behaves differently when it is hosted by the issuer itself versus acting as
+        // an external OIDC client. We compare the normalized public app URI to the issuer URI
+        // so the frontend can pick the correct login flow.
         return string.Equals(currentAppBaseUri.Scheme, issuerUri.Scheme, StringComparison.OrdinalIgnoreCase)
                && string.Equals(currentAppBaseUri.Host, issuerUri.Host, StringComparison.OrdinalIgnoreCase)
                && currentAppPort == issuerPort
@@ -57,6 +62,7 @@ public static class OidcOptionsExtensions
     {
         var normalizedPathBase = NormalizeBasePath(request.PathBase.Value);
 
+        // Fall back to the current request only when no explicit public base URI is configured.
         return new UriBuilder(
             request.Scheme,
             request.Host.Host,
@@ -74,6 +80,7 @@ public static class OidcOptionsExtensions
             return "/";
         }
 
+        // Treat "/identity" and "/identity/" as the same logical app path.
         return trimmedPath.TrimEnd('/');
     }
 
