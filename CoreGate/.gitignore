@@ -3,3 +3,5 @@
 .dolt/
 *.db
 .beads-credential-key
+src/OpenSaur.CoreGate.Web/Frontend/node_modules/
+src/OpenSaur.CoreGate.Web/wwwroot/
