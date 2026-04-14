@@ -21,7 +21,7 @@ The provider will use the existing shared Identity database. User, role, permiss
 - Build a standards-compliant OIDC provider using native OpenIddict and ASP.NET Core Identity
 - Make CoreGate the central identity hub for the broader solution
 - Reuse the existing shared Identity PostgreSQL database
-- Preserve the existing token claim behavior modeled by `AuthSessionPrincipalFactory`
+- Preserve the existing token claim behavior now implemented through the shared principal/claim helper layer
 - Keep the code explicit, readable, and maintainable for humans
 - Support a unified interactive login experience through a minimal built-in React login screen
 
@@ -111,11 +111,14 @@ Inside `src/OpenSaur.CoreGate.Web`, the code should be organized into small, rea
 - `Infrastructure/Database/`
   `DbContext`, entity configurations, and database-specific setup adapted from the Identity project
 
+- `Infrastructure/DependencyInjection/`
+  runtime service registration for configuration, database, and OpenIddict/Identity composition
+
 - `Infrastructure/Security/`
-  claim type constants, principal construction, authentication helpers, and OpenIddict integration glue
+  claim type constants, cookie names, principal construction helpers, and principal-reading helpers
 
 - `Features/Auth/`
-  login/logout flow and auth-specific Minimal API endpoints
+  login/logout endpoints, DTOs, handler classes, OIDC endpoint mapping, and authorization data loading
 
 - `Frontend/`
   React login UI only
@@ -201,6 +204,10 @@ Interactive auth endpoints:
 - `POST /auth/login`
 - `POST /auth/logout`
 
+Implementation note:
+
+- `GET /auth/login` is a backend bridge route that redirects to the frontend `/login` page while preserving `returnUrl`
+
 Not included:
 
 - `/auth/me`
@@ -243,7 +250,7 @@ Not in scope:
 
 ## Claims and Principal Construction
 
-CoreGate should preserve the claim behavior modeled by `AuthSessionPrincipalFactory`.
+CoreGate should preserve the claim behavior modeled by the original `AuthSessionPrincipalFactory`, even if the implementation is split across renamed helpers.
 
 Claims to populate:
 
@@ -267,6 +274,12 @@ Claim destination behavior should remain explicit and scope-aware:
 - internal operational claims only in access token
 
 This preserves compatibility for downstream apps while keeping the provider standards-compliant.
+
+In the current implementation, claim-shaping responsibility is split between:
+
+- a principal-reader/helper layer for extracting existing auth context
+- a principal-construction helper for building the OpenIddict token principal
+- auth handlers that orchestrate the OIDC flow and call into those helpers
 
 ## Session and Authentication Behavior
 
@@ -344,6 +357,7 @@ Principles:
 - reuse existing schema and claim concepts where compatibility matters
 - avoid hidden framework magic where explicit code is clearer
 - make request-to-token flow easy for a human engineer to follow
+- prefer handler-oriented auth slices when they improve readability, but avoid vague helper names that obscure responsibility
 
 The primary design goal is not just correctness. It is readability under real-world maintenance.
 
@@ -357,4 +371,4 @@ The primary design goal is not just correctness. It is readability under real-wo
 
 ## Final Design Decision
 
-Build `OpenSaur.CoreGate.Web` as a standard OIDC provider using native OpenIddict and ASP.NET Core Identity against the existing shared PostgreSQL Identity database, with a minimal React login screen, no in-code seeding, no `OidcClients` dependency, and claims modeled after the existing `AuthSessionPrincipalFactory`.
+Build `OpenSaur.CoreGate.Web` as a standard OIDC provider using native OpenIddict and ASP.NET Core Identity against the existing shared PostgreSQL Identity database, with a minimal React login screen, no in-code seeding, no `OidcClients` dependency, and claim behavior kept compatible with the original identity implementation.

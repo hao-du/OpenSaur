@@ -125,13 +125,13 @@ export function App() {
               }}
             >
               <Typography variant="overline" sx={{ letterSpacing: 2.2 }}>
-                OpenSaur CoreGate
+                CoreGate
               </Typography>
               <Typography variant="h3" sx={{ mt: 1 }}>
                 Sign In
               </Typography>
               <Typography sx={{ mt: 1.5, opacity: 0.88 }}>
-                Unified identity entry for the OpenSaur platform.
+                Secure sign-in for your identity gateway.
               </Typography>
             </Box>
             <CardContent sx={{ p: 4 }}>

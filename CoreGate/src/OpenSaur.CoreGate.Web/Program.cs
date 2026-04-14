@@ -1,23 +1,25 @@
 using OpenSaur.CoreGate.Web.Features.Auth;
+using OpenSaur.CoreGate.Web.Features.Auth.DependencyInjection;
 using OpenSaur.CoreGate.Web.Infrastructure.Configuration;
-using OpenSaur.CoreGate.Web.Infrastructure.Database;
-using OpenSaur.CoreGate.Web.Infrastructure.OpenIddict;
+using OpenSaur.CoreGate.Web.Infrastructure.DependencyInjection;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddCoreGateConfiguration(builder.Configuration);
 builder.Services.AddCoreGateDatabase(builder.Configuration);
-builder.Services.AddCoreGateAuthentication(builder.Configuration, builder.Environment);
-builder.Services.AddCoreGateAuthServices();
+builder.Services.AddCoreGateAuthentication(builder.Configuration);
+
+builder.Services.AddAuthFeature();
+
 builder.Services.AddProblemDetails();
 builder.Services.AddAuthorization();
+builder.Services.AddHttpContextAccessor();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
 app.UseExceptionHandler();
-app.UseHttpsRedirection();
 app.UseDefaultFiles();
 app.UseStaticFiles();
 app.UseAuthentication();

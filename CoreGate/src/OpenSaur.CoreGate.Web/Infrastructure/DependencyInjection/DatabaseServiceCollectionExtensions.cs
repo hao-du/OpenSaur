@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
+using OpenSaur.CoreGate.Web.Features.Auth;
+using OpenSaur.CoreGate.Web.Infrastructure.Database;
 
-namespace OpenSaur.CoreGate.Web.Infrastructure.Database;
+namespace OpenSaur.CoreGate.Web.Infrastructure.DependencyInjection;
 
 public static class DatabaseServiceCollectionExtensions
 {

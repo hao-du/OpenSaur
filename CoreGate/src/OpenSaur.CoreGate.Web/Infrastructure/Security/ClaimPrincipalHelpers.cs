@@ -1,12 +1,18 @@
-using System.Security.Claims;
 using Microsoft.IdentityModel.Tokens;
 using OpenIddict.Abstractions;
 using OpenSaur.CoreGate.Web.Domain.Identity;
+using System.Security.Claims;
 
 namespace OpenSaur.CoreGate.Web.Infrastructure.Security;
 
-internal static class AuthSessionPrincipalFactory
+internal static class ClaimPrincipalHelpers
 {
+    public static string? GetUserId(ClaimsPrincipal principal)
+    {
+        return principal.FindFirstValue(ClaimTypes.Subject)
+               ?? principal.FindFirstValue(ClaimTypes.NameIdentifier);
+    }
+
     public static ClaimsPrincipal Create(
         ApplicationUser user,
         IEnumerable<string> normalizedRoles,
@@ -15,15 +21,15 @@ internal static class AuthSessionPrincipalFactory
     {
         var identity = new ClaimsIdentity(
             TokenValidationParameters.DefaultAuthenticationType,
-            ApplicationClaimTypes.Name,
-            ApplicationClaimTypes.Role);
+            ClaimTypes.Name,
+            ClaimTypes.Role);
 
-        identity.AddClaim(new Claim(ApplicationClaimTypes.Subject, user.Id.ToString()));
-        identity.AddClaim(new Claim(ApplicationClaimTypes.Name, user.UserName ?? string.Empty));
-        identity.AddClaim(new Claim(ApplicationClaimTypes.PreferredUserName, user.UserName ?? string.Empty));
-        identity.AddClaim(new Claim(ApplicationClaimTypes.WorkspaceId, user.WorkspaceId.ToString()));
+        identity.AddClaim(new Claim(ClaimTypes.Subject, user.Id.ToString()));
+        identity.AddClaim(new Claim(ClaimTypes.Name, user.UserName ?? string.Empty));
+        identity.AddClaim(new Claim(ClaimTypes.PreferredUserName, user.UserName ?? string.Empty));
+        identity.AddClaim(new Claim(ClaimTypes.WorkspaceId, user.WorkspaceId.ToString()));
         identity.AddClaim(new Claim(
-            ApplicationClaimTypes.RequirePasswordChange,
+            ClaimTypes.RequirePasswordChange,
             user.RequirePasswordChange.ToString().ToLowerInvariant()));
 
         if (!string.IsNullOrWhiteSpace(user.Email))
@@ -33,12 +39,12 @@ internal static class AuthSessionPrincipalFactory
 
         foreach (var role in normalizedRoles.Where(static role => !string.IsNullOrWhiteSpace(role)).Distinct(StringComparer.Ordinal))
         {
-            identity.AddClaim(new Claim(ApplicationClaimTypes.Role, role));
+            identity.AddClaim(new Claim(ClaimTypes.Role, role));
         }
 
         foreach (var permissionCode in permissionCodes.Where(static code => !string.IsNullOrWhiteSpace(code)).Distinct(StringComparer.Ordinal))
         {
-            identity.AddClaim(new Claim(ApplicationClaimTypes.Permissions, permissionCode));
+            identity.AddClaim(new Claim(ClaimTypes.Permissions, permissionCode));
         }
 
         var principal = new ClaimsPrincipal(identity);
@@ -49,15 +55,16 @@ internal static class AuthSessionPrincipalFactory
 
         principal.SetScopes(scopeArray);
 
-        if (scopeArray.Contains(ScopeConstants.Api, StringComparer.Ordinal))
+        var scope = "api";
+        if (scopeArray.Contains(scope, StringComparer.Ordinal))
         {
-            principal.SetResources(ResourceConstants.Api);
+            principal.SetResources(scope);
         }
 
         principal.SetDestinations(static claim => claim.Type switch
         {
-            ApplicationClaimTypes.Subject => [OpenIddictConstants.Destinations.AccessToken, OpenIddictConstants.Destinations.IdentityToken],
-            ApplicationClaimTypes.Name or ApplicationClaimTypes.PreferredUserName
+            ClaimTypes.Subject => [OpenIddictConstants.Destinations.AccessToken, OpenIddictConstants.Destinations.IdentityToken],
+            ClaimTypes.Name or ClaimTypes.PreferredUserName
                 when claim.Subject is ClaimsIdentity profileIdentity
                      && profileIdentity.HasScope(OpenIddictConstants.Scopes.Profile)
                 => [OpenIddictConstants.Destinations.AccessToken, OpenIddictConstants.Destinations.IdentityToken],
@@ -65,15 +72,15 @@ internal static class AuthSessionPrincipalFactory
                 when claim.Subject is ClaimsIdentity emailIdentity
                      && emailIdentity.HasScope(OpenIddictConstants.Scopes.Email)
                 => [OpenIddictConstants.Destinations.AccessToken, OpenIddictConstants.Destinations.IdentityToken],
-            ApplicationClaimTypes.Role
+            ClaimTypes.Role
                 when claim.Subject is ClaimsIdentity roleIdentity
                      && roleIdentity.HasScope(OpenIddictConstants.Scopes.Roles)
                 => [OpenIddictConstants.Destinations.AccessToken, OpenIddictConstants.Destinations.IdentityToken],
-            ApplicationClaimTypes.Permissions
+            ClaimTypes.Permissions
                 when claim.Subject is ClaimsIdentity permissionIdentity
-                     && permissionIdentity.HasScope(ScopeConstants.Api)
+                     && permissionIdentity.HasScope("api")
                 => [OpenIddictConstants.Destinations.AccessToken],
-            ApplicationClaimTypes.WorkspaceId or ApplicationClaimTypes.RequirePasswordChange
+            ClaimTypes.WorkspaceId or ClaimTypes.RequirePasswordChange
                 => [OpenIddictConstants.Destinations.AccessToken],
             _ => []
         });

@@ -1,11 +1,11 @@
 using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
+using Claims = System.Security.Claims;
 
 namespace OpenSaur.CoreGate.Web.Infrastructure.Security;
 
-public static class ApplicationClaimTypes
+public static class ClaimTypes
 {
-    public const string NameIdentifier = ClaimTypes.NameIdentifier;
+    public const string NameIdentifier = Claims.ClaimTypes.NameIdentifier;
 
     public const string Name = JwtRegisteredClaimNames.Name;
 

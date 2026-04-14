@@ -1,11 +1,16 @@
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using OpenSaur.CoreGate.Web.Domain.Identity;
 using OpenSaur.CoreGate.Web.Domain.Permissions;
+using OpenSaur.CoreGate.Web.Features.Auth.Dtos;
 using OpenSaur.CoreGate.Web.Infrastructure.Database;
 
-namespace OpenSaur.CoreGate.Web.Infrastructure.Security;
+namespace OpenSaur.CoreGate.Web.Features.Auth;
 
-public sealed class UserAuthorizationDataService(ApplicationDbContext dbContext)
+public sealed class UserRolePermissionService(
+    ApplicationDbContext dbContext
+)
 {
     public async Task<IReadOnlyCollection<string>> GetActiveNormalizedRoleNamesForUserAsync(
         Guid userId,

@@ -1,15 +1,23 @@
-using Microsoft.AspNetCore.Authentication;
+﻿using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
 using OpenSaur.CoreGate.Web.Domain.Identity;
+using OpenSaur.CoreGate.Web.Features.Auth.Dtos;
+using OpenSaur.CoreGate.Web.Infrastructure.Database;
 
-namespace OpenSaur.CoreGate.Web.Features.Auth;
+namespace OpenSaur.CoreGate.Web.Features.Auth.Handlers.Auth;
 
-public sealed class AuthService(
+public class LoginHandler(
+    IHttpContextAccessor httpContextAccessor,
     UserManager<ApplicationUser> userManager,
     SignInManager<ApplicationUser> signInManager)
 {
-    public async Task<LoginResponse> LoginAsync(HttpContext httpContext, LoginRequest request)
+    public async Task<LoginResponse> HandleLoginAsync(LoginRequest request)
     {
+        if(httpContextAccessor.HttpContext is null)
+        {
+            return new LoginResponse(false, null, "HTTP context is not available.");
+        }
+
         if (string.IsNullOrWhiteSpace(request.UserName) || string.IsNullOrWhiteSpace(request.Password))
         {
             return new LoginResponse(false, null, "Username and password are required.");
@@ -29,7 +37,7 @@ public sealed class AuthService(
             return new LoginResponse(false, null, "Invalid username or password.");
         }
 
-        await httpContext.SignInAsync(
+        await httpContextAccessor.HttpContext.SignInAsync(
             IdentityConstants.ApplicationScheme,
             await signInManager.CreateUserPrincipalAsync(user),
             new AuthenticationProperties
@@ -39,10 +47,5 @@ public sealed class AuthService(
 
         var redirectUri = string.IsNullOrWhiteSpace(request.ReturnUrl) ? "/" : request.ReturnUrl;
         return new LoginResponse(true, redirectUri, null);
-    }
-
-    public Task LogoutAsync(HttpContext httpContext)
-    {
-        return httpContext.SignOutAsync(IdentityConstants.ApplicationScheme);
     }
 }

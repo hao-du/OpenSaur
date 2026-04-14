@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Options;
+using OpenSaur.CoreGate.Web.Infrastructure.Configuration;
 
-namespace OpenSaur.CoreGate.Web.Infrastructure.Configuration;
+namespace OpenSaur.CoreGate.Web.Infrastructure.DependencyInjection;
 
 public static class OptionsValidationServiceCollectionExtensions
 {
