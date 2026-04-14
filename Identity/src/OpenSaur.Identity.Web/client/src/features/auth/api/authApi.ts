@@ -45,15 +45,6 @@ export type UpdateCurrentUserSettingsRequest = {
   timeZone: string;
 };
 
-export type ExchangeWebSessionRequest = {
-  code: string;
-};
-
-export type ExchangeWebSessionResponse = {
-  accessToken: string;
-  expiresAt: string;
-};
-
 export type ImpersonationOptionsResponse = {
   users: ImpersonationOptionsUser[];
   workspaceId: string;
@@ -121,18 +112,6 @@ export async function getCurrentUserSettings() {
 
 export async function getDashboardSummary() {
   return await unwrapData<DashboardSummaryResponse>(httpClient.get("/api/auth/dashboard"));
-}
-
-export async function exchangeWebSession(request: ExchangeWebSessionRequest) {
-  return await unwrapData<ExchangeWebSessionResponse>(
-    httpClient.post("/api/auth/web-session/exchange", request)
-  );
-}
-
-export async function refreshWebSession() {
-  return await unwrapData<ExchangeWebSessionResponse>(
-    httpClient.post("/api/auth/web-session/refresh")
-  );
 }
 
 export async function getImpersonationOptions(workspaceId: string) {

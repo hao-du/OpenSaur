@@ -1,13 +1,10 @@
 using System.Security.Claims;
 using FluentValidation;
-using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using OpenSaur.Identity.Web.Domain.Identity;
-using OpenSaur.Identity.Web.Features.Auth.Oidc;
 using OpenSaur.Identity.Web.Infrastructure.Database;
 using OpenSaur.Identity.Web.Infrastructure.Http.Responses;
-using OpenSaur.Identity.Web.Infrastructure.Oidc;
 using OpenSaur.Identity.Web.Infrastructure.Results;
 using OpenSaur.Identity.Web.Infrastructure.Security;
 using OpenSaur.Identity.Web.Infrastructure.Validation;
@@ -22,9 +19,7 @@ public static class StartImpersonationHandler
         IValidator<StartImpersonationRequest> validator,
         ApplicationDbContext dbContext,
         UserManager<ApplicationUser> userManager,
-        FirstPartyImpersonationBridge impersonationBridge,
-        ManagedOidcClientResolver managedOidcClientResolver,
-        HttpContext httpContext,
+        SignInManager<ApplicationUser> signInManager,
         CancellationToken cancellationToken)
     {
         if (await validator.ValidateRequestAsync(request, cancellationToken) is { } validationFailure)
@@ -37,88 +32,9 @@ public static class StartImpersonationHandler
             return validationResult;
         }
 
-        var redirectUri = await managedOidcClientResolver.BuildCurrentRedirectUriAsync(
-                              httpContext.Request,
-                              cancellationToken)
-                          ?? throw new InvalidOperationException(
-                              "No active managed OIDC client matched the current app base URI.");
-
-        var redirectUrl = await impersonationBridge.BuildStartRedirectUrlAsync(
-            currentUserContext.UserId,
+        var effectiveUser = await ResolveEffectiveUserAsync(
             request.WorkspaceId,
             request.UserId,
-            redirectUri,
-            request.ReturnUrl,
-            cancellationToken);
-
-        return Result<ImpersonationRedirectResponse>.Success(new ImpersonationRedirectResponse(redirectUrl))
-            .ToApiResult();
-    }
-
-    public static async Task<IResult> HandleRedirectAsync(
-        string command,
-        HttpContext httpContext,
-        ApplicationDbContext dbContext,
-        UserManager<ApplicationUser> userManager,
-        SignInManager<ApplicationUser> signInManager,
-        FirstPartyImpersonationBridge impersonationBridge,
-        CancellationToken cancellationToken)
-    {
-        var bridgeCommand = await impersonationBridge.ReadCommandAsync(command, cancellationToken);
-        if (bridgeCommand is null || bridgeCommand.Action != "start" || !bridgeCommand.WorkspaceId.HasValue)
-        {
-            return Result.Validation(
-                    ResultErrors.Validation(
-                        "Impersonation request is invalid.",
-                        "The issuer could not resume the requested impersonation flow."))
-                .ToApiErrorResult();
-        }
-
-        var authenticationResult = await httpContext.AuthenticateAsync(IdentityConstants.ApplicationScheme);
-        if (!authenticationResult.Succeeded || authenticationResult.Principal is null)
-        {
-            return IssuerAuthenticationFlow.ChallengeIssuerLogin(httpContext);
-        }
-
-        var authenticatedUserId = AuthPrincipalReader.GetUserId(authenticationResult.Principal);
-        if (string.IsNullOrWhiteSpace(authenticatedUserId))
-        {
-            return await IssuerAuthenticationFlow.SignOutAndChallengeIssuerLoginAsync(httpContext);
-        }
-
-        var authenticatedUser = await userManager.FindByIdAsync(authenticatedUserId);
-        if (authenticatedUser is null || !authenticatedUser.IsActive)
-        {
-            return await IssuerAuthenticationFlow.SignOutAndChallengeIssuerLoginAsync(httpContext);
-        }
-
-        if (authenticatedUser.Id != bridgeCommand.ActorUserId)
-        {
-            return Result.Unauthorized(
-                    "Authentication failed.",
-                    "The issuer login did not match the impersonation request.")
-                .ToApiErrorResult();
-        }
-
-        var currentUserContext = new CurrentUserContext(
-            authenticatedUser.Id,
-            authenticatedUser.WorkspaceId,
-            IsSuperAdministrator: false,
-            IsImpersonating: AuthPrincipalReader.IsImpersonating(authenticationResult.Principal));
-
-        if (await ValidateStartRequestAsync(
-                new StartImpersonationRequest(bridgeCommand.WorkspaceId.Value, bridgeCommand.UserId, bridgeCommand.ReturnUrl),
-                currentUserContext,
-                dbContext,
-                userManager,
-                cancellationToken) is { } validationResult)
-        {
-            return validationResult;
-        }
-
-        var effectiveUser = await ResolveEffectiveUserAsync(
-            bridgeCommand.WorkspaceId.Value,
-            bridgeCommand.UserId,
             currentUserContext.UserId,
             userManager,
             cancellationToken);
@@ -134,12 +50,14 @@ public static class StartImpersonationHandler
         {
             new(ApplicationClaimTypes.ImpersonationActive, bool.TrueString.ToLowerInvariant()),
             new(ApplicationClaimTypes.ImpersonationOriginalUserId, currentUserContext.UserId.ToString()),
-            new(ApplicationClaimTypes.ImpersonationWorkspaceId, bridgeCommand.WorkspaceId.Value.ToString())
+            new(ApplicationClaimTypes.ImpersonationWorkspaceId, request.WorkspaceId.ToString())
         };
 
         await signInManager.SignInWithClaimsAsync(effectiveUser, isPersistent: false, additionalClaims);
 
-        return Results.Redirect(await impersonationBridge.BuildCompletionUrlAsync(bridgeCommand, cancellationToken));
+        return Result<ImpersonationRedirectResponse>.Success(
+                new ImpersonationRedirectResponse(NormalizeRedirectUrl(request.ReturnUrl)))
+            .ToApiResult();
     }
 
     private static async Task<IResult?> ValidateStartRequestAsync(
@@ -222,5 +140,12 @@ public static class StartImpersonationHandler
                                                && (assignment.Role.NormalizedName == normalizedSuperAdministrator
                                                    || assignment.Role.NormalizedName == spacedNormalizedSuperAdministrator))),
             cancellationToken);
+    }
+
+    private static string NormalizeRedirectUrl(string? returnUrl)
+    {
+        return !string.IsNullOrWhiteSpace(returnUrl) && returnUrl.StartsWith("/", StringComparison.Ordinal)
+            ? returnUrl
+            : "/";
     }
 }

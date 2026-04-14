@@ -74,7 +74,7 @@ export function ProtectedShellTemplate({
     authSessionStore.clearSession();
     authSessionStore.clearRememberedReturnUrl();
     authSessionStore.broadcastSessionCleared();
-    navigate("/login", { replace: true });
+    navigate("/auth-required", { replace: true });
   }
 
   function handleNavigateToChangePassword() {

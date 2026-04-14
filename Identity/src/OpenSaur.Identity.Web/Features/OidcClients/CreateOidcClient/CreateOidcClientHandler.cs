@@ -1,10 +1,10 @@
 using FluentValidation;
-using OpenSaur.Identity.Web.Domain.Oidc;
+using Microsoft.EntityFrameworkCore;
+using OpenIddict.Abstractions;
+using OpenIddict.EntityFrameworkCore.Models;
 using OpenSaur.Identity.Web.Infrastructure.Database;
 using OpenSaur.Identity.Web.Infrastructure.Http.Responses;
-using OpenSaur.Identity.Web.Infrastructure.Oidc;
 using OpenSaur.Identity.Web.Infrastructure.Results;
-using OpenSaur.Identity.Web.Infrastructure.Security;
 using OpenSaur.Identity.Web.Infrastructure.Validation;
 
 namespace OpenSaur.Identity.Web.Features.OidcClients.CreateOidcClient;
@@ -14,9 +14,8 @@ public static class CreateOidcClientHandler
     public static async Task<IResult> HandleAsync(
         CreateOidcClientRequest request,
         IValidator<CreateOidcClientRequest> validator,
-        CurrentUserContext currentUserContext,
         ApplicationDbContext dbContext,
-        ManagedOidcClientSynchronizer managedOidcClientSynchronizer,
+        IOpenIddictApplicationManager applicationManager,
         CancellationToken cancellationToken)
     {
         if (await validator.ValidateRequestAsync(request, cancellationToken) is { } validationFailure)
@@ -57,25 +56,75 @@ public static class CreateOidcClientHandler
             return originConflict.ToApiErrorResult();
         }
 
-        var oidcClient = new OidcClient
+        var metadata = new OpenIddictApplicationMetadata(
+            normalizedAppPathBase,
+            normalizedCallbackPath,
+            request.Description.Trim(),
+            true,
+            normalizedOrigins,
+            normalizedPostLogoutPath,
+            request.Scope.Trim());
+        var descriptor = new OpenIddictApplicationDescriptor
         {
-            AppPathBase = normalizedAppPathBase,
-            CallbackPath = normalizedCallbackPath,
             ClientId = normalizedClientId,
-            ClientSecret = request.ClientSecret.Trim(),
-            CreatedBy = currentUserContext.UserId,
-            Description = request.Description.Trim(),
             DisplayName = request.DisplayName.Trim(),
-            IsActive = true,
-            PostLogoutPath = normalizedPostLogoutPath,
-            Scope = request.Scope.Trim(),
-            Origins = OidcClientRequestNormalization.CreateOrigins(normalizedOrigins, currentUserContext.UserId)
+            ConsentType = OpenIddictConstants.ConsentTypes.Implicit,
+            ClientType = string.IsNullOrWhiteSpace(request.ClientSecret)
+                ? OpenIddictConstants.ClientTypes.Public
+                : OpenIddictConstants.ClientTypes.Confidential
         };
+        if (!string.IsNullOrWhiteSpace(request.ClientSecret))
+        {
+            descriptor.ClientSecret = request.ClientSecret.Trim();
+        }
 
-        dbContext.OidcClients.Add(oidcClient);
-        await dbContext.SaveChangesAsync(cancellationToken);
-        await managedOidcClientSynchronizer.SynchronizeClientAsync(oidcClient.Id, cancellationToken);
+        ApplyApplicationConfiguration(descriptor, metadata);
 
-        return ApiResponses.Success(new CreateOidcClientResponse(oidcClient.Id));
+        await applicationManager.CreateAsync(descriptor, cancellationToken);
+        var application = await dbContext.Set<OpenIddictEntityFrameworkCoreApplication<Guid>>()
+            .AsNoTracking()
+            .SingleAsync(client => client.ClientId == normalizedClientId, cancellationToken);
+
+        return ApiResponses.Success(new CreateOidcClientResponse(application.Id));
+    }
+
+    internal static void ApplyApplicationConfiguration(
+        OpenIddictApplicationDescriptor descriptor,
+        OpenIddictApplicationMetadata metadata)
+    {
+        descriptor.RedirectUris.Clear();
+        descriptor.PostLogoutRedirectUris.Clear();
+        descriptor.Permissions.Clear();
+
+        OpenIddictApplicationMetadataMapper.ApplyToDescriptor(descriptor, metadata);
+
+        if (!metadata.IsActive)
+        {
+            return;
+        }
+
+        descriptor.Permissions.Add(OpenIddictConstants.Permissions.Endpoints.Authorization);
+        descriptor.Permissions.Add(OpenIddictConstants.Permissions.Endpoints.Token);
+        descriptor.Permissions.Add(OpenIddictConstants.Permissions.GrantTypes.AuthorizationCode);
+        descriptor.Permissions.Add(OpenIddictConstants.Permissions.GrantTypes.RefreshToken);
+        descriptor.Permissions.Add(OpenIddictConstants.Permissions.ResponseTypes.Code);
+
+        foreach (var scope in metadata.Scope
+                     .Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                     .Distinct(StringComparer.Ordinal))
+        {
+            descriptor.Permissions.Add(OpenIddictConstants.Permissions.Prefixes.Scope + scope);
+        }
+
+        foreach (var redirectUri in metadata.RedirectUris)
+        {
+            descriptor.RedirectUris.Add(new Uri(redirectUri));
+        }
+
+        foreach (var postLogoutRedirectUri in metadata.PostLogoutRedirectUris)
+        {
+            descriptor.Permissions.Add(OpenIddictConstants.Permissions.Endpoints.EndSession);
+            descriptor.PostLogoutRedirectUris.Add(new Uri(postLogoutRedirectUri));
+        }
     }
 }

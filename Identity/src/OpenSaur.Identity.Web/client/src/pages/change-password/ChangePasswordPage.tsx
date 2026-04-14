@@ -62,7 +62,7 @@ export function ChangePasswordPage() {
     clearCurrentUser();
     authSessionStore.clearSession();
     authSessionStore.rememberReturnUrl(returnUrl);
-    navigate(`/login?returnUrl=${encodeURIComponent(returnUrl)}`, { replace: true });
+    navigate(`/auth-required?returnUrl=${encodeURIComponent(returnUrl)}`, { replace: true });
   }
 
   return (

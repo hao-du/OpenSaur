@@ -5,7 +5,6 @@ using OpenSaur.Identity.Web.Features.Auth.Logout;
 using OpenSaur.Identity.Web.Features.Auth.Me;
 using OpenSaur.Identity.Web.Features.Auth.Settings;
 using OpenSaur.Identity.Web.Features.Auth.Impersonation;
-using OpenSaur.Identity.Web.Features.Auth.WebSession;
 using OpenSaur.Identity.Web.Infrastructure.Authorization;
 using OpenSaur.Identity.Web.Infrastructure.Authorization.Builders;
 using OpenSaur.Identity.Web.Infrastructure.Http.Metadata;
@@ -53,24 +52,8 @@ public static class AuthEndpoints
             .RequireWorkspaceAccess(restrictToSuperAdministrator: true)
             .WithResilienceScope(EndpointResiliencePolicyScope.Auth);
 
-        auth.MapGet("/impersonation/start", StartImpersonationHandler.HandleRedirectAsync)
-            .AllowAnonymous()
-            .WithResilienceScope(EndpointResiliencePolicyScope.Auth);
-
         auth.MapPost("/impersonation/exit", ExitImpersonationHandler.HandleAsync)
             .RequireAuthorization(AuthorizationPolicies.Api)
-            .WithResilienceScope(EndpointResiliencePolicyScope.Auth);
-
-        auth.MapGet("/impersonation/exit", ExitImpersonationHandler.HandleRedirectAsync)
-            .AllowAnonymous()
-            .WithResilienceScope(EndpointResiliencePolicyScope.Auth);
-
-        auth.MapPost("/web-session/exchange", ExchangeWebSessionHandler.HandleAsync)
-            .AllowAnonymous()
-            .WithResilienceScope(EndpointResiliencePolicyScope.Auth);
-
-        auth.MapPost("/web-session/refresh", RefreshWebSessionHandler.HandleAsync)
-            .AllowAnonymous()
             .WithResilienceScope(EndpointResiliencePolicyScope.Auth);
 
         return app;

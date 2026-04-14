@@ -18,7 +18,7 @@ export function ProtectedRoute({ children }: PropsWithChildren) {
     return (
       <Navigate
         replace
-        to={`/login?returnUrl=${encodeURIComponent(returnUrl)}`}
+        to={`/auth-required?returnUrl=${encodeURIComponent(returnUrl)}`}
       />
     );
   }

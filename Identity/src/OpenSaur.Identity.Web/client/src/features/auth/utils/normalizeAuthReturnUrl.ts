@@ -1,7 +1,7 @@
 const defaultReturnUrl = "/";
 const disallowedPathnames = new Set([
+  "/auth-required",
   "/login",
-  "/auth/callback",
   "/change-password"
 ]);
 
@@ -16,8 +16,7 @@ export function normalizeAuthReturnUrl(returnUrl: string | null | undefined) {
     const normalizedUrl = new URL(returnUrl, "http://localhost");
     const resolvedReturnUrl = `${normalizedUrl.pathname}${normalizedUrl.search}${normalizedUrl.hash}`;
 
-    // Never send the user back to auth infrastructure routes after login, otherwise the UI can
-    // get stuck in redirect loops such as /login -> /auth/callback -> /login.
+    // Never send the user back to auth infrastructure routes after login.
     return disallowedPathnames.has(normalizedUrl.pathname)
       ? defaultReturnUrl
       : resolvedReturnUrl;

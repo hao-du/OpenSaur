@@ -35,7 +35,7 @@ public sealed class BootstrapFirstPartyClientOidcOptions
 
     public string Scope { get; set; } = "openid profile email roles offline_access api";
 
-    public string PostLogoutPath { get; set; } = "/login";
+    public string PostLogoutPath { get; set; } = "/auth-required";
 
     public string DisplayName { get; set; } = string.Empty;
 

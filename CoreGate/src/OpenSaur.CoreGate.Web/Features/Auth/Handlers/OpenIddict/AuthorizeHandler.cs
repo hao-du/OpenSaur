@@ -20,6 +20,7 @@ public class AuthorizeHandler(
         var httpContext = httpContextAccessor.HttpContext
             ?? throw new InvalidOperationException("The HTTP context could not be resolved.");
 
+        // Front-channel OIDC step: the browser lands here first and may need to be redirected to login.
         var request = httpContext.GetOpenIddictServerRequest()
             ?? throw new InvalidOperationException("The OpenID Connect request could not be resolved.");
 
@@ -30,6 +31,7 @@ public class AuthorizeHandler(
             return Results.Redirect($"/auth/login?returnUrl={Uri.EscapeDataString(redirectUri)}");
         }
 
+        // Rebuild the token principal from the current user/workspace/role state before issuing code/tokens.
         var principal = await UserTokenPrincipalBuilder.BuildUserClaimPrincipalAsync(
             authenticationResult.Principal,
             request.GetScopes(),

@@ -36,6 +36,13 @@ export const protectedShellRoutes: ProtectedShellRoute[] = [
     path: "/"
   },
   {
+    icon: KeyRound,
+    labelKey: "nav.oidcClients",
+    path: "/applications",
+    hideWhenImpersonating: true,
+    requiresSuperAdministrator: true
+  },
+  {
     icon: Building2,
     labelKey: "nav.workspaces",
     path: "/workspaces",
@@ -47,12 +54,6 @@ export const protectedShellRoutes: ProtectedShellRoute[] = [
     labelKey: "nav.users",
     path: "/users",
     requiresUserManagement: true
-  },
-  {
-    icon: KeyRound,
-    labelKey: "nav.oidcClients",
-    path: "/oidc-clients",
-    requiresSuperAdministrator: true
   },
   {
     icon: ShieldUser,

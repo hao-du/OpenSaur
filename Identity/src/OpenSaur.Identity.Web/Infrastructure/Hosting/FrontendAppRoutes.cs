@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Options;
+using OpenSaur.Identity.Web.Infrastructure.Http.Configuration;
 using OpenSaur.Identity.Web.Infrastructure.Oidc;
 using OpenSaur.Identity.Web.Infrastructure.Security;
 
@@ -14,14 +15,12 @@ public static class FrontendAppRoutes
     private static readonly string[] ShellRoutes =
     [
         "/",
-        "/login",
-        "/auth/callback",
+        "/auth-required",
         "/change-password",
         "/profile",
         "/settings",
         "/users",
         "/workspaces",
-        "/oidc-clients",
         "/roles",
         "/role-assignments"
     ];
@@ -59,28 +58,22 @@ public static class FrontendAppRoutes
         HttpContext httpContext,
         IOptions<OidcOptions> oidcOptionsAccessor,
         IOptions<GoogleRecaptchaOptions> googleRecaptchaOptionsAccessor,
-        ManagedOidcClientResolver managedOidcClientResolver,
         CancellationToken cancellationToken)
     {
         var oidcOptions = oidcOptionsAccessor.Value;
         var googleRecaptchaOptions = googleRecaptchaOptionsAccessor.Value;
         var currentAppBaseUri = oidcOptions.GetCurrentAppBaseUri(httpContext.Request);
-        var currentClient = await managedOidcClientResolver.ResolveCurrentClientAsync(
-                                httpContext.Request,
-                                cancellationToken)
-                            ?? throw new InvalidOperationException(
-                                "No active managed OIDC client matched the current app base URI.");
-        var currentOrigin = ManagedOidcClientResolver.NormalizeOrigin(currentAppBaseUri);
+        await Task.CompletedTask;
         ApplyNoStoreHeaders(httpContext.Response);
         var runtimeConfig = new FrontendRuntimeConfig(
             AppName: "OpenSaur Identity",
             BasePath: NormalizeBasePath(currentAppBaseUri.AbsolutePath),
             FirstPartyAuth: new FrontendRuntimeFirstPartyAuth(
                 oidcOptions.Issuer,
-                currentClient.ClientId,
-                managedOidcClientResolver.BuildRedirectUri(currentClient, currentOrigin),
-                currentClient.Scope,
-                oidcOptions.IsIssuerHostedRequest(httpContext.Request)),
+                oidcOptions.BootstrapClient.ClientId,
+                new Uri(currentAppBaseUri, oidcOptions.BootstrapClient.CallbackPath.TrimStart('/')).AbsoluteUri,
+                oidcOptions.BootstrapClient.Scope,
+                true),
             GoogleRecaptchaV3: new FrontendRuntimeGoogleRecaptchaV3(
                 googleRecaptchaOptions.IsConfigured,
                 googleRecaptchaOptions.IsConfigured ? googleRecaptchaOptions.SiteKey : string.Empty,

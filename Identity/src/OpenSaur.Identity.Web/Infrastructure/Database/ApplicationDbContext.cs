@@ -4,7 +4,6 @@ using Microsoft.EntityFrameworkCore;
 using OpenIddict.EntityFrameworkCore;
 using OpenSaur.Identity.Web.Domain.Common;
 using OpenSaur.Identity.Web.Domain.Identity;
-using OpenSaur.Identity.Web.Domain.Oidc;
 using OpenSaur.Identity.Web.Domain.Outbox;
 using OpenSaur.Identity.Web.Domain.Permissions;
 using OpenSaur.Identity.Web.Domain.Workspaces;
@@ -49,10 +48,6 @@ public sealed class ApplicationDbContext
     public DbSet<RolePermission> RolePermissions => Set<RolePermission>();
 
     public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
-
-    public DbSet<OidcClient> OidcClients => Set<OidcClient>();
-
-    public DbSet<OidcClientOrigin> OidcClientOrigins => Set<OidcClientOrigin>();
     public override int SaveChanges(bool acceptAllChangesOnSuccess)
     {
         ApplyRuntimeEntityDefaults();

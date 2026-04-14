@@ -1,8 +1,6 @@
 using FluentValidation;
-using System.Security.Cryptography.X509Certificates;
 using System.Security.Claims;
 using System.Threading.RateLimiting;
-using System.Diagnostics;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.HttpOverrides;
@@ -14,13 +12,10 @@ using Microsoft.Extensions.Options;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using Microsoft.IdentityModel.Tokens;
-using OpenIddict.Abstractions;
-using OpenIddict.Server;
+using OpenIddict.EntityFrameworkCore;
 using OpenSaur.Identity.Web.Features.Auth;
 using OpenSaur.Identity.Web.Features.Auth.Impersonation;
 using OpenSaur.Identity.Web.Features.Auth.Login;
-using OpenSaur.Identity.Web.Features.Auth.Oidc;
-using OpenSaur.Identity.Web.Features.OidcClients;
 using OpenSaur.Identity.Web.Features.PermissionScopes;
 using OpenSaur.Identity.Web.Features.Permissions;
 using OpenSaur.Identity.Web.Features.Roles;
@@ -71,8 +66,6 @@ public static class DependencyInjection
             .AddValidationServices()
             .AddApplicationServices()
             .AddRateLimitingServices();
-
-        services.AddOpenIddictServices(oidcOptions, environment);
 
         return services;
     }
@@ -183,6 +176,13 @@ public static class DependencyInjection
             options.UseNpgsql(connectionString);
             options.UseOpenIddict<Guid>();
         });
+        services.AddOpenIddict()
+            .AddCore(options =>
+            {
+                options.UseEntityFrameworkCore()
+                    .UseDbContext<ApplicationDbContext>()
+                    .ReplaceDefaultEntities<Guid>();
+            });
         services.AddScoped<UserRepository>();
         services.AddScoped<RoleRepository>();
         services.AddScoped<PermissionRepository>();
@@ -217,7 +217,7 @@ public static class DependencyInjection
             options.Cookie.IsEssential = true;
             options.Cookie.SameSite = SameSiteMode.Lax;
             options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
-            options.LoginPath = "/login";
+            options.LoginPath = "/auth-required";
             options.ReturnUrlParameter = "returnUrl";
             options.SlidingExpiration = true;
             options.Events = new CookieAuthenticationEvents
@@ -285,18 +285,9 @@ public static class DependencyInjection
         services.AddScoped<PermissionAuthorizationService>();
         services.AddScoped<UserAuthorizationService>();
         services.AddScoped<IAuthorizationHandler, PermissionAuthorizationHandler>();
-        services.AddScoped<FirstPartyImpersonationBridge>();
-        services.AddScoped<ManagedOidcClientResolver>();
-        services.AddScoped<ManagedOidcClientSynchronizer>();
-        services.AddScoped<FirstPartyOidcClientRegistrar>();
         services.AddHttpClient<IGoogleRecaptchaVerifier, GoogleRecaptchaVerifier>(client =>
         {
             client.BaseAddress = new Uri("https://www.google.com/recaptcha/api/");
-        });
-        services.AddHttpClient<IFirstPartyOidcTokenClient, FirstPartyOidcTokenClient>((serviceProvider, client) =>
-        {
-            var oidcOptions = serviceProvider.GetRequiredService<IOptions<OidcOptions>>().Value;
-            client.BaseAddress = oidcOptions.GetIssuerBaseUri();
         });
         services.AddSingleton<IdempotencyCacheStore>();
         services.AddSingleton<IdempotencyRequestLockProvider>();
@@ -390,155 +381,13 @@ public static class DependencyInjection
         return services;
     }
 
-    private static IServiceCollection AddOpenIddictServices(
-        this IServiceCollection services,
-        OidcOptions oidcOptions,
-        IHostEnvironment environment)
-    {
-        var issuerBaseUri = oidcOptions.GetIssuerBaseUri();
-        var issuerUri = new Uri(issuerBaseUri.AbsoluteUri.TrimEnd('/'), UriKind.Absolute);
-
-        services.AddOpenIddict()
-            .AddCore(options =>
-            {
-                options.UseEntityFrameworkCore()
-                    .UseDbContext<ApplicationDbContext>()
-                    .ReplaceDefaultEntities<Guid>();
-            })
-            .AddServer(options =>
-            {
-                options.SetIssuer(issuerUri);
-                options.SetAuthorizationEndpointUris("connect/authorize")
-                    .SetTokenEndpointUris("connect/token")
-                    .SetEndSessionEndpointUris("connect/logout");
-                options.AddEventHandler<OpenIddictServerEvents.HandleConfigurationRequestContext>(
-                    builder => builder
-                        .SetOrder(OpenIddictServerHandlers.Discovery.AttachEndpoints.Descriptor.Order + 1_000)
-                        .UseInlineHandler(context =>
-                        {
-                            RewriteDiscoveryEndpointUris(context, issuerUri, issuerBaseUri);
-                            return ValueTask.CompletedTask;
-                        }));
-                options.AllowAuthorizationCodeFlow()
-                    .AllowRefreshTokenFlow();
-                options.RegisterScopes(
-                    OpenIddictConstants.Scopes.OpenId,
-                    OpenIddictConstants.Scopes.Profile,
-                    OpenIddictConstants.Scopes.Email,
-                    OpenIddictConstants.Scopes.OfflineAccess,
-                    OpenIddictConstants.Scopes.Roles,
-                    "api");
-                options.SetAccessTokenLifetime(OidcDefaults.AccessTokenLifetime);
-                options.SetRefreshTokenLifetime(OidcDefaults.RefreshTokenLifetime);
-                options.SetRefreshTokenReuseLeeway(TimeSpan.Zero);
-
-                // Access tokens are validated as plain JWTs by resource servers using
-                // shared signing material. Token encryption is not part of the current model.
-                options.DisableAccessTokenEncryption();
-                ConfigureOidcKeyMaterial(options, oidcOptions, environment);
-                options.UseAspNetCore()
-                    .DisableTransportSecurityRequirement()
-                    .EnableAuthorizationEndpointPassthrough()
-                    .EnableEndSessionEndpointPassthrough();
-            });
-
-        return services;
-    }
-
-    private static void RewriteDiscoveryEndpointUris(
-        OpenIddictServerEvents.HandleConfigurationRequestContext context,
-        Uri issuerUri,
-        Uri issuerBaseUri)
-    {
-        context.Issuer = issuerUri;
-        context.AuthorizationEndpoint = BuildIssuerEndpointUri(issuerBaseUri, "connect/authorize");
-        context.TokenEndpoint = BuildIssuerEndpointUri(issuerBaseUri, "connect/token");
-        context.EndSessionEndpoint = BuildIssuerEndpointUri(issuerBaseUri, "connect/logout");
-        context.JsonWebKeySetEndpoint = BuildIssuerEndpointUri(issuerBaseUri, ".well-known/jwks");
-    }
-
-    private static Uri BuildIssuerEndpointUri(Uri issuerBaseUri, string relativePath)
-    {
-        return new Uri(issuerBaseUri, relativePath.TrimStart('/'));
-    }
-
-    private static void ConfigureOidcKeyMaterial(
-        Microsoft.Extensions.DependencyInjection.OpenIddictServerBuilder builder,
-        OidcOptions oidcOptions,
-        IHostEnvironment environment)
-    {
-        var signingCertificateConfigured = !string.IsNullOrWhiteSpace(oidcOptions.SigningCertificatePath);
-        var encryptionCertificateConfigured = !string.IsNullOrWhiteSpace(oidcOptions.EncryptionCertificatePath);
-
-        if (signingCertificateConfigured != encryptionCertificateConfigured)
-        {
-            throw new InvalidOperationException(
-                "Both OIDC signing and encryption certificate paths must be configured together.");
-        }
-
-        if (signingCertificateConfigured)
-        {
-            var signingCertificate = LoadCertificate(
-                oidcOptions.SigningCertificatePath!,
-                oidcOptions.SigningCertificatePassword);
-            var encryptionCertificate = LoadCertificate(
-                oidcOptions.EncryptionCertificatePath!,
-                oidcOptions.EncryptionCertificatePassword);
-
-            builder.AddSigningCertificate(signingCertificate)
-                .AddEncryptionCertificate(encryptionCertificate);
-
-            return;
-        }
-
-        if (environment.IsDevelopment())
-        {
-            builder.AddEphemeralEncryptionKey()
-                .AddEphemeralSigningKey();
-
-            return;
-        }
-
-        if (!signingCertificateConfigured && !encryptionCertificateConfigured)
-        {
-            if (!oidcOptions.AllowEphemeralKeysInProduction)
-            {
-                throw new InvalidOperationException(
-                    "OIDC durable signing and encryption certificates are required outside the Development environment.");
-            }
-
-            Trace.TraceWarning(
-                "OIDC durable certificates are not configured outside Development. Falling back to ephemeral signing and encryption keys because Oidc:AllowEphemeralKeysInProduction is enabled. Refresh tokens and sessions will be invalidated on application restart.");
-
-            builder.AddEphemeralEncryptionKey()
-                .AddEphemeralSigningKey();
-
-            return;
-        }
-    }
-
-    private static X509Certificate2 LoadCertificate(string certificatePath, string? certificatePassword)
-    {
-        if (!File.Exists(certificatePath))
-        {
-            throw new InvalidOperationException($"OIDC certificate file '{certificatePath}' was not found.");
-        }
-
-        return X509CertificateLoader.LoadPkcs12FromFile(
-            certificatePath,
-            certificatePassword,
-            X509KeyStorageFlags.MachineKeySet | X509KeyStorageFlags.EphemeralKeySet);
-    }
-
     public static IEndpointRouteBuilder MapOpenSaurEndpoints(this IEndpointRouteBuilder app)
     {
-        app.MapOidcEndpoints();
         app.MapAuthEndpoints();
         app.MapUserEndpoints();
         app.MapUserRoleEndpoints();
         app.MapWorkspaceEndpoints();
         app.MapRoleEndpoints();
-        app.MapOidcClientEndpoints();
         app.MapPermissionEndpoints();
         app.MapPermissionScopeEndpoints();
 

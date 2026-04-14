@@ -1,10 +1,7 @@
 using System.Security.Claims;
-using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
 using OpenSaur.Identity.Web.Domain.Identity;
-using OpenSaur.Identity.Web.Features.Auth.Oidc;
 using OpenSaur.Identity.Web.Infrastructure.Http.Responses;
-using OpenSaur.Identity.Web.Infrastructure.Oidc;
 using OpenSaur.Identity.Web.Infrastructure.Results;
 using OpenSaur.Identity.Web.Infrastructure.Security;
 
@@ -16,9 +13,7 @@ public static class ExitImpersonationHandler
         ExitImpersonationRequest request,
         ClaimsPrincipal user,
         UserManager<ApplicationUser> userManager,
-        FirstPartyImpersonationBridge impersonationBridge,
-        ManagedOidcClientResolver managedOidcClientResolver,
-        HttpContext httpContext,
+        SignInManager<ApplicationUser> signInManager,
         CancellationToken cancellationToken)
     {
         if (await ValidateExitRequestAsync(user, userManager) is { } validationResult)
@@ -27,51 +22,8 @@ public static class ExitImpersonationHandler
         }
 
         var originalUserId = AuthPrincipalReader.GetImpersonationOriginalUserId(user);
-        var redirectUri = await managedOidcClientResolver.BuildCurrentRedirectUriAsync(
-                              httpContext.Request,
-                              cancellationToken)
-                          ?? throw new InvalidOperationException(
-                              "No active managed OIDC client matched the current app base URI.");
-        var redirectUrl = await impersonationBridge.BuildExitRedirectUrlAsync(
-            originalUserId!.Value,
-            redirectUri,
-            request.ReturnUrl,
-            cancellationToken);
-
-        return Result<ImpersonationRedirectResponse>.Success(new ImpersonationRedirectResponse(redirectUrl))
-            .ToApiResult();
-    }
-
-    public static async Task<IResult> HandleRedirectAsync(
-        string command,
-        HttpContext httpContext,
-        UserManager<ApplicationUser> userManager,
-        SignInManager<ApplicationUser> signInManager,
-        FirstPartyImpersonationBridge impersonationBridge)
-    {
-        var bridgeCommand = await impersonationBridge.ReadCommandAsync(command, CancellationToken.None);
-        if (bridgeCommand is null || bridgeCommand.Action != "exit")
-        {
-            return Result.Validation(
-                    ResultErrors.Validation(
-                        "Impersonation request is invalid.",
-                        "The issuer could not resume the requested impersonation flow."))
-                .ToApiErrorResult();
-        }
-
-        var authenticationResult = await httpContext.AuthenticateAsync(IdentityConstants.ApplicationScheme);
-        if (!authenticationResult.Succeeded || authenticationResult.Principal is null)
-        {
-            return IssuerAuthenticationFlow.ChallengeIssuerLogin(httpContext);
-        }
-
-        if (await ValidateExitRequestAsync(authenticationResult.Principal, userManager, bridgeCommand.ActorUserId) is { } validationResult)
-        {
-            return validationResult;
-        }
-
-        var originalUser = await userManager.FindByIdAsync(bridgeCommand.ActorUserId.ToString());
-        if (originalUser is null)
+        var originalUser = await userManager.FindByIdAsync(originalUserId!.Value.ToString());
+        if (originalUser is null || !originalUser.IsActive)
         {
             return Result.Unauthorized(
                     "Authentication failed.",
@@ -79,12 +31,11 @@ public static class ExitImpersonationHandler
                 .ToApiErrorResult();
         }
 
-        if (AuthPrincipalReader.IsImpersonating(authenticationResult.Principal))
-        {
-            await signInManager.SignInAsync(originalUser, isPersistent: false);
-        }
+        await signInManager.SignInAsync(originalUser, isPersistent: false);
 
-        return Results.Redirect(await impersonationBridge.BuildCompletionUrlAsync(bridgeCommand, CancellationToken.None));
+        return Result<ImpersonationRedirectResponse>.Success(
+                new ImpersonationRedirectResponse(NormalizeRedirectUrl(request.ReturnUrl)))
+            .ToApiResult();
     }
 
     private static async Task<IResult?> ValidateExitRequestAsync(
@@ -137,5 +88,12 @@ public static class ExitImpersonationHandler
         }
 
         return null;
+    }
+
+    private static string NormalizeRedirectUrl(string? returnUrl)
+    {
+        return !string.IsNullOrWhiteSpace(returnUrl) && returnUrl.StartsWith("/", StringComparison.Ordinal)
+            ? returnUrl
+            : "/";
     }
 }

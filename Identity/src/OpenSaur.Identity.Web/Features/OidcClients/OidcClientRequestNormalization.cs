@@ -1,8 +1,7 @@
 using Microsoft.EntityFrameworkCore;
-using OpenSaur.Identity.Web.Domain.Oidc;
+using OpenIddict.EntityFrameworkCore.Models;
 using OpenSaur.Identity.Web.Infrastructure.Database;
 using OpenSaur.Identity.Web.Infrastructure.Results;
-using OpenSaur.Identity.Web.Infrastructure.Oidc;
 
 namespace OpenSaur.Identity.Web.Features.OidcClients;
 
@@ -10,19 +9,35 @@ internal static class OidcClientRequestNormalization
 {
     public static string NormalizeAppPathBase(string pathBase)
     {
-        return ManagedOidcClientResolver.NormalizePathBase(pathBase);
+        var trimmedPath = pathBase?.Trim() ?? string.Empty;
+        if (trimmedPath.Length == 0 || trimmedPath == "/")
+        {
+            return "/";
+        }
+
+        return trimmedPath.StartsWith("/", StringComparison.Ordinal)
+            ? trimmedPath.TrimEnd('/')
+            : $"/{trimmedPath.TrimEnd('/')}";
     }
 
     public static string NormalizeClientPath(string path)
     {
-        return ManagedOidcClientResolver.NormalizeRelativePath(path);
+        var trimmedPath = path.Trim();
+        if (trimmedPath.Length == 0 || trimmedPath == "/")
+        {
+            return "/";
+        }
+
+        return trimmedPath.StartsWith("/", StringComparison.Ordinal)
+            ? trimmedPath.TrimEnd('/')
+            : $"/{trimmedPath.TrimEnd('/')}";
     }
 
     public static string[] NormalizeOrigins(IEnumerable<string> origins)
     {
         return origins
             .Where(origin => !string.IsNullOrWhiteSpace(origin))
-            .Select(ManagedOidcClientResolver.NormalizeOrigin)
+            .Select(NormalizeOrigin)
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .OrderBy(origin => origin, StringComparer.OrdinalIgnoreCase)
             .ToArray();
@@ -34,7 +49,7 @@ internal static class OidcClientRequestNormalization
         Guid? excludingOidcClientId,
         CancellationToken cancellationToken)
     {
-        var clientIdInUse = await dbContext.OidcClients
+        var clientIdInUse = await dbContext.Set<OpenIddictEntityFrameworkCoreApplication<Guid>>()
             .AsNoTracking()
             .AnyAsync(
                 client => client.ClientId == clientId
@@ -58,14 +73,27 @@ internal static class OidcClientRequestNormalization
         CancellationToken cancellationToken)
     {
         var normalizedOrigins = origins.ToArray();
-        var conflictingClient = await dbContext.OidcClients
+        var applications = await dbContext.Set<OpenIddictEntityFrameworkCoreApplication<Guid>>()
             .AsNoTracking()
-            .Where(client => client.IsActive
-                             && (!excludingOidcClientId.HasValue || client.Id != excludingOidcClientId.Value)
-                             && client.AppPathBase == appPathBase)
-            .Where(client => client.Origins.Any(origin => origin.IsActive && normalizedOrigins.Contains(origin.BaseUri)))
-            .Select(client => new { client.ClientId, client.DisplayName })
-            .FirstOrDefaultAsync(cancellationToken);
+            .Where(client => !excludingOidcClientId.HasValue || client.Id != excludingOidcClientId.Value)
+            .ToListAsync(cancellationToken);
+        var conflictingClient = applications
+            .Select(
+                application => new
+                {
+                    Application = application,
+                    Metadata = OpenIddictApplicationMetadataMapper.Read(application)
+                })
+            .Where(candidate => candidate.Metadata.IsActive
+                                && string.Equals(candidate.Metadata.AppPathBase, appPathBase, StringComparison.OrdinalIgnoreCase)
+                                && candidate.Metadata.Origins.Any(origin => normalizedOrigins.Contains(origin, StringComparer.OrdinalIgnoreCase)))
+            .Select(
+                candidate => new
+                {
+                    candidate.Application.ClientId,
+                    candidate.Application.DisplayName
+                })
+            .FirstOrDefault();
         if (conflictingClient is null)
         {
             return null;
@@ -76,17 +104,52 @@ internal static class OidcClientRequestNormalization
             $"Managed OIDC client '{conflictingClient.DisplayName}' already owns one of the provided origins for '{appPathBase}'.");
     }
 
-    public static List<OidcClientOrigin> CreateOrigins(IEnumerable<string> origins, Guid createdBy)
+    public static string NormalizeOrigin(string origin)
     {
-        return origins
-            .Select(
-                origin => new OidcClientOrigin
-                {
-                    BaseUri = origin,
-                    CreatedBy = createdBy,
-                    Description = "Managed OIDC client origin.",
-                    IsActive = true
-                })
-            .ToList();
+        if (!Uri.TryCreate(origin, UriKind.Absolute, out var originUri))
+        {
+            throw new InvalidOperationException($"OIDC client origin '{origin}' is invalid.");
+        }
+
+        if (!string.IsNullOrEmpty(originUri.AbsolutePath)
+            && originUri.AbsolutePath != "/")
+        {
+            throw new InvalidOperationException(
+                $"OIDC client origin '{originUri.AbsoluteUri}' must not contain a path segment.");
+        }
+
+        return NormalizeOrigin(originUri);
+    }
+
+    public static string NormalizeOrigin(Uri absoluteUri)
+    {
+        return new UriBuilder(absoluteUri.Scheme, absoluteUri.Host, absoluteUri.IsDefaultPort ? -1 : absoluteUri.Port)
+        {
+            Path = "/"
+        }.Uri.AbsoluteUri;
+    }
+
+    public static string CombineAbsoluteUri(string origin, string appPathBase, string suffixPath)
+    {
+        var normalizedOrigin = NormalizeOrigin(origin);
+        var normalizedAppPathBase = NormalizeAppPathBase(appPathBase);
+        var normalizedSuffix = NormalizeClientPath(suffixPath);
+        var combinedPath = CombinePathSegments(normalizedAppPathBase, normalizedSuffix);
+
+        return new Uri(new Uri(normalizedOrigin, UriKind.Absolute), combinedPath.TrimStart('/')).AbsoluteUri;
+    }
+
+    public static string CombinePathSegments(string? left, string? right)
+    {
+        var normalizedLeft = NormalizeAppPathBase(left ?? "/");
+        var normalizedRight = NormalizeClientPath(right ?? "/");
+
+        return (normalizedLeft, normalizedRight) switch
+        {
+            ("/", "/") => "/",
+            ("/", _) => normalizedRight,
+            (_, "/") => normalizedLeft,
+            _ => $"{normalizedLeft}{normalizedRight}"
+        };
     }
 }

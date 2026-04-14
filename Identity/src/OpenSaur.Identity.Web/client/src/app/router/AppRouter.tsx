@@ -9,10 +9,9 @@ import { useState, type ReactNode } from "react";
 import { AuthBootstrapBoundary } from "../../features/auth/components/AuthBootstrapBoundary";
 import { ProtectedRoute } from "../../features/auth/components/ProtectedRoute";
 import { useCurrentUserState } from "../../features/auth/hooks";
-import { AuthCallbackPage } from "../../pages/auth-callback/AuthCallbackPage";
+import { AuthRequiredPage } from "../../pages/auth-required/AuthRequiredPage";
 import { ChangePasswordPage } from "../../pages/change-password/ChangePasswordPage";
 import { HomePage } from "../../pages/home/HomePage";
-import { LoginPage } from "../../pages/login/LoginPage";
 import { OidcClientsPage } from "../../pages/oidc-clients/OidcClientsPage";
 import { ProfilePage } from "../../pages/profile/ProfilePage";
 import { RoleAssignmentsPage } from "../../pages/role-assignments/RoleAssignmentsPage";
@@ -60,6 +59,16 @@ export const appRoutes: RouteObject[] = [
         )
       },
       {
+        path: "/applications",
+        element: (
+          <ProtectedRoute>
+            <RequireProtectedShellAccess path="/applications">
+              <OidcClientsPage />
+            </RequireProtectedShellAccess>
+          </ProtectedRoute>
+        )
+      },
+      {
         path: "/workspaces",
         element: (
           <ProtectedRoute>
@@ -96,16 +105,6 @@ export const appRoutes: RouteObject[] = [
         )
       },
       {
-        path: "/oidc-clients",
-        element: (
-          <ProtectedRoute>
-            <RequireProtectedShellAccess path="/oidc-clients">
-              <OidcClientsPage />
-            </RequireProtectedShellAccess>
-          </ProtectedRoute>
-        )
-      },
-      {
         path: "/roles",
         element: (
           <ProtectedRoute>
@@ -126,12 +125,8 @@ export const appRoutes: RouteObject[] = [
         )
       },
       {
-        path: "/login",
-        element: <LoginPage />
-      },
-      {
-        path: "/auth/callback",
-        element: <AuthCallbackPage />
+        path: "/auth-required",
+        element: <AuthRequiredPage />
       },
       {
         path: "/change-password",

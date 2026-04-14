@@ -1,11 +1,12 @@
 using FluentValidation;
+using OpenIddict.Abstractions;
+using OpenIddict.EntityFrameworkCore.Models;
 using Microsoft.EntityFrameworkCore;
 using OpenSaur.Identity.Web.Infrastructure.Database;
 using OpenSaur.Identity.Web.Infrastructure.Http.Responses;
-using OpenSaur.Identity.Web.Infrastructure.Oidc;
 using OpenSaur.Identity.Web.Infrastructure.Results;
-using OpenSaur.Identity.Web.Infrastructure.Security;
 using OpenSaur.Identity.Web.Infrastructure.Validation;
+using OpenSaur.Identity.Web.Features.OidcClients.CreateOidcClient;
 
 namespace OpenSaur.Identity.Web.Features.OidcClients.EditOidcClient;
 
@@ -14,9 +15,8 @@ public static class EditOidcClientHandler
     public static async Task<IResult> HandleAsync(
         EditOidcClientRequest request,
         IValidator<EditOidcClientRequest> validator,
-        CurrentUserContext currentUserContext,
         ApplicationDbContext dbContext,
-        ManagedOidcClientSynchronizer managedOidcClientSynchronizer,
+        IOpenIddictApplicationManager applicationManager,
         CancellationToken cancellationToken)
     {
         if (await validator.ValidateRequestAsync(request, cancellationToken) is { } validationFailure)
@@ -24,10 +24,9 @@ public static class EditOidcClientHandler
             return validationFailure;
         }
 
-        var oidcClient = await dbContext.OidcClients
-            .Include(client => client.Origins)
+        var application = await dbContext.Set<OpenIddictEntityFrameworkCoreApplication<Guid>>()
             .SingleOrDefaultAsync(client => client.Id == request.Id, cancellationToken);
-        if (oidcClient is null)
+        if (application is null)
         {
             return Result.NotFound(
                     "OIDC client not found.",
@@ -69,26 +68,31 @@ public static class EditOidcClientHandler
             return originConflict.ToApiErrorResult();
         }
 
-        oidcClient.AppPathBase = normalizedAppPathBase;
-        oidcClient.CallbackPath = normalizedCallbackPath;
-        oidcClient.ClientId = normalizedClientId;
+        var descriptor = new OpenIddictApplicationDescriptor();
+        await applicationManager.PopulateAsync(descriptor, application, cancellationToken);
+
+        descriptor.ClientId = normalizedClientId;
+        descriptor.DisplayName = request.DisplayName.Trim();
+        descriptor.ClientType = string.IsNullOrWhiteSpace(request.ClientSecret)
+            && string.IsNullOrWhiteSpace(descriptor.ClientSecret)
+            ? OpenIddictConstants.ClientTypes.Public
+            : OpenIddictConstants.ClientTypes.Confidential;
         if (!string.IsNullOrWhiteSpace(request.ClientSecret))
         {
-            oidcClient.ClientSecret = request.ClientSecret.Trim();
+            descriptor.ClientSecret = request.ClientSecret.Trim();
         }
 
-        oidcClient.Description = request.Description.Trim();
-        oidcClient.DisplayName = request.DisplayName.Trim();
-        oidcClient.IsActive = request.IsActive;
-        oidcClient.PostLogoutPath = normalizedPostLogoutPath;
-        oidcClient.Scope = request.Scope.Trim();
-        oidcClient.UpdatedBy = currentUserContext.UserId;
+        var metadata = new OpenIddictApplicationMetadata(
+            normalizedAppPathBase,
+            normalizedCallbackPath,
+            request.Description.Trim(),
+            request.IsActive,
+            normalizedOrigins,
+            normalizedPostLogoutPath,
+            request.Scope.Trim());
+        CreateOidcClientHandler.ApplyApplicationConfiguration(descriptor, metadata);
 
-        dbContext.OidcClientOrigins.RemoveRange(oidcClient.Origins);
-        oidcClient.Origins = OidcClientRequestNormalization.CreateOrigins(normalizedOrigins, currentUserContext.UserId);
-
-        await dbContext.SaveChangesAsync(cancellationToken);
-        await managedOidcClientSynchronizer.SynchronizeClientAsync(oidcClient.Id, cancellationToken);
+        await applicationManager.UpdateAsync(application, descriptor, cancellationToken);
 
         return ApiResponses.NoContent();
     }

@@ -92,7 +92,7 @@ export function OidcClientFormDrawer({
                 displayName: initialValues?.displayName ?? "",
                 isActive: initialValues?.isActive ?? true,
                 originsText: (initialValues?.origins ?? []).join("\n"),
-                postLogoutPath: initialValues?.postLogoutPath ?? "/login",
+                postLogoutPath: initialValues?.postLogoutPath ?? "/auth-required",
                 scope: initialValues?.scope ?? "openid profile email roles offline_access api"
               }}
               isEditMode={isEditMode}

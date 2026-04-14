@@ -13,12 +13,6 @@ var app = builder.Build();
 var serveBuiltShell = FrontendAppRoutes.ShouldServeBuiltShell(app.Environment);
 var identityPathBase = new PathString("/identity");
 
-using (var scope = app.Services.CreateScope())
-{
-    var firstPartyOidcClientRegistrar = scope.ServiceProvider.GetRequiredService<FirstPartyOidcClientRegistrar>();
-    await firstPartyOidcClientRegistrar.EnsureConfiguredClientAsync();
-}
-
 app.UseForwardedHeaders();
 app.Use(async (httpContext, next) =>
 {

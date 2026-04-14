@@ -1,6 +1,5 @@
 export const publicAuthRoutes = [
-  "/login",
-  "/auth/callback"
+  "/auth-required"
 ] as const;
 
 export function isPublicAuthRoute(pathname: string) {

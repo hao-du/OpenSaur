@@ -20,6 +20,7 @@ public class TokenHandler(
         var httpContext = httpContextAccessor.HttpContext
             ?? throw new InvalidOperationException("The HTTP context could not be resolved.");
 
+        // Back-channel OIDC step: the client app exchanges an auth code or refresh token directly with CoreGate.
         var request = httpContext.GetOpenIddictServerRequest()
             ?? throw new InvalidOperationException("The OpenID Connect request could not be resolved.");
 
@@ -40,6 +41,7 @@ public class TokenHandler(
             return Results.Forbid(authenticationSchemes: [OpenIddictServerAspNetCoreDefaults.AuthenticationScheme]);
         }
 
+        // Refresh claims from the shared identity data before returning the final token response.
         var principal = await UserTokenPrincipalBuilder.BuildUserClaimPrincipalAsync(
             authenticateResult.Principal,
             authenticateResult.Principal.GetScopes(),

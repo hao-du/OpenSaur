@@ -1,9 +1,10 @@
+using OpenIddict.Abstractions;
+using OpenIddict.EntityFrameworkCore.Models;
 using Microsoft.EntityFrameworkCore;
+using OpenSaur.Identity.Web.Features.OidcClients.CreateOidcClient;
 using OpenSaur.Identity.Web.Infrastructure.Database;
 using OpenSaur.Identity.Web.Infrastructure.Http.Responses;
-using OpenSaur.Identity.Web.Infrastructure.Oidc;
 using OpenSaur.Identity.Web.Infrastructure.Results;
-using OpenSaur.Identity.Web.Infrastructure.Security;
 
 namespace OpenSaur.Identity.Web.Features.OidcClients.DeleteOidcClient;
 
@@ -11,17 +12,13 @@ public static class DeleteOidcClientHandler
 {
     public static async Task<IResult> HandleAsync(
         Guid id,
-        HttpContext httpContext,
-        CurrentUserContext currentUserContext,
         ApplicationDbContext dbContext,
-        ManagedOidcClientResolver managedOidcClientResolver,
-        ManagedOidcClientSynchronizer managedOidcClientSynchronizer,
+        IOpenIddictApplicationManager applicationManager,
         CancellationToken cancellationToken)
     {
-        var oidcClient = await dbContext.OidcClients
-            .Include(client => client.Origins)
+        var application = await dbContext.Set<OpenIddictEntityFrameworkCoreApplication<Guid>>()
             .SingleOrDefaultAsync(client => client.Id == id, cancellationToken);
-        if (oidcClient is null)
+        if (application is null)
         {
             return Result.NotFound(
                     "OIDC client not found.",
@@ -29,26 +26,14 @@ public static class DeleteOidcClientHandler
                 .ToApiErrorResult();
         }
 
-        var currentClient = await managedOidcClientResolver.ResolveCurrentClientAsync(httpContext.Request, cancellationToken);
-        if (currentClient?.Id == id)
+        var metadata = OpenIddictApplicationMetadataMapper.Read(application) with
         {
-            return Result.Conflict(
-                    "Current OIDC client cannot be deleted.",
-                    "The active admin shell client cannot be deleted from its own host.")
-                .ToApiErrorResult();
-        }
-
-        oidcClient.IsActive = false;
-        oidcClient.UpdatedBy = currentUserContext.UserId;
-
-        foreach (var origin in oidcClient.Origins)
-        {
-            origin.IsActive = false;
-            origin.UpdatedBy = currentUserContext.UserId;
-        }
-
-        await dbContext.SaveChangesAsync(cancellationToken);
-        await managedOidcClientSynchronizer.SynchronizeClientAsync(id, cancellationToken);
+            IsActive = false
+        };
+        var descriptor = new OpenIddictApplicationDescriptor();
+        await applicationManager.PopulateAsync(descriptor, application, cancellationToken);
+        CreateOidcClientHandler.ApplyApplicationConfiguration(descriptor, metadata);
+        await applicationManager.UpdateAsync(application, descriptor, cancellationToken);
 
         return ApiResponses.NoContent();
     }

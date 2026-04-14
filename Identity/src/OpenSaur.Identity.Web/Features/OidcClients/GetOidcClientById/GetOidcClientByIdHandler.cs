@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using OpenIddict.EntityFrameworkCore.Models;
 using OpenSaur.Identity.Web.Infrastructure.Database;
 using OpenSaur.Identity.Web.Infrastructure.Http.Responses;
 using OpenSaur.Identity.Web.Infrastructure.Results;
@@ -12,11 +13,10 @@ public static class GetOidcClientByIdHandler
         ApplicationDbContext dbContext,
         CancellationToken cancellationToken)
     {
-        var oidcClient = await dbContext.OidcClients
+        var application = await dbContext.Set<OpenIddictEntityFrameworkCoreApplication<Guid>>()
             .AsNoTracking()
-            .Include(client => client.Origins)
             .SingleOrDefaultAsync(client => client.Id == id, cancellationToken);
-        if (oidcClient is null)
+        if (application is null)
         {
             return Result.NotFound(
                     "OIDC client not found.",
@@ -24,24 +24,19 @@ public static class GetOidcClientByIdHandler
                 .ToApiErrorResult();
         }
 
-        var normalizedOrigins = oidcClient.Origins
-            .Where(origin => origin.IsActive)
-            .Select(origin => origin.BaseUri)
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .OrderBy(origin => origin, StringComparer.OrdinalIgnoreCase)
-            .ToArray();
+        var metadata = OpenIddictApplicationMetadataMapper.Read(application);
 
         return ApiResponses.Success(
             new GetOidcClientByIdResponse(
-                oidcClient.Id,
-                oidcClient.AppPathBase,
-                oidcClient.CallbackPath,
-                oidcClient.ClientId,
-                oidcClient.Description,
-                oidcClient.DisplayName,
-                oidcClient.IsActive,
-                normalizedOrigins,
-                oidcClient.PostLogoutPath,
-                oidcClient.Scope));
+                application.Id,
+                metadata.AppPathBase,
+                metadata.CallbackPath,
+                application.ClientId ?? string.Empty,
+                metadata.Description,
+                string.IsNullOrWhiteSpace(application.DisplayName) ? application.ClientId ?? string.Empty : application.DisplayName,
+                metadata.IsActive,
+                metadata.Origins,
+                metadata.PostLogoutPath,
+                metadata.Scope));
     }
 }
