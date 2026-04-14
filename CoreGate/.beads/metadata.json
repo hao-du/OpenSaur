@@ -1,0 +1,7 @@
+{
+  "database": "dolt",
+  "backend": "dolt",
+  "dolt_mode": "server",
+  "dolt_database": "CoreGate",
+  "project_id": "c0b9d392-5398-4794-a8c4-4597f81e191a"
+}
