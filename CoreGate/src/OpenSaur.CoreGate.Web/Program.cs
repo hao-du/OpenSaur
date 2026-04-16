@@ -33,7 +33,6 @@ if (app.Environment.IsDevelopment())
 
 app.MapOpenIddictEndpoints();
 app.MapAuthEndpoints();
-app.MapGet("/", () => Results.Redirect("/login"));
 app.MapFallbackToFile("index.html");
 
 app.Run();

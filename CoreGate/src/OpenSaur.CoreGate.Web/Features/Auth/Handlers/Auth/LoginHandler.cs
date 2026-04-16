@@ -46,6 +46,11 @@ public class LoginHandler(
             });
 
         var redirectUri = string.IsNullOrWhiteSpace(request.ReturnUrl) ? "/" : request.ReturnUrl;
+        if (user.RequirePasswordChange)
+        {
+            return new LoginResponse(true, $"/change-password?returnUrl={Uri.EscapeDataString(redirectUri)}", null);
+        }
+
         return new LoginResponse(true, redirectUri, null);
     }
 }

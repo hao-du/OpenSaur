@@ -38,14 +38,14 @@ public static class OpenIddictServiceCollectionExtensions
             options.Cookie.IsEssential = true;
             options.Cookie.SameSite = SameSiteMode.Lax;
             options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
-            options.LoginPath = "/auth/login";
+            options.LoginPath = "/login";
             options.ReturnUrlParameter = "returnUrl";
             options.SlidingExpiration = true;
             options.Events = new CookieAuthenticationEvents
             {
                 OnRedirectToLogin = context =>
                 {
-                    var redirectUri = $"/auth/login?returnUrl={Uri.EscapeDataString(context.Request.PathBase + context.Request.Path + context.Request.QueryString)}";
+                    var redirectUri = $"/login?returnUrl={Uri.EscapeDataString(context.Request.PathBase + context.Request.Path + context.Request.QueryString)}";
                     context.Response.Redirect(redirectUri);
                     return Task.CompletedTask;
                 }

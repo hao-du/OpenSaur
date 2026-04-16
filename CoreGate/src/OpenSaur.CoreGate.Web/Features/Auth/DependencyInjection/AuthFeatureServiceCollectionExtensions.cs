@@ -12,6 +12,7 @@ public static class AuthFeatureServiceCollectionExtensions
     {
         services.AddScoped<UserRolePermissionService>();
         services.AddScoped<LoginHandler>();
+        services.AddScoped<ChangePasswordHandler>();
         services.AddScoped<LogoutHandler>();
         services.AddScoped<AuthorizeHandler>();
         services.AddScoped<TokenHandler>();

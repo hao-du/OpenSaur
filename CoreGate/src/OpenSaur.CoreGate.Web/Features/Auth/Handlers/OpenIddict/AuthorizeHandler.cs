@@ -28,7 +28,7 @@ public class AuthorizeHandler(
         if (!authenticationResult.Succeeded || authenticationResult.Principal is null)
         {
             var redirectUri = httpContext.Request.PathBase + httpContext.Request.Path + httpContext.Request.QueryString;
-            return Results.Redirect($"/auth/login?returnUrl={Uri.EscapeDataString(redirectUri)}");
+            return Results.Redirect($"/login?returnUrl={Uri.EscapeDataString(redirectUri)}");
         }
 
         // Rebuild the token principal from the current user/workspace/role state before issuing code/tokens.
@@ -44,7 +44,7 @@ public class AuthorizeHandler(
         {
             await httpContext.SignOutAsync(IdentityConstants.ApplicationScheme);
             var redirectUri = httpContext.Request.PathBase + httpContext.Request.Path + httpContext.Request.QueryString;
-            return Results.Redirect($"/auth/login?returnUrl={Uri.EscapeDataString(redirectUri)}");
+            return Results.Redirect($"/login?returnUrl={Uri.EscapeDataString(redirectUri)}");
         }
 
         return Results.SignIn(principal, authenticationScheme: OpenIddictServerAspNetCoreDefaults.AuthenticationScheme);
