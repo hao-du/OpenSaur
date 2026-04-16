@@ -72,6 +72,7 @@ public static class OpenIddictServiceCollectionExtensions
                 options.SetIssuer(new Uri(oidcOptions.GetIssuerBaseUri().AbsoluteUri.TrimEnd('/'), UriKind.Absolute));
                 options.SetAuthorizationEndpointUris("connect/authorize");
                 options.SetTokenEndpointUris("connect/token");
+                options.SetEndSessionEndpointUris("connect/endsession");
                 options.SetUserInfoEndpointUris("connect/userinfo");
                 options.AllowAuthorizationCodeFlow()
                     .AllowRefreshTokenFlow();
@@ -104,6 +105,7 @@ public static class OpenIddictServiceCollectionExtensions
                 options.UseAspNetCore()
                     .DisableTransportSecurityRequirement()
                     .EnableAuthorizationEndpointPassthrough()
+                    .EnableEndSessionEndpointPassthrough()
                     .EnableTokenEndpointPassthrough()
                     .EnableUserInfoEndpointPassthrough();
             });

@@ -22,6 +22,9 @@ public static class OpenIddictEndpoints
         app.MapPost("/connect/token", async (TokenHandler tokenHandler) => await tokenHandler.HandleTokenAsync())
             .AllowAnonymous();
 
+        app.MapMethods("/connect/endsession", [HttpMethods.Get, HttpMethods.Post], async (EndSessionHandler endSessionHandler) => await endSessionHandler.HandleEndSessionAsync())
+            .AllowAnonymous();
+
         app.MapGet("/connect/userinfo", async (UserInfoHandler userInfoHandler) => await userInfoHandler.HandleUserInfoAsync())
             .AllowAnonymous();
 

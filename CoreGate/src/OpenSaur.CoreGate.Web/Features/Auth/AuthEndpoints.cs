@@ -34,12 +34,6 @@ public static class AuthEndpoints
                     : Results.BadRequest(response);
             });
 
-        app.MapPost("/auth/logout", async Task<IResult> (LogoutHandler logoutHandler) =>
-            {
-                await logoutHandler.HandleLogoutAsync();
-                return Results.NoContent();
-            });
-
         return app;
     }
 }
