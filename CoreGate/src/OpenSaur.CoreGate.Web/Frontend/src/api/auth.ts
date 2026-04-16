@@ -26,3 +26,19 @@ export async function changePassword(request: ChangePasswordRequest): Promise<Ch
 
   return (await response.json()) as ChangePasswordResponse;
 }
+
+export async function canAccessChangePassword(): Promise<boolean> {
+  const response = await fetch("/auth/change-password/access", {
+    method: "GET"
+  });
+
+  if (response.status === 204) {
+    return true;
+  }
+
+  if (response.status === 403) {
+    return false;
+  }
+
+  throw new Error("Unable to determine change password access.");
+}

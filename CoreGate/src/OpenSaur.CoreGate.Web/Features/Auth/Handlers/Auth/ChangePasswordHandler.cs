@@ -30,16 +30,19 @@ public class ChangePasswordHandler(
             return new ChangePasswordResponse(false, null, "New password and confirmation do not match.");
         }
 
-        var userId = ClaimPrincipalHelpers.GetUserId(httpContext.User);
-        if (string.IsNullOrWhiteSpace(userId))
-        {
-            return new ChangePasswordResponse(false, null, "You must be signed in to change your password.");
-        }
-
-        var user = await userManager.FindByIdAsync(userId);
-        if (user is null || !user.IsActive)
+        var user = await GetCurrentUserAsync();
+        if (user is null)
         {
             return new ChangePasswordResponse(false, null, "Unable to change password for the current account.");
+        }
+
+        if (!user.RequirePasswordChange)
+        {
+            return new ChangePasswordResponse(
+                false,
+                null,
+                "Change password is only available when a password update is required.",
+                Forbidden: true);
         }
 
         var result = await userManager.ChangePasswordAsync(user, request.CurrentPassword, request.NewPassword);
@@ -59,5 +62,23 @@ public class ChangePasswordHandler(
 
         var redirectUri = string.IsNullOrWhiteSpace(request.ReturnUrl) ? "/" : request.ReturnUrl;
         return new ChangePasswordResponse(true, redirectUri, null);
+    }
+
+    private async Task<ApplicationUser?> GetCurrentUserAsync()
+    {
+        var httpContext = httpContextAccessor.HttpContext;
+        if (httpContext is null)
+        {
+            return null;
+        }
+
+        var userId = ClaimPrincipalHelpers.GetUserId(httpContext.User);
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            return null;
+        }
+
+        var user = await userManager.FindByIdAsync(userId);
+        return user is not null && user.IsActive ? user : null;
     }
 }

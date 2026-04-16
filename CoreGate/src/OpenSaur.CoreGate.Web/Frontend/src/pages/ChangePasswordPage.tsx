@@ -5,8 +5,9 @@ import {
   Stack
 } from "@mui/material";
 import { useForm } from "react-hook-form";
-import { useMemo, useState } from "react";
-import { changePassword } from "../api/auth";
+import { useEffect, useMemo, useState } from "react";
+import { Navigate } from "react-router-dom";
+import { canAccessChangePassword, changePassword } from "../api/auth";
 import { Card } from "../components/molecules/Card";
 import { FormTextField } from "../components/molecules/FormTextField";
 import { PageLayout } from "../components/templates/PageLayout";
@@ -20,6 +21,7 @@ type ChangePasswordFormValues = {
 export function ChangePasswordPage() {
   const [serverError, setServerError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [accessState, setAccessState] = useState<"checking" | "allowed" | "forbidden">("checking");
   const searchParams = useMemo(() => new URLSearchParams(window.location.search), []);
   const returnUrl = searchParams.get("returnUrl") ?? "/";
 
@@ -30,6 +32,30 @@ export function ChangePasswordPage() {
       confirmPassword: ""
     }
   });
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function checkAccess() {
+      try {
+        const allowed = await canAccessChangePassword();
+        if (isMounted) {
+          setAccessState(allowed ? "allowed" : "forbidden");
+        }
+      } catch {
+        if (isMounted) {
+          setServerError("Unable to reach the identity service.");
+          setAccessState("forbidden");
+        }
+      }
+    }
+
+    void checkAccess();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const onSubmit = handleSubmit(async (values) => {
     setIsSubmitting(true);
@@ -55,6 +81,33 @@ export function ChangePasswordPage() {
       setIsSubmitting(false);
     }
   });
+
+  if (accessState === "checking") {
+    return (
+      <PageLayout background="auth">
+        <Card title="Change Password" subtitle="Checking whether this page is available for your account.">
+          <Stack spacing={2} alignItems="center">
+            <CircularProgress />
+          </Stack>
+        </Card>
+      </PageLayout>
+    );
+  }
+
+  if (accessState === "forbidden") {
+    return (
+      <Navigate
+        to="/403"
+        replace
+        state={{
+          subtitle: "This page is only available when your account is required to change its password.",
+          message: "Return to the normal sign-in flow or continue where you left off.",
+          actionHref: returnUrl,
+          error: serverError
+        }}
+      />
+    );
+  }
 
   return (
     <PageLayout background="auth">
