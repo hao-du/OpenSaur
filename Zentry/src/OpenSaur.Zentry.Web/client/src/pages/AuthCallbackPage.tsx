@@ -1,4 +1,4 @@
-import { useEffect, useState, type CSSProperties } from "react";
+import { useEffect, useRef, type CSSProperties } from "react";
 import { useNavigate } from "react-router-dom";
 import { AuthErrorPanel } from "../components/AuthErrorPanel";
 import { useAuth } from "../auth/useAuth";
@@ -6,16 +6,16 @@ import { useAuth } from "../auth/useAuth";
 export function AuthCallbackPage() {
   const navigate = useNavigate();
   const { error, handleCallback, signIn, status } = useAuth();
-  const [started, setStarted] = useState(false);
+  const hasStartedRef = useRef(false);
 
   useEffect(() => {
-    if (started) {
+    if (hasStartedRef.current) {
       return;
     }
 
-    setStarted(true);
+    hasStartedRef.current = true;
     void handleCallback();
-  }, [handleCallback, started]);
+  }, [handleCallback]);
 
   useEffect(() => {
     if (status === "authenticated") {
