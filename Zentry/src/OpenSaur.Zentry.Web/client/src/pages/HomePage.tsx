@@ -1,7 +1,8 @@
-import { useEffect, type CSSProperties } from "react";
 import { Navigate } from "react-router-dom";
-import { AuthErrorPanel } from "../components/AuthErrorPanel";
+import { useEffect } from "react";
+import { Box, CircularProgress, Stack, Typography } from "@mui/material";
 import { useAuth } from "../auth/useAuth";
+import { AuthErrorPanel } from "../components/AuthErrorPanel";
 
 export function HomePage() {
   const { error, signIn, status } = useAuth();
@@ -16,55 +17,46 @@ export function HomePage() {
     return <Navigate replace to="/dashboard" />;
   }
 
+  if (error) {
+    return (
+      <Box
+        sx={{
+          alignItems: "center",
+          background: "linear-gradient(135deg, #f4efe6 0%, #fffaf3 55%, #d8eef5 100%)",
+          display: "grid",
+          minHeight: "100vh",
+          px: 3
+        }}
+      >
+        <Stack spacing={2} sx={{ maxWidth: 560 }}>
+          <Typography
+            color="primary.main"
+            sx={{ fontSize: "0.85rem", fontWeight: 700, letterSpacing: "0.18em", textTransform: "uppercase" }}
+          >
+            OpenSaur Zentry
+          </Typography>
+          <AuthErrorPanel message={error} onRetry={() => void signIn("/dashboard")} />
+        </Stack>
+      </Box>
+    );
+  }
+
   return (
-    <main style={pageStyles}>
-      <section style={heroStyles}>
-        <p style={eyebrowStyles}>OpenSaur Zentry</p>
-        <h1 style={headlineStyles}>Routing you through CoreGate sign-in.</h1>
-        <p style={copyStyles}>
-          This first phase keeps the app intentionally small: browser-based OIDC login,
-          callback handling, and a protected dashboard once the token exchange completes.
-        </p>
-        {error ? <AuthErrorPanel message={error} onRetry={() => signIn("/dashboard")} /> : null}
-      </section>
-    </main>
+    <Box
+      sx={{
+        alignItems: "center",
+        background: "linear-gradient(135deg, #f4efe6 0%, #fffaf3 55%, #d8eef5 100%)",
+        display: "grid",
+        minHeight: "100vh",
+        px: 3
+      }}
+    >
+      <Stack alignItems="center" spacing={2}>
+        <CircularProgress />
+        <Typography color="text.secondary">
+          Redirecting to CoreGate sign in...
+        </Typography>
+      </Stack>
+    </Box>
   );
 }
-
-const pageStyles: CSSProperties = {
-  alignItems: "center",
-  background: "linear-gradient(135deg, #f4efe6 0%, #fffaf3 55%, #d8eef5 100%)",
-  color: "#111827",
-  display: "grid",
-  minHeight: "100vh",
-  padding: "2rem"
-};
-
-const heroStyles: CSSProperties = {
-  display: "grid",
-  gap: "1rem",
-  margin: "0 auto",
-  maxWidth: "42rem"
-};
-
-const eyebrowStyles: CSSProperties = {
-  fontSize: "0.85rem",
-  fontWeight: 700,
-  letterSpacing: "0.18em",
-  margin: 0,
-  textTransform: "uppercase"
-};
-
-const headlineStyles: CSSProperties = {
-  fontSize: "clamp(2.5rem, 7vw, 4.5rem)",
-  lineHeight: 1,
-  margin: 0
-};
-
-const copyStyles: CSSProperties = {
-  color: "#374151",
-  fontSize: "1.05rem",
-  lineHeight: 1.7,
-  margin: 0,
-  maxWidth: "36rem"
-};

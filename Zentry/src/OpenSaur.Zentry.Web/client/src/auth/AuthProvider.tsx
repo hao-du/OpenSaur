@@ -33,7 +33,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
   const [status, setStatus] = useState<AuthStatus>(session ? "authenticated" : "anonymous");
   const [error, setError] = useState<string | null>(null);
 
-  async function signIn(redirectPath = "/dashboard") {
+  async function signIn(redirectPath = "/") {
     setError(null);
     const url = await beginLogin(appEnvironment, redirectPath);
     window.location.assign(url);

@@ -1,3 +1,4 @@
+import { exchangeAuthorizationCode } from "../api/oidcApi";
 import { fetchUserInfo } from "../api/userInfo";
 import {
   clearAuthSession,
@@ -10,9 +11,7 @@ import {
 import { buildPkceRequest } from "./pkce";
 import {
   buildAuthorizationUrl,
-  buildEndSessionUrl,
-  buildTokenEndpointUrl,
-  buildTokenRequestBody
+  buildEndSessionUrl
 } from "./oidcClient";
 import type { AppRuntimeConfig, AuthSession, TokenSet, UserProfile } from "./authTypes";
 
@@ -45,21 +44,16 @@ export async function completeLogin(config: AppRuntimeConfig, callbackUrl: strin
     throw new Error("OIDC state validation failed.");
   }
 
-  const tokenResponse = await fetch(buildTokenEndpointUrl(config), {
-    body: buildTokenRequestBody(config, code, pendingRequest),
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded"
-    },
-    method: "POST"
-  });
+  let payload: Record<string, unknown>;
 
-  if (!tokenResponse.ok) {
+  try {
+    payload = await exchangeAuthorizationCode(config, code, pendingRequest);
+  } catch (error) {
     clearPendingAuthRequest();
     clearAuthSession();
-    throw new Error(`Token exchange failed with status ${tokenResponse.status}.`);
+    throw error;
   }
 
-  const payload = await tokenResponse.json() as Record<string, unknown>;
   const tokenSet = buildTokenSet(payload);
 
   let profile: UserProfile | null = null;

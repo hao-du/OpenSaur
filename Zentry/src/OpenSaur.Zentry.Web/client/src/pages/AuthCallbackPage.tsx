@@ -1,6 +1,6 @@
-import { useEffect, useRef, type CSSProperties } from "react";
+import { useEffect, useRef } from "react";
+import { Alert, Box, Button, Stack, Typography } from "@mui/material";
 import { useNavigate } from "react-router-dom";
-import { AuthErrorPanel } from "../components/AuthErrorPanel";
 import { useAuth } from "../auth/useAuth";
 
 export function AuthCallbackPage() {
@@ -19,60 +19,45 @@ export function AuthCallbackPage() {
 
   useEffect(() => {
     if (status === "authenticated") {
-      navigate("/dashboard", { replace: true });
+      navigate("/", { replace: true });
     }
   }, [navigate, status]);
 
   return (
-    <main style={pageStyles}>
-      {status === "error" && error
-        ? <AuthErrorPanel message={error} onRetry={() => signIn("/dashboard")} />
-        : <section style={cardStyles}>
-            <p style={eyebrowStyles}>CoreGate callback</p>
-            <h1 style={titleStyles}>Completing your sign in.</h1>
-            <p style={bodyStyles}>
-              Zentry is validating state, exchanging the authorization code, and loading your profile.
-            </p>
-          </section>}
-    </main>
+    <Box sx={{ alignItems: "center", backgroundColor: "background.default", display: "grid", minHeight: "100vh", px: 3 }}>
+      <Stack
+        spacing={2}
+        sx={{
+          backgroundColor: "background.paper",
+          border: "1px solid rgba(11,110,79,0.10)",
+          borderRadius: 4,
+          boxShadow: "0 20px 50px rgba(15, 23, 42, 0.08)",
+          maxWidth: 544,
+          p: 4
+        }}
+      >
+        <Typography color="primary.main" sx={{ fontSize: "0.8rem", fontWeight: 700, letterSpacing: "0.18em", textTransform: "uppercase" }}>
+          CoreGate callback
+        </Typography>
+        <Typography variant="h4">
+          Completing your sign in
+        </Typography>
+        <Typography color="text.secondary">
+          Zentry is validating state, exchanging the authorization code, and loading your profile.
+        </Typography>
+        {status === "error" && error ? (
+          <Alert
+            action={(
+              <Button color="inherit" onClick={() => { void signIn("/"); }} size="small">
+                Retry
+              </Button>
+            )}
+            severity="error"
+          >
+            {error}
+          </Alert>
+        ) : null}
+      </Stack>
+    </Box>
   );
 }
-
-const pageStyles: CSSProperties = {
-  alignItems: "center",
-  background: "#f8fafc",
-  display: "grid",
-  minHeight: "100vh",
-  padding: "2rem"
-};
-
-const cardStyles: CSSProperties = {
-  background: "#ffffff",
-  border: "1px solid #dbe4ee",
-  borderRadius: "24px",
-  boxShadow: "0 20px 50px rgba(15, 23, 42, 0.08)",
-  display: "grid",
-  gap: "0.75rem",
-  maxWidth: "34rem",
-  padding: "2rem"
-};
-
-const eyebrowStyles: CSSProperties = {
-  color: "#0f766e",
-  fontSize: "0.8rem",
-  fontWeight: 700,
-  letterSpacing: "0.18em",
-  margin: 0,
-  textTransform: "uppercase"
-};
-
-const titleStyles: CSSProperties = {
-  fontSize: "2rem",
-  margin: 0
-};
-
-const bodyStyles: CSSProperties = {
-  color: "#475569",
-  lineHeight: 1.7,
-  margin: 0
-};
