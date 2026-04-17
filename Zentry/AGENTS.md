@@ -129,3 +129,7 @@ For more details, see README.md and docs/QUICKSTART.md.
 ## Project-Specific Notes
 
 Keep critical repo rules in this file. Put longer reference material in `docs/agents/` and link it from here.
+
+- Do not create unit tests for frontend or backend code in this project.
+- Do not add automation tests of any kind.
+- Use manual verification, builds, and runtime checks instead of automated test suites.

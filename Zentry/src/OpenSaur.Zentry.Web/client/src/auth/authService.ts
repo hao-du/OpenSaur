@@ -1,0 +1,170 @@
+import { fetchUserInfo } from "../api/userInfo";
+import {
+  clearAuthSession,
+  clearPendingAuthRequest,
+  readAuthSession,
+  readPendingAuthRequest,
+  saveAuthSession,
+  savePendingAuthRequest
+} from "./authStorage";
+import { buildPkceRequest } from "./pkce";
+import {
+  buildAuthorizationUrl,
+  buildEndSessionUrl,
+  buildTokenEndpointUrl,
+  buildTokenRequestBody
+} from "./oidcClient";
+import type { AppRuntimeConfig, AuthSession, TokenSet, UserProfile } from "./authTypes";
+
+export function readStoredAuthSession() {
+  return readAuthSession();
+}
+
+export async function beginLogin(config: AppRuntimeConfig, redirectPath = "/dashboard") {
+  const request = await buildPkceRequest(redirectPath);
+  savePendingAuthRequest(request);
+  return buildAuthorizationUrl(config, request);
+}
+
+export async function completeLogin(config: AppRuntimeConfig, callbackUrl: string) {
+  const url = new URL(callbackUrl);
+  const code = url.searchParams.get("code");
+  const state = url.searchParams.get("state");
+
+  if (!code) {
+    throw new Error("Authorization code is missing from the callback.");
+  }
+
+  if (!state) {
+    throw new Error("OIDC state is missing from the callback.");
+  }
+
+  const pendingRequest = readPendingAuthRequest();
+  if (!pendingRequest || pendingRequest.state !== state) {
+    clearPendingAuthRequest();
+    throw new Error("OIDC state validation failed.");
+  }
+
+  const tokenResponse = await fetch(buildTokenEndpointUrl(config), {
+    body: buildTokenRequestBody(config, code, pendingRequest),
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded"
+    },
+    method: "POST"
+  });
+
+  if (!tokenResponse.ok) {
+    clearPendingAuthRequest();
+    clearAuthSession();
+    throw new Error(`Token exchange failed with status ${tokenResponse.status}.`);
+  }
+
+  const payload = await tokenResponse.json() as Record<string, unknown>;
+  const tokenSet = buildTokenSet(payload);
+
+  let profile: UserProfile | null = null;
+  try {
+    profile = await fetchUserInfo(config, tokenSet.accessToken);
+  } catch {
+    profile = tokenSet.idToken
+      ? readProfileFromIdToken(tokenSet.idToken)
+      : null;
+  }
+
+  if (!profile) {
+    clearPendingAuthRequest();
+    clearAuthSession();
+    throw new Error("User info request failed after login.");
+  }
+
+  clearPendingAuthRequest();
+  const session: AuthSession = {
+    profile,
+    tokenSet
+  };
+  saveAuthSession(session);
+  return session;
+}
+
+export function buildLogoutRedirect(config: AppRuntimeConfig, session: AuthSession | null) {
+  clearPendingAuthRequest();
+  clearAuthSession();
+  return buildEndSessionUrl(config, session?.tokenSet.idToken);
+}
+
+function buildTokenSet(payload: Record<string, unknown>): TokenSet {
+  const accessToken = readRequiredString(payload.access_token, "access_token");
+  const tokenType = readString(payload.token_type) ?? "Bearer";
+  const scope = readString(payload.scope);
+  const refreshToken = readString(payload.refresh_token);
+  const idToken = readString(payload.id_token);
+  const expiresInSeconds = readNumber(payload.expires_in) ?? 300;
+
+  return {
+    accessToken,
+    expiresAtUtc: new Date(Date.now() + expiresInSeconds * 1000).toISOString(),
+    idToken,
+    refreshToken,
+    scope,
+    tokenType
+  };
+}
+
+function readProfileFromIdToken(idToken: string): UserProfile | null {
+  const segments = idToken.split(".");
+  if (segments.length < 2) {
+    return null;
+  }
+
+  try {
+    const normalizedPayload = segments[1]
+      .replace(/-/g, "+")
+      .replace(/_/g, "/")
+      .padEnd(Math.ceil(segments[1].length / 4) * 4, "=");
+
+    const decoded = atob(normalizedPayload);
+    const payload = JSON.parse(decoded) as Record<string, unknown>;
+
+    return {
+      email: readString(payload.email),
+      preferredUsername: readString(payload.preferred_username),
+      roles: readStringArray(payload.role ?? payload.roles),
+      subject: readString(payload.sub) ?? "unknown",
+      workspaceId: readString(payload.workspace_id)
+    };
+  } catch {
+    return null;
+  }
+}
+
+function readRequiredString(value: unknown, fieldName: string) {
+  if (typeof value === "string" && value.length > 0) {
+    return value;
+  }
+
+  throw new Error(`Token response is missing '${fieldName}'.`);
+}
+
+function readString(value: unknown) {
+  return typeof value === "string" && value.length > 0
+    ? value
+    : undefined;
+}
+
+function readNumber(value: unknown) {
+  return typeof value === "number" && Number.isFinite(value)
+    ? value
+    : undefined;
+}
+
+function readStringArray(value: unknown) {
+  if (Array.isArray(value)) {
+    return value.filter((item): item is string => typeof item === "string" && item.length > 0);
+  }
+
+  if (typeof value === "string" && value.length > 0) {
+    return [value];
+  }
+
+  return undefined;
+}
