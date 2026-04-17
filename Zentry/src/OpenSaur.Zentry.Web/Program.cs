@@ -13,8 +13,7 @@ app.UseExceptionHandler();
 app.UseDefaultFiles();
 app.UseStaticFiles();
 
-app.MapShellRuntimeConfig();
-app.MapShellRoutes();
+app.MapFrontEndRoutes();
 
 app.Run();
 

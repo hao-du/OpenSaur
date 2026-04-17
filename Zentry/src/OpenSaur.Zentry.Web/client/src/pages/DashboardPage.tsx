@@ -42,7 +42,6 @@ export function DashboardPage() {
               <InfoRow label="Token type" value={tokenSet.tokenType} />
               <InfoRow label="Expires at" value={tokenSet.expiresAtUtc} />
               <InfoRow label="Scope" value={tokenSet.scope ?? "Not provided"} />
-              <InfoRow label="Refresh token" value={tokenSet.refreshToken ? "Issued" : "Not issued"} />
               <InfoRow label="ID token" value={tokenSet.idToken ? "Issued" : "Not issued"} />
             </Stack>
           </PageSectionCard>

@@ -2,7 +2,7 @@ import type { AppRuntimeConfig } from "../auth/authTypes";
 
 declare global {
   interface Window {
-    __OPENSAUR_ZENTRY_CONFIG__?: AppRuntimeConfig;
+    __ZENTRY_CONFIG__?: AppRuntimeConfig;
   }
 }
 
@@ -34,7 +34,7 @@ function getRuntimeConfig(): AppRuntimeConfig {
     };
   }
 
-  const runtimeConfig = window.__OPENSAUR_ZENTRY_CONFIG__;
+  const runtimeConfig = window.__ZENTRY_CONFIG__;
   if (!runtimeConfig) {
     throw new Error("OpenSaur Zentry runtime configuration is missing.");
   }

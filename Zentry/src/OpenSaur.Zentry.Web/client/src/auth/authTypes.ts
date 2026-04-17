@@ -13,6 +13,7 @@ export type PendingAuthRequest = {
   codeChallengeMethod: "S256";
   codeVerifier: string;
   createdAtUtc: string;
+  nonce: string;
   redirectPath: string;
   state: string;
 };
@@ -21,7 +22,6 @@ export type TokenSet = {
   accessToken: string;
   expiresAtUtc: string;
   idToken?: string;
-  refreshToken?: string;
   scope?: string;
   tokenType: string;
 };

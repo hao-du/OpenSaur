@@ -13,6 +13,10 @@ function generateState(length = 48) {
   return generateCodeVerifier(length);
 }
 
+function generateNonce(length = 48) {
+  return generateCodeVerifier(length);
+}
+
 async function generateCodeChallenge(codeVerifier: string) {
   const verifierBytes = new TextEncoder().encode(codeVerifier);
   const digest = await crypto.subtle.digest("SHA-256", verifierBytes);
@@ -27,6 +31,7 @@ export async function buildPkceRequest(redirectPath = "/dashboard"): Promise<Pen
     codeChallengeMethod: "S256",
     codeVerifier,
     createdAtUtc: new Date().toISOString(),
+    nonce: generateNonce(),
     redirectPath,
     state: generateState()
   };

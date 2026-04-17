@@ -55,14 +55,15 @@ export async function completeLogin(config: AppRuntimeConfig, callbackUrl: strin
   }
 
   const tokenSet = buildTokenSet(payload);
+  validateIdTokenNonce(tokenSet.idToken, pendingRequest.nonce);
 
   let profile: UserProfile | null = null;
   try {
     profile = await fetchUserInfo(config, tokenSet.accessToken);
-  } catch {
-    profile = tokenSet.idToken
-      ? readProfileFromIdToken(tokenSet.idToken)
-      : null;
+  } catch (error) {
+    clearPendingAuthRequest();
+    clearAuthSession();
+    throw error;
   }
 
   if (!profile) {
@@ -90,7 +91,6 @@ function buildTokenSet(payload: Record<string, unknown>): TokenSet {
   const accessToken = readRequiredString(payload.access_token, "access_token");
   const tokenType = readString(payload.token_type) ?? "Bearer";
   const scope = readString(payload.scope);
-  const refreshToken = readString(payload.refresh_token);
   const idToken = readString(payload.id_token);
   const expiresInSeconds = readNumber(payload.expires_in) ?? 300;
 
@@ -98,14 +98,29 @@ function buildTokenSet(payload: Record<string, unknown>): TokenSet {
     accessToken,
     expiresAtUtc: new Date(Date.now() + expiresInSeconds * 1000).toISOString(),
     idToken,
-    refreshToken,
     scope,
     tokenType
   };
 }
 
-function readProfileFromIdToken(idToken: string): UserProfile | null {
-  const segments = idToken.split(".");
+function validateIdTokenNonce(idToken: string | undefined, expectedNonce: string) {
+  if (!idToken) {
+    return;
+  }
+
+  const payload = readJwtPayload(idToken);
+  if (!payload) {
+    throw new Error("ID token payload could not be decoded.");
+  }
+
+  const nonce = readString(payload.nonce);
+  if (!nonce || nonce !== expectedNonce) {
+    throw new Error("OIDC nonce validation failed.");
+  }
+}
+
+function readJwtPayload(token: string): Record<string, unknown> | null {
+  const segments = token.split(".");
   if (segments.length < 2) {
     return null;
   }
@@ -117,15 +132,7 @@ function readProfileFromIdToken(idToken: string): UserProfile | null {
       .padEnd(Math.ceil(segments[1].length / 4) * 4, "=");
 
     const decoded = atob(normalizedPayload);
-    const payload = JSON.parse(decoded) as Record<string, unknown>;
-
-    return {
-      email: readString(payload.email),
-      preferredUsername: readString(payload.preferred_username),
-      roles: readStringArray(payload.role ?? payload.roles),
-      subject: readString(payload.sub) ?? "unknown",
-      workspaceId: readString(payload.workspace_id)
-    };
+    return JSON.parse(decoded) as Record<string, unknown>;
   } catch {
     return null;
   }
@@ -151,14 +158,3 @@ function readNumber(value: unknown) {
     : undefined;
 }
 
-function readStringArray(value: unknown) {
-  if (Array.isArray(value)) {
-    return value.filter((item): item is string => typeof item === "string" && item.length > 0);
-  }
-
-  if (typeof value === "string" && value.length > 0) {
-    return [value];
-  }
-
-  return undefined;
-}

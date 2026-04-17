@@ -8,6 +8,7 @@ export function buildAuthorizationUrl(config: AppRuntimeConfig, request: Pending
   url.searchParams.set("scope", config.scope);
   url.searchParams.set("code_challenge", request.codeChallenge);
   url.searchParams.set("code_challenge_method", request.codeChallengeMethod);
+  url.searchParams.set("nonce", request.nonce);
   url.searchParams.set("state", request.state);
 
   return url.toString();
