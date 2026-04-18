@@ -1,8 +1,10 @@
 import { useMemo, useState, type MouseEvent } from "react";
-import ExitToAppRoundedIcon from "@mui/icons-material/ExitToAppRounded";
-import KeyRoundedIcon from "@mui/icons-material/KeyRounded";
-import PersonOutlineRoundedIcon from "@mui/icons-material/PersonOutlineRounded";
-import SettingsRoundedIcon from "@mui/icons-material/SettingsRounded";
+import {
+  KeyRound,
+  LogOut,
+  Settings,
+  UserRound
+} from "lucide-react";
 import {
   Box,
   Divider,
@@ -13,6 +15,7 @@ import {
 } from "@mui/material";
 import { LabelText } from "../atoms/LabelText";
 import { MetaText } from "../atoms/MetaText";
+import { AppIcon } from "../icons/AppIcon";
 import { Avatar } from "./Avatar";
 import type { MockProfile } from "../../mocks/profile";
 
@@ -79,7 +82,7 @@ export function UserProfileMenu({ profile }: UserProfileMenuProps) {
             direction="row"
             spacing={1}
           >
-            <PersonOutlineRoundedIcon fontSize="small" />
+            <AppIcon icon={UserRound} />
             <span>My Profile</span>
           </Stack>
         </MenuItem>
@@ -89,7 +92,7 @@ export function UserProfileMenu({ profile }: UserProfileMenuProps) {
             direction="row"
             spacing={1}
           >
-            <KeyRoundedIcon fontSize="small" />
+            <AppIcon icon={KeyRound} />
             <span>Change password</span>
           </Stack>
         </MenuItem>
@@ -99,7 +102,7 @@ export function UserProfileMenu({ profile }: UserProfileMenuProps) {
             direction="row"
             spacing={1}
           >
-            <SettingsRoundedIcon fontSize="small" />
+            <AppIcon icon={Settings} />
             <span>Settings</span>
           </Stack>
         </MenuItem>
@@ -110,7 +113,7 @@ export function UserProfileMenu({ profile }: UserProfileMenuProps) {
             direction="row"
             spacing={1}
           >
-            <ExitToAppRoundedIcon fontSize="small" />
+            <AppIcon icon={LogOut} />
             <span>Logout</span>
           </Stack>
         </MenuItem>

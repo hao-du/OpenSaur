@@ -22,7 +22,17 @@ export const theme = createTheme({
     borderRadius: 5
   },
   typography: {
-    fontFamily: "\"Segoe UI\", \"Helvetica Neue\", sans-serif",
+    fontSize: 14,
+    fontFamily: [
+      "\"Noto Sans\"",
+      "\"Noto Sans SC\"",
+      "\"Noto Sans TC\"",
+      "\"Microsoft YaHei\"",
+      "\"PingFang SC\"",
+      "\"Segoe UI\"",
+      "\"Helvetica Neue\"",
+      "sans-serif"
+    ].join(", "),
     h3: {
       fontSize: "2.2rem",
       fontWeight: 700

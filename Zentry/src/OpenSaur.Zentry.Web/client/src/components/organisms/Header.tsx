@@ -1,4 +1,4 @@
-import MenuRoundedIcon from "@mui/icons-material/MenuRounded";
+import { Menu } from "lucide-react";
 import {
   AppBar,
   IconButton,
@@ -6,6 +6,7 @@ import {
   Toolbar
 } from "@mui/material";
 import { EyebrowText } from "../atoms/EyebrowText";
+import { AppIcon } from "../icons/AppIcon";
 import { mockProfile } from "../../mocks/profile";
 import { layoutStyles } from "../../theme/theme";
 import { UserProfileMenu } from "./UserProfileMenu";
@@ -38,7 +39,7 @@ export function Header({ isDesktop, onOpenNavigation }: AppHeaderProps) {
               edge="start"
               onClick={onOpenNavigation}
             >
-              <MenuRoundedIcon fontSize="small" />
+              <AppIcon icon={Menu} />
             </IconButton>
           ) : null}
           <Stack

@@ -6,10 +6,51 @@ import {
   ListItemIcon,
   ListItemText
 } from "@mui/material";
+import {
+  Building2,
+  KeyRound,
+  LayoutDashboard,
+  Shield,
+  UserRound
+} from "lucide-react";
 import { EyebrowText } from "../atoms/EyebrowText";
 import { MetaText } from "../atoms/MetaText";
-import { navigationItems } from "../shell/navigation";
+import { AppIcon, type AppIconType } from "../icons/AppIcon";
 import { layoutStyles } from "../../theme/theme";
+
+type NavigationItem = {
+  icon: AppIconType;
+  label: string;
+  path: string;
+};
+
+const navigationItems: NavigationItem[] = [
+  {
+    icon: LayoutDashboard,
+    label: "Dashboard",
+    path: "/"
+  },
+  {
+    icon: KeyRound,
+    label: "Applications",
+    path: "/applications"
+  },
+  {
+    icon: Building2,
+    label: "Workspaces",
+    path: "/workspaces"
+  },
+  {
+    icon: UserRound,
+    label: "Users",
+    path: "/users"
+  },
+  {
+    icon: Shield,
+    label: "Roles",
+    path: "/roles"
+  }
+];
 
 type SideMenuProps = {
   currentYear: number;
@@ -43,7 +84,7 @@ export function SideMenu({ currentYear }: SideMenuProps) {
               sx={layoutStyles.navItem}
             >
               <ListItemIcon sx={layoutStyles.navItemIcon}>
-                <Icon fontSize="small" />
+                <AppIcon icon={Icon} />
               </ListItemIcon>
               <ListItemText primary={item.label} />
             </ListItemButton>
