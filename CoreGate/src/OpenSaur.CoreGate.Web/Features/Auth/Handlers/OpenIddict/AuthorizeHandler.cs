@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Identity;
 using OpenIddict.Abstractions;
 using OpenIddict.Server.AspNetCore;
 using OpenSaur.CoreGate.Web.Domain.Identity;
+using OpenSaur.CoreGate.Web.Features.Auth.Services;
 using OpenSaur.CoreGate.Web.Infrastructure.Database;
 using System.Security.Claims;
 

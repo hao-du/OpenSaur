@@ -6,7 +6,7 @@ using OpenSaur.CoreGate.Web.Domain.Permissions;
 using OpenSaur.CoreGate.Web.Features.Auth.Dtos;
 using OpenSaur.CoreGate.Web.Infrastructure.Database;
 
-namespace OpenSaur.CoreGate.Web.Features.Auth;
+namespace OpenSaur.CoreGate.Web.Features.Auth.Services;
 
 public sealed class UserRolePermissionService(
     ApplicationDbContext dbContext

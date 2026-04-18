@@ -3,10 +3,13 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.WebUtilities;
 using OpenIddict.Server.AspNetCore;
+using OpenSaur.CoreGate.Web.Features.Auth.Services;
 
 namespace OpenSaur.CoreGate.Web.Features.Auth.Handlers.OpenIddict;
 
-public class EndSessionHandler(IHttpContextAccessor httpContextAccessor)
+public class EndSessionHandler(
+    IHttpContextAccessor httpContextAccessor,
+    CookieService cookieService)
 {
     public async Task<IResult> HandleEndSessionAsync()
     {
@@ -18,6 +21,7 @@ public class EndSessionHandler(IHttpContextAccessor httpContextAccessor)
             ?? throw new InvalidOperationException("The OpenID Connect request could not be resolved.");
 
         await httpContext.SignOutAsync(IdentityConstants.ApplicationScheme);
+        cookieService.ClearRefreshTokenCookie(httpContext.Response);
 
         if (string.IsNullOrWhiteSpace(request.PostLogoutRedirectUri))
         {

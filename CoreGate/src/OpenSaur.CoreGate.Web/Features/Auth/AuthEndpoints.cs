@@ -14,6 +14,18 @@ public static class AuthEndpoints
             })
             .AllowAnonymous();
 
+        app.MapPost("/auth/exchange", async Task<IResult> (TokenExchangeRequest request, ExchangeTokenHandler exchangeTokenHandler) =>
+            {
+                return await exchangeTokenHandler.HandleExchangeAsync(request);
+            })
+            .AllowAnonymous();
+
+        app.MapPost("/auth/refresh", async Task<IResult> (TokenRefreshRequest request, RefreshTokenHandler refreshTokenHandler) =>
+            {
+                return await refreshTokenHandler.HandleRefreshAsync(request);
+            })
+            .AllowAnonymous();
+
         app.MapGet("/auth/change-password/access", async Task<IResult> (ChangePasswordAccessHandler changePasswordAccessHandler) =>
             {
                 return await changePasswordAccessHandler.HandleAccessChangePasswordAsync()

@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using OpenSaur.CoreGate.Web.Domain.Identity;
+using OpenSaur.CoreGate.Web.Features.Auth.Services;
 using OpenSaur.CoreGate.Web.Infrastructure.Database;
 using OpenSaur.CoreGate.Web.Infrastructure.Security;
 using System.Security.Claims;
