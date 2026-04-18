@@ -1,9 +1,5 @@
-using Microsoft.AspNetCore.Components.Routing;
-using Microsoft.Extensions.FileProviders;
-using Microsoft.Extensions.Options;
+using Microsoft.AspNetCore.Mvc;
 using OpenSaur.Zentry.Web.Features.Frontend.Handlers;
-using OpenSaur.Zentry.Web.Infrastructure.Configuration;
-using OpenSaur.Zentry.Web.Infrastructure.Helpers;
 
 namespace OpenSaur.Zentry.Web.Infrastructure.Hosting;
 
@@ -18,14 +14,14 @@ public static class FrontendEndpoints
 
     public static IEndpointRouteBuilder MapFrontEndRoutes(this IEndpointRouteBuilder app)
     {
-        app.MapGet("/app-config.js", async Task<IResult> (CreateAppConfigJsHandler createAppConfigJsHandler) =>
+        app.MapGet("/app-config.js", async Task<IResult> ([FromServices] CreateAppConfigJsHandler createAppConfigJsHandler) =>
         {
             return await createAppConfigJsHandler.HandleAppConfigJs();
         }).AllowAnonymous();
 
         foreach (var route in Routes)
         {
-            app.MapGet(route, async Task<IResult> (CreateFrontendRouteHandler createFrontendRouteHandler) =>
+            app.MapGet(route, async Task<IResult> ([FromServices] CreateFrontendRouteHandler createFrontendRouteHandler) =>
             {
                 return await createFrontendRouteHandler.HandleFrontendRoute();
             }).AllowAnonymous();
