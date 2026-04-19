@@ -1,4 +1,4 @@
-export type RuntimeConfig = {
+export type ConfigDto = {
   appName: string;
   authority: string;
   basePath: string;

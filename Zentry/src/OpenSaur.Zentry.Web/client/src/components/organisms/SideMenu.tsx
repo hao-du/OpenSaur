@@ -16,7 +16,7 @@ import {
 import { EyebrowText } from "../atoms/EyebrowText";
 import { MetaText } from "../atoms/MetaText";
 import { AppIcon, type AppIconType } from "../icons/AppIcon";
-import { layoutStyles } from "../../theme/theme";
+import { layoutStyles } from "../../infrastructure/theme/theme";
 
 type NavigationItem = {
   icon: AppIconType;

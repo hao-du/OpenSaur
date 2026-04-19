@@ -1,24 +1,20 @@
 import { Button } from "@mui/material";
-import { getConfig } from "../../config/Config";
-import { buildAuthorizeUrl } from "../../services/auth/buildAuthorizeUrl";
-import { createPkceSession } from "../../services/auth/pkce";
-import { DefaultLayout } from "../layouts/DefaultLayout";
+import { getConfig } from "../../../infrastructure/config/Config";
+import { DefaultLayout } from "../../../components/layouts/DefaultLayout";
+import { buildAuthorizeUrl } from "../services/AuthService";
 
-
-export function DashboardPage() {
+export function LoginPage() {
   const config = getConfig();
 
   async function handleLogin() {
-    const pkceSession = await createPkceSession();
-    const authorizeUrl = buildAuthorizeUrl(config, pkceSession);
-
+    const authorizeUrl = await buildAuthorizeUrl(config);
     window.location.assign(authorizeUrl);
   }
 
   return (
     <DefaultLayout
-      subtitle="Backend OIDC runtime config is now loaded into the frontend. Login flow will be added step by step."
-      title="Dashboard"
+      subtitle="Use CoreGate sign-in to create a frontend auth session for Zentry."
+      title="Sign In"
     >
       <div>
         <Button
@@ -33,7 +29,6 @@ export function DashboardPage() {
         <p><strong>Redirect URI:</strong> {config.redirectUri}</p>
         <p><strong>Post logout redirect URI:</strong> {config.postLogoutRedirectUri}</p>
         <p><strong>Scope:</strong> {config.scope}</p>
-        <p><strong>Authorize URL:</strong> Generated on login click with PKCE and state.</p>
       </div>
     </DefaultLayout>
   );

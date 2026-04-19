@@ -2,7 +2,7 @@ import type { PropsWithChildren } from "react";
 import { Box, Stack } from "@mui/material";
 import { BodyText } from "../atoms/BodyText";
 import { PageTitleText } from "../atoms/PageTitleText";
-import { layoutStyles } from "../../theme/theme";
+import { layoutStyles } from "../../infrastructure/theme/theme";
 
 type MainContentProps = PropsWithChildren<{
   subtitle?: string;

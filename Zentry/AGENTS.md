@@ -134,5 +134,11 @@ Keep critical repo rules in this file. Put longer reference material in `docs/ag
 - Do not add automation tests of any kind.
 - Use manual verification, builds, and runtime checks instead of automated test suites.
 - For frontend development work, use `src/OpenSaur.Zentry.Web/client` and run `npm run build-dev` for build verification during development. Use `npm run build` or `npm run build-prod` only when explicitly validating production output.
+- Prefer this frontend structure going forward:
+  `src/features/<feature>/...` for feature-owned APIs, services, DTOs, storage, and feature-specific pages;
+  `src/pages/` for app-level route pages that are not clearly owned by a single feature;
+  `src/components/...` for shared UI building blocks;
+  `src/infrastructure/...` for cross-cutting config and theme concerns.
+- Keep page placement consistent. If a page is primarily owned by one feature, prefer `src/features/<feature>/pages`. Use `src/pages` for app-level pages such as shared dashboard/shell routes or simple cross-feature route composition.
 - When the user asks for step-by-step implementation, prefer the simplest code that matches the current step. Do not introduce preparatory abstractions, intermediate adapters, or future-facing layers unless the current step already needs them.
 - Keep ownership boundaries obvious. Prefer `App` for bootstrapping/routing, pages for page composition, and small direct config helpers over speculative auth/config abstraction during early phases.

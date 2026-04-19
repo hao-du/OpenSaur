@@ -3,7 +3,7 @@ import { Box, Drawer, useMediaQuery, useTheme } from "@mui/material";
 import { Header } from "../organisms/Header";
 import { SideMenu } from "../organisms/SideMenu";
 import { MainContent } from "../templates/MainContent";
-import { layoutStyles } from "../../theme/theme";
+import { layoutStyles } from "../../infrastructure/theme/theme";
 
 type DefaultLayoutProps = PropsWithChildren<{
   subtitle?: string;

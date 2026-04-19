@@ -8,7 +8,7 @@ import {
 import { EyebrowText } from "../atoms/EyebrowText";
 import { AppIcon } from "../icons/AppIcon";
 import { mockProfile } from "../../mocks/profile";
-import { layoutStyles } from "../../theme/theme";
+import { layoutStyles } from "../../infrastructure/theme/theme";
 import { UserProfileMenu } from "./UserProfileMenu";
 
 type AppHeaderProps = {

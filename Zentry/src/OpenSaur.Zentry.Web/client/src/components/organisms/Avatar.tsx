@@ -1,5 +1,5 @@
 import { Avatar as MuiAvatar } from "@mui/material";
-import { layoutStyles } from "../../theme/theme";
+import { layoutStyles } from "../../infrastructure/theme/theme";
 
 type AvatarProps = {
   initials?: string;

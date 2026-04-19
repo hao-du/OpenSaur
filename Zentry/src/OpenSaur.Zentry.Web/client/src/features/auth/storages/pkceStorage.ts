@@ -1,9 +1,7 @@
+import { PkceSessionDto } from "../dtos/PkceSessionDto";
+
 const pkceStorageKey = "zentry.pkce";
 
-type PkceSession = {
-  codeVerifier: string;
-  state: string;
-};
 
 function encodeBase64Url(bytes: Uint8Array): string {
   const binary = Array.from(bytes, byte => String.fromCharCode(byte)).join("");
@@ -27,7 +25,16 @@ async function sha256(value: string): Promise<Uint8Array> {
   return new Uint8Array(digest);
 }
 
-export async function createPkceSession(): Promise<{
+export function getPkceSession(): PkceSessionDto | null {
+  const rawValue = sessionStorage.getItem(pkceStorageKey);
+  if (rawValue == null) {
+    return null;
+  }
+
+  return JSON.parse(rawValue) as PkceSessionDto;
+}
+
+export async function savePkceSession(): Promise<{
   codeChallenge: string;
   codeVerifier: string;
   state: string;
@@ -41,7 +48,7 @@ export async function createPkceSession(): Promise<{
     JSON.stringify({
       codeVerifier,
       state
-    } satisfies PkceSession)
+    } satisfies PkceSessionDto)
   );
 
   return {
@@ -51,11 +58,6 @@ export async function createPkceSession(): Promise<{
   };
 }
 
-export function getPkceSession(): PkceSession | null {
-  const rawValue = sessionStorage.getItem(pkceStorageKey);
-  if (rawValue == null) {
-    return null;
-  }
-
-  return JSON.parse(rawValue) as PkceSession;
+export function clearPkceSession(): void {
+  sessionStorage.removeItem(pkceStorageKey);
 }
