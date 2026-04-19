@@ -1,4 +1,4 @@
-import { Button } from "@mui/material";
+import { useEffect, useRef } from "react";
 import { getConfig } from "../../../infrastructure/config/Config";
 import { DefaultLayout } from "../../../components/layouts/DefaultLayout";
 import { buildAuthorizeUrl } from "../services/AuthService";
@@ -9,11 +9,21 @@ type PrepareSessionPageProps = {
 
 export function PrepareSessionPage({ isRestoring }: PrepareSessionPageProps) {
   const config = getConfig();
+  const hasStartedLogin = useRef(false);
 
   async function handleLogin() {
     const authorizeUrl = await buildAuthorizeUrl(config);
     window.location.assign(authorizeUrl);
   }
+
+  useEffect(() => {
+    if (isRestoring || hasStartedLogin.current) {
+      return;
+    }
+
+    hasStartedLogin.current = true;
+    void handleLogin();
+  }, [isRestoring]);
 
   return (
     <DefaultLayout
@@ -21,15 +31,7 @@ export function PrepareSessionPage({ isRestoring }: PrepareSessionPageProps) {
       title="Prepare Session"
     >
       <div>
-        <p><strong>Status:</strong> {isRestoring ? "Restoring existing session..." : "No existing session restored."}</p>
-        {!isRestoring ? (
-          <Button
-            onClick={handleLogin}
-            variant="contained"
-          >
-            Continue to sign in
-          </Button>
-        ) : null}
+        <p><strong>Status:</strong> {isRestoring ? "Restoring existing session..." : "No existing session restored. Redirecting to sign in..."}</p>
         <p>OIDC runtime config loaded from <code>/app-config.js</code>.</p>
         <p><strong>Authority:</strong> {config.authority}</p>
         <p><strong>Client ID:</strong> {config.clientId}</p>

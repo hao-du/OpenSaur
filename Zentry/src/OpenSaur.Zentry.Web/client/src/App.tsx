@@ -1,7 +1,7 @@
 import { Navigate, Outlet, Route, Routes } from "react-router-dom";
 import { AuthCallbackPage } from "./features/auth/pages/AuthCallbackPage";
 import { PrepareSessionPage } from "./features/auth/pages/PrepareSessionPage";
-import { useAuthSession } from "./features/auth/hooks/useAuthSession";
+import { useAuthSession } from "./features/auth/hooks/AuthContext";
 import { DashboardPage } from "./pages/DashboardPage";
 
 export function App() {
