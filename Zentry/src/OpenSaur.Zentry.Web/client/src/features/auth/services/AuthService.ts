@@ -19,6 +19,15 @@ export async function buildAuthorizeUrl(
   return authorizeUrl.toString();
 }
 
+export function buildLogoutUrl(config: ConfigDto): string {
+  const endSessionUrl = new URL("/connect/endsession", config.authority);
+
+  endSessionUrl.searchParams.set("client_id", config.clientId);
+  endSessionUrl.searchParams.set("post_logout_redirect_uri", config.postLogoutRedirectUri);
+
+  return endSessionUrl.toString();
+}
+
 export function readCallbackResult(search: string): CallbackResultDto {
   const searchParams = new URLSearchParams(search);
   const pkceSession = getPkceSession();

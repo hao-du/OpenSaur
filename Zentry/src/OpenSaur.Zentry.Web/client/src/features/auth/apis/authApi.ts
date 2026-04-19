@@ -30,3 +30,24 @@ export async function exchangeAuthCode(
     tokenType: response.data.tokenType
   };
 }
+
+export async function refreshAuthSession(config: ConfigDto): Promise<AuthSessionDto> {
+  const endpoint = new URL("/auth/refresh", config.authority).toString();
+  const response = await axios.post<TokenResponseDto>(
+    endpoint,
+    {
+      clientId: config.clientId
+    },
+    {
+      withCredentials: true
+    }
+  );
+
+  return {
+    accessToken: response.data.accessToken,
+    expiresAt: new Date(Date.now() + response.data.expiresIn * 1000).toISOString(),
+    idToken: response.data.idToken,
+    scope: response.data.scope,
+    tokenType: response.data.tokenType
+  };
+}

@@ -18,12 +18,15 @@ import { MetaText } from "../atoms/MetaText";
 import { AppIcon } from "../icons/AppIcon";
 import { Avatar } from "./Avatar";
 import type { MockProfile } from "../../mocks/profile";
+import { useAuthSession } from "../../features/auth/hooks/useAuthSession";
 
 type UserProfileMenuProps = {
   profile: MockProfile;
 };
 
 export function UserProfileMenu({ profile }: UserProfileMenuProps) {
+  const authSession = useAuthSession();
+
   const [anchorElement, setAnchorElement] = useState<HTMLElement | null>(null);
   const displayName = `${profile.firstName} ${profile.lastName}`.trim();
   const initials = useMemo(() => {
@@ -76,7 +79,9 @@ export function UserProfileMenu({ profile }: UserProfileMenuProps) {
           </Stack>
         </Box>
         <Divider />
-        <MenuItem onClick={handleCloseMenu}>
+        <MenuItem onClick={() => {
+          handleCloseMenu();
+        }}>
           <Stack
             alignItems="center"
             direction="row"
@@ -107,7 +112,10 @@ export function UserProfileMenu({ profile }: UserProfileMenuProps) {
           </Stack>
         </MenuItem>
         <Divider />
-        <MenuItem onClick={handleCloseMenu}>
+        <MenuItem onClick={() => {
+          handleCloseMenu();
+          authSession.handleLogout();
+        }}>
           <Stack
             alignItems="center"
             direction="row"

@@ -51,7 +51,9 @@ export function Header({ isDesktop, onOpenNavigation }: AppHeaderProps) {
             </EyebrowText>
           </Stack>
         </Stack>
-        <UserProfileMenu profile={mockProfile} />
+        <UserProfileMenu
+          profile={mockProfile}
+        />
       </Toolbar>
     </AppBar>
   );

@@ -3,7 +3,11 @@ import { getConfig } from "../../../infrastructure/config/Config";
 import { DefaultLayout } from "../../../components/layouts/DefaultLayout";
 import { buildAuthorizeUrl } from "../services/AuthService";
 
-export function LoginPage() {
+type PrepareSessionPageProps = {
+  isRestoring: boolean;
+};
+
+export function PrepareSessionPage({ isRestoring }: PrepareSessionPageProps) {
   const config = getConfig();
 
   async function handleLogin() {
@@ -13,16 +17,19 @@ export function LoginPage() {
 
   return (
     <DefaultLayout
-      subtitle="Use CoreGate sign-in to create a frontend auth session for Zentry."
-      title="Sign In"
+      subtitle="Zentry first tries to restore an existing CoreGate-backed session before asking you to sign in again."
+      title="Prepare Session"
     >
       <div>
-        <Button
-          onClick={handleLogin}
-          variant="contained"
-        >
-          Login
-        </Button>
+        <p><strong>Status:</strong> {isRestoring ? "Restoring existing session..." : "No existing session restored."}</p>
+        {!isRestoring ? (
+          <Button
+            onClick={handleLogin}
+            variant="contained"
+          >
+            Continue to sign in
+          </Button>
+        ) : null}
         <p>OIDC runtime config loaded from <code>/app-config.js</code>.</p>
         <p><strong>Authority:</strong> {config.authority}</p>
         <p><strong>Client ID:</strong> {config.clientId}</p>
