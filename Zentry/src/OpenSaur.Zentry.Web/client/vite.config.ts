@@ -16,6 +16,7 @@ export default defineConfig(({ mode }) => ({
   build: {
     emptyOutDir: true,
     outDir: path.resolve(__dirname, "../wwwroot"),
+    minify: mode === "development" ? false : "esbuild",
     sourcemap: mode === "development"
   },
   server: {

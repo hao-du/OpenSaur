@@ -10,3 +10,4 @@
 **/*.tsbuildinfo
 **/vite.config.d.ts
 **/vite.config.js
+src/OpenSaur.Zentry.Web/wwwroot/assets/
