@@ -133,5 +133,6 @@ Keep critical repo rules in this file. Put longer reference material in `docs/ag
 - Do not create unit tests for frontend or backend code in this project.
 - Do not add automation tests of any kind.
 - Use manual verification, builds, and runtime checks instead of automated test suites.
+- For frontend development work, use `src/OpenSaur.Zentry.Web/client` and run `npm run build-dev` for build verification during development. Use `npm run build` or `npm run build-prod` only when explicitly validating production output.
 - When the user asks for step-by-step implementation, prefer the simplest code that matches the current step. Do not introduce preparatory abstractions, intermediate adapters, or future-facing layers unless the current step already needs them.
 - Keep ownership boundaries obvious. Prefer `App` for bootstrapping/routing, pages for page composition, and small direct config helpers over speculative auth/config abstraction during early phases.
