@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { getConfig } from "../../../infrastructure/config/Config";
-import { DefaultLayout } from "../../../components/layouts/DefaultLayout";
+import { CenteredCardLayout } from "../../../components/layouts/CenteredCardLayout";
 import { buildAuthorizeUrl } from "../services/AuthService";
 
 type PrepareSessionPageProps = {
@@ -26,12 +26,14 @@ export function PrepareSessionPage({ isRestoring }: PrepareSessionPageProps) {
   }, [isRestoring]);
 
   return (
-    <DefaultLayout
-      subtitle="Zentry first tries to restore an existing CoreGate-backed session before asking you to sign in again."
+    <CenteredCardLayout
+      description="Zentry first tries to restore an existing CoreGate-backed session before asking you to sign in again."
       title="Prepare Session"
     >
       <div>
-        <p><strong>Status:</strong> {isRestoring ? "Restoring existing session..." : "No existing session restored. Redirecting to sign in..."}</p>
+        <p><strong>Status:</strong> {isRestoring
+          ? "Restoring existing session..."
+          : "No existing session restored. Redirecting to sign in..."}</p>
         <p>OIDC runtime config loaded from <code>/app-config.js</code>.</p>
         <p><strong>Authority:</strong> {config.authority}</p>
         <p><strong>Client ID:</strong> {config.clientId}</p>
@@ -39,6 +41,6 @@ export function PrepareSessionPage({ isRestoring }: PrepareSessionPageProps) {
         <p><strong>Post logout redirect URI:</strong> {config.postLogoutRedirectUri}</p>
         <p><strong>Scope:</strong> {config.scope}</p>
       </div>
-    </DefaultLayout>
+    </CenteredCardLayout>
   );
 }

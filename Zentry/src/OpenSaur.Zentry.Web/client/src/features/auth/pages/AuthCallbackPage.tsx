@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { getConfig } from "../../../infrastructure/config/Config";
 import { clearAuthSession, saveAuthSession } from "../storages/authStorage";
 import { clearPkceSession, getPkceSession } from "../storages/pkceStorage";
-import { DefaultLayout } from "../../../components/layouts/DefaultLayout";
+import { CenteredCardLayout } from "../../../components/layouts/CenteredCardLayout";
 import { exchangeAuthCode } from "../apis/authApi";
 import { readCallbackResult } from "../services/AuthService";
 
@@ -30,9 +30,9 @@ export function AuthCallbackPage() {
       }
 
       if (callbackResult.code == null) {
-        setStatus("failed");
-        setCallbackError("Authorization code is missing.");
         clearAuthSession();
+        clearPkceSession();
+        navigate("/prepare-session", { replace: true });
         return;
       }
 
@@ -73,8 +73,8 @@ export function AuthCallbackPage() {
   }, [callbackResult.code, callbackResult.error, callbackResult.errorDescription, callbackResult.stateMatches, navigate]);
 
   return (
-    <DefaultLayout
-      subtitle="OAuth callback values and code exchange status are shown below."
+    <CenteredCardLayout
+      description="OAuth callback values and code exchange status are shown below."
       title="Auth Callback"
     >
       <div>
@@ -88,6 +88,6 @@ export function AuthCallbackPage() {
         <p><strong>Error:</strong> {callbackResult.error ?? "(none)"}</p>
         <p><strong>Error description:</strong> {callbackResult.errorDescription ?? "(none)"}</p>
       </div>
-    </DefaultLayout>
+    </CenteredCardLayout>
   );
 }
