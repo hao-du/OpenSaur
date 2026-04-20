@@ -9,7 +9,8 @@ namespace OpenSaur.CoreGate.Web.Features.Auth.Handlers.OpenIddict;
 
 public class EndSessionHandler(
     IHttpContextAccessor httpContextAccessor,
-    CookieService cookieService)
+    CookieService cookieService,
+    EndSessionRevocationService endSessionRevocationService)
 {
     public async Task<IResult> HandleEndSessionAsync()
     {
@@ -19,6 +20,15 @@ public class EndSessionHandler(
         // OpenIddict validates the end-session request before passthrough reaches this handler.
         var request = httpContext.GetOpenIddictServerRequest()
             ?? throw new InvalidOperationException("The OpenID Connect request could not be resolved.");
+
+        var authenticationResult = await httpContext.AuthenticateAsync(IdentityConstants.ApplicationScheme);
+        if (authenticationResult.Succeeded && authenticationResult.Principal is not null)
+        {
+            await endSessionRevocationService.RevokeCurrentClientSessionAsync(
+                authenticationResult.Principal,
+                request.ClientId,
+                httpContext.RequestAborted);
+        }
 
         await httpContext.SignOutAsync(IdentityConstants.ApplicationScheme);
         cookieService.ClearRefreshTokenCookie(httpContext.Response);

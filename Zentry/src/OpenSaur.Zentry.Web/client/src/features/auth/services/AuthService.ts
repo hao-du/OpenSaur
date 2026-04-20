@@ -19,11 +19,14 @@ export async function buildAuthorizeUrl(
   return authorizeUrl.toString();
 }
 
-export function buildLogoutUrl(config: ConfigDto): string {
+export function buildLogoutUrl(config: ConfigDto, idTokenHint?: string | null): string {
   const endSessionUrl = new URL("/connect/endsession", config.authority);
 
   endSessionUrl.searchParams.set("client_id", config.clientId);
   endSessionUrl.searchParams.set("post_logout_redirect_uri", config.postLogoutRedirectUri);
+  if (idTokenHint != null && idTokenHint.trim().length > 0) {
+    endSessionUrl.searchParams.set("id_token_hint", idTokenHint);
+  }
 
   return endSessionUrl.toString();
 }

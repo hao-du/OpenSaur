@@ -74,9 +74,9 @@ export function AuthSessionProvider({ children }: PropsWithChildren) {
   }, [authSession, location.pathname]);
 
   function handleLogout() {
-    clearAuthSession();
-    setAuthSession(null);
-    window.location.assign(buildLogoutUrl(getConfig()));
+    const currentSession = authSession;
+    clearAuthSession(true);
+    window.location.assign(buildLogoutUrl(getConfig(), currentSession?.idToken));
   }
 
   return (

@@ -31,9 +31,11 @@ export function saveAuthSession(authSession: AuthSessionDto): void {
   dispatchAuthStorageChanged();
 }
 
-export function clearAuthSession(): void {
+export function clearAuthSession(silent = false): void {
   sessionStorage.removeItem(authStorageKey);
-  dispatchAuthStorageChanged();
+  if (!silent) {
+    dispatchAuthStorageChanged();
+  }
 }
 
 export function subscribeAuthStorageChanged(onChanged: () => void): () => void {
