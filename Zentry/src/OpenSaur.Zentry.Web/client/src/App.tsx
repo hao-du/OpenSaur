@@ -3,6 +3,8 @@ import { AuthCallbackPage } from "./features/auth/pages/AuthCallbackPage";
 import { PrepareSessionPage } from "./features/auth/pages/PrepareSessionPage";
 import { useAuthSession } from "./features/auth/hooks/AuthContext";
 import { DashboardPage } from "./pages/DashboardPage";
+import { ForbiddenPage } from "./pages/ForbiddenPage";
+import { OidcClientsPage } from "./pages/OidcClientsPage";
 
 export function App() {
   const { authSession, isRestoring } = useAuthSession();
@@ -13,6 +15,14 @@ export function App() {
         <Route
           element={<DashboardPage />}
           path="/"
+        />
+        <Route
+          element={<OidcClientsPage />}
+          path="/applications"
+        />
+        <Route
+          element={<ForbiddenPage />}
+          path="/forbidden"
         />
       </Route>
       <Route

@@ -6,6 +6,7 @@ import {
   ListItemIcon,
   ListItemText
 } from "@mui/material";
+import { useLocation, useNavigate } from "react-router-dom";
 import {
   Building2,
   KeyRound,
@@ -57,6 +58,9 @@ type SideMenuProps = {
 };
 
 export function SideMenu({ currentYear }: SideMenuProps) {
+  const location = useLocation();
+  const navigate = useNavigate();
+
   return (
     <Box sx={layoutStyles.sidebarContainer}>
       <Box sx={layoutStyles.sidebarBrandRow}>
@@ -81,6 +85,10 @@ export function SideMenu({ currentYear }: SideMenuProps) {
           return (
             <ListItemButton
               key={item.path}
+              onClick={() => {
+                navigate(item.path);
+              }}
+              selected={location.pathname === item.path}
               sx={layoutStyles.navItem}
             >
               <ListItemIcon sx={layoutStyles.navItemIcon}>

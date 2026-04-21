@@ -8,8 +8,10 @@ public static class FrontendEndpoints
     private static readonly string[] Routes =
     [
         "/",
+        "/applications",
         "/auth/callback",
         "/dashboard",
+        "/forbidden",
         "/prepare-session"
     ];
 
