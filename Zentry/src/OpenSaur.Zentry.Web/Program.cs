@@ -1,8 +1,7 @@
 using FluentValidation;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
 using OpenIddict.Abstractions;
+using OpenIddict.Validation.AspNetCore;
 using OpenSaur.Zentry.Web.Features.Frontend.Handlers;
 using OpenSaur.Zentry.Web.Features.OidcClients;
 using OpenSaur.Zentry.Web.Features.OidcClients.CreateOidcClient;
@@ -34,19 +33,31 @@ builder.Services.AddOpenIddict()
         options.UseEntityFrameworkCore()
             .UseDbContext<ApplicationDbContext>()
             .ReplaceDefaultEntities<Guid>();
-    });
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
+    })
+    .AddValidation(options =>
     {
-        options.Authority = oidcOptions.Authority;
-        options.MapInboundClaims = false;
-        options.RequireHttpsMetadata = false;
-        options.TokenValidationParameters = new TokenValidationParameters
+        options.SetIssuer(oidcOptions.Authority);
+        options.AddAudiences("api");
+        options.UseSystemNetHttp(systemNetHttp =>
         {
-            RoleClaimType = "roles",
-            ValidateAudience = false
-        };
+            if (builder.Environment.IsDevelopment()
+                && Uri.TryCreate(oidcOptions.Authority, UriKind.Absolute, out var authorityUri)
+                && string.Equals(authorityUri.Host, "localhost", StringComparison.OrdinalIgnoreCase))
+            {
+                systemNetHttp.ConfigureHttpClientHandler(handler =>
+                {
+                    handler.ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator;
+                });
+            }
+        });
+        options.UseAspNetCore();
     });
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultScheme = OpenIddictValidationAspNetCoreDefaults.AuthenticationScheme;
+    options.DefaultAuthenticateScheme = OpenIddictValidationAspNetCoreDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = OpenIddictValidationAspNetCoreDefaults.AuthenticationScheme;
+});
 builder.Services.AddAuthorization(SuperAdminAuthorization.ConfigurePolicy);
 builder.Services.AddScoped<IValidator<CreateOidcClientRequest>, CreateOidcClientRequestValidator>();
 builder.Services.AddScoped<IValidator<EditOidcClientRequest>, EditOidcClientRequestValidator>();

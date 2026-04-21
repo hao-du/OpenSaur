@@ -2,6 +2,7 @@ import { Button, Stack } from "@mui/material";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { DefaultLayout } from "../components/layouts/DefaultLayout";
+import { clearAuthSession } from "../features/auth/storages/authStorage";
 import { OidcClientFiltersDrawer } from "../features/oidc-clients/components/OidcClientFiltersDrawer";
 import { OidcClientFormDrawer } from "../features/oidc-clients/components/OidcClientFormDrawer";
 import { OidcClientsTable } from "../features/oidc-clients/components/OidcClientsTable";
@@ -27,6 +28,7 @@ export function OidcClientsPage() {
   const {
     data: oidcClients = [],
     isForbidden,
+    isUnauthorized,
     isError,
     isLoading,
     refetch
@@ -58,6 +60,15 @@ export function OidcClientsPage() {
     () => filterOidcClients(oidcClients, filters),
     [filters, oidcClients]
   );
+
+  useEffect(() => {
+    if (!isUnauthorized) {
+      return;
+    }
+
+    clearAuthSession();
+    navigate("/prepare-session", { replace: true });
+  }, [isUnauthorized, navigate]);
 
   useEffect(() => {
     if (!isForbidden) {

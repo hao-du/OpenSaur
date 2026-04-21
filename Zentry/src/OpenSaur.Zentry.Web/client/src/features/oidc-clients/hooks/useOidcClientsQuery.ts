@@ -10,6 +10,7 @@ export function useOidcClientsQuery() {
 
   return {
     ...query,
+    isUnauthorized: isApiErrorStatus(query.error, 401),
     isForbidden: isApiErrorStatus(query.error, 403)
   };
 }

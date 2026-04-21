@@ -7,7 +7,7 @@ public static class SuperAdminAuthorization
 {
     public const string PolicyName = "SuperAdminOnly";
     private const string RoleClaimType = "roles";
-    private const string NormalizedSuperAdministrator = "SUPER ADMINISTRATOR";
+    private const string NormalizedSuperAdministrator = "SUPERADMINISTRATOR";
 
     public static void ConfigurePolicy(AuthorizationOptions options)
     {
