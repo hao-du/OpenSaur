@@ -5,7 +5,6 @@ using Microsoft.EntityFrameworkCore;
 using OpenIddict.Abstractions;
 using OpenIddict.EntityFrameworkCore.Models;
 using AppHttpResults = OpenSaur.Zentry.Web.Infrastructure.Http.HttpResults;
-using OpenSaur.Zentry.Web.Features.OidcClients.CreateOidcClient;
 using OpenSaur.Zentry.Web.Infrastructure.Database;
 
 namespace OpenSaur.Zentry.Web.Features.OidcClients.EditOidcClient;
@@ -48,17 +47,19 @@ public static class EditOidcClientHandler
 
             descriptor.ClientId = normalizedClientId;
             descriptor.DisplayName = request.DisplayName.Trim();
-            descriptor.ClientType = string.IsNullOrWhiteSpace(request.ClientSecret)
-                                    && string.IsNullOrWhiteSpace(descriptor.ClientSecret)
-                ? OpenIddictConstants.ClientTypes.Public
-                : OpenIddictConstants.ClientTypes.Confidential;
-            if (!string.IsNullOrWhiteSpace(request.ClientSecret))
+            descriptor.ClientType = request.ClientType.Trim();
+            if (string.Equals(descriptor.ClientType, OpenIddictConstants.ClientTypes.Public, StringComparison.Ordinal))
+            {
+                descriptor.ClientSecret = null;
+            }
+            else if (!string.IsNullOrWhiteSpace(request.ClientSecret))
             {
                 descriptor.ClientSecret = request.ClientSecret.Trim();
             }
 
-            CreateOidcClientHandler.ApplyDescriptorConfiguration(
+            OidcClientHelper.ApplyDescriptorConfiguration(
                 descriptor,
+                request.ClientType,
                 request.RedirectUris,
                 request.PostLogoutRedirectUris,
                 request.Scope);

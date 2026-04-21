@@ -1,8 +1,13 @@
-import { Alert, Button, CircularProgress, Divider, Stack, TextField, Typography } from "@mui/material";
-import { Controller, useForm } from "react-hook-form";
+import { Alert, Button, CircularProgress, Divider, Stack, Typography } from "@mui/material";
+import { useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { DropDown } from "../../../components/atoms/DropDown";
+import { Text } from "../../../components/atoms/Text";
+import { TextArea } from "../../../components/atoms/TextArea";
 
 type OidcClientFormValues = {
   clientId: string;
+  clientType: string;
   clientSecret: string;
   displayName: string;
   postLogoutRedirectUrisText: string;
@@ -17,6 +22,7 @@ type OidcClientFormProps = {
   isSubmitting: boolean;
   onSubmit: (values: {
     clientId: string;
+    clientType: string;
     clientSecret: string;
     displayName: string;
     postLogoutRedirectUris: string[];
@@ -39,11 +45,21 @@ export function OidcClientForm({
   isSubmitting,
   onSubmit
 }: OidcClientFormProps) {
-  const { control, handleSubmit, watch } = useForm<OidcClientFormValues>({
+  const { clearErrors, control, handleSubmit, resetField, setValue, watch } = useForm<OidcClientFormValues>({
     values: initialValues
   });
+  const clientType = watch("clientType");
+  const isPublicClient = clientType === "public";
   const redirectUriPreview = splitUris(watch("redirectUrisText"));
   const postLogoutRedirectUriPreview = splitUris(watch("postLogoutRedirectUrisText"));
+
+  useEffect(() => {
+    if (isPublicClient) {
+      resetField("clientSecret", { defaultValue: "" });
+      setValue("clientSecret", "", { shouldDirty: false, shouldValidate: false, shouldTouch: false });
+      clearErrors("clientSecret");
+    }
+  }, [clearErrors, isPublicClient, resetField, setValue]);
 
   return (
     <Stack
@@ -52,7 +68,8 @@ export function OidcClientForm({
       onSubmit={handleSubmit(async values => {
         await onSubmit({
           clientId: values.clientId,
-          clientSecret: values.clientSecret,
+          clientType: values.clientType,
+          clientSecret: values.clientType === "public" ? "" : values.clientSecret,
           displayName: values.displayName,
           postLogoutRedirectUris: splitUris(values.postLogoutRedirectUrisText),
           redirectUris: splitUris(values.redirectUrisText),
@@ -64,109 +81,79 @@ export function OidcClientForm({
       {errorMessage ? <Alert severity="error">{errorMessage}</Alert> : null}
       <Stack spacing={2}>
         <Typography variant="h6">Client</Typography>
-        <Controller
+        <Text
           control={control}
+          disabled={isSubmitting}
+          helperText="How this client appears in Zentry."
+          label="Display name"
           name="displayName"
-          render={({ field, fieldState }) => (
-            <TextField
-              {...field}
-              disabled={isSubmitting}
-              error={fieldState.error != null}
-              fullWidth
-              helperText={fieldState.error?.message ?? "How this client appears in Zentry."}
-              label="Display name"
-              required
-            />
-          )}
+          required
           rules={{ required: "Display name is required." }}
         />
-        <Controller
+        <Text
           control={control}
+          disabled={isSubmitting}
+          label="Client ID"
           name="clientId"
-          render={({ field, fieldState }) => (
-            <TextField
-              {...field}
-              disabled={isSubmitting}
-              error={fieldState.error != null}
-              fullWidth
-              helperText={fieldState.error?.message}
-              label="Client ID"
-              required
-            />
-          )}
+          required
           rules={{ required: "Client ID is required." }}
         />
-        <Controller
+        <DropDown
           control={control}
-          name="clientSecret"
-          render={({ field, fieldState }) => (
-            <TextField
-              {...field}
-              disabled={isSubmitting}
-              error={fieldState.error != null}
-              fullWidth
-              helperText={fieldState.error?.message ?? (isEditMode
-                ? "Leave blank to keep the current client secret."
-                : "Client secret is required for managed Zentry clients.")}
-              label="Client secret"
-              required={!isEditMode}
-              type="password"
-            />
-          )}
-          rules={isEditMode ? undefined : { required: "Client secret is required." }}
+          disabled={isSubmitting}
+          helperText="Public clients use authorization code + PKCE without a client secret."
+          label="Client type"
+          name="clientType"
+          options={[
+            { label: "Public (PKCE)", value: "public" },
+            { label: "Confidential", value: "confidential" }
+          ]}
+          required
+          rules={{ required: "Client type is required." }}
         />
-        <Controller
+        <Text
+          key={isPublicClient ? "client-secret-public" : "client-secret-confidential"}
           control={control}
+          disabled={isSubmitting || isPublicClient}
+          helperText={isPublicClient
+            ? "Public PKCE clients do not use a client secret."
+            : isEditMode
+              ? "Leave blank to keep the current client secret."
+              : "Client secret is required for confidential clients."}
+          label="Client secret"
+          name="clientSecret"
+          required={!isEditMode && !isPublicClient}
+          rules={isEditMode || isPublicClient ? undefined : { required: "Client secret is required." }}
+          shouldUnregister
+          type="password"
+        />
+        <Text
+          control={control}
+          disabled={isSubmitting}
+          helperText="Space-separated scopes issued to this application."
+          label="Scope"
           name="scope"
-          render={({ field, fieldState }) => (
-            <TextField
-              {...field}
-              disabled={isSubmitting}
-              error={fieldState.error != null}
-              fullWidth
-              helperText={fieldState.error?.message ?? "Space-separated scopes issued to this application."}
-              label="Scope"
-              required
-            />
-          )}
+          required
           rules={{ required: "Scope is required." }}
         />
-        <Controller
+        <TextArea
           control={control}
+          disabled={isSubmitting}
+          helperText="One absolute redirect URI per line."
+          label="Redirect URIs"
           name="redirectUrisText"
-          render={({ field, fieldState }) => (
-            <TextField
-              {...field}
-              disabled={isSubmitting}
-              error={fieldState.error != null}
-              fullWidth
-              helperText={fieldState.error?.message ?? "One absolute redirect URI per line."}
-              label="Redirect URIs"
-              minRows={4}
-              multiline
-              required
-            />
-          )}
+          required
           rules={{
             required: "At least one redirect URI is required.",
             validate: value => splitUris(String(value)).length > 0 || "At least one redirect URI is required."
           }}
         />
-        <Controller
+        <TextArea
           control={control}
+          disabled={isSubmitting}
+          helperText="Optional absolute post-logout redirect URI per line."
+          label="Post-logout redirect URIs"
           name="postLogoutRedirectUrisText"
-          render={({ field, fieldState }) => (
-            <TextField
-              {...field}
-              disabled={isSubmitting}
-              error={fieldState.error != null}
-              fullWidth
-              helperText={fieldState.error?.message ?? "Optional absolute post-logout redirect URI per line."}
-              label="Post-logout redirect URIs"
-              minRows={4}
-              multiline
-            />
-          )}
           rules={{}}
         />
         {redirectUriPreview.length > 0 ? (

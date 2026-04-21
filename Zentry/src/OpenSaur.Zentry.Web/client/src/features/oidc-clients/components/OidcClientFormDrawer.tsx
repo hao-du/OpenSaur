@@ -13,6 +13,7 @@ type OidcClientFormDrawerProps = {
   onClose: () => void;
   onSubmit: (values: {
     clientId: string;
+    clientType: string;
     clientSecret: string;
     displayName: string;
     postLogoutRedirectUris: string[];
@@ -64,6 +65,7 @@ export function OidcClientFormDrawer({
               errorMessage={errorMessage}
               initialValues={{
                 clientId: initialValues?.clientId ?? "",
+                clientType: initialValues?.clientType ?? "public",
                 clientSecret: "",
                 displayName: initialValues?.displayName ?? "",
                 postLogoutRedirectUrisText: (initialValues?.postLogoutRedirectUris ?? []).join("\n"),

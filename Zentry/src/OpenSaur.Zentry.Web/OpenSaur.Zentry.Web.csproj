@@ -16,6 +16,8 @@
     </PackageReference>
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.0" />
     <PackageReference Include="OpenIddict.EntityFrameworkCore" Version="7.3.0" />
+    <PackageReference Include="OpenIddict.Validation.AspNetCore" Version="7.3.0" />
+    <PackageReference Include="OpenIddict.Validation.SystemNetHttp" Version="7.3.0" />
   </ItemGroup>
 
 </Project>

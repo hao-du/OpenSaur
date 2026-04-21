@@ -1,9 +1,16 @@
 using FluentValidation;
+using OpenIddict.Abstractions;
 
 namespace OpenSaur.Zentry.Web.Features.OidcClients.EditOidcClient;
 
 public sealed class EditOidcClientRequestValidator : AbstractValidator<EditOidcClientRequest>
 {
+    private static readonly string[] AllowedClientTypes =
+    [
+        OpenIddictConstants.ClientTypes.Public,
+        OpenIddictConstants.ClientTypes.Confidential
+    ];
+
     public EditOidcClientRequestValidator()
     {
         RuleFor(request => request.Id)
@@ -15,6 +22,12 @@ public sealed class EditOidcClientRequestValidator : AbstractValidator<EditOidcC
             .WithMessage("Client id is required.")
             .MaximumLength(100)
             .WithMessage("Client id must be 100 characters or fewer.");
+
+        RuleFor(request => request.ClientType)
+            .NotEmpty()
+            .WithMessage("Client type is required.")
+            .Must(clientType => AllowedClientTypes.Contains(clientType, StringComparer.Ordinal))
+            .WithMessage("Client type must be public or confidential.");
 
         RuleFor(request => request.ClientSecret)
             .MaximumLength(512)

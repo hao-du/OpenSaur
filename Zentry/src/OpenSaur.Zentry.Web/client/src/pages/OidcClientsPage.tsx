@@ -1,9 +1,11 @@
 import { Button, Stack } from "@mui/material";
 import { useEffect, useMemo, useState } from "react";
+import { ConfirmationDialog } from "../components/organisms/ConfirmationDialog";
 import { useNavigate } from "react-router-dom";
 import { DefaultLayout } from "../components/layouts/DefaultLayout";
 import { clearAuthSession } from "../features/auth/storages/authStorage";
 import { OidcClientFiltersDrawer } from "../features/oidc-clients/components/OidcClientFiltersDrawer";
+import type { OidcClientFilterValues } from "../features/oidc-clients/components/OidcClientFiltersDrawer";
 import { OidcClientFormDrawer } from "../features/oidc-clients/components/OidcClientFormDrawer";
 import { OidcClientsTable } from "../features/oidc-clients/components/OidcClientsTable";
 import { useCreateOidcClient } from "../features/oidc-clients/hooks/useCreateOidcClient";
@@ -11,13 +13,10 @@ import { useDeleteOidcClient } from "../features/oidc-clients/hooks/useDeleteOid
 import { useEditOidcClient } from "../features/oidc-clients/hooks/useEditOidcClient";
 import { useOidcClientQuery } from "../features/oidc-clients/hooks/useOidcClientQuery";
 import { useOidcClientsQuery } from "../features/oidc-clients/hooks/useOidcClientsQuery";
-import {
-  filterOidcClients,
-  type OidcClientFilterValues
-} from "../features/oidc-clients/utils/filterOidcClients";
 
 export function OidcClientsPage() {
   const navigate = useNavigate();
+  const [clientPendingDelete, setClientPendingDelete] = useState<{ displayName: string; id: string } | null>(null);
   const [filters, setFilters] = useState<OidcClientFilterValues>({
     clientId: ""
   });
@@ -56,10 +55,15 @@ export function OidcClientsPage() {
     resetError: resetDeleteError
   } = useDeleteOidcClient();
   const activeFormErrorMessage = createErrorMessage ?? editErrorMessage;
-  const filteredOidcClients = useMemo(
-    () => filterOidcClients(oidcClients, filters),
-    [filters, oidcClients]
-  );
+  const filteredOidcClients = useMemo(() => {
+    const search = filters.clientId.trim().toLowerCase();
+
+    return oidcClients.filter(client => {
+      return search.length === 0
+        || client.clientId.toLowerCase().includes(search)
+        || client.displayName.toLowerCase().includes(search);
+    });
+  }, [filters, oidcClients]);
 
   useEffect(() => {
     if (!isUnauthorized) {
@@ -113,16 +117,9 @@ export function OidcClientsPage() {
           isDeletingClientId={isDeleting ? deletingOidcClientId : null}
           isError={isError}
           isLoading={isLoading}
-          onDeleteClient={oidcClientId => {
+          onDeleteClient={(oidcClientId, displayName) => {
             resetDeleteError();
-            if (!window.confirm("Delete this OIDC client?")) {
-              return;
-            }
-
-            setDeletingOidcClientId(oidcClientId);
-            void deleteOidcClient({ id: oidcClientId }).finally(() => {
-              setDeletingOidcClientId(current => current === oidcClientId ? null : current);
-            });
+            setClientPendingDelete({ displayName, id: oidcClientId });
           }}
           onEditClient={oidcClientId => {
             resetEditError();
@@ -180,6 +177,33 @@ export function OidcClientsPage() {
           });
           setSelectedOidcClientId(null);
         }}
+      />
+      <ConfirmationDialog
+        confirmLabel="Delete"
+        isConfirming={isDeleting}
+        message={clientPendingDelete == null
+          ? ""
+          : `Delete ${clientPendingDelete.displayName}? This action cannot be undone.`}
+        onClose={() => {
+          if (isDeleting) {
+            return;
+          }
+
+          setClientPendingDelete(null);
+        }}
+        onConfirm={() => {
+          if (clientPendingDelete == null) {
+            return;
+          }
+
+          setDeletingOidcClientId(clientPendingDelete.id);
+          void deleteOidcClient({ id: clientPendingDelete.id }).finally(() => {
+            setDeletingOidcClientId(current => current === clientPendingDelete.id ? null : current);
+            setClientPendingDelete(current => current?.id === clientPendingDelete.id ? null : current);
+          });
+        }}
+        open={clientPendingDelete !== null}
+        title="Delete application"
       />
     </DefaultLayout>
   );

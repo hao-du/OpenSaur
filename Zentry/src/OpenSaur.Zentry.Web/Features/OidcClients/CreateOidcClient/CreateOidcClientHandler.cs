@@ -39,17 +39,17 @@ public static class CreateOidcClientHandler
             {
                 ClientId = normalizedClientId,
                 DisplayName = request.DisplayName.Trim(),
-                ClientType = string.IsNullOrWhiteSpace(request.ClientSecret)
-                    ? OpenIddictConstants.ClientTypes.Public
-                    : OpenIddictConstants.ClientTypes.Confidential
+                ClientType = request.ClientType.Trim()
             };
-            if (!string.IsNullOrWhiteSpace(request.ClientSecret))
+            if (string.Equals(descriptor.ClientType, OpenIddictConstants.ClientTypes.Confidential, StringComparison.Ordinal)
+                && !string.IsNullOrWhiteSpace(request.ClientSecret))
             {
                 descriptor.ClientSecret = request.ClientSecret.Trim();
             }
 
-            ApplyDescriptorConfiguration(
+            OidcClientHelper.ApplyDescriptorConfiguration(
                 descriptor,
+                request.ClientType,
                 request.RedirectUris,
                 request.PostLogoutRedirectUris,
                 request.Scope);
@@ -67,45 +67,4 @@ public static class CreateOidcClientHandler
         }
     }
 
-    internal static void ApplyDescriptorConfiguration(
-        OpenIddictApplicationDescriptor descriptor,
-        IEnumerable<string> redirectUris,
-        IEnumerable<string> postLogoutRedirectUris,
-        string scope)
-    {
-        descriptor.RedirectUris.Clear();
-        descriptor.PostLogoutRedirectUris.Clear();
-        descriptor.Permissions.Clear();
-        descriptor.ConsentType = OpenIddictConstants.ConsentTypes.Implicit;
-
-        descriptor.Permissions.Add(OpenIddictConstants.Permissions.Endpoints.Authorization);
-        descriptor.Permissions.Add(OpenIddictConstants.Permissions.Endpoints.Token);
-        descriptor.Permissions.Add(OpenIddictConstants.Permissions.GrantTypes.AuthorizationCode);
-        descriptor.Permissions.Add(OpenIddictConstants.Permissions.GrantTypes.RefreshToken);
-        descriptor.Permissions.Add(OpenIddictConstants.Permissions.ResponseTypes.Code);
-
-        foreach (var scopeValue in scope
-                     .Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-                     .Distinct(StringComparer.Ordinal))
-        {
-            descriptor.Permissions.Add(OpenIddictConstants.Permissions.Prefixes.Scope + scopeValue);
-        }
-
-        foreach (var redirectUri in redirectUris
-                     .Select(uri => uri.Trim())
-                     .Where(uri => uri.Length > 0)
-                     .Distinct(StringComparer.OrdinalIgnoreCase))
-        {
-            descriptor.RedirectUris.Add(new Uri(redirectUri, UriKind.Absolute));
-        }
-
-        foreach (var postLogoutRedirectUri in postLogoutRedirectUris
-                     .Select(uri => uri.Trim())
-                     .Where(uri => uri.Length > 0)
-                     .Distinct(StringComparer.OrdinalIgnoreCase))
-        {
-            descriptor.Permissions.Add(OpenIddictConstants.Permissions.Endpoints.EndSession);
-            descriptor.PostLogoutRedirectUris.Add(new Uri(postLogoutRedirectUri, UriKind.Absolute));
-        }
-    }
 }

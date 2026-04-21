@@ -7,7 +7,7 @@ type OidcClientsTableProps = {
   isDeletingClientId: string | null;
   isError: boolean;
   isLoading: boolean;
-  onDeleteClient: (oidcClientId: string) => void;
+  onDeleteClient: (oidcClientId: string, displayName: string) => void;
   onEditClient: (oidcClientId: string) => void;
   onRetry: () => void;
 };
@@ -102,7 +102,7 @@ export function OidcClientsTable({
                       color="error"
                       disabled={isDeletingClientId === client.id}
                       onClick={() => {
-                        onDeleteClient(client.id);
+                        onDeleteClient(client.id, client.displayName);
                       }}
                       size="small"
                       variant="text"

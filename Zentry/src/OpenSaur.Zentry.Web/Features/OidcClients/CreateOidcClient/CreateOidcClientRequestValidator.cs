@@ -1,9 +1,16 @@
 using FluentValidation;
+using OpenIddict.Abstractions;
 
 namespace OpenSaur.Zentry.Web.Features.OidcClients.CreateOidcClient;
 
 public sealed class CreateOidcClientRequestValidator : AbstractValidator<CreateOidcClientRequest>
 {
+    private static readonly string[] AllowedClientTypes =
+    [
+        OpenIddictConstants.ClientTypes.Public,
+        OpenIddictConstants.ClientTypes.Confidential
+    ];
+
     public CreateOidcClientRequestValidator()
     {
         RuleFor(request => request.ClientId)
@@ -12,11 +19,22 @@ public sealed class CreateOidcClientRequestValidator : AbstractValidator<CreateO
             .MaximumLength(100)
             .WithMessage("Client id must be 100 characters or fewer.");
 
-        RuleFor(request => request.ClientSecret)
+        RuleFor(request => request.ClientType)
             .NotEmpty()
-            .WithMessage("Client secret is required.")
+            .WithMessage("Client type is required.")
+            .Must(clientType => AllowedClientTypes.Contains(clientType, StringComparer.Ordinal))
+            .WithMessage("Client type must be public or confidential.");
+
+        RuleFor(request => request.ClientSecret)
             .MaximumLength(512)
             .WithMessage("Client secret must be 512 characters or fewer.");
+        RuleFor(request => request.ClientSecret)
+            .NotEmpty()
+            .WithMessage("Client secret is required for confidential clients.")
+            .When(request => string.Equals(
+                request.ClientType,
+                OpenIddictConstants.ClientTypes.Confidential,
+                StringComparison.Ordinal));
 
         RuleFor(request => request.DisplayName)
             .NotEmpty()

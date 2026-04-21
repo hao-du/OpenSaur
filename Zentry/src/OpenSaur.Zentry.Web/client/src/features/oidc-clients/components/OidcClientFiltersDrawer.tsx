@@ -2,7 +2,10 @@ import { useState } from "react";
 import { Button, CircularProgress, Divider, Drawer, IconButton, Stack, TextField, Typography } from "@mui/material";
 import { Controller, useForm } from "react-hook-form";
 import { X } from "lucide-react";
-import type { OidcClientFilterValues } from "../utils/filterOidcClients";
+
+export type OidcClientFilterValues = {
+  clientId: string;
+};
 
 type OidcClientFiltersDrawerProps = {
   initialValues: OidcClientFilterValues;

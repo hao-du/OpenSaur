@@ -1,4 +1,5 @@
 using FluentValidation;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.EntityFrameworkCore;
 using OpenIddict.Abstractions;
 using OpenIddict.Validation.AspNetCore;
@@ -40,15 +41,10 @@ builder.Services.AddOpenIddict()
         options.AddAudiences("api");
         options.UseSystemNetHttp(systemNetHttp =>
         {
-            if (builder.Environment.IsDevelopment()
-                && Uri.TryCreate(oidcOptions.Authority, UriKind.Absolute, out var authorityUri)
-                && string.Equals(authorityUri.Host, "localhost", StringComparison.OrdinalIgnoreCase))
+            systemNetHttp.ConfigureHttpClientHandler(handler =>
             {
-                systemNetHttp.ConfigureHttpClientHandler(handler =>
-                {
-                    handler.ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator;
-                });
-            }
+                handler.ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator;
+            });
         });
         options.UseAspNetCore();
     });
@@ -69,6 +65,29 @@ app.UseExceptionHandler();
 app.UseDefaultFiles();
 app.UseStaticFiles();
 app.UseAuthentication();
+app.Use(async (context, next) =>
+{
+    if (context.Request.Path.StartsWithSegments("/api/oidc-client", StringComparison.OrdinalIgnoreCase))
+    {
+        var logger = context.RequestServices.GetRequiredService<ILoggerFactory>()
+            .CreateLogger("AuthDiagnostics");
+        var hasAuthorizationHeader = context.Request.Headers.Authorization.Count > 0;
+        var authenticateResult = await context.AuthenticateAsync(OpenIddictValidationAspNetCoreDefaults.AuthenticationScheme);
+
+        logger.LogInformation(
+            "OIDC client auth check. Path: {Path}. Authorization header present: {HasAuthorizationHeader}. " +
+            "Succeeded: {Succeeded}. None: {None}. Failure: {Failure}. Authenticated: {Authenticated}. Claims: {Claims}",
+            context.Request.Path,
+            hasAuthorizationHeader,
+            authenticateResult.Succeeded,
+            authenticateResult.None,
+            authenticateResult.Failure?.Message,
+            authenticateResult.Principal?.Identity?.IsAuthenticated,
+            authenticateResult.Principal?.Claims.Select(claim => $"{claim.Type}={claim.Value}").ToArray() ?? []);
+    }
+
+    await next();
+});
 app.UseAuthorization();
 
 app.MapOidcClientEndpoints();
