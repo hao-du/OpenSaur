@@ -1,6 +1,6 @@
 namespace OpenSaur.Zentry.Web.Infrastructure.Configuration;
 
-public sealed class ZentryOidcOptions
+public sealed class OidcOptions
 {
     public const string SectionName = "Oidc";
 
