@@ -8,7 +8,7 @@ public static class FrontendEndpoints
     private static readonly string[] Routes =
     [
         "/",
-        "/applications",
+        "/oidc-clients",
         "/auth/callback",
         "/dashboard",
         "/forbidden",

@@ -18,7 +18,7 @@ export function App() {
         />
         <Route
           element={<OidcClientsPage />}
-          path="/applications"
+          path="/oidc-clients"
         />
         <Route
           element={<ForbiddenPage />}

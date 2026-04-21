@@ -3,19 +3,30 @@ import type { SxProps, Theme } from "@mui/material/styles";
 
 const headerHeight = 64;
 const shellSpace = 2;
+const brandGreen = "#0b6e4f";
+const backgroundDefault = "#f5f7f4";
+const backgroundPaper = "#ffffff";
+const textPrimary = "#15211b";
+const textSecondary = "#5f6c65";
+const borderSubtle = "rgba(11,110,79,0.10)";
+const borderDefault = "rgba(11,110,79,0.12)";
+const borderStrong = "rgba(11,110,79,0.24)";
+const navSelected = "rgba(11,110,79,0.10)";
+const navSelectedHover = "rgba(11,110,79,0.14)";
+const headerSurface = "rgba(245,247,244,0.92)";
 
 export const theme = createTheme({
   palette: {
     background: {
-      default: "#f5f7f4",
-      paper: "#ffffff"
+      default: backgroundDefault,
+      paper: backgroundPaper
     },
     primary: {
-      main: "#0b6e4f"
+      main: brandGreen
     },
     text: {
-      primary: "#15211b",
-      secondary: "#5f6c65"
+      primary: textPrimary,
+      secondary: textSecondary
     }
   },
   shape: {
@@ -42,7 +53,7 @@ export const theme = createTheme({
     MuiDivider: {
       styleOverrides: {
         root: {
-          borderColor: "rgba(11,110,79,0.10)"
+          borderColor: borderSubtle
         }
       }
     }
@@ -57,7 +68,7 @@ export const layoutStyles: Record<string, SxProps<Theme>> = {
   },
   sidebar: {
     backgroundColor: "background.paper",
-    borderRight: "1px solid rgba(11,110,79,0.10)",
+    borderRight: `1px solid ${borderSubtle}`,
     flexShrink: 0,
     pt: 0,
     width: 280
@@ -82,8 +93,8 @@ export const layoutStyles: Record<string, SxProps<Theme>> = {
   },
   headerBar: {
     backdropFilter: "blur(18px)",
-    backgroundColor: "rgba(245,247,244,0.92)",
-    borderBottom: "1px solid rgba(11,110,79,0.10)"
+    backgroundColor: headerSurface,
+    borderBottom: `1px solid ${borderSubtle}`
   },
   headerToolbar: {
     gap: shellSpace,
@@ -103,6 +114,10 @@ export const layoutStyles: Record<string, SxProps<Theme>> = {
     display: "flex",
     height: headerHeight
   },
+  sidebarBrandText: {
+    fontSize: "2rem",
+    letterSpacing: "0.08em"
+  },
   fullWidthDivider: {
     mx: -shellSpace
   },
@@ -119,9 +134,12 @@ export const layoutStyles: Record<string, SxProps<Theme>> = {
     mb: 0.75,
     px: 1.5,
     py: 1.25,
-    "&:first-of-type": {
-      backgroundColor: "rgba(11,110,79,0.10)",
+    "&.Mui-selected": {
+      backgroundColor: navSelected,
       color: "primary.main"
+    },
+    "&.Mui-selected:hover": {
+      backgroundColor: navSelectedHover
     }
   },
   navItemIcon: {
@@ -136,5 +154,61 @@ export const layoutStyles: Record<string, SxProps<Theme>> = {
     color: "primary.contrastText",
     height: 40,
     width: 40
+  },
+  responsiveActionButton: {
+    width: { md: "auto", xs: "100%" }
+  },
+  responsiveActionGroup: {
+    width: { md: "auto", xs: "100%" }
+  },
+  sideMenuHeaderMeta: {
+    minWidth: 0
+  },
+  menuProfileContent: {
+    px: 2,
+    py: 1.5
+  },
+  drawerPaperWide: {
+    "& .MuiDrawer-paper": {
+      p: 3,
+      width: { sm: 620, xs: "100%" }
+    }
+  },
+  drawerPaperNarrow: {
+    "& .MuiDrawer-paper": {
+      p: 3,
+      width: { sm: 480, xs: "100%" }
+    }
+  },
+  drawerContent: {
+    height: "100%"
+  },
+  drawerLoadingState: {
+    flex: 1
+  },
+  drawerBody: {
+    flex: 1
+  },
+  formFooterRow: {
+    mt: "auto"
+  },
+  dialogActions: {
+    px: 3,
+    pb: 3
+  },
+  borderedPanel: {
+    border: `1px solid ${borderDefault}`
+  },
+  borderedPanelScrollable: {
+    border: `1px solid ${borderDefault}`,
+    overflowX: "auto"
+  },
+  emptyStatePanel: {
+    border: `1px dashed ${borderStrong}`,
+    p: 4
+  },
+  loadingPanel: {
+    border: `1px solid ${borderDefault}`,
+    p: 4
   }
 };

@@ -33,8 +33,8 @@ const navigationItems: NavigationItem[] = [
   },
   {
     icon: KeyRound,
-    label: "Applications",
-    path: "/applications"
+    label: "OIDC Clients",
+    path: "/oidc-clients"
   },
   {
     icon: Building2,
@@ -65,10 +65,7 @@ export function SideMenu({ currentYear }: SideMenuProps) {
     <Box sx={layoutStyles.sidebarContainer}>
       <Box sx={layoutStyles.sidebarBrandRow}>
         <EyebrowText
-          sx={{
-            fontSize: "2rem",
-            letterSpacing: "0.08em"
-          }}
+          sx={layoutStyles.sidebarBrandText}
         >
           Zentry
         </EyebrowText>

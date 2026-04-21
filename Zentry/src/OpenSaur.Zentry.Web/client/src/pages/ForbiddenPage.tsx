@@ -12,7 +12,7 @@ export function ForbiddenPage() {
     >
       <Stack spacing={3}>
         <Typography>
-          Applications management is restricted to super administrators in Zentry.
+          OIDC client management is restricted to super administrators in Zentry.
         </Typography>
         <Typography color="text.secondary">
           If you believe you should have access, contact an administrator or return to the dashboard.
@@ -28,7 +28,7 @@ export function ForbiddenPage() {
           </Button>
           <Button
             onClick={() => {
-              navigate("/applications", { replace: true });
+              navigate("/oidc-clients", { replace: true });
             }}
             variant="outlined"
           >

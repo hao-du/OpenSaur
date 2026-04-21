@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Button, CircularProgress, Divider, Drawer, IconButton, Stack, TextField, Typography } from "@mui/material";
 import { Controller, useForm } from "react-hook-form";
 import { X } from "lucide-react";
+import { layoutStyles } from "../../../infrastructure/theme/theme";
 
 export type OidcClientFilterValues = {
   clientId: string;
@@ -34,14 +35,9 @@ export function OidcClientFiltersDrawer({
       anchor="right"
       onClose={onClose}
       open={isOpen}
-      sx={{
-        "& .MuiDrawer-paper": {
-          p: 3,
-          width: { sm: 480, xs: "100%" }
-        }
-      }}
+      sx={layoutStyles.drawerPaperNarrow}
     >
-      <Stack spacing={3} sx={{ height: "100%" }}>
+      <Stack spacing={3} sx={layoutStyles.drawerContent}>
         <Stack alignItems="center" direction="row" justifyContent="space-between">
           <Typography component="h2" variant="h5">
             Filter applications
@@ -63,7 +59,7 @@ export function OidcClientFiltersDrawer({
             }
           })}
           spacing={3}
-          sx={{ flex: 1 }}
+          sx={layoutStyles.drawerBody}
         >
           <Controller
             control={control}
@@ -76,7 +72,7 @@ export function OidcClientFiltersDrawer({
               />
             )}
           />
-          <Stack direction="row" justifyContent="space-between" spacing={1.5} sx={{ mt: "auto" }}>
+          <Stack direction="row" justifyContent="space-between" spacing={1.5} sx={layoutStyles.formFooterRow}>
             <Button
               onClick={() => {
                 reset(defaultFilterValues);

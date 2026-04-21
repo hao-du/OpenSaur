@@ -44,7 +44,7 @@ export function Header({ isDesktop, onOpenNavigation }: AppHeaderProps) {
           ) : null}
           <Stack
             spacing={2}
-            sx={{ minWidth: 0 }}
+            sx={layoutStyles.sideMenuHeaderMeta}
           >
             <EyebrowText>
               Protected workspace

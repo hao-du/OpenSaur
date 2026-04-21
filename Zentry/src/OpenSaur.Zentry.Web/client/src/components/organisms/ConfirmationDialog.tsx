@@ -1,4 +1,5 @@
 import { Button, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, Typography } from "@mui/material";
+import { layoutStyles } from "../../infrastructure/theme/theme";
 
 type ConfirmationDialogProps = {
   cancelLabel?: string;
@@ -32,7 +33,7 @@ export function ConfirmationDialog({
       <DialogContent>
         <Typography color="text.secondary">{message}</Typography>
       </DialogContent>
-      <DialogActions sx={{ px: 3, pb: 3 }}>
+      <DialogActions sx={layoutStyles.dialogActions}>
         <Button disabled={isConfirming} onClick={onClose} variant="text">
           {cancelLabel}
         </Button>

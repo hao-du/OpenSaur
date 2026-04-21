@@ -19,6 +19,7 @@ import { AppIcon } from "../icons/AppIcon";
 import { Avatar } from "./Avatar";
 import type { MockProfile } from "../../mocks/profile";
 import { useAuthSession } from "../../features/auth/hooks/AuthContext";
+import { layoutStyles } from "../../infrastructure/theme/theme";
 
 type UserProfileMenuProps = {
   profile: MockProfile;
@@ -67,7 +68,7 @@ export function UserProfileMenu({ profile }: UserProfileMenuProps) {
         onClose={handleCloseMenu}
         open={anchorElement !== null}
       >
-        <Box sx={{ px: 2, py: 1.5 }}>
+        <Box sx={layoutStyles.menuProfileContent}>
           <Stack spacing={0.25}>
             <LabelText>
               {displayName}

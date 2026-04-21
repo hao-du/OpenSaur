@@ -3,14 +3,13 @@ import { useEffect, useMemo, useState } from "react";
 import { ConfirmationDialog } from "../components/organisms/ConfirmationDialog";
 import { useNavigate } from "react-router-dom";
 import { DefaultLayout } from "../components/layouts/DefaultLayout";
+import { layoutStyles } from "../infrastructure/theme/theme";
 import { clearAuthSession } from "../features/auth/storages/authStorage";
 import { OidcClientFiltersDrawer } from "../features/oidc-clients/components/OidcClientFiltersDrawer";
 import type { OidcClientFilterValues } from "../features/oidc-clients/components/OidcClientFiltersDrawer";
 import { OidcClientFormDrawer } from "../features/oidc-clients/components/OidcClientFormDrawer";
 import { OidcClientsTable } from "../features/oidc-clients/components/OidcClientsTable";
-import { useCreateOidcClient } from "../features/oidc-clients/hooks/useCreateOidcClient";
 import { useDeleteOidcClient } from "../features/oidc-clients/hooks/useDeleteOidcClient";
-import { useEditOidcClient } from "../features/oidc-clients/hooks/useEditOidcClient";
 import { useOidcClientQuery } from "../features/oidc-clients/hooks/useOidcClientQuery";
 import { useOidcClientsQuery } from "../features/oidc-clients/hooks/useOidcClientsQuery";
 
@@ -37,24 +36,11 @@ export function OidcClientsPage() {
     isLoading: isSelectedOidcClientLoading
   } = useOidcClientQuery(selectedOidcClientId);
   const {
-    createOidcClient,
-    errorMessage: createErrorMessage,
-    isCreating,
-    resetError: resetCreateError
-  } = useCreateOidcClient();
-  const {
-    editOidcClient,
-    errorMessage: editErrorMessage,
-    isEditing,
-    resetError: resetEditError
-  } = useEditOidcClient();
-  const {
     deleteOidcClient,
     errorMessage: deleteErrorMessage,
     isDeleting,
     resetError: resetDeleteError
   } = useDeleteOidcClient();
-  const activeFormErrorMessage = createErrorMessage ?? editErrorMessage;
   const filteredOidcClients = useMemo(() => {
     const search = filters.clientId.trim().toLowerCase();
 
@@ -85,16 +71,16 @@ export function OidcClientsPage() {
   return (
     <DefaultLayout
       subtitle="Manage OpenID Connect applications registered through CoreGate."
-      title="Applications"
+      title="OIDC Clients"
     >
       <Stack spacing={3}>
         <Stack direction={{ md: "row", xs: "column" }} justifyContent="space-between" spacing={2}>
-          <Stack direction="row" spacing={2} sx={{ width: { md: "auto", xs: "100%" } }}>
+          <Stack direction="row" spacing={2} sx={layoutStyles.responsiveActionGroup}>
             <Button
               onClick={() => {
                 setIsFilterDrawerOpen(true);
               }}
-              sx={{ width: { md: "auto", xs: "100%" } }}
+              sx={layoutStyles.responsiveActionButton}
               variant="outlined"
             >
               Filter
@@ -102,10 +88,9 @@ export function OidcClientsPage() {
           </Stack>
           <Button
             onClick={() => {
-              resetCreateError();
               setIsCreateDrawerOpen(true);
             }}
-            sx={{ width: { md: "auto", xs: "100%" } }}
+            sx={layoutStyles.responsiveActionButton}
             variant="contained"
           >
             Create
@@ -122,7 +107,6 @@ export function OidcClientsPage() {
             setClientPendingDelete({ displayName, id: oidcClientId });
           }}
           onEditClient={oidcClientId => {
-            resetEditError();
             setSelectedOidcClientId(oidcClientId);
           }}
           onRetry={() => {
@@ -143,38 +127,19 @@ export function OidcClientsPage() {
         }}
       />
       <OidcClientFormDrawer
-        errorMessage={activeFormErrorMessage}
         isEditMode={false}
         isLoading={false}
         isOpen={isCreateDrawerOpen}
-        isSubmitting={isCreating}
         onClose={() => {
-          setIsCreateDrawerOpen(false);
-        }}
-        onSubmit={async values => {
-          await createOidcClient(values);
           setIsCreateDrawerOpen(false);
         }}
       />
       <OidcClientFormDrawer
-        errorMessage={activeFormErrorMessage}
         initialValues={selectedOidcClient}
         isEditMode
         isLoading={isSelectedOidcClientLoading}
         isOpen={selectedOidcClientId !== null}
-        isSubmitting={isEditing}
         onClose={() => {
-          setSelectedOidcClientId(null);
-        }}
-        onSubmit={async values => {
-          if (!selectedOidcClientId) {
-            return;
-          }
-
-          await editOidcClient({
-            ...values,
-            id: selectedOidcClientId
-          });
           setSelectedOidcClientId(null);
         }}
       />

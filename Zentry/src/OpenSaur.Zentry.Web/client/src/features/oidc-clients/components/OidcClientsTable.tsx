@@ -1,5 +1,6 @@
 import { Alert, Button, CircularProgress, Paper, Stack, Table, TableBody, TableCell, TableHead, TableRow, Typography } from "@mui/material";
 import type { OidcClientSummaryDto } from "../dtos/OidcClientSummaryDto";
+import { layoutStyles } from "../../../infrastructure/theme/theme";
 
 type OidcClientsTableProps = {
   actionErrorMessage?: string | null;
@@ -24,7 +25,7 @@ export function OidcClientsTable({
 }: OidcClientsTableProps) {
   if (isLoading) {
     return (
-      <Paper elevation={0} sx={{ border: "1px solid rgba(11,110,79,0.12)", p: 4 }}>
+      <Paper elevation={0} sx={layoutStyles.loadingPanel}>
         <Stack alignItems="center" spacing={2}>
           <CircularProgress size={28} />
           <Typography color="text.secondary">Loading applications...</Typography>
@@ -50,7 +51,7 @@ export function OidcClientsTable({
 
   if (clients.length === 0) {
     return (
-      <Paper elevation={0} sx={{ border: "1px dashed rgba(11,110,79,0.24)", p: 4 }}>
+      <Paper elevation={0} sx={layoutStyles.emptyStatePanel}>
         <Stack spacing={1.5}>
           <Typography variant="h6">No applications yet</Typography>
           <Typography color="text.secondary">
@@ -64,7 +65,7 @@ export function OidcClientsTable({
   return (
     <Stack spacing={2}>
       {actionErrorMessage ? <Alert severity="error">{actionErrorMessage}</Alert> : null}
-      <Paper elevation={0} sx={{ border: "1px solid rgba(11,110,79,0.12)", overflowX: "auto" }}>
+      <Paper elevation={0} sx={layoutStyles.borderedPanelScrollable}>
         <Table>
           <TableHead>
             <TableRow>

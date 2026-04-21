@@ -1,50 +1,57 @@
 import { Box, CircularProgress, Divider, Drawer, IconButton, Stack, Typography } from "@mui/material";
+import { useEffect } from "react";
 import { X } from "lucide-react";
 import type { OidcClientDetailsDto } from "../dtos/OidcClientDetailsDto";
+import { layoutStyles } from "../../../infrastructure/theme/theme";
+import { useCreateOidcClient } from "../hooks/useCreateOidcClient";
+import { useEditOidcClient } from "../hooks/useEditOidcClient";
 import { OidcClientForm } from "./OidcClientForm";
 
 type OidcClientFormDrawerProps = {
-  errorMessage: string | null;
   initialValues?: OidcClientDetailsDto | null;
   isEditMode: boolean;
   isLoading: boolean;
   isOpen: boolean;
-  isSubmitting: boolean;
   onClose: () => void;
-  onSubmit: (values: {
-    clientId: string;
-    clientType: string;
-    clientSecret: string;
-    displayName: string;
-    postLogoutRedirectUris: string[];
-    redirectUris: string[];
-    scope: string;
-  }) => Promise<void>;
 };
 
 export function OidcClientFormDrawer({
-  errorMessage,
   initialValues,
   isEditMode,
   isLoading,
   isOpen,
-  isSubmitting,
-  onClose,
-  onSubmit
+  onClose
 }: OidcClientFormDrawerProps) {
+  const {
+    createOidcClient,
+    errorMessage: createErrorMessage,
+    isCreating,
+    resetError: resetCreateError
+  } = useCreateOidcClient();
+  const {
+    editOidcClient,
+    errorMessage: editErrorMessage,
+    isEditing,
+    resetError: resetEditError
+  } = useEditOidcClient();
+  const errorMessage = isEditMode ? editErrorMessage : createErrorMessage;
+  const isSubmitting = isEditMode ? isEditing : isCreating;
+
+  useEffect(() => {
+    if (!isOpen) {
+      resetCreateError();
+      resetEditError();
+    }
+  }, [isOpen, resetCreateError, resetEditError]);
+
   return (
     <Drawer
       anchor="right"
       onClose={onClose}
       open={isOpen}
-      sx={{
-        "& .MuiDrawer-paper": {
-          p: 3,
-          width: { sm: 620, xs: "100%" }
-        }
-      }}
+      sx={layoutStyles.drawerPaperWide}
     >
-      <Stack spacing={3} sx={{ height: "100%" }}>
+      <Stack spacing={3} sx={layoutStyles.drawerContent}>
         <Stack alignItems="center" direction="row" justifyContent="space-between">
           <Typography component="h2" variant="h5">
             {isEditMode ? "Edit application" : "Create application"}
@@ -55,12 +62,12 @@ export function OidcClientFormDrawer({
         </Stack>
         <Divider />
         {isLoading ? (
-          <Stack alignItems="center" justifyContent="center" spacing={2} sx={{ flex: 1 }}>
+          <Stack alignItems="center" justifyContent="center" spacing={2} sx={layoutStyles.drawerLoadingState}>
             <CircularProgress size={28} />
             <Typography color="text.secondary">Loading application...</Typography>
           </Stack>
         ) : (
-          <Box sx={{ flex: 1 }}>
+          <Box sx={layoutStyles.drawerBody}>
             <OidcClientForm
               errorMessage={errorMessage}
               initialValues={{
@@ -74,7 +81,23 @@ export function OidcClientFormDrawer({
               }}
               isEditMode={isEditMode}
               isSubmitting={isSubmitting}
-              onSubmit={onSubmit}
+              onSubmit={async values => {
+                if (isEditMode) {
+                  if (initialValues == null) {
+                    return;
+                  }
+
+                  await editOidcClient({
+                    ...values,
+                    id: initialValues.id
+                  });
+                  onClose();
+                  return;
+                }
+
+                await createOidcClient(values);
+                onClose();
+              }}
             />
           </Box>
         )}
