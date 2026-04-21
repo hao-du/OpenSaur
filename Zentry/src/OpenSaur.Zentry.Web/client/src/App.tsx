@@ -5,6 +5,7 @@ import { useAuthSession } from "./features/auth/hooks/AuthContext";
 import { DashboardPage } from "./pages/DashboardPage";
 import { ForbiddenPage } from "./pages/ForbiddenPage";
 import { OidcClientsPage } from "./pages/OidcClientsPage";
+import { WorkspacesPage } from "./pages/WorkspacesPage";
 
 export function App() {
   const { authSession, isRestoring } = useAuthSession();
@@ -19,6 +20,10 @@ export function App() {
         <Route
           element={<OidcClientsPage />}
           path="/oidc-clients"
+        />
+        <Route
+          element={<WorkspacesPage />}
+          path="/workspaces"
         />
         <Route
           element={<ForbiddenPage />}

@@ -7,6 +7,9 @@ using OpenSaur.Zentry.Web.Features.Frontend.Handlers;
 using OpenSaur.Zentry.Web.Features.OidcClients;
 using OpenSaur.Zentry.Web.Features.OidcClients.CreateOidcClient;
 using OpenSaur.Zentry.Web.Features.OidcClients.EditOidcClient;
+using OpenSaur.Zentry.Web.Features.Workspaces;
+using OpenSaur.Zentry.Web.Features.Workspaces.CreateWorkspace;
+using OpenSaur.Zentry.Web.Features.Workspaces.EditWorkspace;
 using OpenSaur.Zentry.Web.Infrastructure.Auth;
 using OpenSaur.Zentry.Web.Infrastructure.Configuration;
 using OpenSaur.Zentry.Web.Infrastructure.Database;
@@ -57,6 +60,8 @@ builder.Services.AddAuthentication(options =>
 builder.Services.AddAuthorization(SuperAdminAuthorization.ConfigurePolicy);
 builder.Services.AddScoped<IValidator<CreateOidcClientRequest>, CreateOidcClientRequestValidator>();
 builder.Services.AddScoped<IValidator<EditOidcClientRequest>, EditOidcClientRequestValidator>();
+builder.Services.AddScoped<IValidator<CreateWorkspaceRequest>, CreateWorkspaceRequestValidator>();
+builder.Services.AddScoped<IValidator<EditWorkspaceRequest>, EditWorkspaceRequestValidator>();
 builder.Services.AddProblemDetails();
 
 var app = builder.Build();
@@ -91,6 +96,7 @@ app.Use(async (context, next) =>
 app.UseAuthorization();
 
 app.MapOidcClientEndpoints();
+app.MapWorkspaceEndpoints();
 app.MapFrontEndRoutes();
 
 app.Run();
