@@ -3,7 +3,9 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using OpenSaur.Zentry.Web.Domain.Workspaces;
+using OpenSaur.Zentry.Web.Features.Roles;
 using OpenSaur.Zentry.Web.Infrastructure.Database;
+using OpenSaur.Zentry.Web.Infrastructure.Helpers;
 using AppHttpResults = OpenSaur.Zentry.Web.Infrastructure.Http.HttpResults;
 
 namespace OpenSaur.Zentry.Web.Features.Workspaces.CreateWorkspace;
@@ -14,6 +16,8 @@ public static class CreateWorkspaceHandler
         CreateWorkspaceRequest request,
         IValidator<CreateWorkspaceRequest> validator,
         ApplicationDbContext dbContext,
+        RoleService roleService,
+        WorkspaceService workspaceService,
         HttpContext httpContext,
         CancellationToken cancellationToken)
     {
@@ -32,7 +36,8 @@ public static class CreateWorkspaceHandler
             return AppHttpResults.Conflict("Workspace name already exists.", "A workspace with this name already exists.");
         }
 
-        var currentUserId = WorkspaceHelper.GetCurrentUserId(httpContext.User);
+        var currentUserId = ClaimHelper.GetCurrentUserId(httpContext.User);
+        var selectedActiveRoleIds = await roleService.GetSelectedActiveRoleIdsAsync(request.AssignedRoleIds, cancellationToken);
         var workspace = new Workspace
         {
             Name = name,
@@ -42,16 +47,13 @@ public static class CreateWorkspaceHandler
             CreatedBy = currentUserId
         };
 
-        dbContext.Workspaces.Add(workspace);
-        await dbContext.SaveChangesAsync(cancellationToken);
-
-        await WorkspaceHelper.ApplyWorkspaceRoleAssignmentsAsync(
-            dbContext,
+        await workspaceService.ApplyWorkspaceRoleAssignmentsAsync(
             workspace,
-            request.AssignedRoleIds,
+            selectedActiveRoleIds,
             currentUserId,
             cancellationToken);
 
+        dbContext.Workspaces.Add(workspace);
         await dbContext.SaveChangesAsync(cancellationToken);
 
         return TypedResults.Ok(new CreateWorkspaceResponse(workspace.Id));

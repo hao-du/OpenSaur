@@ -2,7 +2,9 @@ using FluentValidation;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using OpenSaur.Zentry.Web.Features.Roles;
 using OpenSaur.Zentry.Web.Infrastructure.Database;
+using OpenSaur.Zentry.Web.Infrastructure.Helpers;
 using AppHttpResults = OpenSaur.Zentry.Web.Infrastructure.Http.HttpResults;
 
 namespace OpenSaur.Zentry.Web.Features.Workspaces.EditWorkspace;
@@ -13,6 +15,8 @@ public static class EditWorkspaceHandler
         EditWorkspaceRequest request,
         IValidator<EditWorkspaceRequest> validator,
         ApplicationDbContext dbContext,
+        RoleService roleService,
+        WorkspaceService workspaceService,
         HttpContext httpContext,
         CancellationToken cancellationToken)
     {
@@ -39,7 +43,8 @@ public static class EditWorkspaceHandler
             return AppHttpResults.Conflict("Workspace name already exists.", "A workspace with this name already exists.");
         }
 
-        var currentUserId = WorkspaceHelper.GetCurrentUserId(httpContext.User);
+        var currentUserId = ClaimHelper.GetCurrentUserId(httpContext.User);
+        var selectedActiveRoleIds = await roleService.GetSelectedActiveRoleIdsAsync(request.AssignedRoleIds, cancellationToken);
 
         workspace.Name = name;
         workspace.Description = request.Description;
@@ -47,10 +52,9 @@ public static class EditWorkspaceHandler
         workspace.MaxActiveUsers = request.MaxActiveUsers;
         workspace.UpdatedBy = currentUserId;
 
-        await WorkspaceHelper.ApplyWorkspaceRoleAssignmentsAsync(
-            dbContext,
+        await workspaceService.ApplyWorkspaceRoleAssignmentsAsync(
             workspace,
-            request.AssignedRoleIds,
+            selectedActiveRoleIds,
             currentUserId,
             cancellationToken);
 

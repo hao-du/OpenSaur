@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
+using OpenSaur.Zentry.Web.Infrastructure;
 
 namespace OpenSaur.Zentry.Web.Infrastructure.Auth;
 
@@ -7,7 +8,6 @@ public static class SuperAdminAuthorization
 {
     public const string PolicyName = "SuperAdminOnly";
     private const string RoleClaimType = "roles";
-    private const string NormalizedSuperAdministrator = "SUPERADMINISTRATOR";
 
     public static void ConfigurePolicy(AuthorizationOptions options)
     {
@@ -23,7 +23,7 @@ public static class SuperAdminAuthorization
     public static bool IsSuperAdministrator(ClaimsPrincipal user)
     {
         return user.FindAll(RoleClaimType)
-            .Any(claim => string.Equals(Normalize(claim.Value), NormalizedSuperAdministrator, StringComparison.Ordinal));
+            .Any(claim => string.Equals(Normalize(claim.Value), Constants.NormalizedSuperAdministrator, StringComparison.Ordinal));
     }
 
     private static string Normalize(string? roleValue)

@@ -1,62 +1,24 @@
-using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
-using OpenIddict.Abstractions;
-using OpenSaur.Zentry.Web.Domain.Identity;
 using OpenSaur.Zentry.Web.Domain.Workspaces;
 using OpenSaur.Zentry.Web.Infrastructure.Database;
 
 namespace OpenSaur.Zentry.Web.Features.Workspaces;
 
-internal static class WorkspaceHelper
+public sealed class WorkspaceService(ApplicationDbContext dbContext)
 {
-    public const string NormalizedSuperAdministrator = "SUPERADMINISTRATOR";
-
-    public static Guid GetCurrentUserId(ClaimsPrincipal user)
-    {
-        var subject = user.FindFirstValue(OpenIddictConstants.Claims.Subject)
-                      ?? user.FindFirstValue(ClaimTypes.NameIdentifier);
-
-        return Guid.TryParse(subject, out var userId) ? userId : Guid.Empty;
-    }
-
-    public static bool IsSuperAdministrator(string? normalizedRoleName)
-    {
-        return string.Equals(normalizedRoleName, NormalizedSuperAdministrator, StringComparison.Ordinal);
-    }
-
-    public static async Task<List<Guid>> GetSelectedActiveRoleIdsAsync(
-        ApplicationDbContext dbContext,
-        IEnumerable<Guid>? selectedRoleIds,
-        CancellationToken cancellationToken)
-    {
-        var roleIds = selectedRoleIds?.Distinct().ToArray() ?? [];
-        if (roleIds.Length == 0)
-        {
-            return [];
-        }
-
-        return await dbContext.Roles
-            .AsNoTracking()
-            .Where(role => role.IsActive && roleIds.Contains(role.Id))
-            .Where(role => role.NormalizedName != NormalizedSuperAdministrator)
-            .Select(role => role.Id)
-            .ToListAsync(cancellationToken);
-    }
-
-    public static async Task ApplyWorkspaceRoleAssignmentsAsync(
-        ApplicationDbContext dbContext,
+    public async Task ApplyWorkspaceRoleAssignmentsAsync(
         Workspace workspace,
-        IEnumerable<Guid>? selectedRoleIds,
+        IEnumerable<Guid> selectedActiveRoleIds,
         Guid currentUserId,
         CancellationToken cancellationToken)
     {
-        var selectedActiveRoleIds = await GetSelectedActiveRoleIdsAsync(dbContext, selectedRoleIds, cancellationToken);
+        var selectedRoleIds = selectedActiveRoleIds.Distinct().ToArray();
         var activeWorkspaceRoles = workspace.WorkspaceRoles
             .Where(workspaceRole => workspaceRole.IsActive)
             .ToList();
 
         var roleIdsToDeactivate = activeWorkspaceRoles
-            .Where(workspaceRole => !selectedActiveRoleIds.Contains(workspaceRole.RoleId))
+            .Where(workspaceRole => !selectedRoleIds.Contains(workspaceRole.RoleId))
             .Select(workspaceRole => workspaceRole.RoleId)
             .ToHashSet();
 
@@ -66,7 +28,7 @@ internal static class WorkspaceHelper
             workspaceRole.UpdatedBy = currentUserId;
         }
 
-        foreach (var roleId in selectedActiveRoleIds.Except(activeWorkspaceRoles.Select(workspaceRole => workspaceRole.RoleId)))
+        foreach (var roleId in selectedRoleIds.Except(activeWorkspaceRoles.Select(workspaceRole => workspaceRole.RoleId)))
         {
             var existingWorkspaceRole = workspace.WorkspaceRoles.SingleOrDefault(workspaceRole => workspaceRole.RoleId == roleId);
             if (existingWorkspaceRole is not null)
@@ -78,14 +40,14 @@ internal static class WorkspaceHelper
 
             workspace.WorkspaceRoles.Add(new WorkspaceRole
             {
-                WorkspaceId = workspace.Id,
+                Workspace = workspace,
                 RoleId = roleId,
                 Description = $"Role availability for {workspace.Name}.",
                 CreatedBy = currentUserId
             });
         }
 
-        if (roleIdsToDeactivate.Count == 0)
+        if (workspace.Id == Guid.Empty || roleIdsToDeactivate.Count == 0)
         {
             return;
         }

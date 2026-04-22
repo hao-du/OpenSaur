@@ -7,6 +7,7 @@ using OpenSaur.Zentry.Web.Features.Frontend.Handlers;
 using OpenSaur.Zentry.Web.Features.OidcClients;
 using OpenSaur.Zentry.Web.Features.OidcClients.CreateOidcClient;
 using OpenSaur.Zentry.Web.Features.OidcClients.EditOidcClient;
+using OpenSaur.Zentry.Web.Features.Roles;
 using OpenSaur.Zentry.Web.Features.Workspaces;
 using OpenSaur.Zentry.Web.Features.Workspaces.CreateWorkspace;
 using OpenSaur.Zentry.Web.Features.Workspaces.EditWorkspace;
@@ -62,6 +63,8 @@ builder.Services.AddScoped<IValidator<CreateOidcClientRequest>, CreateOidcClient
 builder.Services.AddScoped<IValidator<EditOidcClientRequest>, EditOidcClientRequestValidator>();
 builder.Services.AddScoped<IValidator<CreateWorkspaceRequest>, CreateWorkspaceRequestValidator>();
 builder.Services.AddScoped<IValidator<EditWorkspaceRequest>, EditWorkspaceRequestValidator>();
+builder.Services.AddScoped<RoleService>();
+builder.Services.AddScoped<WorkspaceService>();
 builder.Services.AddProblemDetails();
 
 var app = builder.Build();
