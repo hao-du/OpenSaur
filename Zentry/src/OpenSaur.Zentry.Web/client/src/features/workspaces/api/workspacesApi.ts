@@ -1,5 +1,4 @@
-import axios from "axios";
-import { getAuthSession } from "../../auth/storages/authStorage";
+import { get, post, put } from "../../../infrastructure/http/client";
 import type { AssignableWorkspaceRoleDto } from "../dtos/AssignableWorkspaceRoleDto";
 import type { CreateWorkspaceRequestDto } from "../dtos/CreateWorkspaceRequestDto";
 import type { CreateWorkspaceResponseDto } from "../dtos/CreateWorkspaceResponseDto";
@@ -7,38 +6,22 @@ import type { EditWorkspaceRequestDto } from "../dtos/EditWorkspaceRequestDto";
 import type { WorkspaceDetailsDto } from "../dtos/WorkspaceDetailsDto";
 import type { WorkspaceSummaryDto } from "../dtos/WorkspaceSummaryDto";
 
-function createRequestConfig() {
-  const authSession = getAuthSession();
-
-  return {
-    headers: authSession == null
-      ? undefined
-      : {
-          Authorization: `Bearer ${authSession.accessToken}`
-        }
-  };
-}
-
 export async function getWorkspaces() {
-  const response = await axios.get<WorkspaceSummaryDto[]>("/api/workspace/get", createRequestConfig());
-  return response.data;
+  return get<WorkspaceSummaryDto[]>("/api/workspace/get");
 }
 
 export async function getWorkspaceById(workspaceId: string) {
-  const response = await axios.get<WorkspaceDetailsDto>(`/api/workspace/getbyid/${workspaceId}`, createRequestConfig());
-  return response.data;
+  return get<WorkspaceDetailsDto>(`/api/workspace/getbyid/${workspaceId}`);
 }
 
 export async function getAssignableWorkspaceRoles() {
-  const response = await axios.get<AssignableWorkspaceRoleDto[]>("/api/workspace/roles", createRequestConfig());
-  return response.data;
+  return get<AssignableWorkspaceRoleDto[]>("/api/workspace/roles");
 }
 
 export async function createWorkspace(request: CreateWorkspaceRequestDto) {
-  const response = await axios.post<CreateWorkspaceResponseDto>("/api/workspace/create", request, createRequestConfig());
-  return response.data;
+  return post<CreateWorkspaceResponseDto, CreateWorkspaceRequestDto>("/api/workspace/create", request);
 }
 
 export async function editWorkspace(request: EditWorkspaceRequestDto) {
-  await axios.put("/api/workspace/edit", request, createRequestConfig());
+  await put("/api/workspace/edit", request);
 }
