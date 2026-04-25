@@ -5,6 +5,7 @@ import { useAuthSession } from "./features/auth/hooks/AuthContext";
 import { DashboardPage } from "./pages/DashboardPage";
 import { ForbiddenPage } from "./pages/ForbiddenPage";
 import { OidcClientsPage } from "./pages/OidcClientsPage";
+import { RolesPage } from "./features/roles/pages/RolesPage";
 import { WorkspacesPage } from "./pages/WorkspacesPage";
 
 export function App() {
@@ -24,6 +25,10 @@ export function App() {
         <Route
           element={<WorkspacesPage />}
           path="/workspaces"
+        />
+        <Route
+          element={<RolesPage />}
+          path="/roles"
         />
         <Route
           element={<ForbiddenPage />}
