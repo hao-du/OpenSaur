@@ -3,6 +3,7 @@ using OpenSaur.CoreGate.Web.Features.Auth.DependencyInjection;
 using OpenSaur.CoreGate.Web.Features.Auth.Services;
 using OpenSaur.CoreGate.Web.Infrastructure.Configuration;
 using OpenSaur.CoreGate.Web.Infrastructure.DependencyInjection;
+using OpenSaur.CoreGate.Web.Infrastructure.Hosting;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -41,6 +42,7 @@ builder.Services.AddSwaggerGen();
 var app = builder.Build();
 
 app.UseExceptionHandler();
+app.UseClientAbortedRequestHandling();
 app.UseDefaultFiles();
 app.UseStaticFiles();
 app.UseCors("AppCors");

@@ -22,17 +22,9 @@ public static class SuperAdminAuthorization
 
     public static bool IsSuperAdministrator(ClaimsPrincipal user)
     {
-        return user.FindAll(RoleClaimType)
-            .Any(claim => string.Equals(Normalize(claim.Value), Constants.NormalizedSuperAdministrator, StringComparison.Ordinal));
-    }
+        var isSuperAdministrator = user.FindAll(RoleClaimType)
+            .Any(claim => string.Equals(claim.Value, Constants.NormalizedSuperAdministrator, StringComparison.Ordinal));
 
-    private static string Normalize(string? roleValue)
-    {
-        if (string.IsNullOrWhiteSpace(roleValue))
-        {
-            return string.Empty;
-        }
-
-        return string.Concat(roleValue.Trim().Where(char.IsLetterOrDigit)).ToUpperInvariant();
+        return isSuperAdministrator;
     }
 }
