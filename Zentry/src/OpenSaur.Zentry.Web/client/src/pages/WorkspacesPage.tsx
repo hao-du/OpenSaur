@@ -1,12 +1,13 @@
-import { Button, Stack } from "@mui/material";
+import { Alert, Button, Stack } from "@mui/material";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { DefaultLayout } from "../components/layouts/DefaultLayout";
-import { clearAuthSession } from "../features/auth/storages/authStorage";
+import { clearAuthSession, saveAuthSession } from "../features/auth/storages/authStorage";
 import { WorkspaceFiltersDrawer, type WorkspaceFilterValues } from "../features/workspaces/components/WorkspaceFiltersDrawer";
 import { WorkspaceFormDrawer } from "../features/workspaces/components/WorkspaceFormDrawer";
 import { WorkspaceTable } from "../features/workspaces/components/WorkspaceTable";
 import { useAssignableWorkspaceRolesQuery } from "../features/workspaces/hooks/useAssignableWorkspaceRolesQuery";
+import { useImpersonateWorkspace } from "../features/workspaces/hooks/useImpersonateWorkspace";
 import { useWorkspaceQuery } from "../features/workspaces/hooks/useWorkspaceQuery";
 import { useWorkspacesQuery } from "../features/workspaces/hooks/useWorkspacesQuery";
 import { layoutStyles } from "../infrastructure/theme/theme";
@@ -36,6 +37,13 @@ export function WorkspacesPage() {
     data: selectedWorkspace,
     isLoading: isSelectedWorkspaceLoading
   } = useWorkspaceQuery(selectedWorkspaceId);
+  const {
+    errorMessage: impersonateErrorMessage,
+    impersonateWorkspace,
+    impersonatingWorkspaceId,
+    isImpersonating,
+    resetError: resetImpersonateError
+  } = useImpersonateWorkspace();
   const filteredWorkspaces = useMemo(() => {
     const normalizedSearch = filters.search.trim().toLowerCase();
 
@@ -96,16 +104,41 @@ export function WorkspacesPage() {
         </Stack>
         <WorkspaceTable
           availableRoles={assignableRoles}
+          impersonatingWorkspaceId={impersonatingWorkspaceId}
           isError={isError}
+          isImpersonating={isImpersonating}
           isLoading={isLoading}
           onEditWorkspace={workspaceId => {
             setSelectedWorkspaceId(workspaceId);
+          }}
+          onImpersonateWorkspace={workspaceId => {
+            resetImpersonateError();
+            void (async () => {
+              try {
+                const authSession = await impersonateWorkspace(workspaceId);
+                saveAuthSession(authSession);
+                navigate("/", { replace: true });
+                window.location.reload();
+              } catch {
+                // The mutation owns the displayed API error.
+              }
+            })();
           }}
           onRetry={() => {
             void refetch();
           }}
           workspaces={filteredWorkspaces}
         />
+        {impersonateErrorMessage == null ? null : (
+          <Alert
+            onClose={() => {
+              resetImpersonateError();
+            }}
+            severity="error"
+          >
+            {impersonateErrorMessage}
+          </Alert>
+        )}
       </Stack>
       <WorkspaceFiltersDrawer
         initialValues={filters}

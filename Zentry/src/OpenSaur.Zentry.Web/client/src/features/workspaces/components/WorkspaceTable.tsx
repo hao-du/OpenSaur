@@ -5,18 +5,24 @@ import { layoutStyles } from "../../../infrastructure/theme/theme";
 
 type WorkspaceTableProps = {
   availableRoles: AssignableWorkspaceRoleDto[];
+  impersonatingWorkspaceId: string | null;
   isError: boolean;
+  isImpersonating: boolean;
   isLoading: boolean;
   onEditWorkspace: (workspaceId: string) => void;
+  onImpersonateWorkspace: (workspaceId: string) => void;
   onRetry: () => void;
   workspaces: WorkspaceSummaryDto[];
 };
 
 export function WorkspaceTable({
   availableRoles,
+  impersonatingWorkspaceId,
   isError,
+  isImpersonating,
   isLoading,
   onEditWorkspace,
+  onImpersonateWorkspace,
   onRetry,
   workspaces
 }: WorkspaceTableProps) {
@@ -107,15 +113,27 @@ export function WorkspaceTable({
                 </TableCell>
                 <TableCell>{workspace.maxActiveUsers ?? "Unlimited"}</TableCell>
                 <TableCell align="right">
-                  <Button
-                    onClick={() => {
-                      onEditWorkspace(workspace.id);
-                    }}
-                    size="small"
-                    variant="text"
-                  >
-                    Edit
-                  </Button>
+                  <Stack direction="row" justifyContent="flex-end" spacing={1}>
+                    <Button
+                      disabled={!workspace.isActive || isImpersonating}
+                      onClick={() => {
+                        onImpersonateWorkspace(workspace.id);
+                      }}
+                      size="small"
+                      variant="text"
+                    >
+                      {isImpersonating && impersonatingWorkspaceId === workspace.id ? "Impersonating..." : "Impersonate"}
+                    </Button>
+                    <Button
+                      onClick={() => {
+                        onEditWorkspace(workspace.id);
+                      }}
+                      size="small"
+                      variant="text"
+                    >
+                      Edit
+                    </Button>
+                  </Stack>
                 </TableCell>
               </TableRow>
             );
