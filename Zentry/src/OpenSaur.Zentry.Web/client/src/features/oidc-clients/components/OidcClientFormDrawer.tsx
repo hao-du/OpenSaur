@@ -47,7 +47,6 @@ export function OidcClientFormDrawer({
   return (
     <Drawer
       anchor="right"
-      onClose={onClose}
       open={isOpen}
       sx={layoutStyles.drawerPaperWide}
     >

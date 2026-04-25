@@ -33,7 +33,6 @@ export function OidcClientFiltersDrawer({
   return (
     <Drawer
       anchor="right"
-      onClose={onClose}
       open={isOpen}
       sx={layoutStyles.drawerPaperNarrow}
     >

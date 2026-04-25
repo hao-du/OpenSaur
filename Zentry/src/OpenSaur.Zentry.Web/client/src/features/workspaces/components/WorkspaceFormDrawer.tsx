@@ -53,7 +53,7 @@ export function WorkspaceFormDrawer({
   }, [isOpen, resetCreateError, resetEditError]);
 
   return (
-    <Drawer anchor="right" onClose={onClose} open={isOpen} sx={layoutStyles.drawerPaperNarrow}>
+    <Drawer anchor="right" open={isOpen} sx={layoutStyles.drawerPaperNarrow}>
       <Stack spacing={3} sx={layoutStyles.drawerContent}>
         <Stack alignItems="center" direction="row" justifyContent="space-between">
           <Typography component="h2" variant="h5">
