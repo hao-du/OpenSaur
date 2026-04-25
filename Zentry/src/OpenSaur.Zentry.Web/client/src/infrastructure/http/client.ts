@@ -15,32 +15,35 @@ axios.interceptors.request.use((config) => {
   return config;
 });
 
-export { axios };
+export const client = {
+  get: async <TResponse>(url: string, config?: AxiosRequestConfig) => {
+    const response = await axios.get<TResponse>(url, config);
+    return response.data;
+  },
 
-export async function get<TResponse>(url: string, config?: AxiosRequestConfig) {
-  const response = await axios.get<TResponse>(url, config);
-  return response.data;
-}
+  post: async <TResponse, TRequest = unknown>(
+    url: string,
+    data?: TRequest,
+    config?: AxiosRequestConfig,
+  ) => {
+    const response = await axios.post<TResponse>(url, data, config);
+    return response.data;
+  },
 
-export async function post<TResponse, TRequest = unknown>(
-  url: string,
-  data?: TRequest,
-  config?: AxiosRequestConfig
-) {
-  const response = await axios.post<TResponse>(url, data, config);
-  return response.data;
-}
+  put: async <TResponse = void, TRequest = unknown>(
+    url: string,
+    data?: TRequest,
+    config?: AxiosRequestConfig,
+  ) => {
+    const response = await axios.put<TResponse>(url, data, config);
+    return response.data;
+  },
 
-export async function put<TResponse = void, TRequest = unknown>(
-  url: string,
-  data?: TRequest,
-  config?: AxiosRequestConfig
-) {
-  const response = await axios.put<TResponse>(url, data, config);
-  return response.data;
-}
-
-export async function deleteRequest<TResponse = void>(url: string, config?: AxiosRequestConfig) {
-  const response = await axios.delete<TResponse>(url, config);
-  return response.data;
-}
+  delete: async <TResponse = void>(
+    url: string,
+    config?: AxiosRequestConfig,
+  ) => {
+    const response = await axios.delete<TResponse>(url, config);
+    return response.data;
+  },
+};
