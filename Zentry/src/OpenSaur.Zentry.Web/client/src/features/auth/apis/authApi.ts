@@ -44,23 +44,6 @@ export async function refreshAuthSession(config: ConfigDto): Promise<AuthSession
   return createAuthSession(response.data);
 }
 
-export async function impersonateWorkspace(config: ConfigDto, workspaceId: string): Promise<AuthSessionDto> {
-  const endpoint = new URL("/auth/impersonate-workspace", config.authority).toString();
-  const response = await axios.post<TokenResponseDto>(
-    endpoint,
-    {
-      clientId: config.clientId,
-      workspaceId
-    },
-    {
-      timeout: authRequestTimeoutMs,
-      withCredentials: true
-    }
-  );
-
-  return createAuthSession(response.data);
-}
-
 function createAuthSession(tokenResponse: TokenResponseDto): AuthSessionDto {
   return {
     accessToken: tokenResponse.accessToken,
