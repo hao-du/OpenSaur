@@ -70,6 +70,7 @@ builder.Services.AddProblemDetails();
 var app = builder.Build();
 
 app.UseExceptionHandler();
+app.UseClientAbortedRequestHandling();
 app.UseDefaultFiles();
 app.UseStaticFiles();
 app.UseAuthentication();
