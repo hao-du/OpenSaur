@@ -1,5 +1,7 @@
-import { Alert, Button, Checkbox, CircularProgress, Divider, FormControlLabel, FormGroup, Paper, Stack, Typography } from "@mui/material";
-import { Controller, useForm } from "react-hook-form";
+import { Alert, Button, CircularProgress, Divider, Paper, Stack, Typography } from "@mui/material";
+import { useForm } from "react-hook-form";
+import { CheckBox } from "../../../components/atoms/CheckBox";
+import { MultiSelect } from "../../../components/atoms/MultiSelect";
 import { Text } from "../../../components/atoms/Text";
 import { TextArea } from "../../../components/atoms/TextArea";
 import type { AssignableWorkspaceRoleDto } from "../dtos/AssignableWorkspaceRoleDto";
@@ -91,66 +93,26 @@ export function WorkspaceForm({
             </Stack>
           </Paper>
         ) : (
-          <Controller
+          <MultiSelect
             control={control}
+            disabled={isSubmitting}
+            label="Assigned roles"
             name="selectedRoleIds"
-            render={({ field }) => {
-              const selectedRoleIds = new Set(field.value ?? []);
-
-              return (
-                <FormGroup>
-                  {availableRoles.map(role => (
-                    <FormControlLabel
-                      control={(
-                        <Checkbox
-                          checked={selectedRoleIds.has(role.id)}
-                          disabled={isSubmitting}
-                          onChange={event => {
-                            const nextRoleIds = event.target.checked
-                              ? [...selectedRoleIds, role.id]
-                              : [...selectedRoleIds].filter(roleId => roleId !== role.id);
-
-                            field.onChange(nextRoleIds);
-                          }}
-                        />
-                      )}
-                      key={role.id}
-                      label={(
-                        <Stack spacing={0.25}>
-                          <Typography>{role.name}</Typography>
-                          {role.description ? (
-                            <Typography color="text.secondary" variant="body2">
-                              {role.description}
-                            </Typography>
-                          ) : null}
-                        </Stack>
-                      )}
-                    />
-                  ))}
-                </FormGroup>
-              );
-            }}
+            options={availableRoles.map(role => ({
+              description: role.description,
+              label: role.name,
+              value: role.id
+            }))}
+            placeholder="Search active roles"
           />
         )}
       </Stack>
       {isEditMode ? (
-        <Controller
+        <CheckBox
           control={control}
+          disabled={isSubmitting}
+          label="Workspace is active"
           name="isActive"
-          render={({ field }) => (
-            <FormControlLabel
-              control={(
-                <Checkbox
-                  checked={field.value}
-                  disabled={isSubmitting}
-                  onChange={event => {
-                    field.onChange(event.target.checked);
-                  }}
-                />
-              )}
-              label="Workspace is active"
-            />
-          )}
         />
       ) : null}
       <Stack direction="row" justifyContent="flex-end" spacing={1.5}>

@@ -11,6 +11,7 @@ public static class FrontendEndpoints
         "/oidc-clients",
         "/auth/callback",
         "/dashboard",
+        "/workspaces",
         "/forbidden",
         "/prepare-session"
     ];
