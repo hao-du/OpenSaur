@@ -43,16 +43,18 @@ export function AuthCallbackPage() {
         return;
       }
 
-      const config = getConfig();
-      const pkceSession = getPkceSession();
-      if (pkceSession == null) {
-        setStatus("failed");
-        setCallbackError("Stored PKCE session is missing.");
-        clearAuthSession();
-        return;
-      }
+      let config: ReturnType<typeof getConfig> | null = null;
 
       try {
+        config = getConfig();
+        const pkceSession = getPkceSession();
+        if (pkceSession == null) {
+          setStatus("failed");
+          setCallbackError("Stored PKCE session is missing.");
+          clearAuthSession();
+          return;
+        }
+
         const authSession = await exchangeAuthCode(
           config,
           callbackResult.code,
@@ -63,6 +65,13 @@ export function AuthCallbackPage() {
         clearPkceSession();
         navigate("/", { replace: true });
       } catch (error) {
+        if (config == null) {
+          setStatus("failed");
+          setCallbackError(getCallbackErrorMessage(error));
+          clearAuthSession();
+          return;
+        }
+
         try {
           setStatus("restoring");
           const refreshedSession = await refreshAuthSession(config);
@@ -72,7 +81,7 @@ export function AuthCallbackPage() {
           navigate("/", { replace: true });
         } catch {
           setStatus("failed");
-          setCallbackError("Token exchange failed.");
+          setCallbackError(getCallbackErrorMessage(error));
           clearAuthSession();
         }
       }
@@ -99,4 +108,10 @@ export function AuthCallbackPage() {
       </div>
     </CenteredCardLayout>
   );
+}
+
+function getCallbackErrorMessage(error: unknown) {
+  return error instanceof Error && error.message.trim().length > 0
+    ? `Token exchange failed: ${error.message}`
+    : "Token exchange failed.";
 }
