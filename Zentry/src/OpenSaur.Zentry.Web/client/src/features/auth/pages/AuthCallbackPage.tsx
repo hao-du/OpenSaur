@@ -4,14 +4,14 @@ import { getConfig } from "../../../infrastructure/config/Config";
 import { clearAuthSession, saveAuthSession } from "../storages/authStorage";
 import { clearPkceSession, getPkceSession } from "../storages/pkceStorage";
 import { CenteredCardLayout } from "../../../components/layouts/CenteredCardLayout";
-import { exchangeAuthCode } from "../apis/authApi";
+import { exchangeAuthCode, refreshAuthSession } from "../apis/authApi";
 import { readCallbackResult } from "../services/UriService";
 
 export function AuthCallbackPage() {
   const navigate = useNavigate();
   const callbackResult = readCallbackResult(window.location.search);
   const [callbackError, setCallbackError] = useState<string | null>(null);
-  const [status, setStatus] = useState<"exchanging" | "failed">("exchanging");
+  const [status, setStatus] = useState<"exchanging" | "failed" | "restoring">("exchanging");
   const hasStarted = useRef(false);
 
   useEffect(() => {
@@ -63,9 +63,18 @@ export function AuthCallbackPage() {
         clearPkceSession();
         navigate("/", { replace: true });
       } catch (error) {
-        setStatus("failed");
-        setCallbackError("Token exchange failed.");
-        clearAuthSession();
+        try {
+          setStatus("restoring");
+          const refreshedSession = await refreshAuthSession(config);
+
+          saveAuthSession(refreshedSession);
+          clearPkceSession();
+          navigate("/", { replace: true });
+        } catch {
+          setStatus("failed");
+          setCallbackError("Token exchange failed.");
+          clearAuthSession();
+        }
       }
     }
 
