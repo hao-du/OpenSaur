@@ -24,8 +24,7 @@ public sealed class ExchangeTokenHandler(
             ["client_id"] = request.ClientId,
             ["code"] = request.Code,
             ["code_verifier"] = request.CodeVerifier,
-            ["redirect_uri"] = request.RedirectUri,
-            ["impersonated_user_id"] = request.ImpersonatedUserId ?? Guid.NewGuid().ToString(),
+            ["redirect_uri"] = request.RedirectUri
         };
 
         return await tokenService.ProxyTokenRequestAsync(form, clearRefreshCookieOnFailure: false);

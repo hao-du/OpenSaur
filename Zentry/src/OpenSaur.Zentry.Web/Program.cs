@@ -8,6 +8,7 @@ using OpenSaur.Zentry.Web.Features.OidcClients;
 using OpenSaur.Zentry.Web.Features.OidcClients.CreateOidcClient;
 using OpenSaur.Zentry.Web.Features.OidcClients.EditOidcClient;
 using OpenSaur.Zentry.Web.Features.Permissions;
+using OpenSaur.Zentry.Web.Features.Profile;
 using OpenSaur.Zentry.Web.Features.Roles;
 using OpenSaur.Zentry.Web.Features.Roles.CreateRole;
 using OpenSaur.Zentry.Web.Features.Roles.EditRole;
@@ -107,6 +108,7 @@ app.UseAuthorization();
 
 app.MapOidcClientEndpoints();
 app.MapWorkspaceEndpoints();
+app.MapProfileEndpoints();
 app.MapRoleEndpoints();
 app.MapPermissionEndpoints();
 app.MapFrontEndRoutes();

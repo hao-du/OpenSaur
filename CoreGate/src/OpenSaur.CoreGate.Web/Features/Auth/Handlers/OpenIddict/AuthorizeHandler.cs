@@ -3,18 +3,13 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
 using OpenIddict.Abstractions;
 using OpenIddict.Server.AspNetCore;
-using OpenSaur.CoreGate.Web.Domain.Identity;
 using OpenSaur.CoreGate.Web.Features.Auth.Services;
-using OpenSaur.CoreGate.Web.Infrastructure.Database;
-using System.Security.Claims;
 
 namespace OpenSaur.CoreGate.Web.Features.Auth.Handlers.OpenIddict;
 
 public class AuthorizeHandler(
     IHttpContextAccessor httpContextAccessor,
-    ApplicationDbContext dbContext,
-    UserRolePermissionService authorizationDataService,
-    UserManager<ApplicationUser> userManager)
+    ClaimService claimService)
 {
     public async Task<IResult> HandleAuthorizeAsync()
     {
@@ -32,13 +27,15 @@ public class AuthorizeHandler(
             return Results.Redirect($"/login?returnUrl={Uri.EscapeDataString(redirectUri)}");
         }
 
+        var impersonatedUserId = httpContext.Request.Query.TryGetValue("impersonated_user_id", out var queryValue)
+            ? queryValue.ToString()
+            : null;
+
         // Rebuild the token principal from the current user/workspace/role state before issuing code/tokens.
-        var principal = await UserTokenPrincipalBuilder.BuildUserClaimPrincipalAsync(
+        var principal = await claimService.BuildUserClaimPrincipalAsync(
             authenticationResult.Principal,
             request.GetScopes(),
-            dbContext,
-            authorizationDataService,
-            userManager,
+            impersonatedUserId,
             httpContext.RequestAborted);
 
         if (principal is null)

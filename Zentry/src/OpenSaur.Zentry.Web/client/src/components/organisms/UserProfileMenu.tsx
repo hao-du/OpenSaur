@@ -14,21 +14,20 @@ import {
   Stack
 } from "@mui/material";
 import { LabelText } from "../atoms/LabelText";
-import { MetaText } from "../atoms/MetaText";
 import { AppIcon } from "../icons/AppIcon";
 import { Avatar } from "./Avatar";
-import type { MockProfile } from "../../mocks/profile";
+import type { CurrentProfileDto } from "../../features/profile/dtos/CurrentProfileDto";
 import { useAuthSession } from "../../features/auth/hooks/AuthContext";
 import { layoutStyles } from "../../infrastructure/theme/theme";
 
 type UserProfileMenuProps = {
-  profile: MockProfile;
+  profile?: CurrentProfileDto;
 };
 
 export function UserProfileMenu({ profile }: UserProfileMenuProps) {
   const { handleLogout } = useAuthSession();
   const [anchorElement, setAnchorElement] = useState<HTMLElement | null>(null);
-  const displayName = `${profile.firstName} ${profile.lastName}`.trim();
+  const displayName = `${profile?.firstName ?? ""} ${profile?.lastName ?? ""}`.trim() || "Zentry User";
   const initials = useMemo(() => {
     const segments = displayName.split(/\s+/).filter(Boolean);
     if (segments.length === 0) {
@@ -73,44 +72,43 @@ export function UserProfileMenu({ profile }: UserProfileMenuProps) {
             <LabelText>
               {displayName}
             </LabelText>
-            <MetaText>
-              {profile.email}
-            </MetaText>
           </Stack>
         </Box>
         <Divider />
-        <MenuItem onClick={() => {
-          handleCloseMenu();
-        }}>
-          <Stack
-            alignItems="center"
-            direction="row"
-            spacing={1}
-          >
-            <AppIcon icon={UserRound} />
-            <span>My Profile</span>
-          </Stack>
-        </MenuItem>
-        <MenuItem onClick={handleCloseMenu}>
-          <Stack
-            alignItems="center"
-            direction="row"
-            spacing={1}
-          >
-            <AppIcon icon={KeyRound} />
-            <span>Change password</span>
-          </Stack>
-        </MenuItem>
-        <MenuItem onClick={handleCloseMenu}>
-          <Stack
-            alignItems="center"
-            direction="row"
-            spacing={1}
-          >
-            <AppIcon icon={Settings} />
-            <span>Settings</span>
-          </Stack>
-        </MenuItem>
+        <Box sx={layoutStyles.menuActionGroup}>
+          <MenuItem onClick={() => {
+            handleCloseMenu();
+          }}>
+            <Stack
+              alignItems="center"
+              direction="row"
+              spacing={1}
+            >
+              <AppIcon icon={UserRound} />
+              <span>My Profile</span>
+            </Stack>
+          </MenuItem>
+          <MenuItem onClick={handleCloseMenu}>
+            <Stack
+              alignItems="center"
+              direction="row"
+              spacing={1}
+            >
+              <AppIcon icon={KeyRound} />
+              <span>Change password</span>
+            </Stack>
+          </MenuItem>
+          <MenuItem onClick={handleCloseMenu}>
+            <Stack
+              alignItems="center"
+              direction="row"
+              spacing={1}
+            >
+              <AppIcon icon={Settings} />
+              <span>Settings</span>
+            </Stack>
+          </MenuItem>
+        </Box>
         <Divider />
         <MenuItem onClick={() => {
           handleCloseMenu();

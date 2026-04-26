@@ -4,5 +4,4 @@ public sealed record TokenExchangeRequest(
     string ClientId,
     string Code,
     string CodeVerifier,
-    string RedirectUri,
-    string ImpersonatedUserId);
+    string RedirectUri);

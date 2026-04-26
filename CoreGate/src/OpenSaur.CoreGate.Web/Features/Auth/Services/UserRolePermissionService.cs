@@ -12,6 +12,21 @@ public sealed class UserRolePermissionService(
     ApplicationDbContext dbContext
 )
 {
+    public async Task<bool> CanImpersonateAsync(Guid actorUserId, CancellationToken cancellationToken)
+    {
+        var roles = await dbContext.UserRoles
+            .AsNoTracking()
+            .Where(userRole => userRole.UserId == actorUserId && userRole.IsActive)
+            .Join(
+                dbContext.Roles.AsNoTracking().Where(role => role.IsActive),
+                userRole => userRole.RoleId,
+                role => role.Id,
+                (_, role) => role.NormalizedName)
+            .ToListAsync(cancellationToken);
+
+        return roles.Any(SystemRoles.IsSuperAdministratorValue);
+    }
+
     public async Task<IReadOnlyCollection<string>> GetActiveNormalizedRoleNamesForUserAsync(
         Guid userId,
         Guid workspaceId,

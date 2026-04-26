@@ -17,7 +17,8 @@ internal static class ClaimPrincipalHelpers
         ApplicationUser user,
         IEnumerable<string> normalizedRoles,
         IEnumerable<string> permissionCodes,
-        IEnumerable<string> scopes)
+        IEnumerable<string> scopes,
+        string? impersonationOriginalUserId = null)
     {
         var identity = new ClaimsIdentity(
             TokenValidationParameters.DefaultAuthenticationType,
@@ -45,6 +46,11 @@ internal static class ClaimPrincipalHelpers
         foreach (var permissionCode in permissionCodes.Where(static code => !string.IsNullOrWhiteSpace(code)).Distinct(StringComparer.Ordinal))
         {
             identity.AddClaim(new Claim(ClaimTypes.Permissions, permissionCode));
+        }
+
+        if (!string.IsNullOrWhiteSpace(impersonationOriginalUserId))
+        {
+            identity.AddClaim(new Claim(ClaimTypes.ImpersonationOriginalUserId, impersonationOriginalUserId));
         }
 
         var principal = new ClaimsPrincipal(identity);
@@ -79,6 +85,8 @@ internal static class ClaimPrincipalHelpers
             ClaimTypes.Permissions
                 when claim.Subject is ClaimsIdentity permissionIdentity
                      && permissionIdentity.HasScope("api")
+                => [OpenIddictConstants.Destinations.AccessToken],
+            ClaimTypes.ImpersonationOriginalUserId
                 => [OpenIddictConstants.Destinations.AccessToken],
             ClaimTypes.WorkspaceId or ClaimTypes.RequirePasswordChange
                 => [OpenIddictConstants.Destinations.AccessToken],

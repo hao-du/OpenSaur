@@ -3,6 +3,7 @@ import type { AssignableWorkspaceRoleDto } from "../dtos/AssignableWorkspaceRole
 import type { CreateWorkspaceRequestDto } from "../dtos/CreateWorkspaceRequestDto";
 import type { CreateWorkspaceResponseDto } from "../dtos/CreateWorkspaceResponseDto";
 import type { EditWorkspaceRequestDto } from "../dtos/EditWorkspaceRequestDto";
+import type { UsersForImpersonationByWorkspaceIdDto } from "../dtos/UsersForImpersonationByWorkspaceIdDto";
 import type { WorkspaceDetailsDto } from "../dtos/WorkspaceDetailsDto";
 import type { WorkspaceSummaryDto } from "../dtos/WorkspaceSummaryDto";
 
@@ -16,6 +17,10 @@ export async function getWorkspaceById(workspaceId: string) {
 
 export async function getAssignableWorkspaceRoles() {
   return client.get<AssignableWorkspaceRoleDto[]>("/api/workspace/roles");
+}
+
+export async function getUsersForImpersonationByWorkspaceId(workspaceId: string) {
+  return client.get<UsersForImpersonationByWorkspaceIdDto>(`/api/workspace/impersonation/users/${workspaceId}`);
 }
 
 export async function createWorkspace(request: CreateWorkspaceRequestDto) {

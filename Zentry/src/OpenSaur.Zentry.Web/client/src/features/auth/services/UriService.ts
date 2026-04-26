@@ -4,6 +4,7 @@ import { getPkceSession, savePkceSession } from "../storages/pkceStorage";
 
 export async function buildAuthorizeUrl(
   config: ConfigDto,
+  options?: { impersonatedUserId?: string | null }
 ): Promise<string> {
   const pkceSession = await savePkceSession();
   const authorizeUrl = new URL("/connect/authorize", config.authority);
@@ -15,6 +16,9 @@ export async function buildAuthorizeUrl(
   authorizeUrl.searchParams.set("code_challenge", pkceSession.codeChallenge);
   authorizeUrl.searchParams.set("code_challenge_method", "S256");
   authorizeUrl.searchParams.set("state", pkceSession.state);
+  if (options?.impersonatedUserId != null && options.impersonatedUserId.trim().length > 0) {
+    authorizeUrl.searchParams.set("impersonated_user_id", options.impersonatedUserId);
+  }
 
   return authorizeUrl.toString();
 }

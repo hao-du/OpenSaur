@@ -164,9 +164,22 @@ export const layoutStyles: Record<string, SxProps<Theme>> = {
   sideMenuHeaderMeta: {
     minWidth: 0
   },
+  impersonationIndicator: {
+    alignItems: "center",
+    border: `1px solid ${borderStrong}`,
+    borderRadius: 999,
+    color: "primary.main",
+    display: "inline-flex",
+    height: 28,
+    justifyContent: "center",
+    width: 28
+  },
   menuProfileContent: {
     px: 2,
     py: 1.5
+  },
+  menuActionGroup: {
+    py: 0.75
   },
   drawerPaperWide: {
     "& .MuiDrawer-paper": {

@@ -2,11 +2,15 @@ import { Button, Stack } from "@mui/material";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { DefaultLayout } from "../components/layouts/DefaultLayout";
+import { getConfig } from "../infrastructure/config/Config";
 import { clearAuthSession } from "../features/auth/storages/authStorage";
+import { buildAuthorizeUrl } from "../features/auth/services/UriService";
 import { WorkspaceFiltersDrawer, type WorkspaceFilterValues } from "../features/workspaces/components/WorkspaceFiltersDrawer";
 import { WorkspaceFormDrawer } from "../features/workspaces/components/WorkspaceFormDrawer";
+import { WorkspaceImpersonationDialog } from "../features/workspaces/components/WorkspaceImpersonationDialog";
 import { WorkspaceTable } from "../features/workspaces/components/WorkspaceTable";
 import { useAssignableWorkspaceRolesQuery } from "../features/workspaces/hooks/useAssignableWorkspaceRolesQuery";
+import { useUsersForImpersonationByWorkspaceIdQuery } from "../features/workspaces/hooks/useUsersForImpersonationByWorkspaceIdQuery";
 import { useWorkspaceQuery } from "../features/workspaces/hooks/useWorkspaceQuery";
 import { useWorkspacesQuery } from "../features/workspaces/hooks/useWorkspacesQuery";
 import { layoutStyles } from "../infrastructure/theme/theme";
@@ -20,6 +24,9 @@ export function WorkspacesPage() {
   const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
   const [isCreateDrawerOpen, setIsCreateDrawerOpen] = useState(false);
   const [selectedWorkspaceId, setSelectedWorkspaceId] = useState<string | null>(null);
+  const [impersonationWorkspaceId, setImpersonationWorkspaceId] = useState<string | null>(null);
+  const [impersonationErrorMessage, setImpersonationErrorMessage] = useState<string | null>(null);
+  const [isStartingImpersonation, setIsStartingImpersonation] = useState(false);
   const {
     data: workspaces = [],
     isForbidden,
@@ -36,6 +43,11 @@ export function WorkspacesPage() {
     data: selectedWorkspace,
     isLoading: isSelectedWorkspaceLoading
   } = useWorkspaceQuery(selectedWorkspaceId);
+  const {
+    data: usersForImpersonation,
+    isError: isUsersForImpersonationError,
+    isLoading: isUsersForImpersonationLoading
+  } = useUsersForImpersonationByWorkspaceIdQuery(impersonationWorkspaceId);
   const filteredWorkspaces = useMemo(() => {
     const normalizedSearch = filters.search.trim().toLowerCase();
 
@@ -65,6 +77,23 @@ export function WorkspacesPage() {
 
     navigate("/forbidden", { replace: true });
   }, [isForbidden, navigate]);
+
+  async function handleStartImpersonation(values: { userId: string; workspaceId: string }) {
+    try {
+      setIsStartingImpersonation(true);
+      const authorizeUrl = await buildAuthorizeUrl(getConfig(), {
+        impersonatedUserId: values.userId
+      });
+      window.location.assign(authorizeUrl);
+    } catch (error) {
+      setIsStartingImpersonation(false);
+      setImpersonationErrorMessage(
+        error instanceof Error && error.message.trim().length > 0
+          ? error.message
+          : "Unable to start impersonation."
+      );
+    }
+  }
 
   return (
     <DefaultLayout
@@ -100,6 +129,10 @@ export function WorkspacesPage() {
           isLoading={isLoading}
           onEditWorkspace={workspaceId => {
             setSelectedWorkspaceId(workspaceId);
+          }}
+          onImpersonateWorkspace={workspaceId => {
+            setImpersonationErrorMessage(null);
+            setImpersonationWorkspaceId(workspaceId);
           }}
           onRetry={() => {
             void refetch();
@@ -137,6 +170,22 @@ export function WorkspacesPage() {
         onClose={() => {
           setSelectedWorkspaceId(null);
         }}
+      />
+      <WorkspaceImpersonationDialog
+        errorMessage={
+          isUsersForImpersonationError
+            ? "Unable to load workspace users."
+            : impersonationErrorMessage
+        }
+        isLoading={isUsersForImpersonationLoading}
+        isOpen={impersonationWorkspaceId !== null}
+        isSubmitting={isStartingImpersonation}
+        onClose={() => {
+          setImpersonationWorkspaceId(null);
+          setImpersonationErrorMessage(null);
+        }}
+        onSubmit={handleStartImpersonation}
+        usersForImpersonation={usersForImpersonation ?? null}
       />
     </DefaultLayout>
   );

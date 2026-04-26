@@ -44,6 +44,7 @@ public class TokenHandler(
         var principal = await claimService.BuildUserClaimPrincipalAsync(
             authenticateResult.Principal,
             authenticateResult.Principal.GetScopes(),
+            impersonatedUserId: null,
             httpContext.RequestAborted);
 
         return principal is null

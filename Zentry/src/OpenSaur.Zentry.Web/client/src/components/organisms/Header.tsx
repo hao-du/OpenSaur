@@ -1,14 +1,16 @@
-import { Menu } from "lucide-react";
+import { Eye, Menu } from "lucide-react";
 import {
   AppBar,
+  Box,
   IconButton,
   Stack,
+  Tooltip,
   Toolbar
 } from "@mui/material";
 import { EyebrowText } from "../atoms/EyebrowText";
 import { AppIcon } from "../icons/AppIcon";
-import { mockProfile } from "../../mocks/profile";
 import { layoutStyles } from "../../infrastructure/theme/theme";
+import { useCurrentProfileQuery } from "../../features/profile/hooks/useCurrentProfileQuery";
 import { UserProfileMenu } from "./UserProfileMenu";
 
 type AppHeaderProps = {
@@ -17,6 +19,9 @@ type AppHeaderProps = {
 };
 
 export function Header({ isDesktop, onOpenNavigation }: AppHeaderProps) {
+  const { data: currentProfile } = useCurrentProfileQuery();
+  const workspaceName = currentProfile?.workspaceName ?? "Protected workspace";
+
   return (
     <AppBar
       color="transparent"
@@ -43,16 +48,25 @@ export function Header({ isDesktop, onOpenNavigation }: AppHeaderProps) {
             </IconButton>
           ) : null}
           <Stack
+            alignItems="center"
+            direction="row"
             spacing={2}
             sx={layoutStyles.sideMenuHeaderMeta}
           >
             <EyebrowText>
-              Protected workspace
+              {workspaceName}
             </EyebrowText>
+            {currentProfile?.isImpersonating ? (
+              <Tooltip title="Impersonation mode">
+                <Box component="span" sx={layoutStyles.impersonationIndicator}>
+                  <AppIcon icon={Eye} size={16} />
+                </Box>
+              </Tooltip>
+            ) : null}
           </Stack>
         </Stack>
         <UserProfileMenu
-          profile={mockProfile}
+          profile={currentProfile}
         />
       </Toolbar>
     </AppBar>
