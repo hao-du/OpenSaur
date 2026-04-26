@@ -2,7 +2,7 @@ import { Button, Stack } from "@mui/material";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { DefaultLayout } from "../../../components/layouts/DefaultLayout";
-import { clearAuthSession } from "../../auth/storages/authStorage";
+import { useAuthSession } from "../../auth/hooks/AuthContext";
 import { layoutStyles } from "../../../infrastructure/theme/theme";
 import { RoleFiltersDrawer, type RoleFilterValues } from "../components/RoleFiltersDrawer";
 import { RoleFormDrawer } from "../components/RoleFormDrawer";
@@ -16,6 +16,7 @@ import type { RoleFormValues } from "../components/RoleForm";
 
 export function RolesPage() {
   const navigate = useNavigate();
+  const { clearSession } = useAuthSession();
   const [filters, setFilters] = useState<RoleFilterValues>({
     search: "",
     status: "active"
@@ -69,9 +70,9 @@ export function RolesPage() {
       return;
     }
 
-    clearAuthSession();
+    clearSession();
     navigate("/prepare-session", { replace: true });
-  }, [isUnauthorized, navigate]);
+  }, [clearSession, isUnauthorized, navigate]);
 
   useEffect(() => {
     if (!isForbidden) {

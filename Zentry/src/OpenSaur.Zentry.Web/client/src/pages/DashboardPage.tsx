@@ -1,10 +1,10 @@
 import { getConfig } from "../infrastructure/config/Config";
-import { getAuthSession } from "../features/auth/storages/authStorage";
+import { useAuthSession } from "../features/auth/hooks/AuthContext";
 import { DefaultLayout } from "../components/layouts/DefaultLayout";
 
 export function DashboardPage() {
   const config = getConfig();
-  const authSession = getAuthSession();
+  const { authSession } = useAuthSession();
 
   return (
     <DefaultLayout

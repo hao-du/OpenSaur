@@ -4,7 +4,7 @@ import { ConfirmationDialog } from "../components/organisms/ConfirmationDialog";
 import { useNavigate } from "react-router-dom";
 import { DefaultLayout } from "../components/layouts/DefaultLayout";
 import { layoutStyles } from "../infrastructure/theme/theme";
-import { clearAuthSession } from "../features/auth/storages/authStorage";
+import { useAuthSession } from "../features/auth/hooks/AuthContext";
 import { OidcClientFiltersDrawer } from "../features/oidc-clients/components/OidcClientFiltersDrawer";
 import type { OidcClientFilterValues } from "../features/oidc-clients/components/OidcClientFiltersDrawer";
 import { OidcClientFormDrawer } from "../features/oidc-clients/components/OidcClientFormDrawer";
@@ -15,6 +15,7 @@ import { useOidcClientsQuery } from "../features/oidc-clients/hooks/useOidcClien
 
 export function OidcClientsPage() {
   const navigate = useNavigate();
+  const { clearSession } = useAuthSession();
   const [clientPendingDelete, setClientPendingDelete] = useState<{ displayName: string; id: string } | null>(null);
   const [filters, setFilters] = useState<OidcClientFilterValues>({
     clientId: ""
@@ -56,9 +57,9 @@ export function OidcClientsPage() {
       return;
     }
 
-    clearAuthSession();
+    clearSession();
     navigate("/prepare-session", { replace: true });
-  }, [isUnauthorized, navigate]);
+  }, [clearSession, isUnauthorized, navigate]);
 
   useEffect(() => {
     if (!isForbidden) {

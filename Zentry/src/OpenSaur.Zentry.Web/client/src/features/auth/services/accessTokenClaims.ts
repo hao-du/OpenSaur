@@ -1,5 +1,3 @@
-import { getAuthSession } from "../storages/authStorage";
-
 type AccessTokenPayload = {
   "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"?: string | string[];
   role?: string | string[];
@@ -41,11 +39,10 @@ function getClaimValues(value: string | string[] | undefined) {
   return typeof value === "string" && value.length > 0 ? [value] : [];
 }
 
-export function getAccessTokenRoles() {
-  const authSession = getAuthSession();
+export function getAccessTokenRoles(accessToken: string | null | undefined, idToken: string | null | undefined) {
   const payloads = [
-    getTokenPayload(authSession?.accessToken),
-    getTokenPayload(authSession?.idToken)
+    getTokenPayload(accessToken),
+    getTokenPayload(idToken)
   ];
 
   return payloads
@@ -63,6 +60,6 @@ export function getAccessTokenRoles() {
     .filter(role => role.length > 0);
 }
 
-export function isSuperAdministrator() {
-  return getAccessTokenRoles().some(role => role.toUpperCase() === "SUPERADMINISTRATOR");
+export function isSuperAdministrator(accessToken: string | null | undefined, idToken: string | null | undefined) {
+  return getAccessTokenRoles(accessToken, idToken).some(role => role.toUpperCase() === "SUPERADMINISTRATOR");
 }

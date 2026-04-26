@@ -1,16 +1,19 @@
 import rawAxios, { AxiosHeaders, type AxiosRequestConfig } from "axios";
-import { getAuthSession } from "../../features/auth/storages/authStorage";
 
 const axios = rawAxios.create();
+let currentAccessToken: string | null = null;
+
+export function setClientAccessToken(accessToken: string | null) {
+  currentAccessToken = accessToken;
+}
 
 axios.interceptors.request.use((config) => {
-  const authSession = getAuthSession();
-  if (authSession == null) {
+  if (currentAccessToken == null) {
     return config;
   }
 
   config.headers = AxiosHeaders.from(config.headers);
-  config.headers.set("Authorization", `Bearer ${authSession.accessToken}`);
+  config.headers.set("Authorization", `Bearer ${currentAccessToken}`);
 
   return config;
 });

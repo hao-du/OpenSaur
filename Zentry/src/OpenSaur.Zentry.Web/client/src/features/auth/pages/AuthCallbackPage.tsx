@@ -1,14 +1,15 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getConfig } from "../../../infrastructure/config/Config";
-import { clearAuthSession, saveAuthSession } from "../storages/authStorage";
 import { clearPkceSession, getPkceSession } from "../storages/pkceStorage";
 import { CenteredCardLayout } from "../../../components/layouts/CenteredCardLayout";
 import { exchangeAuthCode, refreshAuthSession } from "../apis/authApi";
+import { useAuthSession } from "../hooks/AuthContext";
 import { readCallbackResult } from "../services/UriService";
 
 export function AuthCallbackPage() {
   const navigate = useNavigate();
+  const { clearSession, setSession } = useAuthSession();
   const callbackResult = readCallbackResult(window.location.search);
   const [callbackError, setCallbackError] = useState<string | null>(null);
   const [status, setStatus] = useState<"exchanging" | "failed" | "restoring">("exchanging");
@@ -25,12 +26,12 @@ export function AuthCallbackPage() {
       if (callbackResult.error != null) {
         setStatus("failed");
         setCallbackError(callbackResult.errorDescription ?? callbackResult.error);
-        clearAuthSession();
+        clearSession();
         return;
       }
 
       if (callbackResult.code == null) {
-        clearAuthSession();
+        clearSession();
         clearPkceSession();
         navigate("/prepare-session", { replace: true });
         return;
@@ -39,7 +40,7 @@ export function AuthCallbackPage() {
       if (callbackResult.stateMatches !== true) {
         setStatus("failed");
         setCallbackError("Returned OAuth state did not match the stored PKCE state.");
-        clearAuthSession();
+        clearSession();
         return;
       }
 
@@ -51,7 +52,7 @@ export function AuthCallbackPage() {
         if (pkceSession == null) {
           setStatus("failed");
           setCallbackError("Stored PKCE session is missing.");
-          clearAuthSession();
+          clearSession();
           return;
         }
 
@@ -61,14 +62,14 @@ export function AuthCallbackPage() {
           pkceSession.codeVerifier
         );
 
-        saveAuthSession(authSession);
+        setSession(authSession);
         clearPkceSession();
         navigate("/", { replace: true });
       } catch (error) {
         if (config == null) {
           setStatus("failed");
           setCallbackError(getCallbackErrorMessage(error));
-          clearAuthSession();
+          clearSession();
           return;
         }
 
@@ -76,19 +77,19 @@ export function AuthCallbackPage() {
           setStatus("restoring");
           const refreshedSession = await refreshAuthSession(config);
 
-          saveAuthSession(refreshedSession);
+          setSession(refreshedSession);
           clearPkceSession();
           navigate("/", { replace: true });
         } catch {
           setStatus("failed");
           setCallbackError(getCallbackErrorMessage(error));
-          clearAuthSession();
+          clearSession();
         }
       }
     }
 
     void runExchange();
-  }, [callbackResult.code, callbackResult.error, callbackResult.errorDescription, callbackResult.stateMatches, navigate]);
+  }, [callbackResult.code, callbackResult.error, callbackResult.errorDescription, callbackResult.stateMatches, clearSession, navigate, setSession]);
 
   return (
     <CenteredCardLayout

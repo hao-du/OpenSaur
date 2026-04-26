@@ -1,15 +1,19 @@
-import { createContext, useContext, useEffect, useRef, useState, type PropsWithChildren } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type PropsWithChildren } from "react";
 import { useLocation } from "react-router-dom";
 import { refreshAuthSession } from "../apis/authApi";
 import { AuthSessionDto } from "../dtos/AuthSessionDto";
 import { buildLogoutUrl } from "../services/UriService";
-import { clearAuthSession, getAuthSession, saveAuthSession, subscribeAuthStorageChanged } from "../storages/authStorage";
+import { setClientAccessToken } from "../../../infrastructure/http/client";
 import { getConfig } from "../../../infrastructure/config/Config";
 
 type AuthSessionContextValue = {
+  accessToken: string | null;
   authSession: AuthSessionDto | null;
+  clearSession: () => void;
   handleLogout: () => void;
+  idToken: string | null;
   isRestoring: boolean;
+  setSession: (authSession: AuthSessionDto) => void;
 };
 
 const AuthSessionContext = createContext<AuthSessionContextValue | null>(null);
@@ -17,15 +21,27 @@ const refreshBeforeExpiryMs = 2 * 60 * 1000;
 
 export function AuthSessionProvider({ children }: PropsWithChildren) {
   const location = useLocation();
-  const [authSession, setAuthSession] = useState<AuthSessionDto | null>(() => getAuthSession());
-  const [isRestoring, setIsRestoring] = useState(() => authSession == null);
+  const [authSession, setAuthSession] = useState<AuthSessionDto | null>(null);
+  const [accessToken, setAccessToken] = useState<string | null>(null);
+  const [idToken, setIdToken] = useState<string | null>(null);
+  const [isRestoring, setIsRestoring] = useState(true);
   const hasTriedRestore = useRef(false);
 
-  useEffect(() => {
-    return subscribeAuthStorageChanged(() => {
-      setAuthSession(getAuthSession());
-    });
+  const setSession = useCallback((nextAuthSession: AuthSessionDto) => {
+    setAccessToken(nextAuthSession.accessToken);
+    setIdToken(nextAuthSession.idToken);
+    setAuthSession(nextAuthSession);
   }, []);
+
+  const clearSession = useCallback(() => {
+    setAccessToken(null);
+    setIdToken(null);
+    setAuthSession(null);
+  }, []);
+
+  useEffect(() => {
+    setClientAccessToken(accessToken);
+  }, [accessToken]);
 
   useEffect(() => {
     if (location.pathname === "/auth/callback") {
@@ -49,15 +65,13 @@ export function AuthSessionProvider({ children }: PropsWithChildren) {
           return;
         }
 
-        saveAuthSession(refreshedSession);
-        setAuthSession(refreshedSession);
+        setSession(refreshedSession);
       } catch {
         if (!isMounted) {
           return;
         }
 
-        clearAuthSession();
-        setAuthSession(null);
+        clearSession();
       } finally {
         if (isMounted && isRestore) {
           setIsRestoring(false);
@@ -89,16 +103,26 @@ export function AuthSessionProvider({ children }: PropsWithChildren) {
         window.clearTimeout(timeoutId);
       }
     };
-  }, [authSession, location.pathname]);
+  }, [authSession, clearSession, location.pathname, setSession]);
 
-  function handleLogout() {
+  const handleLogout = useCallback(() => {
     const currentSession = authSession;
-    clearAuthSession(true);
+    clearSession();
     window.location.assign(buildLogoutUrl(getConfig(), currentSession?.idToken));
-  }
+  }, [authSession, clearSession]);
+
+  const contextValue = useMemo<AuthSessionContextValue>(() => ({
+    accessToken,
+    authSession,
+    clearSession,
+    handleLogout,
+    idToken,
+    isRestoring,
+    setSession
+  }), [accessToken, authSession, clearSession, handleLogout, idToken, isRestoring, setSession]);
 
   return (
-    <AuthSessionContext.Provider value={{ authSession, handleLogout, isRestoring }}>
+    <AuthSessionContext.Provider value={contextValue}>
       {children}
     </AuthSessionContext.Provider>
   );

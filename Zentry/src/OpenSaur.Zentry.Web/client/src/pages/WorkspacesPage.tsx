@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { DefaultLayout } from "../components/layouts/DefaultLayout";
 import { getConfig } from "../infrastructure/config/Config";
-import { clearAuthSession } from "../features/auth/storages/authStorage";
+import { useAuthSession } from "../features/auth/hooks/AuthContext";
 import { buildAuthorizeUrl } from "../features/auth/services/UriService";
 import { WorkspaceFiltersDrawer, type WorkspaceFilterValues } from "../features/workspaces/components/WorkspaceFiltersDrawer";
 import { WorkspaceFormDrawer } from "../features/workspaces/components/WorkspaceFormDrawer";
@@ -17,6 +17,7 @@ import { layoutStyles } from "../infrastructure/theme/theme";
 
 export function WorkspacesPage() {
   const navigate = useNavigate();
+  const { clearSession } = useAuthSession();
   const [filters, setFilters] = useState<WorkspaceFilterValues>({
     search: "",
     status: "active"
@@ -66,9 +67,9 @@ export function WorkspacesPage() {
       return;
     }
 
-    clearAuthSession();
+    clearSession();
     navigate("/prepare-session", { replace: true });
-  }, [isUnauthorized, navigate]);
+  }, [clearSession, isUnauthorized, navigate]);
 
   useEffect(() => {
     if (!isForbidden) {
