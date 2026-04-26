@@ -22,7 +22,19 @@ public sealed class EndSessionRevocationService(
 
         var applicationId = await ResolveApplicationIdAsync(clientId, cancellationToken);
 
-        await foreach (var authorization in authorizationManager.FindBySubjectAsync(subject, cancellationToken))
+        var authorizations = new List<object>();
+        await foreach (var authorization in authorizationManager.FindAsync(
+            subject,
+            client: null,
+            OpenIddictConstants.Statuses.Valid,
+            type: null,
+            scopes: null,
+            cancellationToken))
+        {
+            authorizations.Add(authorization);
+        }
+
+        foreach (var authorization in authorizations)
         {
             if (!await MatchesApplicationAsync(
                     applicationId,
@@ -36,7 +48,18 @@ public sealed class EndSessionRevocationService(
             await authorizationManager.TryRevokeAsync(authorization, cancellationToken);
         }
 
-        await foreach (var token in tokenManager.FindBySubjectAsync(subject, cancellationToken))
+        var tokens = new List<object>();
+        await foreach (var token in tokenManager.FindAsync(
+            subject,
+            client: null,
+            OpenIddictConstants.Statuses.Valid,
+            type: null,
+            cancellationToken))
+        {
+            tokens.Add(token);
+        }
+
+        foreach (var token in tokens)
         {
             if (!await MatchesApplicationAsync(
                     applicationId,

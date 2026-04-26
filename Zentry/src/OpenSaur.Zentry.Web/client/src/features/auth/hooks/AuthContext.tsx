@@ -107,9 +107,8 @@ export function AuthSessionProvider({ children }: PropsWithChildren) {
 
   const handleLogout = useCallback(() => {
     const currentSession = authSession;
-    clearSession();
     window.location.assign(buildLogoutUrl(getConfig(), currentSession?.idToken));
-  }, [authSession, clearSession]);
+  }, [authSession]);
 
   const contextValue = useMemo<AuthSessionContextValue>(() => ({
     accessToken,
