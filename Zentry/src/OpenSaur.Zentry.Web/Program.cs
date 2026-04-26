@@ -78,6 +78,7 @@ var app = builder.Build();
 
 app.UseExceptionHandler();
 app.UseClientAbortedRequestHandling();
+app.UseSecurityHeaders(oidcOptions, app.Environment);
 app.UseDefaultFiles();
 app.UseStaticFiles();
 app.UseAuthentication();

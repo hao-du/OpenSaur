@@ -13,6 +13,7 @@ type AuthSessionContextValue = {
 };
 
 const AuthSessionContext = createContext<AuthSessionContextValue | null>(null);
+const refreshBeforeExpiryMs = 2 * 60 * 1000;
 
 export function AuthSessionProvider({ children }: PropsWithChildren) {
   const location = useLocation();
@@ -27,22 +28,20 @@ export function AuthSessionProvider({ children }: PropsWithChildren) {
   }, []);
 
   useEffect(() => {
-    if (location.pathname === "/auth/callback" || authSession != null) {
+    if (location.pathname === "/auth/callback") {
       hasTriedRestore.current = false;
       setIsRestoring(false);
       return;
     }
 
-    if (hasTriedRestore.current) {
-      setIsRestoring(false);
-      return;
-    }
-
     let isMounted = true;
+    let timeoutId: number | undefined;
 
-    async function restoreAuthSession() {
-      hasTriedRestore.current = true;
-      setIsRestoring(true);
+    async function refreshSession(isRestore: boolean) {
+      if (isRestore) {
+        hasTriedRestore.current = true;
+        setIsRestoring(true);
+      }
 
       try {
         const refreshedSession = await refreshAuthSession(getConfig());
@@ -60,16 +59,35 @@ export function AuthSessionProvider({ children }: PropsWithChildren) {
         clearAuthSession();
         setAuthSession(null);
       } finally {
-        if (isMounted) {
+        if (isMounted && isRestore) {
           setIsRestoring(false);
         }
       }
     }
 
-    void restoreAuthSession();
+    if (authSession == null) {
+      if (hasTriedRestore.current) {
+        setIsRestoring(false);
+      } else {
+        void refreshSession(true);
+      }
+    } else {
+      hasTriedRestore.current = false;
+      setIsRestoring(false);
+
+      const expiresAt = Date.parse(authSession.expiresAt);
+      const refreshDelay = Math.max(expiresAt - Date.now() - refreshBeforeExpiryMs, 0);
+
+      timeoutId = window.setTimeout(() => {
+        void refreshSession(false);
+      }, refreshDelay);
+    }
 
     return () => {
       isMounted = false;
+      if (timeoutId !== undefined) {
+        window.clearTimeout(timeoutId);
+      }
     };
   }, [authSession, location.pathname]);
 

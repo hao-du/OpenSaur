@@ -74,6 +74,7 @@ public static class OpenIddictServiceCollectionExtensions
                 options.SetTokenEndpointUris("connect/token");
                 options.SetEndSessionEndpointUris("connect/endsession");
                 options.SetUserInfoEndpointUris("connect/userinfo");
+                options.SetAccessTokenLifetime(TimeSpan.FromMinutes(15));
                 options.AllowAuthorizationCodeFlow()
                     .AllowRefreshTokenFlow();
                 options.RequireProofKeyForCodeExchange();
