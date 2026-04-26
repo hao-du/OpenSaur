@@ -1,22 +1,21 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using OpenSaur.CoreGate.Web.Domain.Identity;
-using OpenSaur.CoreGate.Web.Features.Auth.Services;
 using OpenSaur.CoreGate.Web.Infrastructure.Database;
 using OpenSaur.CoreGate.Web.Infrastructure.Security;
 using System.Security.Claims;
-using static OpenIddict.Abstractions.OpenIddictConstants;
 
-namespace OpenSaur.CoreGate.Web.Features.Auth.Handlers;
+namespace OpenSaur.CoreGate.Web.Features.Auth.Services;
 
-public static class UserTokenPrincipalBuilder
+public class ClaimService(
+    ApplicationDbContext dbContext,
+    UserRolePermissionService authorizationDataService,
+    UserManager<ApplicationUser> userManager
+)
 {
-    public static async Task<ClaimsPrincipal?> BuildUserClaimPrincipalAsync(
+    public async Task<ClaimsPrincipal?> BuildUserClaimPrincipalAsync(
         ClaimsPrincipal sourcePrincipal,
         IEnumerable<string> requestedScopes,
-        ApplicationDbContext dbContext,
-        UserRolePermissionService authorizationDataService,
-        UserManager<ApplicationUser> userManager,
         CancellationToken cancellationToken
     )
     {

@@ -11,9 +11,7 @@ namespace OpenSaur.CoreGate.Web.Features.Auth.Handlers.OpenIddict;
 
 public class TokenHandler(
     IHttpContextAccessor httpContextAccessor,
-    ApplicationDbContext dbContext,
-    UserRolePermissionService authorizationDataService,
-    UserManager<ApplicationUser> userManager
+    ClaimService claimService
 )
 {
     public async Task<IResult> HandleTokenAsync()
@@ -43,12 +41,9 @@ public class TokenHandler(
         }
 
         // Refresh claims from the shared identity data before returning the final token response.
-        var principal = await UserTokenPrincipalBuilder.BuildUserClaimPrincipalAsync(
+        var principal = await claimService.BuildUserClaimPrincipalAsync(
             authenticateResult.Principal,
             authenticateResult.Principal.GetScopes(),
-            dbContext,
-            authorizationDataService,
-            userManager,
             httpContext.RequestAborted);
 
         return principal is null

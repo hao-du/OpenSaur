@@ -22,6 +22,7 @@ public static class AuthFeatureServiceCollectionExtensions
 
         services.AddScoped<UserRolePermissionService>();
         services.AddScoped<CookieService>();
+        services.AddScoped<ClaimService>();
         services.AddScoped<EndSessionRevocationService>();
         services.AddScoped<TokenService>();
         return services;
