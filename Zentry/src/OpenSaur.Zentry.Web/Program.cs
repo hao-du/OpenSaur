@@ -62,7 +62,7 @@ builder.Services.AddAuthentication(options =>
     options.DefaultAuthenticateScheme = OpenIddictValidationAspNetCoreDefaults.AuthenticationScheme;
     options.DefaultChallengeScheme = OpenIddictValidationAspNetCoreDefaults.AuthenticationScheme;
 });
-builder.Services.AddAuthorization(SuperAdminAuthorization.ConfigurePolicy);
+builder.Services.AddAuthorization(AppAuthorization.ConfigurePolicies);
 builder.Services.AddScoped<IValidator<CreateOidcClientRequest>, CreateOidcClientRequestValidator>();
 builder.Services.AddScoped<IValidator<EditOidcClientRequest>, EditOidcClientRequestValidator>();
 builder.Services.AddScoped<IValidator<CreateWorkspaceRequest>, CreateWorkspaceRequestValidator>();
@@ -71,6 +71,7 @@ builder.Services.AddScoped<IValidator<CreateRoleRequest>, CreateRoleRequestValid
 builder.Services.AddScoped<IValidator<EditRoleRequest>, EditRoleRequestValidator>();
 builder.Services.AddScoped<PermissionService>();
 builder.Services.AddScoped<RoleService>();
+builder.Services.AddScoped<SideMenuService>();
 builder.Services.AddScoped<WorkspaceService>();
 builder.Services.AddProblemDetails();
 

@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { DefaultLayout } from "../../../components/layouts/DefaultLayout";
 import { useAuthSession } from "../../auth/hooks/AuthContext";
+import { useCurrentProfileQuery } from "../../profile/hooks/useCurrentProfileQuery";
 import { layoutStyles } from "../../../infrastructure/theme/theme";
 import { RoleFiltersDrawer, type RoleFilterValues } from "../components/RoleFiltersDrawer";
 import { RoleFormDrawer } from "../components/RoleFormDrawer";
@@ -17,6 +18,8 @@ import type { RoleFormValues } from "../components/RoleForm";
 export function RolesPage() {
   const navigate = useNavigate();
   const { clearSession } = useAuthSession();
+  const { data: currentProfile } = useCurrentProfileQuery();
+  const canEditRoles = currentProfile?.canEditRoles === true;
   const [filters, setFilters] = useState<RoleFilterValues>({
     search: "",
     status: "active"
@@ -39,7 +42,7 @@ export function RolesPage() {
   const {
     data: permissions = [],
     isLoading: isPermissionsLoading
-  } = usePermissionsQuery();
+  } = usePermissionsQuery(canEditRoles);
   const {
     createRole,
     errorMessage: createErrorMessage,
@@ -124,18 +127,21 @@ export function RolesPage() {
               Filter
             </Button>
           </Stack>
-          <Button
-            onClick={() => {
-              resetCreateError();
-              setIsCreateDrawerOpen(true);
-            }}
-            sx={layoutStyles.responsiveActionButton}
-            variant="contained"
-          >
-            Create
-          </Button>
+          {canEditRoles ? (
+            <Button
+              onClick={() => {
+                resetCreateError();
+                setIsCreateDrawerOpen(true);
+              }}
+              sx={layoutStyles.responsiveActionButton}
+              variant="contained"
+            >
+              Create
+            </Button>
+          ) : null}
         </Stack>
         <RolesTable
+          canEditRoles={canEditRoles}
           isError={isError}
           isLoading={isLoading}
           onEditRole={roleId => {
@@ -160,31 +166,35 @@ export function RolesPage() {
           setIsFilterDrawerOpen(false);
         }}
       />
-      <RoleFormDrawer
-        errorMessage={createErrorMessage}
-        isEditMode={false}
-        isLoading={isPermissionsLoading}
-        isOpen={isCreateDrawerOpen}
-        isSubmitting={isCreating}
-        onClose={() => {
-          setIsCreateDrawerOpen(false);
-        }}
-        onSubmit={handleCreateRole}
-        permissions={permissions}
-      />
-      <RoleFormDrawer
-        errorMessage={editErrorMessage}
-        initialValues={selectedRole}
-        isEditMode
-        isLoading={isPermissionsLoading || isSelectedRoleLoading}
-        isOpen={selectedRoleId !== null}
-        isSubmitting={isEditing}
-        onClose={() => {
-          setSelectedRoleId(null);
-        }}
-        onSubmit={handleEditRole}
-        permissions={permissions}
-      />
+      {canEditRoles ? (
+        <>
+          <RoleFormDrawer
+            errorMessage={createErrorMessage}
+            isEditMode={false}
+            isLoading={isPermissionsLoading}
+            isOpen={isCreateDrawerOpen}
+            isSubmitting={isCreating}
+            onClose={() => {
+              setIsCreateDrawerOpen(false);
+            }}
+            onSubmit={handleCreateRole}
+            permissions={permissions}
+          />
+          <RoleFormDrawer
+            errorMessage={editErrorMessage}
+            initialValues={selectedRole}
+            isEditMode
+            isLoading={isPermissionsLoading || isSelectedRoleLoading}
+            isOpen={selectedRoleId !== null}
+            isSubmitting={isEditing}
+            onClose={() => {
+              setSelectedRoleId(null);
+            }}
+            onSubmit={handleEditRole}
+            permissions={permissions}
+          />
+        </>
+      ) : null}
     </DefaultLayout>
   );
 }

@@ -12,46 +12,22 @@ import {
   KeyRound,
   LayoutDashboard,
   Shield,
-  UserRound
+  UserRound,
+  type LucideIcon
 } from "lucide-react";
 import { EyebrowText } from "../atoms/EyebrowText";
 import { MetaText } from "../atoms/MetaText";
-import { AppIcon, type AppIconType } from "../icons/AppIcon";
+import { AppIcon } from "../icons/AppIcon";
 import { layoutStyles } from "../../infrastructure/theme/theme";
+import { useCurrentProfileQuery } from "../../features/profile/hooks/useCurrentProfileQuery";
 
-type NavigationItem = {
-  icon: AppIconType;
-  label: string;
-  path: string;
+const navigationIcons: Record<string, LucideIcon> = {
+  "building-2": Building2,
+  dashboard: LayoutDashboard,
+  "key-round": KeyRound,
+  shield: Shield,
+  "user-round": UserRound
 };
-
-const navigationItems: NavigationItem[] = [
-  {
-    icon: LayoutDashboard,
-    label: "Dashboard",
-    path: "/"
-  },
-  {
-    icon: KeyRound,
-    label: "OIDC Clients",
-    path: "/oidc-clients"
-  },
-  {
-    icon: Building2,
-    label: "Workspaces",
-    path: "/workspaces"
-  },
-  {
-    icon: UserRound,
-    label: "Users",
-    path: "/users"
-  },
-  {
-    icon: Shield,
-    label: "Roles",
-    path: "/roles"
-  }
-];
 
 type SideMenuProps = {
   currentYear: number;
@@ -60,6 +36,8 @@ type SideMenuProps = {
 export function SideMenu({ currentYear }: SideMenuProps) {
   const location = useLocation();
   const navigate = useNavigate();
+  const { data: currentProfile } = useCurrentProfileQuery();
+  const navigationItems = currentProfile?.navigationItems ?? [];
 
   return (
     <Box sx={layoutStyles.sidebarContainer}>
@@ -77,7 +55,7 @@ export function SideMenu({ currentYear }: SideMenuProps) {
         sx={layoutStyles.navList}
       >
         {navigationItems.map(item => {
-          const Icon = item.icon;
+          const Icon = navigationIcons[item.icon] ?? LayoutDashboard;
 
           return (
             <ListItemButton

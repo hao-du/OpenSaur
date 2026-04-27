@@ -13,7 +13,7 @@ public static class WorkspaceEndpoints
     public static IEndpointRouteBuilder MapWorkspaceEndpoints(this IEndpointRouteBuilder app)
     {
         var workspaces = app.MapGroup("/api/workspace")
-            .RequireAuthorization(SuperAdminAuthorization.PolicyName);
+            .RequireAuthorization(AppAuthorization.SuperAdminOnlyPolicyName);
 
         workspaces.MapGet("/get", GetWorkspacesHandler.HandleAsync);
         workspaces.MapGet("/getbyid/{id:guid}", GetWorkspaceByIdHandler.HandleAsync);

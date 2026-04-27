@@ -12,7 +12,7 @@ public static class OidcClientEndpoints
     public static IEndpointRouteBuilder MapOidcClientEndpoints(this IEndpointRouteBuilder app)
     {
         var oidcClients = app.MapGroup("/api/oidc-client")
-            .RequireAuthorization(SuperAdminAuthorization.PolicyName);
+            .RequireAuthorization(AppAuthorization.SuperAdminOnlyPolicyName);
 
         oidcClients.MapGet("/get", GetOidcClientsHandler.HandleAsync);
         oidcClients.MapGet("/getbyid/{id:guid}", GetOidcClientByIdHandler.HandleAsync);

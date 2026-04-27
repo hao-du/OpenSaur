@@ -8,7 +8,7 @@ public static class PermissionEndpoints
     public static IEndpointRouteBuilder MapPermissionEndpoints(this IEndpointRouteBuilder app)
     {
         var permissions = app.MapGroup("/api/permission")
-            .RequireAuthorization(SuperAdminAuthorization.PolicyName);
+            .RequireAuthorization(AppAuthorization.SuperAdminOnlyPolicyName);
 
         permissions.MapGet("/get", GetPermissionsHandler.HandleAsync);
 

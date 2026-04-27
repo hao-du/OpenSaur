@@ -4,6 +4,7 @@ import type { RoleSummaryDto } from "../dtos/RoleSummaryDto";
 const normalizedSuperAdministrator = "SUPER ADMINISTRATOR";
 
 type RolesTableProps = {
+  canEditRoles: boolean;
   isError: boolean;
   isLoading: boolean;
   onEditRole: (roleId: string) => void;
@@ -12,6 +13,7 @@ type RolesTableProps = {
 };
 
 export function RolesTable({
+  canEditRoles,
   isError,
   isLoading,
   onEditRole,
@@ -83,7 +85,7 @@ export function RolesTable({
                   />
                 </TableCell>
                 <TableCell align="right">
-                  {role.normalizedName === normalizedSuperAdministrator ? null : (
+                  {canEditRoles && role.normalizedName !== normalizedSuperAdministrator ? (
                     <Button
                       onClick={() => {
                         onEditRole(role.id);
@@ -93,7 +95,7 @@ export function RolesTable({
                     >
                       Edit
                     </Button>
-                  )}
+                  ) : null}
                 </TableCell>
               </TableRow>
             ))}

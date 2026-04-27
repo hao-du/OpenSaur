@@ -17,4 +17,12 @@ public static class StringHelper
 
         return JsonSerializer.Deserialize<string[]>(json) ?? [];
     }
+
+    public static string NormalizeRoleValue(string value)
+    {
+        return new string(value
+            .Where(char.IsLetterOrDigit)
+            .Select(char.ToUpperInvariant)
+            .ToArray());
+    }
 }

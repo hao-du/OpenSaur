@@ -11,12 +11,16 @@ public static class RoleEndpoints
     public static IEndpointRouteBuilder MapRoleEndpoints(this IEndpointRouteBuilder app)
     {
         var roles = app.MapGroup("/api/role")
-            .RequireAuthorization(SuperAdminAuthorization.PolicyName);
+            .RequireAuthorization();
 
-        roles.MapGet("/get", GetRolesHandler.HandleAsync);
-        roles.MapGet("/getbyid/{id:guid}", GetRoleByIdHandler.HandleAsync);
-        roles.MapPost("/create", CreateRoleHandler.HandleAsync);
-        roles.MapPut("/edit", EditRoleHandler.HandleAsync);
+        roles.MapGet("/get", GetRolesHandler.HandleAsync)
+            .RequireAuthorization(AppAuthorization.AdminCanManageOrSuperAdminPolicyName);
+        roles.MapGet("/getbyid/{id:guid}", GetRoleByIdHandler.HandleAsync)
+            .RequireAuthorization(AppAuthorization.AdminCanManageOrSuperAdminPolicyName);
+        roles.MapPost("/create", CreateRoleHandler.HandleAsync)
+            .RequireAuthorization(AppAuthorization.SuperAdminOnlyPolicyName);
+        roles.MapPut("/edit", EditRoleHandler.HandleAsync)
+            .RequireAuthorization(AppAuthorization.SuperAdminOnlyPolicyName);
 
         return app;
     }
