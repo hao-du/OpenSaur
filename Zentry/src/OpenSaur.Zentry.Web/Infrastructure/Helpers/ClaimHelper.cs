@@ -8,6 +8,7 @@ internal static class ClaimHelper
     public const string WorkspaceIdClaimType = "workspace_id";
     public const string PermissionClaimType = "permissions";
     public const string RoleClaimType = "roles";
+    public const string ImpersonationOriginalUserIdClaimType = "impersonation_original_user_id";
 
     public static Guid GetCurrentUserId(ClaimsPrincipal user)
     {
@@ -27,10 +28,22 @@ internal static class ClaimHelper
 
     public static bool IsSuperAdministrator(ClaimsPrincipal user)
     {
+        if (IsImpersonating(user))
+        {
+            return false;
+        }
+
         var isSuperAdmin = user.FindAll(RoleClaimType)
             .Any(claim => StringHelper.NormalizeRoleValue(claim.Value) == StringHelper.NormalizeRoleValue(Constants.NormalizedSuperAdministrator));
 
         return isSuperAdmin;
+    }
+
+    public static bool IsImpersonating(ClaimsPrincipal user)
+    {
+        return user.HasClaim(claim =>
+            claim.Type == ImpersonationOriginalUserIdClaimType
+            && !string.IsNullOrWhiteSpace(claim.Value));
     }
 
     public static bool HasPermission(ClaimsPrincipal user, string permissionCode)

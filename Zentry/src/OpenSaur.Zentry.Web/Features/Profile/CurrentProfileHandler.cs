@@ -9,8 +9,6 @@ namespace OpenSaur.Zentry.Web.Features.Profile;
 
 public static class CurrentProfileHandler
 {
-    private const string ImpersonationOriginalUserIdClaimType = "impersonation_original_user_id";
-
     public static async Task<Ok<CurrentProfileResponse>> HandleAsync(
         ClaimsPrincipal user,
         ApplicationDbContext dbContext,
@@ -42,9 +40,7 @@ public static class CurrentProfileHandler
         var isSuperAdministrator = ClaimHelper.IsSuperAdministrator(user);
         var canAssignUsers = ClaimHelper.HasPermission(user, Constants.Permissions.Administration.CanManage);
         var canEditRoles = isSuperAdministrator;
-        var isImpersonating = user.HasClaim(claim =>
-            claim.Type == ImpersonationOriginalUserIdClaimType
-            && !string.IsNullOrWhiteSpace(claim.Value));
+        var isImpersonating = ClaimHelper.IsImpersonating(user);
         var workspaceName = isSuperAdministrator && !isImpersonating
             ? "All workspaces"
             : "Protected workspace";
