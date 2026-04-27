@@ -2,7 +2,11 @@ using OpenSaur.Zentry.Web.Features.Roles.CreateRole;
 using OpenSaur.Zentry.Web.Features.Roles.EditRole;
 using OpenSaur.Zentry.Web.Features.Roles.GetRoleById;
 using OpenSaur.Zentry.Web.Features.Roles.GetRoles;
+using OpenSaur.Zentry.Web.Features.Roles.GetRoleUsers;
+using OpenSaur.Zentry.Web.Features.Roles.UpdateRoleUsers;
 using OpenSaur.Zentry.Web.Infrastructure.Auth;
+using OpenSaur.Zentry.Web.Infrastructure.Database;
+using System.Security.Claims;
 
 namespace OpenSaur.Zentry.Web.Features.Roles;
 
@@ -16,6 +20,11 @@ public static class RoleEndpoints
         roles.MapGet("/get", GetRolesHandler.HandleAsync)
             .RequireAuthorization(AppAuthorization.AdminCanManageOrSuperAdminPolicyName);
         roles.MapGet("/getbyid/{id:guid}", GetRoleByIdHandler.HandleAsync)
+            .RequireAuthorization(AppAuthorization.AdminCanManageOrSuperAdminPolicyName);
+        roles.MapGet("/{roleId:guid}/users", GetRoleUsersHandler.HandleAsync)
+            .RequireAuthorization(AppAuthorization.AdminCanManageOrSuperAdminPolicyName);
+        roles.MapPut("/{roleId:guid}/users", (Guid roleId, UpdateRoleUsersRequest request, ClaimsPrincipal user, ApplicationDbContext dbContext, CancellationToken cancellationToken) =>
+                UpdateRoleUsersHandler.HandleAsync(request with { RoleId = roleId }, user, dbContext, cancellationToken))
             .RequireAuthorization(AppAuthorization.AdminCanManageOrSuperAdminPolicyName);
         roles.MapPost("/create", CreateRoleHandler.HandleAsync)
             .RequireAuthorization(AppAuthorization.SuperAdminOnlyPolicyName);

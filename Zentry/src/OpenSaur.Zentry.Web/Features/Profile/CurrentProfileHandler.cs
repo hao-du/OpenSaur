@@ -40,8 +40,7 @@ public static class CurrentProfileHandler
         }
 
         var isSuperAdministrator = ClaimHelper.IsSuperAdministrator(user);
-        var canAssignUsers = isSuperAdministrator
-            || ClaimHelper.HasPermission(user, Constants.Permissions.Administration.CanManage);
+        var canAssignUsers = ClaimHelper.HasPermission(user, Constants.Permissions.Administration.CanManage);
         var canEditRoles = isSuperAdministrator;
         var isImpersonating = user.HasClaim(claim =>
             claim.Type == ImpersonationOriginalUserIdClaimType

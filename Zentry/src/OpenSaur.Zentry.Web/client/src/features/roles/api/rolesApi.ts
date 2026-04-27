@@ -5,6 +5,8 @@ import type { EditRoleRequestDto } from "../dtos/EditRoleRequestDto";
 import type { PermissionSummaryDto } from "../dtos/PermissionSummaryDto";
 import type { RoleDetailsDto } from "../dtos/RoleDetailsDto";
 import type { RoleSummaryDto } from "../dtos/RoleSummaryDto";
+import type { RoleUsersDto } from "../dtos/RoleUsersDto";
+import type { UpdateRoleUsersRequestDto } from "../dtos/UpdateRoleUsersRequestDto";
 
 export async function getRoles() {
   return client.get<RoleSummaryDto[]>("/api/role/get");
@@ -24,4 +26,12 @@ export async function createRole(request: CreateRoleRequestDto) {
 
 export async function editRole(request: EditRoleRequestDto) {
   await client.put("/api/role/edit", request);
+}
+
+export async function getRoleUsers(roleId: string) {
+  return client.get<RoleUsersDto>(`/api/role/${roleId}/users`);
+}
+
+export async function updateRoleUsers(roleId: string, request: UpdateRoleUsersRequestDto) {
+  await client.put<void, UpdateRoleUsersRequestDto>(`/api/role/${roleId}/users`, request);
 }

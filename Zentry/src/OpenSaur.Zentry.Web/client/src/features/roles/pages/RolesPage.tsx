@@ -7,12 +7,15 @@ import { useCurrentProfileQuery } from "../../profile/hooks/useCurrentProfileQue
 import { layoutStyles } from "../../../infrastructure/theme/theme";
 import { RoleFiltersDrawer, type RoleFilterValues } from "../components/RoleFiltersDrawer";
 import { RoleFormDrawer } from "../components/RoleFormDrawer";
+import { RoleUsersDrawer } from "../components/RoleUsersDrawer";
 import { RolesTable } from "../components/RolesTable";
 import { useCreateRole } from "../hooks/useCreateRole";
 import { useEditRole } from "../hooks/useEditRole";
 import { usePermissionsQuery } from "../hooks/usePermissionsQuery";
 import { useRoleQuery } from "../hooks/useRoleQuery";
 import { useRolesQuery } from "../hooks/useRolesQuery";
+import { useRoleUsersQuery } from "../hooks/useRoleUsersQuery";
+import { useUpdateRoleUsers } from "../hooks/useUpdateRoleUsers";
 import type { RoleFormValues } from "../components/RoleForm";
 
 export function RolesPage() {
@@ -20,6 +23,7 @@ export function RolesPage() {
   const { clearSession } = useAuthSession();
   const { data: currentProfile } = useCurrentProfileQuery();
   const canEditRoles = currentProfile?.canEditRoles === true;
+  const canAssignUsers = currentProfile?.canAssignUsers === true && !canEditRoles;
   const [filters, setFilters] = useState<RoleFilterValues>({
     search: "",
     status: "active"
@@ -27,6 +31,7 @@ export function RolesPage() {
   const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
   const [isCreateDrawerOpen, setIsCreateDrawerOpen] = useState(false);
   const [selectedRoleId, setSelectedRoleId] = useState<string | null>(null);
+  const [selectedRoleUsersRoleId, setSelectedRoleUsersRoleId] = useState<string | null>(null);
   const {
     data: roles = [],
     isForbidden,
@@ -44,6 +49,10 @@ export function RolesPage() {
     isLoading: isPermissionsLoading
   } = usePermissionsQuery(canEditRoles);
   const {
+    data: roleUsers,
+    isLoading: isRoleUsersLoading
+  } = useRoleUsersQuery(selectedRoleUsersRoleId);
+  const {
     createRole,
     errorMessage: createErrorMessage,
     isCreating,
@@ -55,6 +64,12 @@ export function RolesPage() {
     isEditing,
     resetError: resetEditError
   } = useEditRole();
+  const {
+    errorMessage: updateRoleUsersErrorMessage,
+    isUpdating: isUpdatingRoleUsers,
+    resetError: resetUpdateRoleUsersError,
+    updateRoleUsers
+  } = useUpdateRoleUsers();
   const filteredRoles = useMemo(() => {
     const normalizedSearch = filters.search.trim().toLowerCase();
 
@@ -141,9 +156,14 @@ export function RolesPage() {
           ) : null}
         </Stack>
         <RolesTable
+          canAssignUsers={canAssignUsers}
           canEditRoles={canEditRoles}
           isError={isError}
           isLoading={isLoading}
+          onAssignUsers={roleId => {
+            resetUpdateRoleUsersError();
+            setSelectedRoleUsersRoleId(roleId);
+          }}
           onEditRole={roleId => {
             resetEditError();
             setSelectedRoleId(roleId);
@@ -194,6 +214,29 @@ export function RolesPage() {
             permissions={permissions}
           />
         </>
+      ) : null}
+      {canAssignUsers ? (
+        <RoleUsersDrawer
+          errorMessage={updateRoleUsersErrorMessage}
+          isLoading={isRoleUsersLoading}
+          isOpen={selectedRoleUsersRoleId !== null}
+          isSubmitting={isUpdatingRoleUsers}
+          onClose={() => {
+            setSelectedRoleUsersRoleId(null);
+          }}
+          onSubmit={async userIds => {
+            if (selectedRoleUsersRoleId == null) {
+              return;
+            }
+
+            await updateRoleUsers({
+              request: { userIds },
+              roleId: selectedRoleUsersRoleId
+            });
+            setSelectedRoleUsersRoleId(null);
+          }}
+          roleUsers={roleUsers}
+        />
       ) : null}
     </DefaultLayout>
   );

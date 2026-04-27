@@ -4,18 +4,22 @@ import type { RoleSummaryDto } from "../dtos/RoleSummaryDto";
 const normalizedSuperAdministrator = "SUPER ADMINISTRATOR";
 
 type RolesTableProps = {
+  canAssignUsers: boolean;
   canEditRoles: boolean;
   isError: boolean;
   isLoading: boolean;
+  onAssignUsers: (roleId: string) => void;
   onEditRole: (roleId: string) => void;
   onRetry?: () => void;
   roles: RoleSummaryDto[];
 };
 
 export function RolesTable({
+  canAssignUsers,
   canEditRoles,
   isError,
   isLoading,
+  onAssignUsers,
   onEditRole,
   onRetry,
   roles
@@ -85,6 +89,18 @@ export function RolesTable({
                   />
                 </TableCell>
                 <TableCell align="right">
+                  {canAssignUsers ? (
+                    <Button
+                      onClick={() => {
+                        onAssignUsers(role.id);
+                      }}
+                      size="small"
+                      sx={{ mr: canEditRoles ? 1 : 0 }}
+                      variant="outlined"
+                    >
+                      Assign Users
+                    </Button>
+                  ) : null}
                   {canEditRoles && role.normalizedName !== normalizedSuperAdministrator ? (
                     <Button
                       onClick={() => {
