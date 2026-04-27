@@ -12,13 +12,18 @@ internal static class ClaimPrincipalHelpers
         return principal.FindFirstValue(ClaimTypes.Subject)
                ?? principal.FindFirstValue(ClaimTypes.NameIdentifier);
     }
+    public static string? GetWorkspaceId(ClaimsPrincipal principal)
+    {
+        return principal.FindFirstValue(ClaimTypes.WorkspaceId);
+    }
 
     public static ClaimsPrincipal Create(
         ApplicationUser user,
         IEnumerable<string> normalizedRoles,
         IEnumerable<string> permissionCodes,
         IEnumerable<string> scopes,
-        string? impersonationOriginalUserId = null)
+        string? impersonationOriginalUserId = null,
+        string? workspaceId = null)
     {
         var identity = new ClaimsIdentity(
             TokenValidationParameters.DefaultAuthenticationType,
@@ -28,7 +33,7 @@ internal static class ClaimPrincipalHelpers
         identity.AddClaim(new Claim(ClaimTypes.Subject, user.Id.ToString()));
         identity.AddClaim(new Claim(ClaimTypes.Name, user.UserName ?? string.Empty));
         identity.AddClaim(new Claim(ClaimTypes.PreferredUserName, user.UserName ?? string.Empty));
-        identity.AddClaim(new Claim(ClaimTypes.WorkspaceId, user.WorkspaceId.ToString()));
+        identity.AddClaim(new Claim(ClaimTypes.WorkspaceId, string.IsNullOrWhiteSpace(workspaceId) ? user.WorkspaceId.ToString() : workspaceId));
         identity.AddClaim(new Claim(
             ClaimTypes.RequirePasswordChange,
             user.RequirePasswordChange.ToString().ToLowerInvariant()));

@@ -19,6 +19,7 @@ public class ClaimService(
         ClaimsPrincipal sourcePrincipal,
         IEnumerable<string> requestedScopes,
         string? impersonatedUserId,
+        string? workspaceId,
         CancellationToken cancellationToken
     )
     {
@@ -47,9 +48,22 @@ public class ClaimService(
             return null;
         }
 
+        Guid assignedWorkspaceId = Guid.Empty;
+        if (!string.IsNullOrWhiteSpace(workspaceId))
+        {
+            assignedWorkspaceId = Guid.Parse(workspaceId);
+        }
+        else if (!string.IsNullOrWhiteSpace(ClaimPrincipalHelpers.GetWorkspaceId(sourcePrincipal)))
+        {
+            assignedWorkspaceId = Guid.Parse(ClaimPrincipalHelpers.GetWorkspaceId(sourcePrincipal)!);
+        }
+        else
+        {
+            assignedWorkspaceId = user.WorkspaceId;
+        }
         var workspace = await dbContext.Workspaces
             .AsNoTracking()
-            .FirstOrDefaultAsync(candidate => candidate.Id == user.WorkspaceId && candidate.IsActive, cancellationToken);
+            .FirstOrDefaultAsync(workspace => workspace.Id == assignedWorkspaceId && workspace.IsActive, cancellationToken);
         if (workspace is null)
         {
             return null;
@@ -58,6 +72,6 @@ public class ClaimService(
         var roles = await authorizationDataService.GetActiveNormalizedRoleNamesForUserAsync(user.Id, workspace.Id, cancellationToken);
         var permissions = await authorizationDataService.GetGrantedPermissionCodesAsync(user.Id, workspace.Id, cancellationToken);
 
-        return ClaimPrincipalHelpers.Create(user, roles, permissions, requestedScopes, originalUserId);
+        return ClaimPrincipalHelpers.Create(user, roles, permissions, requestedScopes, originalUserId, assignedWorkspaceId.ToString());
     }
 }

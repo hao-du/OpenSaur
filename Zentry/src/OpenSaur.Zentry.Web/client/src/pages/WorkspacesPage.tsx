@@ -83,7 +83,8 @@ export function WorkspacesPage() {
     try {
       setIsStartingImpersonation(true);
       const authorizeUrl = await buildAuthorizeUrl(getConfig(), {
-        impersonatedUserId: values.userId
+        impersonatedUserId: values.userId,
+        workspaceId: values.workspaceId
       });
       window.location.assign(authorizeUrl);
     } catch (error) {

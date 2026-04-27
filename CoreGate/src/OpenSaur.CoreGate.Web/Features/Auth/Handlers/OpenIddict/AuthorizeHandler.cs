@@ -27,8 +27,12 @@ public class AuthorizeHandler(
             return Results.Redirect($"/login?returnUrl={Uri.EscapeDataString(redirectUri)}");
         }
 
-        var impersonatedUserId = httpContext.Request.Query.TryGetValue("impersonated_user_id", out var queryValue)
-            ? queryValue.ToString()
+        var impersonatedUserId = httpContext.Request.Query.TryGetValue("impersonated_user_id", out var userIdValue)
+            ? userIdValue.ToString()
+            : null;
+
+        var workspaceId = httpContext.Request.Query.TryGetValue("workspace_id", out var workspaceIdValue)
+            ? workspaceIdValue.ToString()
             : null;
 
         // Rebuild the token principal from the current user/workspace/role state before issuing code/tokens.
@@ -36,6 +40,7 @@ public class AuthorizeHandler(
             authenticationResult.Principal,
             request.GetScopes(),
             impersonatedUserId,
+            workspaceId,
             httpContext.RequestAborted);
 
         if (principal is null)

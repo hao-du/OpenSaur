@@ -45,6 +45,7 @@ public class TokenHandler(
             authenticateResult.Principal,
             authenticateResult.Principal.GetScopes(),
             impersonatedUserId: null,
+            workspaceId: null,
             httpContext.RequestAborted);
 
         return principal is null
