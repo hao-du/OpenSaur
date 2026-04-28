@@ -1,6 +1,6 @@
 import { Button, Stack, Typography } from "@mui/material";
 import { useNavigate } from "react-router-dom";
-import { DefaultLayout } from "../components/layouts/DefaultLayout";
+import { DefaultLayout } from "../../../components/layouts/DefaultLayout";
 
 export function ForbiddenPage() {
   const navigate = useNavigate();

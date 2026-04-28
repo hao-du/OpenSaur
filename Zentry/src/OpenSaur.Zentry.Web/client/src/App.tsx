@@ -1,12 +1,12 @@
 import { Navigate, Outlet, Route, Routes } from "react-router-dom";
 import { AuthCallbackPage } from "./features/auth/pages/AuthCallbackPage";
+import { ForbiddenPage } from "./features/auth/pages/ForbiddenPage";
 import { PrepareSessionPage } from "./features/auth/pages/PrepareSessionPage";
 import { useAuthSession } from "./features/auth/hooks/AuthContext";
+import { OidcClientsPage } from "./features/oidc-clients/pages/OidcClientsPage";
 import { DashboardPage } from "./pages/DashboardPage";
-import { ForbiddenPage } from "./pages/ForbiddenPage";
-import { OidcClientsPage } from "./pages/OidcClientsPage";
 import { RolesPage } from "./features/roles/pages/RolesPage";
-import { WorkspacesPage } from "./pages/WorkspacesPage";
+import { WorkspacesPage } from "./features/workspaces/pages/WorkspacesPage";
 
 export function App() {
   const { authSession, isRestoring } = useAuthSession();

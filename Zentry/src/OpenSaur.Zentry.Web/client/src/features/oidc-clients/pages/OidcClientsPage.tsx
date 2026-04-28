@@ -1,17 +1,17 @@
 import { Button, Stack } from "@mui/material";
 import { useEffect, useMemo, useState } from "react";
-import { ConfirmationDialog } from "../components/organisms/ConfirmationDialog";
+import { ConfirmationDialog } from "../../../components/organisms/ConfirmationDialog";
 import { useNavigate } from "react-router-dom";
-import { DefaultLayout } from "../components/layouts/DefaultLayout";
-import { layoutStyles } from "../infrastructure/theme/theme";
-import { useAuthSession } from "../features/auth/hooks/AuthContext";
-import { OidcClientFiltersDrawer } from "../features/oidc-clients/components/OidcClientFiltersDrawer";
-import type { OidcClientFilterValues } from "../features/oidc-clients/components/OidcClientFiltersDrawer";
-import { OidcClientFormDrawer } from "../features/oidc-clients/components/OidcClientFormDrawer";
-import { OidcClientsTable } from "../features/oidc-clients/components/OidcClientsTable";
-import { useDeleteOidcClient } from "../features/oidc-clients/hooks/useDeleteOidcClient";
-import { useOidcClientQuery } from "../features/oidc-clients/hooks/useOidcClientQuery";
-import { useOidcClientsQuery } from "../features/oidc-clients/hooks/useOidcClientsQuery";
+import { DefaultLayout } from "../../../components/layouts/DefaultLayout";
+import { layoutStyles } from "../../../infrastructure/theme/theme";
+import { useAuthSession } from "../../auth/hooks/AuthContext";
+import { OidcClientFiltersDrawer } from "../components/OidcClientFiltersDrawer";
+import type { OidcClientFilterValues } from "../components/OidcClientFiltersDrawer";
+import { OidcClientFormDrawer } from "../components/OidcClientFormDrawer";
+import { OidcClientsTable } from "../components/OidcClientsTable";
+import { useDeleteOidcClient } from "../hooks/useDeleteOidcClient";
+import { useOidcClientQuery } from "../hooks/useOidcClientQuery";
+import { useOidcClientsQuery } from "../hooks/useOidcClientsQuery";
 
 export function OidcClientsPage() {
   const navigate = useNavigate();

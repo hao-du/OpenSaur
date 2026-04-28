@@ -1,19 +1,19 @@
 import { Button, Stack } from "@mui/material";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { DefaultLayout } from "../components/layouts/DefaultLayout";
-import { getConfig } from "../infrastructure/config/Config";
-import { useAuthSession } from "../features/auth/hooks/AuthContext";
-import { buildAuthorizeUrl } from "../features/auth/services/UriService";
-import { WorkspaceFiltersDrawer, type WorkspaceFilterValues } from "../features/workspaces/components/WorkspaceFiltersDrawer";
-import { WorkspaceFormDrawer } from "../features/workspaces/components/WorkspaceFormDrawer";
-import { WorkspaceImpersonationDialog } from "../features/workspaces/components/WorkspaceImpersonationDialog";
-import { WorkspaceTable } from "../features/workspaces/components/WorkspaceTable";
-import { useAssignableWorkspaceRolesQuery } from "../features/workspaces/hooks/useAssignableWorkspaceRolesQuery";
-import { useUsersForImpersonationByWorkspaceIdQuery } from "../features/workspaces/hooks/useUsersForImpersonationByWorkspaceIdQuery";
-import { useWorkspaceQuery } from "../features/workspaces/hooks/useWorkspaceQuery";
-import { useWorkspacesQuery } from "../features/workspaces/hooks/useWorkspacesQuery";
-import { layoutStyles } from "../infrastructure/theme/theme";
+import { DefaultLayout } from "../../../components/layouts/DefaultLayout";
+import { getConfig } from "../../../infrastructure/config/Config";
+import { layoutStyles } from "../../../infrastructure/theme/theme";
+import { useAuthSession } from "../../auth/hooks/AuthContext";
+import { buildAuthorizeUrl } from "../../auth/services/UriService";
+import { WorkspaceFiltersDrawer, type WorkspaceFilterValues } from "../components/WorkspaceFiltersDrawer";
+import { WorkspaceFormDrawer } from "../components/WorkspaceFormDrawer";
+import { WorkspaceImpersonationDialog } from "../components/WorkspaceImpersonationDialog";
+import { WorkspaceTable } from "../components/WorkspaceTable";
+import { useAssignableWorkspaceRolesQuery } from "../hooks/useAssignableWorkspaceRolesQuery";
+import { useUsersForImpersonationByWorkspaceIdQuery } from "../hooks/useUsersForImpersonationByWorkspaceIdQuery";
+import { useWorkspaceQuery } from "../hooks/useWorkspaceQuery";
+import { useWorkspacesQuery } from "../hooks/useWorkspacesQuery";
 
 export function WorkspacesPage() {
   const navigate = useNavigate();
