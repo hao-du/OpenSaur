@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.Identity;
 using OpenIddict.Abstractions;
 using OpenIddict.Server.AspNetCore;
 using OpenSaur.CoreGate.Web.Features.Auth.Services;
+using OpenSaur.CoreGate.Web.Infrastructure.Security;
+using CoreGateClaimTypes = OpenSaur.CoreGate.Web.Infrastructure.Security.ClaimTypes;
 
 namespace OpenSaur.CoreGate.Web.Features.Auth.Handlers.OpenIddict;
 
@@ -27,13 +29,13 @@ public class AuthorizeHandler(
             return Results.Redirect($"/login?returnUrl={Uri.EscapeDataString(redirectUri)}");
         }
 
-        var impersonatedUserId = httpContext.Request.Query.TryGetValue("impersonated_user_id", out var userIdValue)
+        var impersonatedUserId = httpContext.Request.Query.TryGetValue(CoreGateClaimTypes.ImpersonatedUserId, out var userIdValue)
             ? userIdValue.ToString()
-            : null;
+            : ClaimPrincipalHelpers.GetImpersonatedUserId(authenticationResult.Principal);
 
-        var workspaceId = httpContext.Request.Query.TryGetValue("workspace_id", out var workspaceIdValue)
+        var workspaceId = httpContext.Request.Query.TryGetValue(CoreGateClaimTypes.WorkspaceId, out var workspaceIdValue)
             ? workspaceIdValue.ToString()
-            : null;
+            : ClaimPrincipalHelpers.GetWorkspaceId(authenticationResult.Principal);
 
         // Rebuild the token principal from the current user/workspace/role state before issuing code/tokens.
         var principal = await claimService.BuildUserClaimPrincipalAsync(
@@ -48,6 +50,28 @@ public class AuthorizeHandler(
             await httpContext.SignOutAsync(IdentityConstants.ApplicationScheme);
             var redirectUri = httpContext.Request.PathBase + httpContext.Request.Path + httpContext.Request.QueryString;
             return Results.Redirect($"/login?returnUrl={Uri.EscapeDataString(redirectUri)}");
+        }
+
+        var shouldUpdateCookie = false;
+        if (!string.IsNullOrWhiteSpace(impersonatedUserId))
+        {
+            ClaimPrincipalHelpers.AddOrReplaceClaim(authenticationResult.Principal, CoreGateClaimTypes.ImpersonatedUserId, impersonatedUserId);
+            shouldUpdateCookie = true;
+        }
+        if (!string.IsNullOrWhiteSpace(workspaceId))
+        {
+            ClaimPrincipalHelpers.AddOrReplaceClaim(authenticationResult.Principal, CoreGateClaimTypes.WorkspaceId, workspaceId);
+            shouldUpdateCookie = true;
+        }
+        if (shouldUpdateCookie)
+        {
+            await httpContext.SignInAsync(
+                IdentityConstants.ApplicationScheme,
+                authenticationResult.Principal,
+                new AuthenticationProperties
+                {
+                    IsPersistent = false
+                });
         }
 
         return Results.SignIn(principal, authenticationScheme: OpenIddictServerAspNetCoreDefaults.AuthenticationScheme);

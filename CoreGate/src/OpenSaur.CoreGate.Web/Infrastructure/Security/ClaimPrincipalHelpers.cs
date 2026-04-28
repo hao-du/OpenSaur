@@ -17,6 +17,29 @@ internal static class ClaimPrincipalHelpers
         return principal.FindFirstValue(ClaimTypes.WorkspaceId);
     }
 
+    public static string? GetImpersonatedUserId(ClaimsPrincipal principal)
+    {
+        return principal.FindFirstValue(ClaimTypes.ImpersonatedUserId);
+    }
+
+    public static void AddOrReplaceClaim(ClaimsPrincipal principal, string claimType, string? claimValue)
+    {
+        if (principal.Identity is not ClaimsIdentity identity)
+        {
+            return;
+        }
+
+        foreach (var claim in identity.FindAll(claimType).ToArray())
+        {
+            identity.RemoveClaim(claim);
+        }
+
+        if (!string.IsNullOrWhiteSpace(claimValue))
+        {
+            identity.AddClaim(new Claim(claimType, claimValue));
+        }
+    }
+
     public static ClaimsPrincipal Create(
         ApplicationUser user,
         IEnumerable<string> normalizedRoles,

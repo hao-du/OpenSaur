@@ -37,10 +37,11 @@ public static class CurrentProfileHandler
             }
         }
 
+        var isImpersonating = ClaimHelper.IsImpersonating(user);
         var isSuperAdministrator = ClaimHelper.IsSuperAdministrator(user);
         var canAssignUsers = ClaimHelper.HasPermission(user, Constants.Permissions.Administration.CanManage);
         var canEditRoles = isSuperAdministrator;
-        var isImpersonating = ClaimHelper.IsImpersonating(user);
+        
         var workspaceName = isSuperAdministrator && !isImpersonating
             ? "All workspaces"
             : "Protected workspace";
