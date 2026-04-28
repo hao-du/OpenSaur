@@ -12,6 +12,10 @@ using OpenSaur.Zentry.Web.Features.Profile;
 using OpenSaur.Zentry.Web.Features.Roles;
 using OpenSaur.Zentry.Web.Features.Roles.CreateRole;
 using OpenSaur.Zentry.Web.Features.Roles.EditRole;
+using OpenSaur.Zentry.Web.Features.Users;
+using OpenSaur.Zentry.Web.Features.Users.CreateUser;
+using OpenSaur.Zentry.Web.Features.Users.EditUser;
+using OpenSaur.Zentry.Web.Features.Users.ResetUserPassword;
 using OpenSaur.Zentry.Web.Features.Workspaces;
 using OpenSaur.Zentry.Web.Features.Workspaces.CreateWorkspace;
 using OpenSaur.Zentry.Web.Features.Workspaces.EditWorkspace;
@@ -69,6 +73,9 @@ builder.Services.AddScoped<IValidator<CreateWorkspaceRequest>, CreateWorkspaceRe
 builder.Services.AddScoped<IValidator<EditWorkspaceRequest>, EditWorkspaceRequestValidator>();
 builder.Services.AddScoped<IValidator<CreateRoleRequest>, CreateRoleRequestValidator>();
 builder.Services.AddScoped<IValidator<EditRoleRequest>, EditRoleRequestValidator>();
+builder.Services.AddScoped<IValidator<CreateUserRequest>, CreateUserRequestValidator>();
+builder.Services.AddScoped<IValidator<EditUserRequest>, EditUserRequestValidator>();
+builder.Services.AddScoped<IValidator<ResetUserPasswordRequest>, ResetUserPasswordRequestValidator>();
 builder.Services.AddScoped<PermissionService>();
 builder.Services.AddScoped<RoleService>();
 builder.Services.AddScoped<SideMenuService>();
@@ -112,6 +119,7 @@ app.MapOidcClientEndpoints();
 app.MapWorkspaceEndpoints();
 app.MapProfileEndpoints();
 app.MapRoleEndpoints();
+app.MapUserEndpoints();
 app.MapPermissionEndpoints();
 app.MapFrontEndRoutes();
 
