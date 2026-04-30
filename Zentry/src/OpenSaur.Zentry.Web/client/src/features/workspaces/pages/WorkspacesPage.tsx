@@ -36,10 +36,8 @@ export function WorkspacesPage() {
     const normalizedSearch = filters.search.trim().toLowerCase();
 
     return workspaces.filter(workspace => {
-      const matchesSearch = normalizedSearch.length === 0
-        || `${workspace.name} ${workspace.description}`.toLowerCase().includes(normalizedSearch);
-      const matchesStatus = filters.status === "all"
-        || (filters.status === "active" ? workspace.isActive : !workspace.isActive);
+      const matchesSearch = normalizedSearch.length === 0 || `${workspace.name} ${workspace.description}`.toLowerCase().includes(normalizedSearch);
+      const matchesStatus = filters.status === "all" || (filters.status === "active" ? workspace.isActive : !workspace.isActive);
 
       return matchesSearch && matchesStatus;
     });

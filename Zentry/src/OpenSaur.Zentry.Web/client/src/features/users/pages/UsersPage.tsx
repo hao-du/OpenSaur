@@ -32,6 +32,7 @@ export function UsersPage() {
   const { data: userRoles, isLoading: isUserRolesLoading } = useUserRolesQuery(assignRolesUserId);
   const { errorMessage: resetPasswordErrorMessage, isResetting, resetError: resetResetPasswordError, resetUserPassword } = useResetUserPassword();
   const { assignUserRoles, errorMessage: assignUserRolesErrorMessage, isAssigning, resetError: resetAssignUserRolesError } = useAssignUserRoles();
+  
   const filteredUsers = useMemo(() => {
     const normalizedSearch = filters.search.trim().toLowerCase();
 
@@ -45,8 +46,7 @@ export function UsersPage() {
           user.description,
           ...user.roleNames
         ].join(" ").toLowerCase().includes(normalizedSearch);
-      const matchesStatus = filters.status === "all"
-        || (filters.status === "active" ? user.isActive : !user.isActive);
+      const matchesStatus = filters.status === "all" || (filters.status === "active" ? user.isActive : !user.isActive);
 
       return matchesSearch && matchesStatus;
     });

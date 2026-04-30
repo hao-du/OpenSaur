@@ -1,8 +1,8 @@
-import { Alert, Box, Button, CircularProgress, Divider, Drawer, IconButton, Stack, Typography } from "@mui/material";
-import { X } from "lucide-react";
+import { Alert, Box, Button, CircularProgress, Stack, Typography } from "@mui/material";
 import { useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { MultiSelect } from "../../../components/atoms/MultiSelect";
+import { DrawerPanel } from "../../../components/organisms/DrawerPanel";
 import { layoutStyles } from "../../../infrastructure/theme/theme";
 import type { RoleUsersDto } from "../dtos/RoleUsersDto";
 
@@ -54,22 +54,7 @@ export function RoleUsersDrawer({
   }, [isOpen, reset, roleUsers]);
 
   return (
-    <Drawer anchor="right" open={isOpen} sx={layoutStyles.drawerPaperNarrow}>
-      <Stack spacing={3} sx={layoutStyles.drawerContent}>
-        <Stack alignItems="center" direction="row" justifyContent="space-between">
-          <Stack spacing={0.5}>
-            <Typography component="h2" variant="h5">
-              Assign Users
-            </Typography>
-            <Typography color="text.secondary">
-              {roleUsers?.roleName ?? ""}
-            </Typography>
-          </Stack>
-          <IconButton aria-label="Close" onClick={onClose}>
-            <X size={18} />
-          </IconButton>
-        </Stack>
-        <Divider />
+    <DrawerPanel isOpen={isOpen} onClose={onClose} subtitle={roleUsers?.roleName ?? ""} title="Assign Users">
         {isLoading ? (
           <Stack alignItems="center" justifyContent="center" spacing={2} sx={layoutStyles.drawerLoadingState}>
             <CircularProgress size={28} />
@@ -109,7 +94,6 @@ export function RoleUsersDrawer({
             </Stack>
           </Stack>
         )}
-      </Stack>
-    </Drawer>
+    </DrawerPanel>
   );
 }

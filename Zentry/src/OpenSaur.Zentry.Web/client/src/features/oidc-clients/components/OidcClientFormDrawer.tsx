@@ -1,6 +1,6 @@
-import { Box, CircularProgress, Divider, Drawer, IconButton, Stack, Typography } from "@mui/material";
+import { Box, CircularProgress, Stack, Typography } from "@mui/material";
 import { useEffect } from "react";
-import { X } from "lucide-react";
+import { DrawerPanel } from "../../../components/organisms/DrawerPanel";
 import type { OidcClientDetailsDto } from "../dtos/OidcClientDetailsDto";
 import { layoutStyles } from "../../../infrastructure/theme/theme";
 import { useCreateOidcClient } from "../hooks/useCreateOidcClient";
@@ -35,21 +35,7 @@ export function OidcClientFormDrawer({
   }, [isOpen, resetCreateError, resetEditError]);
 
   return (
-    <Drawer
-      anchor="right"
-      open={isOpen}
-      sx={layoutStyles.drawerPaperWide}
-    >
-      <Stack spacing={3} sx={layoutStyles.drawerContent}>
-        <Stack alignItems="center" direction="row" justifyContent="space-between">
-          <Typography component="h2" variant="h5">
-            {isEditMode ? "Edit application" : "Create application"}
-          </Typography>
-          <IconButton aria-label="Close" onClick={onClose}>
-            <X size={18} />
-          </IconButton>
-        </Stack>
-        <Divider />
+    <DrawerPanel isOpen={isOpen} onClose={onClose} title={isEditMode ? "Edit application" : "Create application"} width="wide">
         {isLoading ? (
           <Stack alignItems="center" justifyContent="center" spacing={2} sx={layoutStyles.drawerLoadingState}>
             <CircularProgress size={28} />
@@ -90,7 +76,6 @@ export function OidcClientFormDrawer({
             />
           </Box>
         )}
-      </Stack>
-    </Drawer>
+    </DrawerPanel>
   );
 }

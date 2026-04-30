@@ -1,9 +1,9 @@
 import { useState } from "react";
-import { Button, CircularProgress, Divider, Drawer, IconButton, Stack, Typography } from "@mui/material";
+import { Button, CircularProgress, Stack } from "@mui/material";
 import { useForm } from "react-hook-form";
-import { X } from "lucide-react";
 import { DropDown } from "../../../components/atoms/DropDown";
 import { Text } from "../../../components/atoms/Text";
+import { DrawerPanel } from "../../../components/organisms/DrawerPanel";
 import { layoutStyles } from "../../../infrastructure/theme/theme";
 
 export type WorkspaceFilterValues = {
@@ -35,17 +35,7 @@ export function WorkspaceFiltersDrawer({
   const [isApplying, setIsApplying] = useState(false);
 
   return (
-    <Drawer anchor="right" open={isOpen} sx={layoutStyles.drawerPaperNarrow}>
-      <Stack spacing={3} sx={layoutStyles.drawerContent}>
-        <Stack alignItems="center" direction="row" justifyContent="space-between">
-          <Typography component="h2" variant="h5">
-            Filter workspaces
-          </Typography>
-          <IconButton aria-label="Close" onClick={onClose}>
-            <X size={18} />
-          </IconButton>
-        </Stack>
-        <Divider />
+    <DrawerPanel isOpen={isOpen} onClose={onClose} title="Filter workspaces">
         <Stack
           component="form"
           noValidate
@@ -91,7 +81,6 @@ export function WorkspaceFiltersDrawer({
             </Button>
           </Stack>
         </Stack>
-      </Stack>
-    </Drawer>
+    </DrawerPanel>
   );
 }

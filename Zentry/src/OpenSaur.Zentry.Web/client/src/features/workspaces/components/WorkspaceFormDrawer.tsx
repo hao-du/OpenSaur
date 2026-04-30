@@ -1,6 +1,6 @@
-import { Box, CircularProgress, Divider, Drawer, IconButton, Stack, Typography } from "@mui/material";
+import { Box, CircularProgress, Stack, Typography } from "@mui/material";
 import { useEffect } from "react";
-import { X } from "lucide-react";
+import { DrawerPanel } from "../../../components/organisms/DrawerPanel";
 import { layoutStyles } from "../../../infrastructure/theme/theme";
 import type { AssignableWorkspaceRoleDto } from "../dtos/AssignableWorkspaceRoleDto";
 import type { WorkspaceDetailsDto } from "../dtos/WorkspaceDetailsDto";
@@ -43,17 +43,7 @@ export function WorkspaceFormDrawer({
   }, [isOpen, resetCreateError, resetEditError]);
 
   return (
-    <Drawer anchor="right" open={isOpen} sx={layoutStyles.drawerPaperNarrow}>
-      <Stack spacing={3} sx={layoutStyles.drawerContent}>
-        <Stack alignItems="center" direction="row" justifyContent="space-between">
-          <Typography component="h2" variant="h5">
-            {isEditMode ? "Edit workspace" : "Create workspace"}
-          </Typography>
-          <IconButton aria-label="Close" onClick={onClose}>
-            <X size={18} />
-          </IconButton>
-        </Stack>
-        <Divider />
+    <DrawerPanel isOpen={isOpen} onClose={onClose} title={isEditMode ? "Edit workspace" : "Create workspace"}>
         {isLoading ? (
           <Stack alignItems="center" justifyContent="center" spacing={2} sx={layoutStyles.drawerLoadingState}>
             <CircularProgress size={28} />
@@ -102,7 +92,6 @@ export function WorkspaceFormDrawer({
             />
           </Box>
         )}
-      </Stack>
-    </Drawer>
+    </DrawerPanel>
   );
 }

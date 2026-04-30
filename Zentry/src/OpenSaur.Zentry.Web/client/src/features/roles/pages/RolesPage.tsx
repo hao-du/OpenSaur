@@ -43,10 +43,8 @@ export function RolesPage() {
     const normalizedSearch = filters.search.trim().toLowerCase();
 
     return roles.filter(role => {
-      const matchesSearch = normalizedSearch.length === 0
-        || `${role.name} ${role.description}`.toLowerCase().includes(normalizedSearch);
-      const matchesStatus = filters.status === "all"
-        || (filters.status === "active" ? role.isActive : !role.isActive);
+      const matchesSearch = normalizedSearch.length === 0 || `${role.name} ${role.description}`.toLowerCase().includes(normalizedSearch);
+      const matchesStatus = filters.status === "all" || (filters.status === "active" ? role.isActive : !role.isActive);
 
       return matchesSearch && matchesStatus;
     });

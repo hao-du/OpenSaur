@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { Button, CircularProgress, Divider, Drawer, IconButton, Stack, TextField, Typography } from "@mui/material";
+import { Button, CircularProgress, Stack, TextField } from "@mui/material";
 import { Controller, useForm } from "react-hook-form";
-import { X } from "lucide-react";
+import { DrawerPanel } from "../../../components/organisms/DrawerPanel";
 import { layoutStyles } from "../../../infrastructure/theme/theme";
 
 export type OidcClientFilterValues = {
@@ -31,21 +31,7 @@ export function OidcClientFiltersDrawer({
   const [isApplying, setIsApplying] = useState(false);
 
   return (
-    <Drawer
-      anchor="right"
-      open={isOpen}
-      sx={layoutStyles.drawerPaperNarrow}
-    >
-      <Stack spacing={3} sx={layoutStyles.drawerContent}>
-        <Stack alignItems="center" direction="row" justifyContent="space-between">
-          <Typography component="h2" variant="h5">
-            Filter applications
-          </Typography>
-          <IconButton aria-label="Close" onClick={onClose}>
-            <X size={18} />
-          </IconButton>
-        </Stack>
-        <Divider />
+    <DrawerPanel isOpen={isOpen} onClose={onClose} title="Filter applications">
         <Stack
           component="form"
           noValidate
@@ -91,7 +77,6 @@ export function OidcClientFiltersDrawer({
             </Button>
           </Stack>
         </Stack>
-      </Stack>
-    </Drawer>
+    </DrawerPanel>
   );
 }

@@ -1,7 +1,7 @@
-import { Alert, Button, CircularProgress, Divider, Drawer, IconButton, Stack, Typography } from "@mui/material";
-import { X } from "lucide-react";
+import { Alert, Button, CircularProgress, Stack, Typography } from "@mui/material";
 import { useForm } from "react-hook-form";
 import { Text } from "../../../components/atoms/Text";
+import { DrawerPanel } from "../../../components/organisms/DrawerPanel";
 import { layoutStyles } from "../../../infrastructure/theme/theme";
 
 type ResetUserPasswordDrawerProps = {
@@ -32,20 +32,7 @@ export function ResetUserPasswordDrawer({
   });
 
   return (
-    <Drawer anchor="right" open={isOpen} sx={layoutStyles.drawerPaperNarrow}>
-      <Stack spacing={3} sx={layoutStyles.drawerContent}>
-        <Stack alignItems="center" direction="row" justifyContent="space-between">
-          <Stack spacing={0.5}>
-            <Typography component="h2" variant="h5">
-              Reset Password
-            </Typography>
-            <Typography color="text.secondary">{userName ?? ""}</Typography>
-          </Stack>
-          <IconButton aria-label="Close" onClick={onClose}>
-            <X size={18} />
-          </IconButton>
-        </Stack>
-        <Divider />
+    <DrawerPanel isOpen={isOpen} onClose={onClose} subtitle={userName ?? ""} title="Reset Password">
         <Stack
           component="form"
           noValidate
@@ -89,7 +76,6 @@ export function ResetUserPasswordDrawer({
             </Button>
           </Stack>
         </Stack>
-      </Stack>
-    </Drawer>
+    </DrawerPanel>
   );
 }
