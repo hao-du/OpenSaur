@@ -9,4 +9,6 @@ public sealed record GetRoleUsersUserResponse(
     Guid UserId,
     string UserName,
     string Email,
+    string FirstName,
+    string LastName,
     bool IsAssigned);

@@ -62,6 +62,8 @@ public static class GetRoleUsersHandler
                 candidate.Id,
                 candidate.UserName ?? string.Empty,
                 candidate.Email ?? string.Empty,
+                candidate.FirstName,
+                candidate.LastName,
                 assignedUserIdSet.Contains(candidate.Id)))
             .ToListAsync(cancellationToken);
 

@@ -15,8 +15,10 @@ public static class CurrentProfileHandler
         SideMenuService sideMenuService,
         CancellationToken cancellationToken)
     {
+        var email = string.Empty;
         var firstName = string.Empty;
         var lastName = string.Empty;
+        var userName = string.Empty;
         var currentUserId = ClaimHelper.GetCurrentUserId(user);
         if (currentUserId != Guid.Empty)
         {
@@ -25,15 +27,19 @@ public static class CurrentProfileHandler
                 .Where(candidate => candidate.Id == currentUserId)
                 .Select(candidate => new
                 {
+                    candidate.Email,
                     candidate.FirstName,
-                    candidate.LastName
+                    candidate.LastName,
+                    candidate.UserName
                 })
                 .SingleOrDefaultAsync(cancellationToken);
 
             if (currentUser is not null)
             {
+                email = currentUser.Email ?? string.Empty;
                 firstName = currentUser.FirstName;
                 lastName = currentUser.LastName;
+                userName = currentUser.UserName ?? string.Empty;
             }
         }
 
@@ -58,11 +64,13 @@ public static class CurrentProfileHandler
         }
 
         return TypedResults.Ok(new CurrentProfileResponse(
+            email,
             firstName,
             isImpersonating,
             isSuperAdministrator,
             lastName,
             sideMenuService.BuildNavigationItems(isSuperAdministrator, canAssignUsers),
+            userName,
             workspaceName,
             canAssignUsers,
             canEditRoles));

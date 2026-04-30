@@ -20,6 +20,11 @@ type RoleUsersFormValues = {
   userIds: string[];
 };
 
+function formatUserOptionLabel(firstName: string, lastName: string, userName: string) {
+  const fullName = `${firstName} ${lastName}`.trim();
+  return fullName.length > 0 ? `${fullName} (${userName})` : userName;
+}
+
 export function RoleUsersDrawer({
   errorMessage,
   isLoading,
@@ -32,7 +37,7 @@ export function RoleUsersDrawer({
   const users = useMemo(() => roleUsers?.users ?? [], [roleUsers?.users]);
   const userOptions = useMemo(() => users.map(user => ({
     description: user.email,
-    label: user.userName,
+    label: formatUserOptionLabel(user.firstName, user.lastName, user.userName),
     value: user.userId
   })), [users]);
   const { control, handleSubmit, reset } = useForm<RoleUsersFormValues>({
@@ -55,45 +60,45 @@ export function RoleUsersDrawer({
 
   return (
     <DrawerPanel isOpen={isOpen} onClose={onClose} subtitle={roleUsers?.roleName ?? ""} title="Assign Users">
-        {isLoading ? (
-          <Stack alignItems="center" justifyContent="center" spacing={2} sx={layoutStyles.drawerLoadingState}>
-            <CircularProgress size={28} />
-            <Typography color="text.secondary">Loading users...</Typography>
+      {isLoading ? (
+        <Stack alignItems="center" justifyContent="center" spacing={2} sx={layoutStyles.drawerLoadingState}>
+          <CircularProgress size={28} />
+          <Typography color="text.secondary">Loading users...</Typography>
+        </Stack>
+      ) : (
+        <Stack spacing={3} sx={layoutStyles.drawerBody}>
+          {errorMessage ? (
+            <Alert severity="error">
+              {errorMessage}
+            </Alert>
+          ) : null}
+          <MultiSelect
+            control={control}
+            helperText={users.length === 0 ? "No active users found in this workspace." : undefined}
+            label="Users"
+            name="userIds"
+            options={userOptions}
+            placeholder="Search users"
+          />
+          <Box sx={layoutStyles.flexGrow} />
+          <Stack direction="row" justifyContent="flex-end" spacing={1.5}>
+            <Button
+              onClick={onClose}
+              variant="text"
+            >
+              Cancel
+            </Button>
+            <Button
+              aria-busy={isSubmitting}
+              disabled={isSubmitting}
+              onClick={handleSubmit(values => onSubmit(values.userIds))}
+              variant="contained"
+            >
+              {isSubmitting ? "Saving..." : "Save"}
+            </Button>
           </Stack>
-        ) : (
-          <Stack spacing={3} sx={layoutStyles.drawerBody}>
-            {errorMessage ? (
-              <Alert severity="error">
-                {errorMessage}
-              </Alert>
-            ) : null}
-            <MultiSelect
-              control={control}
-              helperText={users.length === 0 ? "No active users found in this workspace." : undefined}
-              label="Users"
-              name="userIds"
-              options={userOptions}
-              placeholder="Search users"
-            />
-            <Box sx={layoutStyles.flexGrow} />
-            <Stack direction="row" justifyContent="flex-end" spacing={1.5}>
-              <Button
-                onClick={onClose}
-                variant="text"
-              >
-                Cancel
-              </Button>
-              <Button
-                aria-busy={isSubmitting}
-                disabled={isSubmitting}
-                onClick={handleSubmit(values => onSubmit(values.userIds))}
-                variant="contained"
-              >
-                {isSubmitting ? "Saving..." : "Save"}
-              </Button>
-            </Stack>
-          </Stack>
-        )}
+        </Stack>
+      )}
     </DrawerPanel>
   );
 }

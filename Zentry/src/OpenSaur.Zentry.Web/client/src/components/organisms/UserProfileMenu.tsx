@@ -14,6 +14,7 @@ import {
   Stack
 } from "@mui/material";
 import { LabelText } from "../atoms/LabelText";
+import { MetaText } from "../atoms/MetaText";
 import { AppIcon } from "../icons/AppIcon";
 import { Avatar } from "./Avatar";
 import type { CurrentProfileDto } from "../../features/profile/dtos/CurrentProfileDto";
@@ -72,6 +73,16 @@ export function UserProfileMenu({ profile }: UserProfileMenuProps) {
             <LabelText>
               {displayName}
             </LabelText>
+            {profile?.userName ? (
+              <MetaText>
+                {profile.userName}
+              </MetaText>
+            ) : null}
+            {profile?.email ? (
+              <MetaText>
+                {profile.email}
+              </MetaText>
+            ) : null}
           </Stack>
         </Box>
         <Divider />
