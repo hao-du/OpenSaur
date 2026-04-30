@@ -4,7 +4,7 @@ public sealed class OidcOptions
 {
     public const string SectionName = "Oidc";
 
-    public string AppName { get; set; } = "OpenSaur Zentry";
+    public string AppName { get; set; } = "Zentry";
 
     public string Authority { get; set; } = string.Empty;
 

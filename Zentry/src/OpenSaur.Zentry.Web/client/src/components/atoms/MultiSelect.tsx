@@ -1,5 +1,7 @@
-import { Autocomplete, Checkbox, Chip, Stack, TextField, Typography } from "@mui/material";
+import { Autocomplete, Checkbox, Chip, Stack, TextField } from "@mui/material";
 import { Controller, type Control, type FieldPath, type FieldValues, type RegisterOptions } from "react-hook-form";
+import { LabelText } from "./LabelText";
+import { MetaText } from "./MetaText";
 
 export type MultiSelectOption = {
   description?: string;
@@ -73,11 +75,11 @@ export function MultiSelect<TFieldValues extends FieldValues>({
                 <li {...optionProps} key={key}>
                   <Checkbox checked={selected} sx={{ mr: 1 }} />
                   <Stack spacing={0.25}>
-                    <Typography>{option.label}</Typography>
+                    <LabelText>{option.label}</LabelText>
                     {option.description ? (
-                      <Typography color="text.secondary" variant="body2">
+                      <MetaText>
                         {option.description}
-                      </Typography>
+                      </MetaText>
                     ) : null}
                   </Stack>
                 </li>

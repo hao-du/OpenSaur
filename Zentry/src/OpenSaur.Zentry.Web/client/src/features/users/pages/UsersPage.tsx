@@ -1,9 +1,11 @@
-import { Button, Stack } from "@mui/material";
+import { Stack } from "@mui/material";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { ActionButton } from "../../../components/atoms/ActionButton";
 import { DefaultLayout } from "../../../components/layouts/DefaultLayout";
 import { layoutStyles } from "../../../infrastructure/theme/theme";
 import { useAuthSession } from "../../auth/hooks/AuthContext";
+import { useSettings } from "../../settings/provider/SettingProvider";
 import { AssignUserRolesDrawer } from "../components/AssignUserRolesDrawer";
 import { ResetUserPasswordDrawer } from "../components/ResetUserPasswordDrawer";
 import { UserFiltersDrawer, type UserFilterValues } from "../components/UserFiltersDrawer";
@@ -18,6 +20,7 @@ import { useUsersQuery } from "../hooks/useUsersQuery";
 export function UsersPage() {
   const navigate = useNavigate();
   const { clearSession } = useAuthSession();
+  const { t } = useSettings();
   const [filters, setFilters] = useState<UserFilterValues>({
     search: "",
     status: "active"
@@ -71,31 +74,30 @@ export function UsersPage() {
 
   return (
     <DefaultLayout
-      subtitle="Manage users in the current workspace."
-      title="Users"
+      subtitle={t("users.subtitle")}
+      title={t("users.title")}
     >
       <Stack spacing={3}>
         <Stack direction={{ md: "row", xs: "column" }} justifyContent="space-between" spacing={2}>
           <Stack direction="row" spacing={2} sx={layoutStyles.responsiveActionGroup}>
-            <Button
+            <ActionButton
               onClick={() => {
                 setIsFilterDrawerOpen(true);
               }}
               sx={layoutStyles.responsiveActionButton}
               variant="outlined"
             >
-              Filter
-            </Button>
+              {t("action.filter")}
+            </ActionButton>
           </Stack>
-          <Button
+          <ActionButton
             onClick={() => {
               setIsCreateDrawerOpen(true);
             }}
             sx={layoutStyles.responsiveActionButton}
-            variant="contained"
           >
-            Create
-          </Button>
+            {t("action.create")}
+          </ActionButton>
         </Stack>
         <UsersTable
           isError={isError}

@@ -1,8 +1,11 @@
-import { Alert, Button, CircularProgress, Stack, Typography } from "@mui/material";
+import { Alert, CircularProgress, Stack } from "@mui/material";
 import { useForm } from "react-hook-form";
+import { ActionButton } from "../../../components/atoms/ActionButton";
+import { MetaText } from "../../../components/atoms/MetaText";
 import { Text } from "../../../components/atoms/Text";
 import { DrawerPanel } from "../../../components/organisms/DrawerPanel";
 import { layoutStyles } from "../../../infrastructure/theme/theme";
+import { useSettings } from "../../settings/provider/SettingProvider";
 
 type ResetUserPasswordDrawerProps = {
   errorMessage: string | null;
@@ -25,6 +28,7 @@ export function ResetUserPasswordDrawer({
   onSubmit,
   userName
 }: ResetUserPasswordDrawerProps) {
+  const { t } = useSettings();
   const { control, handleSubmit, reset } = useForm<ResetUserPasswordFormValues>({
     values: {
       password: ""
@@ -32,7 +36,7 @@ export function ResetUserPasswordDrawer({
   });
 
   return (
-    <DrawerPanel isOpen={isOpen} onClose={onClose} subtitle={userName ?? ""} title="Reset Password">
+    <DrawerPanel isOpen={isOpen} onClose={onClose} subtitle={userName ?? ""} title={t("users.resetPasswordTitle")}>
         <Stack
           component="form"
           noValidate
@@ -47,33 +51,32 @@ export function ResetUserPasswordDrawer({
           <Text
             control={control}
             disabled={isSubmitting}
-            label="New temporary password"
+            label={t("users.newTemporaryPassword")}
             name="password"
             required
             rules={{
               minLength: {
-                message: "Password must be at least 8 characters.",
+                message: t("users.passwordMinLength"),
                 value: 8
               },
-              required: "New temporary password is required."
+              required: t("users.newTemporaryPasswordRequired")
             }}
             type="password"
           />
-          <Typography color="text.secondary" variant="body2">
-            The user will be required to change this password on next sign-in.
-          </Typography>
+          <MetaText>
+            {t("users.resetPasswordInfo")}
+          </MetaText>
           <Stack direction="row" justifyContent="flex-end" spacing={1.5}>
-            <Button onClick={onClose} type="button" variant="text">
-              Cancel
-            </Button>
-            <Button
+            <ActionButton onClick={onClose} type="button" variant="text">
+              {t("action.cancel")}
+            </ActionButton>
+            <ActionButton
               disabled={isSubmitting}
               startIcon={isSubmitting ? <CircularProgress color="inherit" size={18} /> : undefined}
               type="submit"
-              variant="contained"
             >
-              {isSubmitting ? "Saving..." : "Reset password"}
-            </Button>
+              {isSubmitting ? t("action.saving") : t("action.resetPassword")}
+            </ActionButton>
           </Stack>
         </Stack>
     </DrawerPanel>

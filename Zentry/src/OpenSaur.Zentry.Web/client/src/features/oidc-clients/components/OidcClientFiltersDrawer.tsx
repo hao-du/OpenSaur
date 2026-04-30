@@ -1,8 +1,10 @@
 import { useState } from "react";
-import { Button, CircularProgress, Stack, TextField } from "@mui/material";
+import { CircularProgress, Stack, TextField } from "@mui/material";
 import { Controller, useForm } from "react-hook-form";
+import { ActionButton } from "../../../components/atoms/ActionButton";
 import { DrawerPanel } from "../../../components/organisms/DrawerPanel";
 import { layoutStyles } from "../../../infrastructure/theme/theme";
+import { useSettings } from "../../settings/provider/SettingProvider";
 
 export type OidcClientFilterValues = {
   clientId: string;
@@ -28,10 +30,11 @@ export function OidcClientFiltersDrawer({
   const { control, handleSubmit, reset } = useForm<OidcClientFilterValues>({
     values: initialValues
   });
+  const { t } = useSettings();
   const [isApplying, setIsApplying] = useState(false);
 
   return (
-    <DrawerPanel isOpen={isOpen} onClose={onClose} title="Filter applications">
+    <DrawerPanel isOpen={isOpen} onClose={onClose} title={t("oidc.filterTitle")}>
         <Stack
           component="form"
           noValidate
@@ -53,28 +56,27 @@ export function OidcClientFiltersDrawer({
               <TextField
                 {...field}
                 fullWidth
-                label="Client ID or name"
+                label={t("oidc.clientIdOrName")}
               />
             )}
           />
           <Stack direction="row" justifyContent="space-between" spacing={1.5} sx={layoutStyles.formFooterRow}>
-            <Button
+            <ActionButton
               onClick={() => {
                 reset(defaultFilterValues);
               }}
               type="button"
               variant="text"
             >
-              Reset filters
-            </Button>
-            <Button
+              {t("action.resetFilters")}
+            </ActionButton>
+            <ActionButton
               disabled={isApplying}
               startIcon={isApplying ? <CircularProgress color="inherit" size={18} /> : undefined}
               type="submit"
-              variant="contained"
             >
-              {isApplying ? "Applying..." : "Apply"}
-            </Button>
+              {isApplying ? t("action.applying") : t("action.apply")}
+            </ActionButton>
           </Stack>
         </Stack>
     </DrawerPanel>

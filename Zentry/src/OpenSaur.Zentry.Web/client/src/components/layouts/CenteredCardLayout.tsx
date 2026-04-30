@@ -1,6 +1,8 @@
 import type { PropsWithChildren, ReactNode } from "react";
-import { Box, Container, Divider, Paper, Stack, Typography } from "@mui/material";
+import { Box, Container, Divider, Paper, Stack } from "@mui/material";
+import { BodyText } from "../atoms/BodyText";
 import { EyebrowText } from "../atoms/EyebrowText";
+import { PageTitleText } from "../atoms/PageTitleText";
 
 type CenteredCardLayoutProps = PropsWithChildren<{
   description: ReactNode;
@@ -33,9 +35,9 @@ export function CenteredCardLayout({
         >
           <Stack spacing={2.5}>
             <Stack spacing={0.75}>
-              <EyebrowText>OpenSaur Zentry</EyebrowText>
-              <Typography variant="h3">{title}</Typography>
-              <Typography color="text.secondary">{description}</Typography>
+              <EyebrowText>Zentry</EyebrowText>
+              <PageTitleText variant="h3">{title}</PageTitleText>
+              <BodyText>{description}</BodyText>
             </Stack>
             <Divider />
             {children}

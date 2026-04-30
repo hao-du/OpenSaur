@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { getConfig } from "../../../infrastructure/config/Config";
 import { CenteredCardLayout } from "../../../components/layouts/CenteredCardLayout";
 import { buildAuthorizeUrl } from "../services/UriService";
+import { useSettings } from "../../settings/provider/SettingProvider";
 
 type PrepareSessionPageProps = {
   isRestoring: boolean;
@@ -9,6 +10,7 @@ type PrepareSessionPageProps = {
 
 export function PrepareSessionPage({ isRestoring }: PrepareSessionPageProps) {
   const config = getConfig();
+  const { t } = useSettings();
   const hasStartedLogin = useRef(false);
 
   async function handleLogin() {
@@ -27,19 +29,19 @@ export function PrepareSessionPage({ isRestoring }: PrepareSessionPageProps) {
 
   return (
     <CenteredCardLayout
-      description="Zentry first tries to restore an existing CoreGate-backed session before asking you to sign in again."
-      title="Prepare Session"
+      description={t("auth.prepareDescription")}
+      title={t("auth.prepareTitle")}
     >
       <div>
-        <p><strong>Status:</strong> {isRestoring
-          ? "Restoring existing session..."
-          : "No existing session restored. Redirecting to sign in..."}</p>
-        <p>OIDC runtime config loaded from <code>/app-config.js</code>.</p>
-        <p><strong>Authority:</strong> {config.authority}</p>
-        <p><strong>Client ID:</strong> {config.clientId}</p>
-        <p><strong>Redirect URI:</strong> {config.redirectUri}</p>
-        <p><strong>Post logout redirect URI:</strong> {config.postLogoutRedirectUri}</p>
-        <p><strong>Scope:</strong> {config.scope}</p>
+        <p><strong>{t("auth.status")}:</strong> {isRestoring
+          ? t("auth.prepareRestoring")
+          : t("auth.prepareRedirecting")}</p>
+        <p>{t("dashboard.oidcRuntimeConfig")} <code>/app-config.js</code>.</p>
+        <p><strong>{t("auth.authority")}:</strong> {config.authority}</p>
+        <p><strong>{t("auth.clientId")}:</strong> {config.clientId}</p>
+        <p><strong>{t("auth.redirectUri")}:</strong> {config.redirectUri}</p>
+        <p><strong>{t("auth.postLogoutRedirectUri")}:</strong> {config.postLogoutRedirectUri}</p>
+        <p><strong>{t("auth.scope")}:</strong> {config.scope}</p>
       </div>
     </CenteredCardLayout>
   );

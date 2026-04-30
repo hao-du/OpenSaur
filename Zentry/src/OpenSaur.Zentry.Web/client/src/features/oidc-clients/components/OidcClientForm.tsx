@@ -1,9 +1,12 @@
-import { Alert, Button, CircularProgress, Divider, Stack, Typography } from "@mui/material";
+import { Alert, CircularProgress, Divider, Stack } from "@mui/material";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
+import { ActionButton } from "../../../components/atoms/ActionButton";
 import { DropDown } from "../../../components/atoms/DropDown";
+import { PageTitleText } from "../../../components/atoms/PageTitleText";
 import { Text } from "../../../components/atoms/Text";
 import { TextArea } from "../../../components/atoms/TextArea";
+import { useSettings } from "../../settings/provider/SettingProvider";
 
 type OidcClientFormValues = {
   clientId: string;
@@ -45,6 +48,7 @@ export function OidcClientForm({
   isSubmitting,
   onSubmit
 }: OidcClientFormProps) {
+  const { t } = useSettings();
   const { clearErrors, control, handleSubmit, resetField, setValue, watch } = useForm<OidcClientFormValues>({
     values: initialValues
   });
@@ -80,15 +84,15 @@ export function OidcClientForm({
     >
       {errorMessage ? <Alert severity="error">{errorMessage}</Alert> : null}
       <Stack spacing={2}>
-        <Typography variant="h6">Client</Typography>
+        <PageTitleText variant="h6">{t("oidc.client")}</PageTitleText>
         <Text
           control={control}
           disabled={isSubmitting}
-          helperText="How this client appears in Zentry."
-          label="Display name"
+          helperText={t("oidc.displayNameHelper")}
+          label={t("oidc.displayName")}
           name="displayName"
           required
-          rules={{ required: "Display name is required." }}
+          rules={{ required: t("oidc.displayNameRequired") }}
         />
         <Text
           control={control}
@@ -96,87 +100,86 @@ export function OidcClientForm({
           label="Client ID"
           name="clientId"
           required
-          rules={{ required: "Client ID is required." }}
+          rules={{ required: t("oidc.clientIdRequired") }}
         />
         <DropDown
           control={control}
           disabled={isSubmitting}
-          helperText="Public clients use authorization code + PKCE without a client secret."
-          label="Client type"
+          helperText={t("oidc.publicPkceHelper")}
+          label={t("oidc.clientType")}
           name="clientType"
           options={[
-            { label: "Public (PKCE)", value: "public" },
-            { label: "Confidential", value: "confidential" }
+            { label: t("oidc.publicPkce"), value: "public" },
+            { label: t("oidc.confidential"), value: "confidential" }
           ]}
           required
-          rules={{ required: "Client type is required." }}
+          rules={{ required: t("oidc.clientTypeRequired") }}
         />
         <Text
           key={isPublicClient ? "client-secret-public" : "client-secret-confidential"}
           control={control}
           disabled={isSubmitting || isPublicClient}
           helperText={isPublicClient
-            ? "Public PKCE clients do not use a client secret."
+            ? t("oidc.publicClientSecretHelper")
             : isEditMode
-              ? "Leave blank to keep the current client secret."
-              : "Client secret is required for confidential clients."}
-          label="Client secret"
+              ? t("oidc.keepSecretHelper")
+              : t("oidc.clientSecretRequiredForConfidential")}
+          label={t("oidc.clientSecret")}
           name="clientSecret"
           required={!isEditMode && !isPublicClient}
-          rules={isEditMode || isPublicClient ? undefined : { required: "Client secret is required." }}
+          rules={isEditMode || isPublicClient ? undefined : { required: t("oidc.clientSecretRequired") }}
           shouldUnregister
           type="password"
         />
         <Text
           control={control}
           disabled={isSubmitting}
-          helperText="Space-separated scopes issued to this application."
-          label="Scope"
+          helperText={t("oidc.scopeHelper")}
+          label={t("auth.scope")}
           name="scope"
           required
-          rules={{ required: "Scope is required." }}
+          rules={{ required: t("oidc.scopeRequired") }}
         />
         <TextArea
           control={control}
           disabled={isSubmitting}
-          helperText="One absolute redirect URI per line."
-          label="Redirect URIs"
+          helperText={t("oidc.redirectUrisHelper")}
+          label={t("oidc.redirectUris")}
           name="redirectUrisText"
           required
           rules={{
-            required: "At least one redirect URI is required.",
-            validate: value => splitUris(String(value)).length > 0 || "At least one redirect URI is required."
+            required: t("oidc.redirectUrisRequired"),
+            validate: value => splitUris(String(value)).length > 0 || t("oidc.redirectUrisRequired")
           }}
         />
         <TextArea
           control={control}
           disabled={isSubmitting}
-          helperText="Optional absolute post-logout redirect URI per line."
-          label="Post-logout redirect URIs"
+          helperText={t("oidc.postLogoutRedirectUrisHelper")}
+          label={t("oidc.postLogoutRedirectUris")}
           name="postLogoutRedirectUrisText"
           rules={{}}
         />
         {redirectUriPreview.length > 0 ? (
           <Alert severity="info">
-            Redirect URIs: {redirectUriPreview.join(", ")}
+            {t("oidc.redirectUris")}: {redirectUriPreview.join(", ")}
           </Alert>
         ) : null}
         {postLogoutRedirectUriPreview.length > 0 ? (
           <Alert severity="info">
-            Post-logout redirect URIs: {postLogoutRedirectUriPreview.join(", ")}
+            {t("oidc.postLogoutRedirectUris")}: {postLogoutRedirectUriPreview.join(", ")}
           </Alert>
         ) : null}
       </Stack>
       <Divider />
       <Stack direction="row" justifyContent="flex-end">
-        <Button
+        <ActionButton
           disabled={isSubmitting}
           startIcon={isSubmitting ? <CircularProgress color="inherit" size={18} /> : undefined}
           type="submit"
-          variant="contained"
         >
-          {isSubmitting ? "Saving..." : "Save"}
-        </Button>
+          {isSubmitting ? t("action.saving") : t("action.save")}
+        </ActionButton>
       </Stack>
     </Stack>
   );

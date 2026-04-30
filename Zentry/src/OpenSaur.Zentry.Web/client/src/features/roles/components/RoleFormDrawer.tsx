@@ -1,9 +1,11 @@
-import { Box, CircularProgress, Stack, Typography } from "@mui/material";
+import { Box, CircularProgress, Stack } from "@mui/material";
+import { BodyText } from "../../../components/atoms/BodyText";
 import { DrawerPanel } from "../../../components/organisms/DrawerPanel";
 import { layoutStyles } from "../../../infrastructure/theme/theme";
 import type { PermissionSummaryDto } from "../dtos/PermissionSummaryDto";
 import type { RoleDetailsDto } from "../dtos/RoleDetailsDto";
 import { RoleForm, type RoleFormValues } from "./RoleForm";
+import { useSettings } from "../../settings/provider/SettingProvider";
 
 type RoleFormDrawerProps = {
   errorMessage: string | null;
@@ -28,12 +30,14 @@ export function RoleFormDrawer({
   onSubmit,
   permissions
 }: RoleFormDrawerProps) {
+  const { t } = useSettings();
+
   return (
-    <DrawerPanel isOpen={isOpen} onClose={onClose} title={isEditMode ? "Edit role" : "Create role"} width="wide">
+    <DrawerPanel isOpen={isOpen} onClose={onClose} title={isEditMode ? t("roles.editTitle") : t("roles.createTitle")} width="wide">
         {isLoading ? (
           <Stack alignItems="center" justifyContent="center" spacing={2} sx={layoutStyles.drawerLoadingState}>
             <CircularProgress size={28} />
-            <Typography color="text.secondary">Loading role...</Typography>
+            <BodyText>{t("roles.loadingRole")}</BodyText>
           </Stack>
         ) : (
           <Box sx={layoutStyles.drawerBody}>

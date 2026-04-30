@@ -6,10 +6,12 @@ import { CenteredCardLayout } from "../../../components/layouts/CenteredCardLayo
 import { exchangeAuthCode, refreshAuthSession } from "../apis/authApi";
 import { useAuthSession } from "../hooks/AuthContext";
 import { readCallbackResult } from "../services/UriService";
+import { useSettings } from "../../settings/provider/SettingProvider";
 
 export function AuthCallbackPage() {
   const navigate = useNavigate();
   const { clearSession, setSession } = useAuthSession();
+  const { t } = useSettings();
   const callbackResult = readCallbackResult(window.location.search);
   const [callbackError, setCallbackError] = useState<string | null>(null);
   const [status, setStatus] = useState<"exchanging" | "failed" | "restoring">("exchanging");
@@ -68,7 +70,7 @@ export function AuthCallbackPage() {
       } catch (error) {
         if (config == null) {
           setStatus("failed");
-          setCallbackError(getCallbackErrorMessage(error));
+          setCallbackError(getCallbackErrorMessage(error, t("auth.tokenExchangeFailed")));
           clearSession();
           return;
         }
@@ -82,7 +84,7 @@ export function AuthCallbackPage() {
           navigate("/", { replace: true });
         } catch {
           setStatus("failed");
-          setCallbackError(getCallbackErrorMessage(error));
+          setCallbackError(getCallbackErrorMessage(error, t("auth.tokenExchangeFailed")));
           clearSession();
         }
       }
@@ -93,26 +95,26 @@ export function AuthCallbackPage() {
 
   return (
     <CenteredCardLayout
-      description="OAuth callback values and code exchange status are shown below."
-      title="Auth Callback"
+      description={t("auth.callbackDescription")}
+      title={t("auth.callbackTitle")}
     >
       <div>
-        <p><strong>Status:</strong> {status}</p>
-        <p><strong>Callback error:</strong> {callbackError ?? "(none)"}</p>
-        <p><strong>Code:</strong> {callbackResult.code ?? "(missing)"}</p>
-        <p><strong>Returned state:</strong> {callbackResult.returnedState ?? "(missing)"}</p>
-        <p><strong>Stored PKCE state:</strong> {callbackResult.storedState ?? "(missing)"}</p>
-        <p><strong>PKCE session present:</strong> {callbackResult.hasPkceSession ? "yes" : "no"}</p>
-        <p><strong>State matches:</strong> {callbackResult.stateMatches == null ? "(not verifiable)" : callbackResult.stateMatches ? "yes" : "no"}</p>
-        <p><strong>Error:</strong> {callbackResult.error ?? "(none)"}</p>
-        <p><strong>Error description:</strong> {callbackResult.errorDescription ?? "(none)"}</p>
+        <p><strong>{t("auth.status")}:</strong> {status}</p>
+        <p><strong>{t("auth.callbackError")}:</strong> {callbackError ?? t("common.none")}</p>
+        <p><strong>{t("auth.callbackCode")}:</strong> {callbackResult.code ?? t("common.missing")}</p>
+        <p><strong>{t("auth.returnedState")}:</strong> {callbackResult.returnedState ?? t("common.missing")}</p>
+        <p><strong>{t("auth.storedPkceState")}:</strong> {callbackResult.storedState ?? t("common.missing")}</p>
+        <p><strong>{t("auth.pkceSessionPresent")}:</strong> {callbackResult.hasPkceSession ? t("common.yes") : t("common.no")}</p>
+        <p><strong>{t("auth.stateMatches")}:</strong> {callbackResult.stateMatches == null ? t("common.notVerifiable") : callbackResult.stateMatches ? t("common.yes") : t("common.no")}</p>
+        <p><strong>{t("auth.error")}:</strong> {callbackResult.error ?? t("common.none")}</p>
+        <p><strong>{t("auth.errorDescription")}:</strong> {callbackResult.errorDescription ?? t("common.none")}</p>
       </div>
     </CenteredCardLayout>
   );
 }
 
-function getCallbackErrorMessage(error: unknown) {
+function getCallbackErrorMessage(error: unknown, fallbackMessage: string) {
   return error instanceof Error && error.message.trim().length > 0
     ? `Token exchange failed: ${error.message}`
-    : "Token exchange failed.";
+    : fallbackMessage;
 }

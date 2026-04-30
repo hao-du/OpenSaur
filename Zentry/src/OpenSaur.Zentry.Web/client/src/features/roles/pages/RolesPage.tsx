@@ -1,9 +1,11 @@
-import { Button, Stack } from "@mui/material";
+import { Stack } from "@mui/material";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { ActionButton } from "../../../components/atoms/ActionButton";
 import { DefaultLayout } from "../../../components/layouts/DefaultLayout";
 import { useAuthSession } from "../../auth/hooks/AuthContext";
 import { useCurrentProfileQuery } from "../../profile/hooks/useCurrentProfileQuery";
+import { useSettings } from "../../settings/provider/SettingProvider";
 import { layoutStyles } from "../../../infrastructure/theme/theme";
 import { RoleFiltersDrawer, type RoleFilterValues } from "../components/RoleFiltersDrawer";
 import { RoleFormDrawer } from "../components/RoleFormDrawer";
@@ -21,6 +23,7 @@ import type { RoleFormValues } from "../components/RoleForm";
 export function RolesPage() {
   const navigate = useNavigate();
   const { clearSession } = useAuthSession();
+  const { t } = useSettings();
   const { data: currentProfile } = useCurrentProfileQuery();
   const canEditRoles = currentProfile?.canEditRoles === true;
   const canAssignUsers = currentProfile?.canAssignUsers === true && !canEditRoles;
@@ -93,33 +96,32 @@ export function RolesPage() {
 
   return (
     <DefaultLayout
-      subtitle="Manage role definitions and permission assignments."
-      title="Roles"
+      subtitle={t("roles.subtitle")}
+      title={t("roles.title")}
     >
       <Stack spacing={3}>
         <Stack direction={{ md: "row", xs: "column" }} justifyContent="space-between" spacing={2}>
           <Stack direction="row" spacing={2} sx={layoutStyles.responsiveActionGroup}>
-            <Button
+            <ActionButton
               onClick={() => {
                 setIsFilterDrawerOpen(true);
               }}
               sx={layoutStyles.responsiveActionButton}
               variant="outlined"
             >
-              Filter
-            </Button>
+              {t("action.filter")}
+            </ActionButton>
           </Stack>
           {canEditRoles ? (
-            <Button
+            <ActionButton
               onClick={() => {
                 resetCreateError();
                 setIsCreateDrawerOpen(true);
               }}
               sx={layoutStyles.responsiveActionButton}
-              variant="contained"
             >
-              Create
-            </Button>
+              {t("action.create")}
+            </ActionButton>
           ) : null}
         </Stack>
         <RolesTable

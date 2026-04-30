@@ -1,5 +1,8 @@
-import { Button, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, Typography } from "@mui/material";
+import { CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle } from "@mui/material";
+import { ActionButton } from "../atoms/ActionButton";
+import { BodyText } from "../atoms/BodyText";
 import { layoutStyles } from "../../infrastructure/theme/theme";
+import { useSettings } from "../../features/settings/provider/SettingProvider";
 
 type ConfirmationDialogProps = {
   cancelLabel?: string;
@@ -13,8 +16,8 @@ type ConfirmationDialogProps = {
 };
 
 export function ConfirmationDialog({
-  cancelLabel = "Cancel",
-  confirmLabel = "Confirm",
+  cancelLabel,
+  confirmLabel,
   isConfirming = false,
   message,
   onClose,
@@ -22,6 +25,10 @@ export function ConfirmationDialog({
   open,
   title
 }: ConfirmationDialogProps) {
+  const { t } = useSettings();
+  const resolvedCancelLabel = cancelLabel ?? t("action.cancel");
+  const resolvedConfirmLabel = confirmLabel ?? t("action.confirm");
+
   return (
     <Dialog
       fullWidth
@@ -31,21 +38,20 @@ export function ConfirmationDialog({
     >
       <DialogTitle>{title}</DialogTitle>
       <DialogContent>
-        <Typography color="text.secondary">{message}</Typography>
+        <BodyText>{message}</BodyText>
       </DialogContent>
       <DialogActions sx={layoutStyles.dialogActions}>
-        <Button disabled={isConfirming} onClick={onClose} variant="text">
-          {cancelLabel}
-        </Button>
-        <Button
+        <ActionButton disabled={isConfirming} onClick={onClose} variant="text">
+          {resolvedCancelLabel}
+        </ActionButton>
+        <ActionButton
           color="error"
           disabled={isConfirming}
           onClick={onConfirm}
           startIcon={isConfirming ? <CircularProgress color="inherit" size={18} /> : undefined}
-          variant="contained"
         >
-          {isConfirming ? "Working..." : confirmLabel}
-        </Button>
+          {isConfirming ? t("action.working") : resolvedConfirmLabel}
+        </ActionButton>
       </DialogActions>
     </Dialog>
   );

@@ -1,10 +1,15 @@
-import { Alert, Button, CircularProgress, Divider, Paper, Stack, Typography } from "@mui/material";
+import { Alert, CircularProgress, Divider, Paper, Stack } from "@mui/material";
 import { useForm } from "react-hook-form";
+import { ActionButton } from "../../../components/atoms/ActionButton";
+import { BodyText } from "../../../components/atoms/BodyText";
 import { CheckBox } from "../../../components/atoms/CheckBox";
+import { MetaText } from "../../../components/atoms/MetaText";
 import { MultiSelect } from "../../../components/atoms/MultiSelect";
+import { PageTitleText } from "../../../components/atoms/PageTitleText";
 import { Text } from "../../../components/atoms/Text";
 import { TextArea } from "../../../components/atoms/TextArea";
 import type { AssignableWorkspaceRoleDto } from "../dtos/AssignableWorkspaceRoleDto";
+import { useSettings } from "../../settings/provider/SettingProvider";
 
 export type WorkspaceFormValues = {
   description: string;
@@ -31,6 +36,7 @@ export function WorkspaceForm({
   isSubmitting,
   onSubmit
 }: WorkspaceFormProps) {
+  const { t } = useSettings();
   const { control, handleSubmit } = useForm<WorkspaceFormValues>({
     values: initialValues
   });
@@ -48,22 +54,22 @@ export function WorkspaceForm({
       <Text
         control={control}
         disabled={isSubmitting}
-        label="Workspace name"
+        label={t("workspaces.workspaceName")}
         name="name"
         required
-        rules={{ required: "Workspace name is required." }}
+        rules={{ required: t("workspaces.workspaceNameRequired") }}
       />
       <TextArea
         control={control}
         disabled={isSubmitting}
-        label="Description"
+        label={t("common.description")}
         name="description"
       />
       <Text
         control={control}
         disabled={isSubmitting}
-        helperText="Leave blank for no workspace limit."
-        label="Maximum active users"
+        helperText={t("workspaces.leaveBlankLimit")}
+        label={t("workspaces.maxActiveUsersField")}
         name="maxActiveUsers"
         rules={{
           validate: value => {
@@ -75,35 +81,35 @@ export function WorkspaceForm({
             const parsedValue = Number(normalizedValue);
             return Number.isInteger(parsedValue) && parsedValue >= 0
               ? true
-              : "Maximum active users must be a whole number that is zero or greater.";
+              : t("workspaces.maxActiveUsersInvalid");
           }
         }}
         type="number"
       />
       <Divider />
       <Stack spacing={2}>
-        <Typography variant="h6">Assigned roles</Typography>
+        <PageTitleText variant="h6">{t("workspaces.assignedRoles")}</PageTitleText>
         {availableRoles.length === 0 ? (
           <Paper elevation={0} variant="outlined">
             <Stack spacing={1.5} sx={{ p: 2 }}>
-              <Typography>No assignable roles found.</Typography>
-              <Typography color="text.secondary" variant="body2">
-                Create active roles before assigning them to a workspace.
-              </Typography>
+              <BodyText color="text.primary">{t("workspaces.noAssignableRoles")}</BodyText>
+              <MetaText>
+                {t("workspaces.createActiveRoles")}
+              </MetaText>
             </Stack>
           </Paper>
         ) : (
           <MultiSelect
             control={control}
             disabled={isSubmitting}
-            label="Assigned roles"
+            label={t("workspaces.assignedRoles")}
             name="selectedRoleIds"
             options={availableRoles.map(role => ({
               description: role.description,
               label: role.name,
               value: role.id
             }))}
-            placeholder="Search active roles"
+            placeholder={t("workspaces.searchActiveRoles")}
           />
         )}
       </Stack>
@@ -111,19 +117,18 @@ export function WorkspaceForm({
         <CheckBox
           control={control}
           disabled={isSubmitting}
-          label="Workspace is active"
+          label={t("workspaces.workspaceIsActive")}
           name="isActive"
         />
       ) : null}
       <Stack direction="row" justifyContent="flex-end" spacing={1.5}>
-        <Button
+        <ActionButton
           disabled={isSubmitting}
           startIcon={isSubmitting ? <CircularProgress color="inherit" size={18} /> : undefined}
           type="submit"
-          variant="contained"
         >
-          {isSubmitting ? "Saving..." : "Save"}
-        </Button>
+          {isSubmitting ? t("action.saving") : t("action.save")}
+        </ActionButton>
       </Stack>
     </Stack>
   );

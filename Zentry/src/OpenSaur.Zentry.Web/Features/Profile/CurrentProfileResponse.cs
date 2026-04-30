@@ -7,6 +7,7 @@ public sealed record CurrentProfileResponse(
     bool IsSuperAdministrator,
     string LastName,
     IReadOnlyList<CurrentProfileNavigationItemResponse> NavigationItems,
+    IReadOnlyList<string> Roles,
     string UserName,
     string WorkspaceName,
     bool CanAssignUsers,

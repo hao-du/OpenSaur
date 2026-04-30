@@ -1,10 +1,12 @@
-import { Button, Stack } from "@mui/material";
+import { Stack } from "@mui/material";
 import { useEffect, useMemo, useState } from "react";
 import { ConfirmationDialog } from "../../../components/organisms/ConfirmationDialog";
 import { useNavigate } from "react-router-dom";
+import { ActionButton } from "../../../components/atoms/ActionButton";
 import { DefaultLayout } from "../../../components/layouts/DefaultLayout";
 import { layoutStyles } from "../../../infrastructure/theme/theme";
 import { useAuthSession } from "../../auth/hooks/AuthContext";
+import { useSettings } from "../../settings/provider/SettingProvider";
 import { OidcClientFiltersDrawer } from "../components/OidcClientFiltersDrawer";
 import type { OidcClientFilterValues } from "../components/OidcClientFiltersDrawer";
 import { OidcClientFormDrawer } from "../components/OidcClientFormDrawer";
@@ -16,6 +18,7 @@ import { useOidcClientsQuery } from "../hooks/useOidcClientsQuery";
 export function OidcClientsPage() {
   const navigate = useNavigate();
   const { clearSession } = useAuthSession();
+  const { t } = useSettings();
   const [clientPendingDelete, setClientPendingDelete] = useState<{ displayName: string; id: string } | null>(null);
   const [filters, setFilters] = useState<OidcClientFilterValues>({
     clientId: ""
@@ -56,31 +59,30 @@ export function OidcClientsPage() {
 
   return (
     <DefaultLayout
-      subtitle="Manage OpenID Connect applications registered through CoreGate."
-      title="OIDC Clients"
+      subtitle={t("oidc.subtitle")}
+      title={t("oidc.title")}
     >
       <Stack spacing={3}>
         <Stack direction={{ md: "row", xs: "column" }} justifyContent="space-between" spacing={2}>
           <Stack direction="row" spacing={2} sx={layoutStyles.responsiveActionGroup}>
-            <Button
+            <ActionButton
               onClick={() => {
                 setIsFilterDrawerOpen(true);
               }}
               sx={layoutStyles.responsiveActionButton}
               variant="outlined"
             >
-              Filter
-            </Button>
+              {t("action.filter")}
+            </ActionButton>
           </Stack>
-          <Button
+          <ActionButton
             onClick={() => {
               setIsCreateDrawerOpen(true);
             }}
             sx={layoutStyles.responsiveActionButton}
-            variant="contained"
           >
-            Create
-          </Button>
+            {t("action.create")}
+          </ActionButton>
         </Stack>
         <OidcClientsTable
           actionErrorMessage={deleteErrorMessage}
@@ -130,11 +132,11 @@ export function OidcClientsPage() {
         }}
       />
       <ConfirmationDialog
-        confirmLabel="Delete"
+        confirmLabel={t("action.delete")}
         isConfirming={isDeleting}
         message={clientPendingDelete == null
           ? ""
-          : `Delete ${clientPendingDelete.displayName}? This action cannot be undone.`}
+          : t("oidc.deleteMessage").replace("{name}", clientPendingDelete.displayName)}
         onClose={() => {
           if (isDeleting) {
             return;
@@ -154,7 +156,7 @@ export function OidcClientsPage() {
           });
         }}
         open={clientPendingDelete !== null}
-        title="Delete application"
+        title={t("oidc.deleteTitle")}
       />
     </DefaultLayout>
   );

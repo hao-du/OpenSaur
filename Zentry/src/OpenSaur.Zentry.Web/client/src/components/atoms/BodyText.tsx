@@ -1,9 +1,9 @@
 import type { PropsWithChildren } from "react";
-import { Typography } from "@mui/material";
+import { Typography, type TypographyProps } from "@mui/material";
 
-export function BodyText({ children }: PropsWithChildren) {
+export function BodyText({ children, ...props }: PropsWithChildren<TypographyProps>) {
   return (
-    <Typography color="text.secondary">
+    <Typography color="text.secondary" {...props}>
       {children}
     </Typography>
   );

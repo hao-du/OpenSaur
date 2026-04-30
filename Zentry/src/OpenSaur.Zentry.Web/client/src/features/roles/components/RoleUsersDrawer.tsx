@@ -1,10 +1,13 @@
-import { Alert, Box, Button, CircularProgress, Stack, Typography } from "@mui/material";
+import { Alert, Box, CircularProgress, Stack } from "@mui/material";
 import { useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
+import { ActionButton } from "../../../components/atoms/ActionButton";
+import { BodyText } from "../../../components/atoms/BodyText";
 import { MultiSelect } from "../../../components/atoms/MultiSelect";
 import { DrawerPanel } from "../../../components/organisms/DrawerPanel";
 import { layoutStyles } from "../../../infrastructure/theme/theme";
 import type { RoleUsersDto } from "../dtos/RoleUsersDto";
+import { useSettings } from "../../settings/provider/SettingProvider";
 
 type RoleUsersDrawerProps = {
   errorMessage: string | null;
@@ -34,6 +37,7 @@ export function RoleUsersDrawer({
   onSubmit,
   roleUsers
 }: RoleUsersDrawerProps) {
+  const { t } = useSettings();
   const users = useMemo(() => roleUsers?.users ?? [], [roleUsers?.users]);
   const userOptions = useMemo(() => users.map(user => ({
     description: user.email,
@@ -59,11 +63,11 @@ export function RoleUsersDrawer({
   }, [isOpen, reset, roleUsers]);
 
   return (
-    <DrawerPanel isOpen={isOpen} onClose={onClose} subtitle={roleUsers?.roleName ?? ""} title="Assign Users">
+    <DrawerPanel isOpen={isOpen} onClose={onClose} subtitle={roleUsers?.roleName ?? ""} title={t("action.assignUsers")}>
       {isLoading ? (
         <Stack alignItems="center" justifyContent="center" spacing={2} sx={layoutStyles.drawerLoadingState}>
           <CircularProgress size={28} />
-          <Typography color="text.secondary">Loading users...</Typography>
+          <BodyText>{t("roles.loadingUsers")}</BodyText>
         </Stack>
       ) : (
         <Stack spacing={3} sx={layoutStyles.drawerBody}>
@@ -74,28 +78,27 @@ export function RoleUsersDrawer({
           ) : null}
           <MultiSelect
             control={control}
-            helperText={users.length === 0 ? "No active users found in this workspace." : undefined}
-            label="Users"
+            helperText={users.length === 0 ? t("roles.noActiveUsers") : undefined}
+            label={t("roles.users")}
             name="userIds"
             options={userOptions}
-            placeholder="Search users"
+            placeholder={t("roles.searchUsers")}
           />
           <Box sx={layoutStyles.flexGrow} />
           <Stack direction="row" justifyContent="flex-end" spacing={1.5}>
-            <Button
+            <ActionButton
               onClick={onClose}
               variant="text"
             >
-              Cancel
-            </Button>
-            <Button
+              {t("action.cancel")}
+            </ActionButton>
+            <ActionButton
               aria-busy={isSubmitting}
               disabled={isSubmitting}
               onClick={handleSubmit(values => onSubmit(values.userIds))}
-              variant="contained"
             >
-              {isSubmitting ? "Saving..." : "Save"}
-            </Button>
+              {isSubmitting ? t("action.saving") : t("action.save")}
+            </ActionButton>
           </Stack>
         </Stack>
       )}

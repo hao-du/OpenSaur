@@ -1,39 +1,42 @@
-import { Button, Stack, Typography } from "@mui/material";
+import { Stack } from "@mui/material";
 import { useNavigate } from "react-router-dom";
+import { ActionButton } from "../../../components/atoms/ActionButton";
+import { BodyText } from "../../../components/atoms/BodyText";
 import { DefaultLayout } from "../../../components/layouts/DefaultLayout";
+import { useSettings } from "../../settings/provider/SettingProvider";
 
 export function ForbiddenPage() {
   const navigate = useNavigate();
+  const { t } = useSettings();
 
   return (
     <DefaultLayout
-      subtitle="Your account is signed in, but it does not have permission to use this area."
-      title="403 Forbidden"
+      subtitle={t("forbidden.subtitle")}
+      title={t("forbidden.title")}
     >
       <Stack spacing={3}>
-        <Typography>
-          This area is restricted to super administrators in Zentry.
-        </Typography>
-        <Typography color="text.secondary">
-          If you believe you should have access, contact an administrator or return to the dashboard.
-        </Typography>
+        <BodyText color="text.primary">
+          {t("forbidden.body")}
+        </BodyText>
+        <BodyText>
+          {t("forbidden.help")}
+        </BodyText>
         <Stack direction={{ md: "row", xs: "column" }} spacing={2}>
-          <Button
+          <ActionButton
             onClick={() => {
               navigate("/", { replace: true });
             }}
-            variant="contained"
           >
-            Back to dashboard
-          </Button>
-          <Button
+            {t("action.backToDashboard")}
+          </ActionButton>
+          <ActionButton
             onClick={() => {
               navigate("/", { replace: true });
             }}
             variant="outlined"
           >
-            Return to dashboard
-          </Button>
+            {t("action.returnToDashboard")}
+          </ActionButton>
         </Stack>
       </Stack>
     </DefaultLayout>

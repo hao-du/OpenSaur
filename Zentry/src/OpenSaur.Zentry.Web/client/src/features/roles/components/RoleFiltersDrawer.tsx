@@ -1,10 +1,12 @@
 import { useState } from "react";
-import { Button, CircularProgress, Stack } from "@mui/material";
+import { CircularProgress, Stack } from "@mui/material";
 import { useForm } from "react-hook-form";
+import { ActionButton } from "../../../components/atoms/ActionButton";
 import { DropDown } from "../../../components/atoms/DropDown";
 import { Text } from "../../../components/atoms/Text";
 import { DrawerPanel } from "../../../components/organisms/DrawerPanel";
 import { layoutStyles } from "../../../infrastructure/theme/theme";
+import { useSettings } from "../../settings/provider/SettingProvider";
 
 export type RoleFilterValues = {
   search: string;
@@ -32,10 +34,11 @@ export function RoleFiltersDrawer({
   const { control, handleSubmit, reset } = useForm<RoleFilterValues>({
     values: initialValues
   });
+  const { t } = useSettings();
   const [isApplying, setIsApplying] = useState(false);
 
   return (
-    <DrawerPanel isOpen={isOpen} onClose={onClose} title="Filter roles">
+    <DrawerPanel isOpen={isOpen} onClose={onClose} title={t("roles.filterTitle")}>
         <Stack
           component="form"
           noValidate
@@ -50,35 +53,34 @@ export function RoleFiltersDrawer({
           spacing={3}
           sx={layoutStyles.drawerBody}
         >
-          <Text control={control} label="Role name or description" name="search" />
+          <Text control={control} label={t("roles.filterSearch")} name="search" />
           <DropDown
             control={control}
-            label="Status"
+            label={t("common.status")}
             name="status"
             options={[
-              { label: "Active", value: "active" },
-              { label: "Inactive", value: "inactive" },
-              { label: "All", value: "all" }
+              { label: t("common.active"), value: "active" },
+              { label: t("common.inactive"), value: "inactive" },
+              { label: t("common.all"), value: "all" }
             ]}
           />
           <Stack direction="row" justifyContent="space-between" spacing={1.5} sx={layoutStyles.formFooterRow}>
-            <Button
+            <ActionButton
               onClick={() => {
                 reset(defaultFilterValues);
               }}
               type="button"
               variant="text"
             >
-              Reset filters
-            </Button>
-            <Button
+              {t("action.resetFilters")}
+            </ActionButton>
+            <ActionButton
               disabled={isApplying}
               startIcon={isApplying ? <CircularProgress color="inherit" size={18} /> : undefined}
               type="submit"
-              variant="contained"
             >
-              {isApplying ? "Applying..." : "Apply"}
-            </Button>
+              {isApplying ? t("action.applying") : t("action.apply")}
+            </ActionButton>
           </Stack>
         </Stack>
     </DrawerPanel>

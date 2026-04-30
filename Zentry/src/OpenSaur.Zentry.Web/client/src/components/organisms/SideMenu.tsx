@@ -4,7 +4,8 @@ import {
   List,
   ListItemButton,
   ListItemIcon,
-  ListItemText
+  ListItemText,
+  Skeleton
 } from "@mui/material";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
@@ -20,6 +21,8 @@ import { MetaText } from "../atoms/MetaText";
 import { AppIcon } from "../icons/AppIcon";
 import { layoutStyles } from "../../infrastructure/theme/theme";
 import { useCurrentProfileQuery } from "../../features/profile/hooks/useCurrentProfileQuery";
+import { useSettings } from "../../features/settings/provider/SettingProvider";
+import type { TranslationKey } from "../../features/settings/provider/translations";
 
 const navigationIcons: Record<string, LucideIcon> = {
   "building-2": Building2,
@@ -29,6 +32,15 @@ const navigationIcons: Record<string, LucideIcon> = {
   "user-round": UserRound
 };
 
+const navigationLabelKeys: Record<string, TranslationKey> = {
+  "/": "nav.dashboard",
+  "/oidc-clients": "nav.oidcClients",
+  "/roles": "nav.roles",
+  "/settings": "nav.settings",
+  "/users": "nav.users",
+  "/workspaces": "nav.workspaces"
+};
+
 type SideMenuProps = {
   currentYear: number;
 };
@@ -36,7 +48,8 @@ type SideMenuProps = {
 export function SideMenu({ currentYear }: SideMenuProps) {
   const location = useLocation();
   const navigate = useNavigate();
-  const { data: currentProfile } = useCurrentProfileQuery();
+  const { data: currentProfile, isLoading: isCurrentProfileLoading } = useCurrentProfileQuery();
+  const { t } = useSettings();
   const navigationItems = currentProfile?.navigationItems ?? [];
 
   return (
@@ -50,11 +63,24 @@ export function SideMenu({ currentYear }: SideMenuProps) {
       </Box>
       <Divider sx={layoutStyles.fullWidthDivider} />
       <List
-        aria-label="Primary navigation"
+        aria-label={t("nav.primaryNavigation")}
         component="nav"
         sx={layoutStyles.navList}
       >
-        {navigationItems.map(item => {
+        {isCurrentProfileLoading ? (
+          Array.from({ length: 5 }).map((_, index) => (
+            <ListItemButton
+              disabled
+              key={`navigation-skeleton-${index}`}
+              sx={layoutStyles.navItem}
+            >
+              <ListItemIcon sx={layoutStyles.navItemIcon}>
+                <Skeleton height={22} variant="circular" width={22} />
+              </ListItemIcon>
+              <Skeleton height={24} variant="text" width={index === 1 ? 132 : 104} />
+            </ListItemButton>
+          ))
+        ) : navigationItems.map(item => {
           const Icon = navigationIcons[item.icon] ?? LayoutDashboard;
 
           return (
@@ -69,7 +95,7 @@ export function SideMenu({ currentYear }: SideMenuProps) {
               <ListItemIcon sx={layoutStyles.navItemIcon}>
                 <AppIcon icon={Icon} />
               </ListItemIcon>
-              <ListItemText primary={item.label} />
+              <ListItemText primary={navigationLabelKeys[item.path] ? t(navigationLabelKeys[item.path]) : item.label} />
             </ListItemButton>
           );
         })}

@@ -18,6 +18,7 @@ public static class CurrentProfileHandler
         var email = string.Empty;
         var firstName = string.Empty;
         var lastName = string.Empty;
+        var roles = new List<string>();
         var userName = string.Empty;
         var currentUserId = ClaimHelper.GetCurrentUserId(user);
         if (currentUserId != Guid.Empty)
@@ -30,7 +31,12 @@ public static class CurrentProfileHandler
                     candidate.Email,
                     candidate.FirstName,
                     candidate.LastName,
-                    candidate.UserName
+                    candidate.UserName,
+                    Roles = candidate.UserRoles
+                        .Where(userRole => userRole.IsActive && userRole.Role != null)
+                        .OrderBy(userRole => userRole.Role!.Name)
+                        .Select(userRole => userRole.Role!.Name ?? string.Empty)
+                        .ToList()
                 })
                 .SingleOrDefaultAsync(cancellationToken);
 
@@ -39,6 +45,7 @@ public static class CurrentProfileHandler
                 email = currentUser.Email ?? string.Empty;
                 firstName = currentUser.FirstName;
                 lastName = currentUser.LastName;
+                roles = currentUser.Roles;
                 userName = currentUser.UserName ?? string.Empty;
             }
         }
@@ -70,6 +77,7 @@ public static class CurrentProfileHandler
             isSuperAdministrator,
             lastName,
             sideMenuService.BuildNavigationItems(isSuperAdministrator, canAssignUsers),
+            roles,
             userName,
             workspaceName,
             canAssignUsers,

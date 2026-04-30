@@ -1,8 +1,10 @@
-import { Alert, Button, CircularProgress, Stack } from "@mui/material";
+import { Alert, CircularProgress, Stack } from "@mui/material";
 import { useForm } from "react-hook-form";
+import { ActionButton } from "../../../components/atoms/ActionButton";
 import { CheckBox } from "../../../components/atoms/CheckBox";
 import { Text } from "../../../components/atoms/Text";
 import { TextArea } from "../../../components/atoms/TextArea";
+import { useSettings } from "../../settings/provider/SettingProvider";
 
 export type UserFormValues = {
   description: string;
@@ -30,6 +32,7 @@ export function UserForm({
   isSubmitting,
   onSubmit
 }: UserFormProps) {
+  const { t } = useSettings();
   const { control, handleSubmit } = useForm<UserFormValues>({
     values: initialValues
   });
@@ -47,36 +50,36 @@ export function UserForm({
       <Text
         control={control}
         disabled={isSubmitting}
-        label="User name"
+        label={t("users.userName")}
         name="userName"
         required
-        rules={{ required: "User name is required." }}
+        rules={{ required: t("users.userNameRequired") }}
       />
       <Text
         control={control}
         disabled={isSubmitting}
-        label="Email"
+        label={t("common.email")}
         name="email"
         required
-        rules={{ required: "Email is required." }}
+        rules={{ required: t("users.emailRequired") }}
         type="email"
       />
-      <Text control={control} disabled={isSubmitting} label="First name" name="firstName" />
-      <Text control={control} disabled={isSubmitting} label="Last name" name="lastName" />
-      <TextArea control={control} disabled={isSubmitting} label="Description" name="description" />
+      <Text control={control} disabled={isSubmitting} label={t("users.firstName")} name="firstName" />
+      <Text control={control} disabled={isSubmitting} label={t("users.lastName")} name="lastName" />
+      <TextArea control={control} disabled={isSubmitting} label={t("common.description")} name="description" />
       {!isEditMode ? (
         <Text
           control={control}
           disabled={isSubmitting}
-          label="Temporary password"
+          label={t("users.temporaryPassword")}
           name="password"
           required
           rules={{
             minLength: {
-              message: "Password must be at least 8 characters.",
+              message: t("users.passwordMinLength"),
               value: 8
             },
-            required: "Temporary password is required."
+            required: t("users.temporaryPasswordRequired")
           }}
           type="password"
         />
@@ -84,26 +87,25 @@ export function UserForm({
       <CheckBox
         control={control}
         disabled={isSubmitting}
-        label="Require password change"
+        label={t("users.requirePasswordChange")}
         name="requirePasswordChange"
       />
       {isEditMode ? (
         <CheckBox
           control={control}
           disabled={isSubmitting}
-          label="User is active"
+          label={t("users.userIsActive")}
           name="isActive"
         />
       ) : null}
       <Stack direction="row" justifyContent="flex-end" spacing={1.5}>
-        <Button
+        <ActionButton
           disabled={isSubmitting}
           startIcon={isSubmitting ? <CircularProgress color="inherit" size={18} /> : undefined}
           type="submit"
-          variant="contained"
         >
-          {isSubmitting ? "Saving..." : "Save"}
-        </Button>
+          {isSubmitting ? t("action.saving") : t("action.save")}
+        </ActionButton>
       </Stack>
     </Stack>
   );

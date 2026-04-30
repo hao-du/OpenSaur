@@ -1,5 +1,10 @@
-import { Alert, Box, Button, Chip, CircularProgress, Paper, Stack, Table, TableBody, TableCell, TableHead, TableRow, Typography } from "@mui/material";
+import { Alert, Box, Chip, CircularProgress, Paper, Stack, Table, TableBody, TableCell, TableHead, TableRow } from "@mui/material";
+import { ActionButton } from "../../../components/atoms/ActionButton";
+import { BodyText } from "../../../components/atoms/BodyText";
+import { LinkButton } from "../../../components/atoms/LinkButton";
+import { PageTitleText } from "../../../components/atoms/PageTitleText";
 import type { RoleSummaryDto } from "../dtos/RoleSummaryDto";
+import { useSettings } from "../../settings/provider/SettingProvider";
 
 const normalizedSuperAdministrator = "SUPER ADMINISTRATOR";
 
@@ -24,12 +29,14 @@ export function RolesTable({
   onRetry,
   roles
 }: RolesTableProps) {
+  const { t } = useSettings();
+
   if (isLoading) {
     return (
       <Paper elevation={0} sx={{ border: "1px solid rgba(11,110,79,0.12)", p: 4 }}>
         <Stack alignItems="center" spacing={2}>
           <CircularProgress size={28} />
-          <Typography color="text.secondary">Loading roles...</Typography>
+          <BodyText>{t("roles.loadingRoles")}</BodyText>
         </Stack>
       </Paper>
     );
@@ -39,13 +46,13 @@ export function RolesTable({
     return (
       <Alert
         action={onRetry ? (
-          <Button color="inherit" onClick={onRetry} size="small">
-            Retry
-          </Button>
+          <ActionButton color="inherit" onClick={onRetry} size="small" variant="text">
+            {t("action.retry")}
+          </ActionButton>
         ) : undefined}
         severity="error"
       >
-        Unable to load roles.
+        {t("roles.unableToLoad")}
       </Alert>
     );
   }
@@ -54,10 +61,10 @@ export function RolesTable({
     return (
       <Paper elevation={0} sx={{ border: "1px dashed rgba(11,110,79,0.24)", p: 4 }}>
         <Stack spacing={1}>
-          <Typography variant="h6">No roles found</Typography>
-          <Typography color="text.secondary">
-            Create a role to start assigning permissions and making it available to workspaces.
-          </Typography>
+          <PageTitleText variant="h6">{t("roles.noRolesTitle")}</PageTitleText>
+          <BodyText>
+            {t("roles.noRolesBody")}
+          </BodyText>
         </Stack>
       </Paper>
     );
@@ -69,10 +76,10 @@ export function RolesTable({
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell>Name</TableCell>
-              <TableCell>Description</TableCell>
-              <TableCell>Status</TableCell>
-              <TableCell align="right">Actions</TableCell>
+              <TableCell>{t("common.name")}</TableCell>
+              <TableCell>{t("common.description")}</TableCell>
+              <TableCell>{t("common.status")}</TableCell>
+              <TableCell align="right">{t("common.actions")}</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -83,35 +90,32 @@ export function RolesTable({
                 <TableCell>
                   <Chip
                     color={role.isActive ? "success" : "default"}
-                    label={role.isActive ? "Active" : "Inactive"}
+                    label={role.isActive ? t("common.active") : t("common.inactive")}
                     size="small"
                     variant={role.isActive ? "filled" : "outlined"}
                   />
                 </TableCell>
                 <TableCell align="right">
-                  {canAssignUsers ? (
-                    <Button
-                      onClick={() => {
-                        onAssignUsers(role.id);
-                      }}
-                      size="small"
-                      sx={{ mr: canEditRoles ? 1 : 0 }}
-                      variant="outlined"
-                    >
-                      Assign Users
-                    </Button>
-                  ) : null}
-                  {canEditRoles && role.normalizedName !== normalizedSuperAdministrator ? (
-                    <Button
-                      onClick={() => {
-                        onEditRole(role.id);
-                      }}
-                      size="small"
-                      variant="outlined"
-                    >
-                      Edit
-                    </Button>
-                  ) : null}
+                  <Stack direction="row" justifyContent="flex-end" spacing={1}>
+                    {canAssignUsers ? (
+                      <LinkButton
+                        onClick={() => {
+                          onAssignUsers(role.id);
+                        }}
+                      >
+                        {t("action.assignUsers")}
+                      </LinkButton>
+                    ) : null}
+                    {canEditRoles && role.normalizedName !== normalizedSuperAdministrator ? (
+                      <LinkButton
+                        onClick={() => {
+                          onEditRole(role.id);
+                        }}
+                      >
+                        {t("action.edit")}
+                      </LinkButton>
+                    ) : null}
+                  </Stack>
                 </TableCell>
               </TableRow>
             ))}

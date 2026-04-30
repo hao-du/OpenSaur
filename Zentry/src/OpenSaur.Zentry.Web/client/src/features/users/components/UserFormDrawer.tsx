@@ -1,11 +1,13 @@
-import { Box, CircularProgress, Stack, Typography } from "@mui/material";
+import { Box, CircularProgress, Stack } from "@mui/material";
 import { useEffect } from "react";
+import { BodyText } from "../../../components/atoms/BodyText";
 import { DrawerPanel } from "../../../components/organisms/DrawerPanel";
 import { layoutStyles } from "../../../infrastructure/theme/theme";
 import type { UserDetailsDto } from "../dtos/UserDetailsDto";
 import { useCreateUser } from "../hooks/useCreateUser";
 import { useEditUser } from "../hooks/useEditUser";
 import { UserForm } from "./UserForm";
+import { useSettings } from "../../settings/provider/SettingProvider";
 
 type UserFormDrawerProps = {
   initialValues?: UserDetailsDto | null;
@@ -24,6 +26,7 @@ export function UserFormDrawer({
 }: UserFormDrawerProps) {
   const { createUser, errorMessage: createErrorMessage, isCreating, resetError: resetCreateError } = useCreateUser();
   const { editUser, errorMessage: editErrorMessage, isEditing, resetError: resetEditError } = useEditUser();
+  const { t } = useSettings();
   const errorMessage = isEditMode ? editErrorMessage : createErrorMessage;
   const isSubmitting = isEditMode ? isEditing : isCreating;
 
@@ -35,11 +38,11 @@ export function UserFormDrawer({
   }, [isOpen, resetCreateError, resetEditError]);
 
   return (
-    <DrawerPanel isOpen={isOpen} onClose={onClose} title={isEditMode ? "Edit user" : "Create user"}>
+    <DrawerPanel isOpen={isOpen} onClose={onClose} title={isEditMode ? t("users.editTitle") : t("users.createTitle")}>
         {isLoading ? (
           <Stack alignItems="center" justifyContent="center" spacing={2} sx={layoutStyles.drawerLoadingState}>
             <CircularProgress size={28} />
-            <Typography color="text.secondary">Loading user...</Typography>
+            <BodyText>{t("users.loadingUser")}</BodyText>
           </Stack>
         ) : (
           <Box sx={layoutStyles.drawerBody}>

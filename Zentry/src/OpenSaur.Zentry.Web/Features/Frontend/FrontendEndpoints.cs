@@ -8,13 +8,16 @@ public static class FrontendEndpoints
     private static readonly string[] Routes =
     [
         "/",
+        "/profile/",
         "/oidc-clients",
         "/auth/callback",
         "/dashboard",
         "/roles",
+        "/users",
         "/workspaces",
         "/forbidden",
-        "/prepare-session"
+        "/prepare-session",
+        "/settings"
     ];
 
     public static IEndpointRouteBuilder MapFrontEndRoutes(this IEndpointRouteBuilder app)

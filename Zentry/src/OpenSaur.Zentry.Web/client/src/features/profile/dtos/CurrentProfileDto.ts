@@ -7,6 +7,7 @@ export type CurrentProfileDto = {
   isSuperAdministrator: boolean;
   lastName: string;
   navigationItems: CurrentProfileNavigationItemDto[];
+  roles: string[];
   userName: string;
   workspaceName: string;
 };

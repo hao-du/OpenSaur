@@ -8,6 +8,7 @@ public static class ProfileEndpoints
             .RequireAuthorization();
 
         profile.MapGet("/current", CurrentProfileHandler.HandleAsync);
+        profile.MapPut("/require-password-change", RequirePasswordChangeHandler.HandleAsync);
 
         return app;
     }

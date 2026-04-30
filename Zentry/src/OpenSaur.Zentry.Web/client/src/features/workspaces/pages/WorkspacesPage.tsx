@@ -1,11 +1,13 @@
-import { Button, Stack } from "@mui/material";
+import { Stack } from "@mui/material";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { ActionButton } from "../../../components/atoms/ActionButton";
 import { DefaultLayout } from "../../../components/layouts/DefaultLayout";
 import { getConfig } from "../../../infrastructure/config/Config";
 import { layoutStyles } from "../../../infrastructure/theme/theme";
 import { useAuthSession } from "../../auth/hooks/AuthContext";
 import { buildAuthorizeUrl } from "../../auth/services/UriService";
+import { useSettings } from "../../settings/provider/SettingProvider";
 import { WorkspaceFiltersDrawer, type WorkspaceFilterValues } from "../components/WorkspaceFiltersDrawer";
 import { WorkspaceFormDrawer } from "../components/WorkspaceFormDrawer";
 import { WorkspaceImpersonationDialog } from "../components/WorkspaceImpersonationDialog";
@@ -18,6 +20,7 @@ import { useWorkspacesQuery } from "../hooks/useWorkspacesQuery";
 export function WorkspacesPage() {
   const navigate = useNavigate();
   const { clearSession } = useAuthSession();
+  const { t } = useSettings();
   const [filters, setFilters] = useState<WorkspaceFilterValues>({
     search: "",
     status: "active"
@@ -73,38 +76,37 @@ export function WorkspacesPage() {
       setImpersonationErrorMessage(
         error instanceof Error && error.message.trim().length > 0
           ? error.message
-          : "Unable to start impersonation."
+          : t("workspaces.impersonationStartError")
       );
     }
   }
 
   return (
     <DefaultLayout
-      subtitle="Manage workspaces and the roles available inside each workspace."
-      title="Workspaces"
+      subtitle={t("workspaces.subtitle")}
+      title={t("workspaces.title")}
     >
       <Stack spacing={3}>
         <Stack direction={{ md: "row", xs: "column" }} justifyContent="space-between" spacing={2}>
           <Stack direction="row" spacing={2} sx={layoutStyles.responsiveActionGroup}>
-            <Button
+            <ActionButton
               onClick={() => {
                 setIsFilterDrawerOpen(true);
               }}
               sx={layoutStyles.responsiveActionButton}
               variant="outlined"
             >
-              Filter
-            </Button>
+              {t("action.filter")}
+            </ActionButton>
           </Stack>
-          <Button
+          <ActionButton
             onClick={() => {
               setIsCreateDrawerOpen(true);
             }}
             sx={layoutStyles.responsiveActionButton}
-            variant="contained"
           >
-            Create
-          </Button>
+            {t("action.create")}
+          </ActionButton>
         </Stack>
         <WorkspaceTable
           availableRoles={assignableRoles}
@@ -157,7 +159,7 @@ export function WorkspacesPage() {
       <WorkspaceImpersonationDialog
         errorMessage={
           isUsersForImpersonationError
-            ? "Unable to load workspace users."
+            ? t("workspaces.impersonationLoadError")
             : impersonationErrorMessage
         }
         isLoading={isUsersForImpersonationLoading}

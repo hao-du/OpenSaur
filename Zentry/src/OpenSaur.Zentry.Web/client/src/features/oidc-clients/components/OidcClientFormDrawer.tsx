@@ -1,11 +1,13 @@
-import { Box, CircularProgress, Stack, Typography } from "@mui/material";
+import { Box, CircularProgress, Stack } from "@mui/material";
 import { useEffect } from "react";
+import { BodyText } from "../../../components/atoms/BodyText";
 import { DrawerPanel } from "../../../components/organisms/DrawerPanel";
 import type { OidcClientDetailsDto } from "../dtos/OidcClientDetailsDto";
 import { layoutStyles } from "../../../infrastructure/theme/theme";
 import { useCreateOidcClient } from "../hooks/useCreateOidcClient";
 import { useEditOidcClient } from "../hooks/useEditOidcClient";
 import { OidcClientForm } from "./OidcClientForm";
+import { useSettings } from "../../settings/provider/SettingProvider";
 
 type OidcClientFormDrawerProps = {
   initialValues?: OidcClientDetailsDto | null;
@@ -24,6 +26,7 @@ export function OidcClientFormDrawer({
 }: OidcClientFormDrawerProps) {
   const { createOidcClient, errorMessage: createErrorMessage, isCreating, resetError: resetCreateError } = useCreateOidcClient();
   const { editOidcClient, errorMessage: editErrorMessage, isEditing, resetError: resetEditError } = useEditOidcClient();
+  const { t } = useSettings();
   const errorMessage = isEditMode ? editErrorMessage : createErrorMessage;
   const isSubmitting = isEditMode ? isEditing : isCreating;
 
@@ -35,11 +38,11 @@ export function OidcClientFormDrawer({
   }, [isOpen, resetCreateError, resetEditError]);
 
   return (
-    <DrawerPanel isOpen={isOpen} onClose={onClose} title={isEditMode ? "Edit application" : "Create application"} width="wide">
+    <DrawerPanel isOpen={isOpen} onClose={onClose} title={isEditMode ? t("oidc.editTitle") : t("oidc.createTitle")} width="wide">
         {isLoading ? (
           <Stack alignItems="center" justifyContent="center" spacing={2} sx={layoutStyles.drawerLoadingState}>
             <CircularProgress size={28} />
-            <Typography color="text.secondary">Loading application...</Typography>
+            <BodyText>{t("oidc.loadingApplication")}</BodyText>
           </Stack>
         ) : (
           <Box sx={layoutStyles.drawerBody}>

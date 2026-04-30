@@ -3,6 +3,7 @@ import {
   AppBar,
   Box,
   IconButton,
+  Skeleton,
   Stack,
   Tooltip,
   Toolbar
@@ -11,6 +12,7 @@ import { EyebrowText } from "../atoms/EyebrowText";
 import { AppIcon } from "../icons/AppIcon";
 import { layoutStyles } from "../../infrastructure/theme/theme";
 import { useCurrentProfileQuery } from "../../features/profile/hooks/useCurrentProfileQuery";
+import { useSettings } from "../../features/settings/provider/SettingProvider";
 import { UserProfileMenu } from "./UserProfileMenu";
 
 type AppHeaderProps = {
@@ -19,8 +21,9 @@ type AppHeaderProps = {
 };
 
 export function Header({ isDesktop, onOpenNavigation }: AppHeaderProps) {
-  const { data: currentProfile } = useCurrentProfileQuery();
-  const workspaceName = currentProfile?.workspaceName ?? "Protected workspace";
+  const { data: currentProfile, isLoading: isCurrentProfileLoading } = useCurrentProfileQuery();
+  const { t } = useSettings();
+  const workspaceName = currentProfile?.workspaceName ?? t("nav.protectedWorkspace");
 
   return (
     <AppBar
@@ -40,7 +43,7 @@ export function Header({ isDesktop, onOpenNavigation }: AppHeaderProps) {
         >
           {!isDesktop ? (
             <IconButton
-              aria-label="Open navigation"
+              aria-label={t("nav.openNavigation")}
               edge="start"
               onClick={onOpenNavigation}
             >
@@ -53,11 +56,17 @@ export function Header({ isDesktop, onOpenNavigation }: AppHeaderProps) {
             spacing={2}
             sx={layoutStyles.sideMenuHeaderMeta}
           >
-            <EyebrowText>
-              {workspaceName}
-            </EyebrowText>
-            {currentProfile?.isImpersonating ? (
-              <Tooltip title="Impersonation mode">
+            {isCurrentProfileLoading ? (
+              <Skeleton height={20} variant="text" width={160} />
+            ) : (
+              <EyebrowText>
+                {workspaceName}
+              </EyebrowText>
+            )}
+            {isCurrentProfileLoading ? (
+              <Skeleton height={24} variant="circular" width={24} />
+            ) : currentProfile?.isImpersonating ? (
+              <Tooltip title={t("nav.impersonationMode")}>
                 <Box component="span" sx={layoutStyles.impersonationIndicator}>
                   <AppIcon icon={Eye} size={16} />
                 </Box>
@@ -66,6 +75,7 @@ export function Header({ isDesktop, onOpenNavigation }: AppHeaderProps) {
           </Stack>
         </Stack>
         <UserProfileMenu
+          isLoading={isCurrentProfileLoading}
           profile={currentProfile}
         />
       </Toolbar>

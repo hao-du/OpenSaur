@@ -1,10 +1,13 @@
-import { Alert, Box, Button, CircularProgress, Stack, Typography } from "@mui/material";
+import { Alert, Box, CircularProgress, Stack } from "@mui/material";
 import { useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
+import { ActionButton } from "../../../components/atoms/ActionButton";
+import { BodyText } from "../../../components/atoms/BodyText";
 import { MultiSelect } from "../../../components/atoms/MultiSelect";
 import { DrawerPanel } from "../../../components/organisms/DrawerPanel";
 import { layoutStyles } from "../../../infrastructure/theme/theme";
 import type { UserRolesDto } from "../dtos/UserRolesDto";
+import { useSettings } from "../../settings/provider/SettingProvider";
 
 type AssignUserRolesDrawerProps = {
   errorMessage: string | null;
@@ -29,6 +32,7 @@ export function AssignUserRolesDrawer({
   onSubmit,
   userRoles
 }: AssignUserRolesDrawerProps) {
+  const { t } = useSettings();
   const roles = useMemo(() => userRoles?.roles ?? [], [userRoles?.roles]);
   const roleOptions = useMemo(() => roles.map(role => ({
     description: role.description,
@@ -54,36 +58,35 @@ export function AssignUserRolesDrawer({
   }, [isOpen, reset, userRoles]);
 
   return (
-    <DrawerPanel isOpen={isOpen} onClose={onClose} subtitle={userRoles?.userName ?? ""} title="Assign Roles">
+    <DrawerPanel isOpen={isOpen} onClose={onClose} subtitle={userRoles?.userName ?? ""} title={t("users.assignTitle")}>
         {isLoading ? (
           <Stack alignItems="center" justifyContent="center" spacing={2} sx={layoutStyles.drawerLoadingState}>
             <CircularProgress size={28} />
-            <Typography color="text.secondary">Loading roles...</Typography>
+            <BodyText>{t("users.loadingRoles")}</BodyText>
           </Stack>
         ) : (
           <Stack spacing={3} sx={layoutStyles.drawerBody}>
             {errorMessage ? <Alert severity="error">{errorMessage}</Alert> : null}
             <MultiSelect
               control={control}
-              helperText={roles.length === 0 ? "No assignable roles found in this workspace." : undefined}
-              label="Roles"
+              helperText={roles.length === 0 ? t("users.noAssignableRoles") : undefined}
+              label={t("users.roles")}
               name="roleIds"
               options={roleOptions}
-              placeholder="Search roles"
+              placeholder={t("users.searchRoles")}
             />
             <Box sx={layoutStyles.flexGrow} />
             <Stack direction="row" justifyContent="flex-end" spacing={1.5}>
-              <Button onClick={onClose} variant="text">
-                Cancel
-              </Button>
-              <Button
+              <ActionButton onClick={onClose} variant="text">
+                {t("action.cancel")}
+              </ActionButton>
+              <ActionButton
                 aria-busy={isSubmitting}
                 disabled={isSubmitting}
                 onClick={handleSubmit(values => onSubmit(values.roleIds))}
-                variant="contained"
               >
-                {isSubmitting ? "Saving..." : "Save"}
-              </Button>
+                {isSubmitting ? t("action.saving") : t("action.save")}
+              </ActionButton>
             </Stack>
           </Stack>
         )}

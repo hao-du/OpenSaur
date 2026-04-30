@@ -1,5 +1,6 @@
-import { Box, CircularProgress, Stack, Typography } from "@mui/material";
+import { Box, CircularProgress, Stack } from "@mui/material";
 import { useEffect } from "react";
+import { BodyText } from "../../../components/atoms/BodyText";
 import { DrawerPanel } from "../../../components/organisms/DrawerPanel";
 import { layoutStyles } from "../../../infrastructure/theme/theme";
 import type { AssignableWorkspaceRoleDto } from "../dtos/AssignableWorkspaceRoleDto";
@@ -7,6 +8,7 @@ import type { WorkspaceDetailsDto } from "../dtos/WorkspaceDetailsDto";
 import { useCreateWorkspace } from "../hooks/useCreateWorkspace";
 import { useEditWorkspace } from "../hooks/useEditWorkspace";
 import { WorkspaceForm } from "./WorkspaceForm";
+import { useSettings } from "../../settings/provider/SettingProvider";
 
 type WorkspaceFormDrawerProps = {
   availableRoles: AssignableWorkspaceRoleDto[];
@@ -32,6 +34,7 @@ export function WorkspaceFormDrawer({
 }: WorkspaceFormDrawerProps) {
   const { createWorkspace, errorMessage: createErrorMessage, isCreating, resetError: resetCreateError } = useCreateWorkspace();
   const { editWorkspace, errorMessage: editErrorMessage, isEditing, resetError: resetEditError } = useEditWorkspace();
+  const { t } = useSettings();
   const errorMessage = isEditMode ? editErrorMessage : createErrorMessage;
   const isSubmitting = isEditMode ? isEditing : isCreating;
 
@@ -43,11 +46,11 @@ export function WorkspaceFormDrawer({
   }, [isOpen, resetCreateError, resetEditError]);
 
   return (
-    <DrawerPanel isOpen={isOpen} onClose={onClose} title={isEditMode ? "Edit workspace" : "Create workspace"}>
+    <DrawerPanel isOpen={isOpen} onClose={onClose} title={isEditMode ? t("workspaces.editTitle") : t("workspaces.createTitle")}>
         {isLoading ? (
           <Stack alignItems="center" justifyContent="center" spacing={2} sx={layoutStyles.drawerLoadingState}>
             <CircularProgress size={28} />
-            <Typography color="text.secondary">Loading workspace...</Typography>
+            <BodyText>{t("workspaces.loadingWorkspace")}</BodyText>
           </Stack>
         ) : (
           <Box sx={layoutStyles.drawerBody}>
