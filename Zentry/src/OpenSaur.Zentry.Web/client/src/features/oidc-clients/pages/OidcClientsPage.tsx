@@ -24,24 +24,9 @@ export function OidcClientsPage() {
   const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
   const [isCreateDrawerOpen, setIsCreateDrawerOpen] = useState(false);
   const [selectedOidcClientId, setSelectedOidcClientId] = useState<string | null>(null);
-  const {
-    data: oidcClients = [],
-    isForbidden,
-    isUnauthorized,
-    isError,
-    isLoading,
-    refetch
-  } = useOidcClientsQuery();
-  const {
-    data: selectedOidcClient,
-    isLoading: isSelectedOidcClientLoading
-  } = useOidcClientQuery(selectedOidcClientId);
-  const {
-    deleteOidcClient,
-    errorMessage: deleteErrorMessage,
-    isDeleting,
-    resetError: resetDeleteError
-  } = useDeleteOidcClient();
+  const { data: oidcClients = [], isForbidden, isUnauthorized, isError, isLoading, refetch } = useOidcClientsQuery();
+  const { data: selectedOidcClient, isLoading: isSelectedOidcClientLoading } = useOidcClientQuery(selectedOidcClientId);
+  const { deleteOidcClient, errorMessage: deleteErrorMessage, isDeleting, resetError: resetDeleteError } = useDeleteOidcClient();
   const filteredOidcClients = useMemo(() => {
     const search = filters.clientId.trim().toLowerCase();
 

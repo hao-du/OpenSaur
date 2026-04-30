@@ -28,27 +28,10 @@ export function WorkspacesPage() {
   const [impersonationWorkspaceId, setImpersonationWorkspaceId] = useState<string | null>(null);
   const [impersonationErrorMessage, setImpersonationErrorMessage] = useState<string | null>(null);
   const [isStartingImpersonation, setIsStartingImpersonation] = useState(false);
-  const {
-    data: workspaces = [],
-    isForbidden,
-    isUnauthorized,
-    isError,
-    isLoading,
-    refetch
-  } = useWorkspacesQuery();
-  const {
-    data: assignableRoles = [],
-    isLoading: isAssignableRolesLoading
-  } = useAssignableWorkspaceRolesQuery();
-  const {
-    data: selectedWorkspace,
-    isLoading: isSelectedWorkspaceLoading
-  } = useWorkspaceQuery(selectedWorkspaceId);
-  const {
-    data: usersForImpersonation,
-    isError: isUsersForImpersonationError,
-    isLoading: isUsersForImpersonationLoading
-  } = useUsersForImpersonationByWorkspaceIdQuery(impersonationWorkspaceId);
+  const { data: workspaces = [], isForbidden, isUnauthorized, isError, isLoading, refetch } = useWorkspacesQuery();
+  const { data: assignableRoles = [], isLoading: isAssignableRolesLoading } = useAssignableWorkspaceRolesQuery();
+  const { data: selectedWorkspace, isLoading: isSelectedWorkspaceLoading } = useWorkspaceQuery(selectedWorkspaceId);
+  const { data: usersForImpersonation, isError: isUsersForImpersonationError, isLoading: isUsersForImpersonationLoading } = useUsersForImpersonationByWorkspaceIdQuery(impersonationWorkspaceId);
   const filteredWorkspaces = useMemo(() => {
     const normalizedSearch = filters.search.trim().toLowerCase();
 

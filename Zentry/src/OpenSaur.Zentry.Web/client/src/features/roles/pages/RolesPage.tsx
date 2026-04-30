@@ -32,44 +32,13 @@ export function RolesPage() {
   const [isCreateDrawerOpen, setIsCreateDrawerOpen] = useState(false);
   const [selectedRoleId, setSelectedRoleId] = useState<string | null>(null);
   const [selectedRoleUsersRoleId, setSelectedRoleUsersRoleId] = useState<string | null>(null);
-  const {
-    data: roles = [],
-    isForbidden,
-    isUnauthorized,
-    isError,
-    isLoading,
-    refetch
-  } = useRolesQuery();
-  const {
-    data: selectedRole,
-    isLoading: isSelectedRoleLoading
-  } = useRoleQuery(selectedRoleId);
-  const {
-    data: permissions = [],
-    isLoading: isPermissionsLoading
-  } = usePermissionsQuery(canEditRoles);
-  const {
-    data: roleUsers,
-    isLoading: isRoleUsersLoading
-  } = useRoleUsersQuery(selectedRoleUsersRoleId);
-  const {
-    createRole,
-    errorMessage: createErrorMessage,
-    isCreating,
-    resetError: resetCreateError
-  } = useCreateRole();
-  const {
-    editRole,
-    errorMessage: editErrorMessage,
-    isEditing,
-    resetError: resetEditError
-  } = useEditRole();
-  const {
-    errorMessage: updateRoleUsersErrorMessage,
-    isUpdating: isUpdatingRoleUsers,
-    resetError: resetUpdateRoleUsersError,
-    updateRoleUsers
-  } = useUpdateRoleUsers();
+  const { data: roles = [], isForbidden, isUnauthorized, isError, isLoading, refetch } = useRolesQuery();
+  const { data: selectedRole, isLoading: isSelectedRoleLoading } = useRoleQuery(selectedRoleId);
+  const { data: permissions = [], isLoading: isPermissionsLoading } = usePermissionsQuery(canEditRoles);
+  const { data: roleUsers, isLoading: isRoleUsersLoading } = useRoleUsersQuery(selectedRoleUsersRoleId);
+  const { createRole, errorMessage: createErrorMessage, isCreating, resetError: resetCreateError } = useCreateRole();
+  const { editRole, errorMessage: editErrorMessage, isEditing, resetError: resetEditError } = useEditRole();
+  const { errorMessage: updateRoleUsersErrorMessage, isUpdating: isUpdatingRoleUsers, resetError: resetUpdateRoleUsersError, updateRoleUsers } = useUpdateRoleUsers();
   const filteredRoles = useMemo(() => {
     const normalizedSearch = filters.search.trim().toLowerCase();
 

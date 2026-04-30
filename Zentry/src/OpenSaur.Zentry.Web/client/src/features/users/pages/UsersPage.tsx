@@ -27,34 +27,11 @@ export function UsersPage() {
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [resetPasswordUser, setResetPasswordUser] = useState<{ id: string; userName: string } | null>(null);
   const [assignRolesUserId, setAssignRolesUserId] = useState<string | null>(null);
-  const {
-    data: users = [],
-    isForbidden,
-    isUnauthorized,
-    isError,
-    isLoading,
-    refetch
-  } = useUsersQuery();
-  const {
-    data: selectedUser,
-    isLoading: isSelectedUserLoading
-  } = useUserQuery(selectedUserId);
-  const {
-    data: userRoles,
-    isLoading: isUserRolesLoading
-  } = useUserRolesQuery(assignRolesUserId);
-  const {
-    errorMessage: resetPasswordErrorMessage,
-    isResetting,
-    resetError: resetResetPasswordError,
-    resetUserPassword
-  } = useResetUserPassword();
-  const {
-    assignUserRoles,
-    errorMessage: assignUserRolesErrorMessage,
-    isAssigning,
-    resetError: resetAssignUserRolesError
-  } = useAssignUserRoles();
+  const { data: users = [], isForbidden, isUnauthorized, isError, isLoading, refetch } = useUsersQuery();
+  const { data: selectedUser, isLoading: isSelectedUserLoading } = useUserQuery(selectedUserId);
+  const { data: userRoles, isLoading: isUserRolesLoading } = useUserRolesQuery(assignRolesUserId);
+  const { errorMessage: resetPasswordErrorMessage, isResetting, resetError: resetResetPasswordError, resetUserPassword } = useResetUserPassword();
+  const { assignUserRoles, errorMessage: assignUserRolesErrorMessage, isAssigning, resetError: resetAssignUserRolesError } = useAssignUserRoles();
   const filteredUsers = useMemo(() => {
     const normalizedSearch = filters.search.trim().toLowerCase();
 

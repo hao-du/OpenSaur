@@ -30,18 +30,8 @@ export function WorkspaceFormDrawer({
   isOpen,
   onClose
 }: WorkspaceFormDrawerProps) {
-  const {
-    createWorkspace,
-    errorMessage: createErrorMessage,
-    isCreating,
-    resetError: resetCreateError
-  } = useCreateWorkspace();
-  const {
-    editWorkspace,
-    errorMessage: editErrorMessage,
-    isEditing,
-    resetError: resetEditError
-  } = useEditWorkspace();
+  const { createWorkspace, errorMessage: createErrorMessage, isCreating, resetError: resetCreateError } = useCreateWorkspace();
+  const { editWorkspace, errorMessage: editErrorMessage, isEditing, resetError: resetEditError } = useEditWorkspace();
   const errorMessage = isEditMode ? editErrorMessage : createErrorMessage;
   const isSubmitting = isEditMode ? isEditing : isCreating;
 

@@ -22,18 +22,8 @@ export function OidcClientFormDrawer({
   isOpen,
   onClose
 }: OidcClientFormDrawerProps) {
-  const {
-    createOidcClient,
-    errorMessage: createErrorMessage,
-    isCreating,
-    resetError: resetCreateError
-  } = useCreateOidcClient();
-  const {
-    editOidcClient,
-    errorMessage: editErrorMessage,
-    isEditing,
-    resetError: resetEditError
-  } = useEditOidcClient();
+  const { createOidcClient, errorMessage: createErrorMessage, isCreating, resetError: resetCreateError } = useCreateOidcClient();
+  const { editOidcClient, errorMessage: editErrorMessage, isEditing, resetError: resetEditError } = useEditOidcClient();
   const errorMessage = isEditMode ? editErrorMessage : createErrorMessage;
   const isSubmitting = isEditMode ? isEditing : isCreating;
 

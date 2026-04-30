@@ -22,18 +22,8 @@ export function UserFormDrawer({
   isOpen,
   onClose
 }: UserFormDrawerProps) {
-  const {
-    createUser,
-    errorMessage: createErrorMessage,
-    isCreating,
-    resetError: resetCreateError
-  } = useCreateUser();
-  const {
-    editUser,
-    errorMessage: editErrorMessage,
-    isEditing,
-    resetError: resetEditError
-  } = useEditUser();
+  const { createUser, errorMessage: createErrorMessage, isCreating, resetError: resetCreateError } = useCreateUser();
+  const { editUser, errorMessage: editErrorMessage, isEditing, resetError: resetEditError } = useEditUser();
   const errorMessage = isEditMode ? editErrorMessage : createErrorMessage;
   const isSubmitting = isEditMode ? isEditing : isCreating;
 
