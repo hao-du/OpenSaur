@@ -33,6 +33,7 @@ stages:
       dotnetSdkVersion: $(dotnetSdkVersion)
       nodeVersion: $(nodeVersion)
       webProject: $(webProject)
+      clientWorkingDirectory: $(clientWorkingDirectory)
       publishOutputDirectory: $(publishOutputDirectory)
       dockerfileTemplate: $(dockerfileTemplate)
       dockerHubServiceConnection: $(dockerHubServiceConnection)
