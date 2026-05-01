@@ -5,18 +5,32 @@ pool:
   vmImage: ubuntu-latest
 
 variables:
-  buildConfiguration: Release
-  dotnetSdkVersion: 10.0.x
-  nodeVersion: 20.x
-  webProject: CoreGate/src/OpenSaur.CoreGate.Web/OpenSaur.CoreGate.Web.csproj
-  clientWorkingDirectory: CoreGate/src/OpenSaur.CoreGate.Web/Frontend
-  publishOutputDirectory: $(Build.ArtifactStagingDirectory)/webapp-publish
-  dockerfileTemplate: CoreGate/devops/Dockerfile.artifact
-  dockerHubServiceConnection: Docker Hub
-  dockerRepository: duchihao/coregate
-  azureServiceConnection: Azure Service Connection
-  containerAppResourceGroup: Home
-  containerAppName: ca-coregate
+  - group: CoreGate Certificates
+
+  - name: buildConfiguration
+    value: Release
+  - name: dotnetSdkVersion
+    value: 10.0.x
+  - name: nodeVersion
+    value: 20.x
+  - name: webProject
+    value: CoreGate/src/OpenSaur.CoreGate.Web/OpenSaur.CoreGate.Web.csproj
+  - name: clientWorkingDirectory
+    value: CoreGate/src/OpenSaur.CoreGate.Web/Frontend
+  - name: publishOutputDirectory
+    value: $(Build.ArtifactStagingDirectory)/webapp-publish
+  - name: dockerfileTemplate
+    value: CoreGate/devops/Dockerfile.artifact
+  - name: dockerHubServiceConnection
+    value: Docker Hub
+  - name: dockerRepository
+    value: duchihao/coregate
+  - name: azureServiceConnection
+    value: Azure Service Connection
+  - name: containerAppResourceGroup
+    value: Home
+  - name: containerAppName
+    value: ca-coregate
 
 stages:
   - template: azure-pipelines.build-test-artifact.yml
