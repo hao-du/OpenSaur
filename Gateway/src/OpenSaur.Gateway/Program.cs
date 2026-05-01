@@ -21,8 +21,14 @@ builder.Services
 var app = builder.Build();
 var forwarder = app.Services.GetRequiredService<IHttpForwarder>();
 
-var coreGateAddress = builder.Configuration["ReverseProxy:Clusters:coregate:Destinations:coregateApp:Address"];
-var zentryAddress = builder.Configuration["ReverseProxy:Clusters:zentry:Destinations:zentryApp:Address"];
+var directForwardingHosts = builder.Configuration
+    .GetSection("GatewayDirectForwarding:Hosts")
+    .GetChildren()
+    .Where(section => !string.IsNullOrWhiteSpace(section.Key) && !string.IsNullOrWhiteSpace(section.Value))
+    .ToDictionary(
+        section => section.Key,
+        section => ResolveClusterAddress(builder.Configuration, section.Value!),
+        StringComparer.OrdinalIgnoreCase);
 
 var forwarderHttpClient = new HttpMessageInvoker(new SocketsHttpHandler
 {
@@ -54,12 +60,7 @@ app.Use(async (context, next) =>
 
 app.Use(async (context, next) =>
 {
-    var destinationPrefix = context.Request.Host.Host switch
-    {
-        "coregate.duchihao.com" when !string.IsNullOrWhiteSpace(coreGateAddress) => coreGateAddress,
-        "zentry.duchihao.com" when !string.IsNullOrWhiteSpace(zentryAddress) => zentryAddress,
-        _ => null
-    };
+    directForwardingHosts.TryGetValue(context.Request.Host.Host, out var destinationPrefix);
 
     if (destinationPrefix is null)
     {
@@ -95,3 +96,11 @@ app.Use(async (context, next) =>
 app.MapReverseProxy();
 
 app.Run();
+
+static string? ResolveClusterAddress(IConfiguration configuration, string clusterId)
+{
+    var destinations = configuration.GetSection($"ReverseProxy:Clusters:{clusterId}:Destinations").GetChildren();
+    return destinations
+        .Select(destination => destination["Address"])
+        .FirstOrDefault(address => !string.IsNullOrWhiteSpace(address));
+}
