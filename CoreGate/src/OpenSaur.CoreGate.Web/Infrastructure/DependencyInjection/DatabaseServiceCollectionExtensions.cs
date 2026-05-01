@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.DataProtection;
 using OpenSaur.CoreGate.Web.Features.Auth;
 using OpenSaur.CoreGate.Web.Infrastructure.Database;
 
@@ -16,6 +17,10 @@ public static class DatabaseServiceCollectionExtensions
             options.UseNpgsql(connectionString);
             options.UseOpenIddict<Guid>();
         });
+
+        services.AddDataProtection()
+            .SetApplicationName("OpenSaur.CoreGate.Web")
+            .PersistKeysToDbContext<ApplicationDbContext>();
 
         return services;
     }

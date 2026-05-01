@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using OpenIddict.EntityFrameworkCore;
 using OpenSaur.CoreGate.Web.Domain.Identity;
@@ -16,7 +17,8 @@ public sealed class ApplicationDbContext : IdentityDbContext<
     ApplicationUserRole,
     IdentityUserLogin<Guid>,
     IdentityRoleClaim<Guid>,
-    IdentityUserToken<Guid>>
+    IdentityUserToken<Guid>>,
+    IDataProtectionKeyContext
 {
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
         : base(options)
@@ -32,6 +34,8 @@ public sealed class ApplicationDbContext : IdentityDbContext<
     public DbSet<Permission> Permissions => Set<Permission>();
 
     public DbSet<RolePermission> RolePermissions => Set<RolePermission>();
+
+    public DbSet<DataProtectionKey> DataProtectionKeys => Set<DataProtectionKey>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
