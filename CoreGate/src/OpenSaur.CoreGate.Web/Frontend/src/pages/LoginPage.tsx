@@ -81,7 +81,7 @@ export function LoginPage() {
             variant="contained"
             size="large"
             disabled={isSubmitting}
-            sx={{ minHeight: 52, fontWeight: 700 }}
+            fullWidth
           >
             {isSubmitting ? <CircularProgress size={22} color="inherit" /> : "Continue"}
           </Button>

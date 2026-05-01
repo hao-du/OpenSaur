@@ -55,11 +55,26 @@ export function SideMenu({ currentYear }: SideMenuProps) {
   return (
     <Box sx={layoutStyles.sidebarContainer}>
       <Box sx={layoutStyles.sidebarBrandRow}>
-        <EyebrowText
-          sx={layoutStyles.sidebarBrandText}
-        >
-          Zentry
-        </EyebrowText>
+        <Box sx={{ alignItems: "center", display: "flex", gap: 1.5 }}>
+          <Box
+            alt="Zentry"
+            component="img"
+            src="/zentry-logo.svg"
+            sx={{
+              display: "block",
+              height: 34,
+              width: 34
+            }}
+          />
+          <EyebrowText
+            sx={{
+              fontSize: "0.95rem",
+              letterSpacing: "0.14em"
+            }}
+          >
+            Zentry
+          </EyebrowText>
+        </Box>
       </Box>
       <Divider sx={layoutStyles.fullWidthDivider} />
       <List
@@ -103,7 +118,7 @@ export function SideMenu({ currentYear }: SideMenuProps) {
       <Box sx={layoutStyles.flexGrow} />
       <Divider sx={layoutStyles.fullWidthDividerSpacing} />
       <MetaText>
-        {`Zentry ${currentYear}`}
+        {`Copyright © ${currentYear} Zentry.`}
       </MetaText>
     </Box>
   );

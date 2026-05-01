@@ -150,7 +150,7 @@ export function ChangePasswordPage() {
             variant="contained"
             size="large"
             disabled={isSubmitting}
-            sx={{ minHeight: 52, fontWeight: 700 }}
+            fullWidth
           >
             {isSubmitting ? <CircularProgress size={22} color="inherit" /> : "Update Password"}
           </Button>

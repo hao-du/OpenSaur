@@ -35,7 +35,26 @@ export function CenteredCardLayout({
         >
           <Stack spacing={2.5}>
             <Stack spacing={0.75}>
-              <EyebrowText>Zentry</EyebrowText>
+              <Box sx={{ alignItems: "center", display: "flex", gap: 1.5 }}>
+                <Box
+                  alt="Zentry"
+                  component="img"
+                  src="/zentry-logo.svg"
+                  sx={{
+                    display: "block",
+                    height: 34,
+                    width: 34
+                  }}
+                />
+                <EyebrowText
+                  sx={{
+                    fontSize: "0.95rem",
+                    letterSpacing: "0.14em"
+                  }}
+                >
+                  Zentry
+                </EyebrowText>
+              </Box>
               <PageTitleText variant="h3">{title}</PageTitleText>
               <BodyText>{description}</BodyText>
             </Stack>

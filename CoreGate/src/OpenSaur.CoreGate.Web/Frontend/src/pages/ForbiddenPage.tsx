@@ -29,7 +29,7 @@ export function ForbiddenPage() {
         <Stack spacing={2}>
           {error ? <Alert severity="error">{error}</Alert> : null}
           <Typography color="text.secondary">{message}</Typography>
-          <Button variant="contained" onClick={() => window.location.assign(actionHref)}>
+          <Button variant="contained" fullWidth onClick={() => window.location.assign(actionHref)}>
             {actionLabel}
           </Button>
         </Stack>

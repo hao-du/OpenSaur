@@ -26,6 +26,14 @@ export function FormTextField<TFieldValues extends FieldValues>({
       render={({ field, fieldState }) => (
         <TextField
           {...field}
+          slotProps={{
+            formHelperText: {
+              sx: {
+                mt: 1,
+                mx: 0
+              }
+            }
+          }}
           label={label}
           type={type}
           autoComplete={autoComplete}

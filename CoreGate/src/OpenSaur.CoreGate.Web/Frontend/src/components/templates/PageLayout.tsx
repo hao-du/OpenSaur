@@ -1,4 +1,4 @@
-import { Box, Container, CssBaseline, ThemeProvider } from "@mui/material";
+import { Box, Container, CssBaseline, ThemeProvider, Typography } from "@mui/material";
 import type { ReactNode } from "react";
 import { theme } from "../../theme";
 
@@ -8,18 +8,36 @@ type PageLayoutProps = {
 };
 
 export function PageLayout({ background, children }: PageLayoutProps) {
+  const currentYear = new Date().getFullYear();
+
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <Box
         sx={{
-          minHeight: "100vh",
-          display: "flex",
           alignItems: "center",
-          background: theme.custom.pageBackgrounds[background]
+          background: theme.custom.pageBackgrounds[background],
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "center",
+          minHeight: "100vh",
+          px: 2,
+          py: 4
         }}
       >
-        <Container maxWidth="sm">{children}</Container>
+        <Container maxWidth="sm">
+          {children}
+        </Container>
+        <Typography
+          color="text.secondary"
+          sx={{
+            fontSize: "0.8rem",
+            mt: 3,
+            textAlign: "center"
+          }}
+        >
+          {`Copyright © ${currentYear} CoreGate.`}
+        </Typography>
       </Box>
     </ThemeProvider>
   );
