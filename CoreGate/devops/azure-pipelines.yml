@@ -9,7 +9,7 @@ variables:
   dotnetSdkVersion: 10.0.x
   nodeVersion: 20.x
   webProject: CoreGate/src/OpenSaur.CoreGate.Web/OpenSaur.CoreGate.Web.csproj
-  clientWorkingDirectory: CoreGate/src/OpenSaur.CoreGate.Web/client
+  clientWorkingDirectory: CoreGate/src/OpenSaur.CoreGate.Web/Frontend
   publishOutputDirectory: $(Build.ArtifactStagingDirectory)/webapp-publish
   dockerfileTemplate: CoreGate/devops/Dockerfile.artifact
   dockerHubServiceConnection: Docker Hub
