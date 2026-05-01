@@ -5,6 +5,8 @@ parameters:
     type: string
   - name: nodeVersion
     type: string
+  - name: clientWorkingDirectory
+    type: string
   - name: webProject
     type: string
   - name: publishOutputDirectory
@@ -38,6 +40,19 @@ stages:
             displayName: Install Node.js
             inputs:
               version: ${{ parameters.nodeVersion }}
+
+          - task: Npm@1
+            displayName: Install frontend dependencies
+            inputs:
+              command: install
+              workingDir: ${{ parameters.clientWorkingDirectory }}
+
+          - task: Npm@1
+            displayName: Build frontend
+            inputs:
+              command: custom
+              workingDir: ${{ parameters.clientWorkingDirectory }}
+              customCommand: run build
 
           - task: DotNetCoreCLI@2
             displayName: Restore web application dependencies
