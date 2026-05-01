@@ -74,7 +74,7 @@ stages:
           - script: cp "${{ parameters.dockerfileTemplate }}" "${{ parameters.publishOutputDirectory }}/Dockerfile.artifact"
             displayName: Copy Dockerfile into publish context
 
-          - script: cp "devops/container-entrypoint.sh" "${{ parameters.publishOutputDirectory }}/container-entrypoint.sh"
+          - script: cp "CoreGate/devops/container-entrypoint.sh" "${{ parameters.publishOutputDirectory }}/container-entrypoint.sh"
             displayName: Copy container entrypoint into publish context
 
           - task: Docker@2
