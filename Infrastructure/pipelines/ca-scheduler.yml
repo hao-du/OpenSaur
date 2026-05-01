@@ -19,13 +19,17 @@ parameters:
     type: stringList
     displayName: "Container App Names"
     default:
-      - "ca-identity"
+      - "ca-zentry"
+      - "ca-coregate"
       - "ca-gateway"
       - "ca-cloudflared"
+      - "ca-umbraco"
     values:
-      - "ca-identity"
+      - "ca-zentry"
+      - "ca-coregate"
       - "ca-gateway"
       - "ca-cloudflared"
+      - "ca-umbraco"
 
 variables:
   azureServiceConnection: "Azure Service Connection"
