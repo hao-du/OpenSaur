@@ -34,7 +34,7 @@ stages:
             displayName: Resolve image reference
 
           - task: AzureCLI@2
-            displayName: Update Azure Container App image
+            displayName: Update Azure Container App secrets, env vars, and image
             inputs:
               azureSubscription: ${{ parameters.azureServiceConnection }}
               scriptType: bash
@@ -42,7 +42,30 @@ stages:
               inlineScript: |
                 set -euo pipefail
 
+                az containerapp secret set \
+                  --name "${{ parameters.containerAppName }}" \
+                  --resource-group "${{ parameters.containerAppResourceGroup }}" \
+                  --secrets \
+                    "oidc-signing-certificate-base64=${OIDC_SIGNING_CERTIFICATE_BASE64}" \
+                    "oidc-signing-certificate-password=${OIDC_SIGNING_CERTIFICATE_PASSWORD}" \
+                    "oidc-encryption-certificate-base64=${OIDC_ENCRYPTION_CERTIFICATE_BASE64}" \
+                    "oidc-encryption-certificate-password=${OIDC_ENCRYPTION_CERTIFICATE_PASSWORD}"
+
                 az containerapp update \
                   --name "${{ parameters.containerAppName }}" \
                   --resource-group "${{ parameters.containerAppResourceGroup }}" \
-                  --image "$(resolvedImageReference)"
+                  --image "$(resolvedImageReference)" \
+                  --set-env-vars \
+                    "OIDC_SIGNING_CERTIFICATE_PATH=/app/certs/oidc-signing.pfx" \
+                    "OIDC_ENCRYPTION_CERTIFICATE_PATH=/app/certs/oidc-encryption.pfx" \
+                    "OIDC_SIGNING_CERTIFICATE_BASE64=secretref:oidc-signing-certificate-base64" \
+                    "OIDC_ENCRYPTION_CERTIFICATE_BASE64=secretref:oidc-encryption-certificate-base64" \
+                    "Oidc__SigningCertificatePath=/app/certs/oidc-signing.pfx" \
+                    "Oidc__SigningCertificatePassword=secretref:oidc-signing-certificate-password" \
+                    "Oidc__EncryptionCertificatePath=/app/certs/oidc-encryption.pfx" \
+                    "Oidc__EncryptionCertificatePassword=secretref:oidc-encryption-certificate-password"
+            env:
+              OIDC_SIGNING_CERTIFICATE_BASE64: $(OidcSigningCertificateBase64)
+              OIDC_SIGNING_CERTIFICATE_PASSWORD: $(OidcSigningCertificatePassword)
+              OIDC_ENCRYPTION_CERTIFICATE_BASE64: $(OidcEncryptionCertificateBase64)
+              OIDC_ENCRYPTION_CERTIFICATE_PASSWORD: $(OidcEncryptionCertificatePassword)

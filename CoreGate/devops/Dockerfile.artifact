@@ -1,6 +1,5 @@
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
 
-USER $APP_UID
 WORKDIR /app
 ENV ASPNETCORE_HTTP_PORTS=8080
 
@@ -8,4 +7,11 @@ EXPOSE 8080
 
 COPY . .
 
-ENTRYPOINT ["dotnet", "OpenSaur.CoreGate.Web.dll"]
+RUN mkdir -p /app/certs \
+    && chmod 700 /app/certs \
+    && chmod 755 /app/container-entrypoint.sh \
+    && chown -R $APP_UID /app
+
+USER $APP_UID
+
+ENTRYPOINT ["./container-entrypoint.sh"]
