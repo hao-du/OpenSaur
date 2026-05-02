@@ -1,6 +1,7 @@
 using Microsoft.IdentityModel.Tokens;
 using OpenIddict.Abstractions;
 using OpenSaur.CoreGate.Web.Domain.Identity;
+using OpenSaur.CoreGate.Web.Domain.Workspaces;
 using System.Security.Claims;
 
 namespace OpenSaur.CoreGate.Web.Infrastructure.Security;
@@ -46,7 +47,7 @@ internal static class ClaimPrincipalHelpers
         IEnumerable<string> permissionCodes,
         IEnumerable<string> scopes,
         string? impersonationOriginalUserId = null,
-        string? workspaceId = null)
+        Workspace? assignedWorkspace = null)
     {
         var identity = new ClaimsIdentity(
             TokenValidationParameters.DefaultAuthenticationType,
@@ -56,7 +57,8 @@ internal static class ClaimPrincipalHelpers
         identity.AddClaim(new Claim(ClaimTypes.Subject, user.Id.ToString()));
         identity.AddClaim(new Claim(ClaimTypes.Name, user.UserName ?? string.Empty));
         identity.AddClaim(new Claim(ClaimTypes.PreferredUserName, user.UserName ?? string.Empty));
-        identity.AddClaim(new Claim(ClaimTypes.WorkspaceId, string.IsNullOrWhiteSpace(workspaceId) ? user.WorkspaceId.ToString() : workspaceId));
+        identity.AddClaim(new Claim(ClaimTypes.WorkspaceId, assignedWorkspace == null ? user.WorkspaceId.ToString() : assignedWorkspace.Id.ToString()));
+        identity.AddClaim(new Claim(ClaimTypes.WorkspaceId, assignedWorkspace == null ? (user.Workspace == null ? user.WorkspaceId.ToString() : user.Workspace.Name) : assignedWorkspace.Name));
         identity.AddClaim(new Claim(
             ClaimTypes.RequirePasswordChange,
             user.RequirePasswordChange.ToString().ToLowerInvariant()));

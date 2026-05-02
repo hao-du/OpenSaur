@@ -21,6 +21,8 @@ public static class ClaimTypes
 
     public const string WorkspaceId = "workspace_id";
 
+    public const string WorkspaceName = "workspace_name";
+
     public const string ImpersonatedUserId = "impersonated_user_id";
 
     public const string Subject = JwtRegisteredClaimNames.Sub;
