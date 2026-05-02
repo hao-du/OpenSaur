@@ -11,7 +11,7 @@ variables:
   publishOutputDirectory: $(Build.ArtifactStagingDirectory)/webapp-publish
   dockerfileTemplate: Gateway/devops/Dockerfile.artifact
   dockerHubServiceConnection: Docker Hub
-  dockerRepository: duchihao/opensaur-gateway
+  dockerRepository: duchihao/gateway
   azureServiceConnection: Azure Service Connection
   containerAppResourceGroup: Home
   containerAppName: ca-gateway
