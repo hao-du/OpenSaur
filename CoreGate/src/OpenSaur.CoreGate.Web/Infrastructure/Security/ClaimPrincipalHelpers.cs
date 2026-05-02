@@ -58,7 +58,7 @@ internal static class ClaimPrincipalHelpers
         identity.AddClaim(new Claim(ClaimTypes.Name, user.UserName ?? string.Empty));
         identity.AddClaim(new Claim(ClaimTypes.PreferredUserName, user.UserName ?? string.Empty));
         identity.AddClaim(new Claim(ClaimTypes.WorkspaceId, assignedWorkspace == null ? user.WorkspaceId.ToString() : assignedWorkspace.Id.ToString()));
-        identity.AddClaim(new Claim(ClaimTypes.WorkspaceId, assignedWorkspace == null ? (user.Workspace == null ? user.WorkspaceId.ToString() : user.Workspace.Name) : assignedWorkspace.Name));
+        identity.AddClaim(new Claim(ClaimTypes.WorkspaceName, assignedWorkspace == null ? (user.Workspace == null ? user.WorkspaceId.ToString() : user.Workspace.Name) : assignedWorkspace.Name));
         identity.AddClaim(new Claim(
             ClaimTypes.RequirePasswordChange,
             user.RequirePasswordChange.ToString().ToLowerInvariant()));
