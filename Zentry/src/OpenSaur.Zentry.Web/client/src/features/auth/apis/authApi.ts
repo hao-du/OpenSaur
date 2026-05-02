@@ -1,5 +1,5 @@
-import axios from "axios";
 import { ConfigDto } from "../../../infrastructure/config/dtos/ConfigDto";
+import { client } from "../../../infrastructure/http/client";
 import { AuthSessionDto } from "../dtos/AuthSessionDto";
 import { TokenResponseDto } from "../dtos/TokenResponseDto";
 
@@ -11,7 +11,7 @@ export async function exchangeAuthCode(
   codeVerifier: string
 ): Promise<AuthSessionDto> {
   const endpoint = new URL("/auth/exchange", config.authority).toString();
-  const response = await axios.post<TokenResponseDto>(
+  const tokenResponse = await client.post<TokenResponseDto>(
     endpoint,
     {
       clientId: config.clientId,
@@ -21,27 +21,29 @@ export async function exchangeAuthCode(
     },
     {
       timeout: authRequestTimeoutMs,
-      withCredentials: true
+      withCredentials: true,
+      skipAuth: true
     }
   );
 
-  return createAuthSession(response.data);
+  return createAuthSession(tokenResponse);
 }
 
 export async function refreshAuthSession(config: ConfigDto): Promise<AuthSessionDto> {
   const endpoint = new URL("/auth/refresh", config.authority).toString();
-  const response = await axios.post<TokenResponseDto>(
+  const tokenResponse = await client.post<TokenResponseDto>(
     endpoint,
     {
       clientId: config.clientId
     },
     {
       timeout: authRequestTimeoutMs,
-      withCredentials: true
+      withCredentials: true,
+      skipAuth: true
     }
   );
 
-  return createAuthSession(response.data);
+  return createAuthSession(tokenResponse);
 }
 
 function createAuthSession(tokenResponse: TokenResponseDto): AuthSessionDto {
