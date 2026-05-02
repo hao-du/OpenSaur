@@ -118,7 +118,7 @@ internal static class ClaimPrincipalHelpers
                 => [OpenIddictConstants.Destinations.AccessToken],
             ClaimTypes.ImpersonationOriginalUserId
                 => [OpenIddictConstants.Destinations.AccessToken],
-            ClaimTypes.WorkspaceId or ClaimTypes.RequirePasswordChange
+            ClaimTypes.WorkspaceId or ClaimTypes.WorkspaceName or ClaimTypes.RequirePasswordChange
                 => [OpenIddictConstants.Destinations.AccessToken],
             _ => []
         });
