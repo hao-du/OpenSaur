@@ -10,10 +10,10 @@ using Umbraco.Cms.Core.DependencyInjection;
 
 namespace OpenSaur.Umbraco.Web.Authentication;
 
-internal static class OpenSaurBackOfficeAuthenticationExtensions
+internal static class BackOfficeAuthenticationExtensions
 {
-    private const string ProviderName = "Umbraco.OpenSaur.Identity";
-    private const string DisplayName = "OpenSaur Identity";
+    private const string ProviderName = "CoreGate";
+    private const string DisplayName = "CoreGate";
 
     public static IUmbracoBuilder AddOpenSaurBackOfficeAuthentication(this IUmbracoBuilder builder)
     {
@@ -22,14 +22,13 @@ internal static class OpenSaurBackOfficeAuthenticationExtensions
 
         var httpContextAccessor = new HttpContextAccessor();
         builder.Services.AddSingleton<IHttpContextAccessor>(httpContextAccessor);
-        builder.Services.Configure<OidcOptions>(
-            builder.Config.GetSection(OidcOptions.SectionName));
+        builder.Services.Configure<OidcOptions>(builder.Config.GetSection(OidcOptions.SectionName));
         builder.Services.PostConfigure<GlobalSettings>(settings =>
         {
             settings.ReservedPaths = AppendReservedPath(settings.ReservedPaths, options.CallbackPath);
             settings.ReservedPaths = AppendReservedPath(settings.ReservedPaths, options.SignedOutCallbackPath);
         });
-        builder.Services.AddScoped<OpenSaurBackOfficeUserProvisioningService>();
+        builder.Services.AddScoped<BackOfficeUserProvisioningService>();
 
         builder.AddBackOfficeExternalLogins(logins =>
         {
@@ -48,14 +47,15 @@ internal static class OpenSaurBackOfficeAuthenticationExtensions
                             oidcOptions.ResponseType = OpenIdConnectResponseType.Code;
                             oidcOptions.CallbackPath = options.CallbackPath;
                             oidcOptions.SignedOutCallbackPath = options.SignedOutCallbackPath;
+
                             oidcOptions.MapInboundClaims = false;
                             oidcOptions.GetClaimsFromUserInfoEndpoint = false;
                             oidcOptions.SaveTokens = false;
                             oidcOptions.UsePkce = true;
                             oidcOptions.TokenValidationParameters = new TokenValidationParameters
                             {
-                                NameClaimType = OpenSaurIdentityClaimTypes.PreferredUserName,
-                                RoleClaimType = OpenSaurIdentityClaimTypes.Role
+                                NameClaimType = ClaimTypes.PreferredUserName,
+                                RoleClaimType = ClaimTypes.Roles
                             };
 
                             oidcOptions.Scope.Clear();
@@ -67,49 +67,49 @@ internal static class OpenSaurBackOfficeAuthenticationExtensions
 
                             oidcOptions.Events = new OpenIdConnectEvents
                             {
-                                OnTokenValidated = context =>
+                                OnTokenValidated = async context =>
                                 {
                                     var accessToken = context.TokenEndpointResponse?.AccessToken;
 
                                     if (string.IsNullOrWhiteSpace(accessToken))
                                     {
                                         context.Fail("Identity did not return an access token.");
-                                        return Task.CompletedTask;
+                                        return;
                                     }
 
                                     var jwtHandler = new JwtSecurityTokenHandler();
                                     if (!jwtHandler.CanReadToken(accessToken))
                                     {
                                         context.Fail("Identity returned an unreadable access token.");
-                                        return Task.CompletedTask;
+                                        return;
                                     }
 
                                     var accessTokenPrincipal = jwtHandler.ReadJwtToken(accessToken);
                                     if (context.Principal?.Identity is not ClaimsIdentity identity)
                                     {
                                         context.Fail("Backoffice sign-in principal is unavailable.");
-                                        return Task.CompletedTask;
+                                        return;
                                     }
 
-                                    CopyClaimIfMissing(identity, accessTokenPrincipal, OpenSaurIdentityClaimTypes.Permissions);
-                                    CopyClaimIfMissing(identity, accessTokenPrincipal, OpenSaurIdentityClaimTypes.Role);
-                                    CopyClaimIfMissing(identity, accessTokenPrincipal, OpenSaurIdentityClaimTypes.WorkspaceId);
-                                    CopyClaimIfMissing(identity, accessTokenPrincipal, OpenSaurIdentityClaimTypes.ImpersonationActive);
-                                    CopyClaimIfMissing(identity, accessTokenPrincipal, OpenSaurIdentityClaimTypes.ImpersonationOriginalUserId);
-                                    CopyClaimIfMissing(identity, accessTokenPrincipal, OpenSaurIdentityClaimTypes.ImpersonationWorkspaceId);
+                                    CopyClaimIfMissing(identity, accessTokenPrincipal, ClaimTypes.Permissions);
+                                    CopyClaimIfMissing(identity, accessTokenPrincipal, ClaimTypes.Roles);
+                                    CopyClaimIfMissing(identity, accessTokenPrincipal, ClaimTypes.WorkspaceId);
+                                    CopyClaimIfMissing(identity, accessTokenPrincipal, ClaimTypes.WorkspaceName);
+                                    CopyClaimIfMissing(identity, accessTokenPrincipal, ClaimTypes.ImpersonationOriginalUserId);
+                                    CopyClaimIfMissing(identity, accessTokenPrincipal, ClaimTypes.ImpersonatedUserId);
                                     EnsureStandardExternalLoginClaims(identity);
 
-                                    if (!OpenSaurIdentitySession.TryCreate(context.Principal, out var session) || session is null)
+                                    if (!IdentitySession.TryCreate(context.Principal, out var session) || session is null)
                                     {
                                         context.Fail("Backoffice access requires SUPER ADMINISTRATOR or Umbraco.CanManage.");
-                                        return Task.CompletedTask;
+                                        return;
                                     }
 
                                     var provisioningService = context.HttpContext.RequestServices
-                                        .GetRequiredService<OpenSaurBackOfficeUserProvisioningService>();
-                                    provisioningService.EnsureWorkspaceGroup(session);
+                                        .GetRequiredService<BackOfficeUserProvisioningService>();
+                                    await provisioningService.EnsureWorkspaceGroupAsync(session);
 
-                                    return Task.CompletedTask;
+                                    return;
                                 }
                             };
                         });
@@ -125,15 +125,18 @@ internal static class OpenSaurBackOfficeAuthenticationExtensions
                     {
                         OnAutoLinking = (autoLinkUser, loginInfo) =>
                         {
-                            var provisioningService = httpContextAccessor.HttpContext?.RequestServices
-                                .GetRequiredService<OpenSaurBackOfficeUserProvisioningService>();
-                            provisioningService?.PrepareAutoLinkedUser(autoLinkUser, loginInfo);
+                            var provisioningService = httpContextAccessor.HttpContext?.RequestServices.GetRequiredService<BackOfficeUserProvisioningService>();
+                            provisioningService?.PrepareAutoLinkedUserAsync(autoLinkUser, loginInfo).GetAwaiter().GetResult();
                         },
                         OnExternalLogin = (user, loginInfo) =>
                         {
-                            var provisioningService = httpContextAccessor.HttpContext?.RequestServices
-                                .GetRequiredService<OpenSaurBackOfficeUserProvisioningService>();
-                            return provisioningService?.SynchronizeUser(user, loginInfo) ?? false;
+                            var provisioningService = httpContextAccessor.HttpContext?.RequestServices.GetRequiredService<BackOfficeUserProvisioningService>();
+                            if(provisioningService is null)
+                            {
+                                return false;
+                            }
+
+                            return provisioningService.SynchronizeUserAsync(user, loginInfo).GetAwaiter().GetResult();
                         }
                     };
                 });
@@ -146,17 +149,17 @@ internal static class OpenSaurBackOfficeAuthenticationExtensions
     {
         AddClaimIfMissing(
             identity,
-            ClaimTypes.NameIdentifier,
-            FindClaimValue(identity, OpenSaurIdentityClaimTypes.Subject));
+            System.Security.Claims.ClaimTypes.NameIdentifier,
+            FindClaimValue(identity, ClaimTypes.Subject));
         AddClaimIfMissing(
             identity,
-            ClaimTypes.Name,
-            FindClaimValue(identity, OpenSaurIdentityClaimTypes.Name)
-            ?? FindClaimValue(identity, OpenSaurIdentityClaimTypes.PreferredUserName));
+            System.Security.Claims.ClaimTypes.Name,
+            FindClaimValue(identity, ClaimTypes.Name)
+            ?? FindClaimValue(identity, ClaimTypes.PreferredUserName));
         AddClaimIfMissing(
             identity,
-            ClaimTypes.Email,
-            FindClaimValue(identity, OpenSaurIdentityClaimTypes.Email));
+            System.Security.Claims.ClaimTypes.Email,
+            FindClaimValue(identity, ClaimTypes.Email));
     }
 
     private static void AddClaimIfMissing(ClaimsIdentity identity, string claimType, string? value)

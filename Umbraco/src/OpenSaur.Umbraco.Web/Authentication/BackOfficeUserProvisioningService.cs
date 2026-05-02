@@ -12,22 +12,37 @@ using Umbraco.Extensions;
 
 namespace OpenSaur.Umbraco.Web.Authentication;
 
-internal sealed class OpenSaurBackOfficeUserProvisioningService(
+internal sealed class BackOfficeUserProvisioningService(
     IUserService userService,
     IUserGroupService userGroupService,
     IContentService contentService,
     IMediaService mediaService,
     IShortStringHelper shortStringHelper,
-    ILogger<OpenSaurBackOfficeUserProvisioningService> logger,
+    ILogger<BackOfficeUserProvisioningService> logger,
     IOptions<OidcOptions> optionsAccessor)
 {
-    private const string ManagedWorkspaceGroupDescription = "Managed by OpenSaur Identity workspace provisioning.";
+    private const string ManagedWorkspaceGroupDescription = "Managed by Zentry.";
 
-    public IUserGroup EnsureWorkspaceGroup(OpenSaurIdentitySession session)
+    public async Task<IUserGroup> EnsureWorkspaceGroupAsync(IdentitySession session)
     {
-        var existingGroup = FindExistingWorkspaceGroup(session);
+        var existingGroup = await FindExistingWorkspaceGroupAsync(session);
         if (existingGroup is not null)
         {
+            if(existingGroup.Alias != session.WorkspaceGroupAlias
+                || existingGroup.Name != session.WorkspaceGroupName
+            )
+            {
+                existingGroup.Alias = session.WorkspaceGroupAlias;
+                existingGroup.Name = session.WorkspaceGroupName;
+                var updateResult = await userGroupService.UpdateAsync(existingGroup, Constants.Security.SuperUserKey);
+                if (updateResult.Success)
+                {
+                    return updateResult.Result;
+                }
+
+                throw new InvalidOperationException($"Failed to update workspace group '{session.WorkspaceGroupAlias}'. Status: {updateResult.Status}.");
+            }
+
             return existingGroup;
         }
 
@@ -41,39 +56,38 @@ internal sealed class OpenSaurBackOfficeUserProvisioningService(
         newGroup.AddAllowedSection(Constants.Applications.Content);
         newGroup.AddAllowedSection(Constants.Applications.Media);
 
-        var createResult = userGroupService.CreateAsync(newGroup, Constants.Security.SuperUserKey, Array.Empty<Guid>())
-            .GetAwaiter()
-            .GetResult();
+        var createResult = await userGroupService.CreateAsync(newGroup, Constants.Security.SuperUserKey, Array.Empty<Guid>());
 
         if (createResult.Success)
         {
             return createResult.Result;
         }
 
-        existingGroup = FindExistingWorkspaceGroup(session);
+        existingGroup = await FindExistingWorkspaceGroupAsync(session);
         if (existingGroup is not null)
         {
             return existingGroup;
         }
 
-        throw new InvalidOperationException(
-            $"Failed to create workspace group '{session.WorkspaceGroupAlias}'. Status: {createResult.Status}.");
+        throw new InvalidOperationException($"Failed to create workspace group '{session.WorkspaceGroupAlias}'. Status: {createResult.Status}.");
     }
 
-    public void PrepareAutoLinkedUser(BackOfficeIdentityUser autoLinkedUser, ExternalLoginInfo loginInfo)
+    public async Task PrepareAutoLinkedUserAsync(BackOfficeIdentityUser autoLinkedUser, ExternalLoginInfo loginInfo)
     {
-        if (!OpenSaurIdentitySession.TryCreate(loginInfo.Principal, out var session) || session is null)
+        if (!IdentitySession.TryCreate(loginInfo.Principal, out var session) || session is null)
         {
             throw new InvalidOperationException("Effective OpenSaur identity claims are missing.");
         }
 
-        var workspaceGroup = EnsureWorkspaceGroup(session);
+        var workspaceGroup = await EnsureWorkspaceGroupAsync(session);
         var hasFullAdminAccess = session.IsSuperAdministrator;
+        var groups = await BuildDesiredIdentityGroupsAsync(hasFullAdminAccess, workspaceGroup);
+
+        autoLinkedUser.SetGroups(groups);
         autoLinkedUser.Culture = optionsAccessor.Value.DefaultCulture;
         autoLinkedUser.EmailConfirmed = true;
         autoLinkedUser.IsApproved = true;
-        autoLinkedUser.SetGroups(BuildDesiredIdentityGroups(hasFullAdminAccess, workspaceGroup));
-
+        
         if (hasFullAdminAccess)
         {
             autoLinkedUser.StartContentIds = [Constants.System.Root];
@@ -86,19 +100,19 @@ internal sealed class OpenSaurBackOfficeUserProvisioningService(
         }
     }
 
-    public bool SynchronizeUser(BackOfficeIdentityUser identityUser, ExternalLoginInfo loginInfo)
+    public async Task<bool> SynchronizeUserAsync(BackOfficeIdentityUser identityUser, ExternalLoginInfo loginInfo)
     {
-        if (!OpenSaurIdentitySession.TryCreate(loginInfo.Principal, out var session) || session is null)
+        if (!IdentitySession.TryCreate(loginInfo.Principal, out var session) || session is null)
         {
             logger.LogWarning("OpenSaur external login was rejected because required Identity claims were missing.");
             return false;
         }
 
-        var workspaceGroup = EnsureWorkspaceGroup(session);
+        var workspaceGroup = await EnsureWorkspaceGroupAsync(session);
         var hasFullAdminAccess = session.IsSuperAdministrator;
-        ApplyCurrentIdentityUserAccess(identityUser, hasFullAdminAccess, workspaceGroup);
+        await ApplyCurrentIdentityUserAccessAsync(identityUser, hasFullAdminAccess, workspaceGroup);
 
-        var user = ResolveUser(identityUser, session);
+        var user = await ResolveUserAsync(identityUser, session);
         if (user is null)
         {
             logger.LogWarning(
@@ -136,16 +150,14 @@ internal sealed class OpenSaurBackOfficeUserProvisioningService(
                 : new HashSet<Guid>(ResolveMediaStartNodeKeys(user.StartMediaIds ?? []))
         };
 
-        userService.UpdateAsync(Constants.Security.SuperUserKey, updateModel)
-            .GetAwaiter()
-            .GetResult();
-        EnsureExistingUserCanLogin(user);
-        EnsurePersistedUserAccess(user.Key, workspaceGroup.Key, hasFullAdminAccess);
+        await userService.UpdateAsync(Constants.Security.SuperUserKey, updateModel);
+        await EnsureExistingUserCanLoginAsync(user);
+        await EnsurePersistedUserAccessAsync(user.Key, workspaceGroup.Key, hasFullAdminAccess);
 
         return true;
     }
 
-    private void ApplyCurrentIdentityUserAccess(
+    private async Task ApplyCurrentIdentityUserAccessAsync(
         BackOfficeIdentityUser identityUser,
         bool hasFullAdminAccess,
         IUserGroup workspaceGroup)
@@ -153,7 +165,7 @@ internal sealed class OpenSaurBackOfficeUserProvisioningService(
         identityUser.Culture = optionsAccessor.Value.DefaultCulture;
         identityUser.EmailConfirmed = true;
         identityUser.IsApproved = true;
-        identityUser.SetGroups(BuildDesiredIdentityGroups(hasFullAdminAccess, workspaceGroup));
+        identityUser.SetGroups(await BuildDesiredIdentityGroupsAsync(hasFullAdminAccess, workspaceGroup));
 
         if (hasFullAdminAccess)
         {
@@ -166,28 +178,24 @@ internal sealed class OpenSaurBackOfficeUserProvisioningService(
         identityUser.StartMediaIds = [];
     }
 
-    private void EnsureExistingUserCanLogin(IUser user)
+    private async Task EnsureExistingUserCanLoginAsync(IUser user)
     {
         if (user.UserState is UserState.Disabled or UserState.Inactive)
         {
-            userService.EnableAsync(Constants.Security.SuperUserKey, new HashSet<Guid> { user.Key })
-                .GetAwaiter()
-                .GetResult();
+            await userService.EnableAsync(Constants.Security.SuperUserKey, new HashSet<Guid> { user.Key });
         }
 
         if (user.UserState is UserState.LockedOut)
         {
-            userService.UnlockAsync(Constants.Security.SuperUserKey, [user.Key])
-                .GetAwaiter()
-                .GetResult();
+            await userService.UnlockAsync(Constants.Security.SuperUserKey, user.Key);
         }
     }
 
-    private IUser? ResolveUser(BackOfficeIdentityUser identityUser, OpenSaurIdentitySession session)
+    private async Task<IUser?> ResolveUserAsync(BackOfficeIdentityUser identityUser, IdentitySession session)
     {
         if (Guid.TryParse(identityUser.Id, out var userKey))
         {
-            var user = userService.GetAsync(userKey).GetAwaiter().GetResult();
+            var user = await userService.GetAsync(userKey);
             if (user is not null)
             {
                 return user;
@@ -214,21 +222,19 @@ internal sealed class OpenSaurBackOfficeUserProvisioningService(
             : userService.GetByUsername(userName);
     }
 
-    private void EnsurePersistedUserAccess(Guid userKey, Guid workspaceGroupKey, bool isSuperAdministrator)
+    private async Task EnsurePersistedUserAccessAsync(Guid userKey, Guid workspaceGroupKey, bool isSuperAdministrator)
     {
-        var refreshedUser = userService.GetAsync(userKey).GetAwaiter().GetResult()
+        var refreshedUser = await userService.GetAsync(userKey)
             ?? throw new InvalidOperationException($"Failed to reload Umbraco user '{userKey}' after synchronization.");
 
         var requiresWorkspaceGroup = !refreshedUser.Groups.Any(group => group.Key == workspaceGroupKey);
-        var requiresAdminGroup = isSuperAdministrator
-                                 && !refreshedUser.Groups.Any(group => group.Key == Constants.Security.AdminGroupKey);
-        var requiresSensitiveDataGroup = isSuperAdministrator
-                                         && !refreshedUser.Groups.Any(group => group.Key == Constants.Security.SensitiveDataGroupKey);
+        var requiresAdminGroup = isSuperAdministrator && !refreshedUser.Groups.Any(group => group.Key == Constants.Security.AdminGroupKey);
+        var requiresSensitiveDataGroup = isSuperAdministrator && !refreshedUser.Groups.Any(group => group.Key == Constants.Security.SensitiveDataGroupKey);
 
         if (requiresWorkspaceGroup || requiresAdminGroup || requiresSensitiveDataGroup)
         {
-            RepairPersistedUserGroups(refreshedUser, workspaceGroupKey, isSuperAdministrator);
-            refreshedUser = userService.GetAsync(userKey).GetAwaiter().GetResult()
+            await RepairPersistedUserGroupsAsync(refreshedUser, workspaceGroupKey, isSuperAdministrator);
+            refreshedUser = await userService.GetAsync(userKey)
                 ?? throw new InvalidOperationException($"Failed to reload Umbraco user '{userKey}' after repairing access.");
         }
 
@@ -251,9 +257,9 @@ internal sealed class OpenSaurBackOfficeUserProvisioningService(
         }
     }
 
-    private void RepairPersistedUserGroups(IUser user, Guid workspaceGroupKey, bool isSuperAdministrator)
+    private async Task RepairPersistedUserGroupsAsync(IUser user, Guid workspaceGroupKey, bool isSuperAdministrator)
     {
-        var workspaceGroup = FindUserGroupByKey(workspaceGroupKey)
+        var workspaceGroup = await FindUserGroupByKeyAsync(workspaceGroupKey)
             ?? throw new InvalidOperationException($"Failed to resolve workspace group '{workspaceGroupKey}' for repair.");
 
         var repairedGroupKeys = BuildDesiredUserGroupKeys(user, workspaceGroup, isSuperAdministrator);
@@ -278,14 +284,12 @@ internal sealed class OpenSaurBackOfficeUserProvisioningService(
                 : new HashSet<Guid>(ResolveMediaStartNodeKeys(user.StartMediaIds ?? []))
         };
 
-        userService.UpdateAsync(Constants.Security.SuperUserKey, repairModel)
-            .GetAwaiter()
-            .GetResult();
+        await userService.UpdateAsync(Constants.Security.SuperUserKey, repairModel);
     }
 
-    private IUserGroup? FindUserGroupByKey(Guid groupKey)
+    private async Task<IUserGroup?> FindUserGroupByKeyAsync(Guid groupKey)
     {
-        var page = userGroupService.GetAllAsync(0, 10_000).GetAwaiter().GetResult();
+        var page = await userGroupService.GetAllAsync(0, 10_000);
         return page.Items.FirstOrDefault(group => group.Key == groupKey);
     }
 
@@ -313,18 +317,16 @@ internal sealed class OpenSaurBackOfficeUserProvisioningService(
     private static bool IsManagedWorkspaceGroup(IReadOnlyUserGroup group) =>
         string.Equals(group.Description, ManagedWorkspaceGroupDescription, StringComparison.Ordinal);
 
-    private IReadOnlyCollection<IReadOnlyUserGroup> BuildDesiredIdentityGroups(
-        bool hasFullAdminAccess,
-        IUserGroup workspaceGroup)
+    private async Task<IReadOnlyCollection<IReadOnlyUserGroup>> BuildDesiredIdentityGroupsAsync(bool hasFullAdminAccess, IUserGroup workspaceGroup)
     {
         if (!hasFullAdminAccess)
         {
             return [workspaceGroup.ToReadOnlyGroup()];
         }
 
-        var adminGroup = userGroupService.GetAsync(Constants.Security.AdminGroupAlias).GetAwaiter().GetResult()
+        var adminGroup = await userGroupService.GetAsync(Constants.Security.AdminGroupAlias)
             ?? throw new InvalidOperationException("Failed to resolve the built-in Umbraco administrator group.");
-        var sensitiveDataGroup = FindUserGroupByKey(Constants.Security.SensitiveDataGroupKey)
+        var sensitiveDataGroup = await FindUserGroupByKeyAsync(Constants.Security.SensitiveDataGroupKey)
             ?? throw new InvalidOperationException("Failed to resolve the built-in Umbraco sensitive data group.");
 
         return
@@ -335,16 +337,16 @@ internal sealed class OpenSaurBackOfficeUserProvisioningService(
         ];
     }
 
-    private IUserGroup? FindExistingWorkspaceGroup(OpenSaurIdentitySession session)
+    private async Task<IUserGroup?> FindExistingWorkspaceGroupAsync(IdentitySession session)
     {
-        var existingGroup = userGroupService.GetAsync(session.WorkspaceGroupAlias).GetAwaiter().GetResult()
-                            ?? userGroupService.GetAsync(session.LegacyWorkspaceGroupAlias).GetAwaiter().GetResult();
+        var existingGroup = await userGroupService.GetAsync(session.WorkspaceGroupAlias)
+                            ?? await userGroupService.GetAsync(session.LegacyWorkspaceGroupAlias);
         if (existingGroup is not null)
         {
             return existingGroup;
         }
 
-        var page = userGroupService.GetAllAsync(0, 10_000).GetAwaiter().GetResult();
+        var page = await userGroupService.GetAllAsync(0, 10_000);
         return page.Items.FirstOrDefault(group =>
             string.Equals(group.Name, session.WorkspaceGroupName, StringComparison.Ordinal)
             && string.Equals(group.Description, ManagedWorkspaceGroupDescription, StringComparison.Ordinal));

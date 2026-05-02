@@ -1,15 +1,15 @@
 {
   "$schema": "../../umbraco-package-schema.json",
-  "name": "OpenSaur Identity Backoffice Auth",
+  "name": "CoreGate Backoffice Auth",
   "allowPublicAccess": true,
   "extensions": [
     {
       "type": "authProvider",
-      "alias": "OpenSaur.AuthProvider.Identity",
-      "name": "OpenSaur Identity",
-      "forProviderName": "Umbraco.OpenSaur.Identity",
+      "alias": "CoreGate",
+      "name": "CoreGate",
+      "forProviderName": "Umbraco.CoreGate",
       "meta": {
-        "label": "OpenSaur Identity",
+        "label": "CoreGate",
         "defaultView": {
           "icon": "icon-cloud",
           "color": "default",
