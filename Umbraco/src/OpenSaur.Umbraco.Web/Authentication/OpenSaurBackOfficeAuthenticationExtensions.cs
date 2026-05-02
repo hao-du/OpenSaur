@@ -17,13 +17,13 @@ internal static class OpenSaurBackOfficeAuthenticationExtensions
 
     public static IUmbracoBuilder AddOpenSaurBackOfficeAuthentication(this IUmbracoBuilder builder)
     {
-        var options = builder.Config.GetSection(OpenSaurIdentityBackOfficeOptions.SectionName)
-            .Get<OpenSaurIdentityBackOfficeOptions>() ?? new OpenSaurIdentityBackOfficeOptions();
+        var options = builder.Config.GetSection(OidcOptions.SectionName)
+            .Get<OidcOptions>() ?? new OidcOptions();
 
         var httpContextAccessor = new HttpContextAccessor();
         builder.Services.AddSingleton<IHttpContextAccessor>(httpContextAccessor);
-        builder.Services.Configure<OpenSaurIdentityBackOfficeOptions>(
-            builder.Config.GetSection(OpenSaurIdentityBackOfficeOptions.SectionName));
+        builder.Services.Configure<OidcOptions>(
+            builder.Config.GetSection(OidcOptions.SectionName));
         builder.Services.PostConfigure<GlobalSettings>(settings =>
         {
             settings.ReservedPaths = AppendReservedPath(settings.ReservedPaths, options.CallbackPath);
@@ -44,6 +44,7 @@ internal static class OpenSaurBackOfficeAuthenticationExtensions
                             oidcOptions.Authority = options.Authority;
                             oidcOptions.ClientId = options.ClientId;
                             oidcOptions.ClientSecret = options.ClientSecret;
+                            oidcOptions.RequireHttpsMetadata = !options.AllowInsecureDiscoveryEndpoints;
                             oidcOptions.ResponseType = OpenIdConnectResponseType.Code;
                             oidcOptions.CallbackPath = options.CallbackPath;
                             oidcOptions.SignedOutCallbackPath = options.SignedOutCallbackPath;

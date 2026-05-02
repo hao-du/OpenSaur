@@ -19,7 +19,7 @@ internal sealed class OpenSaurBackOfficeUserProvisioningService(
     IMediaService mediaService,
     IShortStringHelper shortStringHelper,
     ILogger<OpenSaurBackOfficeUserProvisioningService> logger,
-    IOptions<OpenSaurIdentityBackOfficeOptions> optionsAccessor)
+    IOptions<OidcOptions> optionsAccessor)
 {
     private const string ManagedWorkspaceGroupDescription = "Managed by OpenSaur Identity workspace provisioning.";
 

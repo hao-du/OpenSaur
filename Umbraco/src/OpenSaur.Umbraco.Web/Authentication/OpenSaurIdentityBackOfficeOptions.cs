@@ -1,8 +1,8 @@
 namespace OpenSaur.Umbraco.Web.Authentication;
 
-internal sealed class OpenSaurIdentityBackOfficeOptions
+internal sealed class OidcOptions
 {
-    public const string SectionName = "OpenSaurIdentityBackOffice";
+    public const string SectionName = "Oidc";
 
     public string Authority { get; set; } = string.Empty;
 
@@ -15,4 +15,6 @@ internal sealed class OpenSaurIdentityBackOfficeOptions
     public string SignedOutCallbackPath { get; set; } = "/signout-callback-oidc";
 
     public string DefaultCulture { get; set; } = "en-US";
+
+    public bool AllowInsecureDiscoveryEndpoints { get; set; }
 }

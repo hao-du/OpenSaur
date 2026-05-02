@@ -4,8 +4,8 @@
     "windowsAuthentication": false,
     "anonymousAuthentication": true,
     "iisExpress": {
-      "applicationUrl": "http://localhost:5320",
-      "sslPort": 5320
+      "applicationUrl": "http://localhost:5021",
+      "sslPort": 5021
     }
   },
   "profiles": {
@@ -22,7 +22,7 @@
       "dotnetRunMessages": true,
       "launchBrowser": false,
       "launchUrl": "umbraco",
-      "applicationUrl": "https://localhost:5321;http://localhost:5320",
+      "applicationUrl": "https://localhost:5021;http://localhost:5020",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       }      

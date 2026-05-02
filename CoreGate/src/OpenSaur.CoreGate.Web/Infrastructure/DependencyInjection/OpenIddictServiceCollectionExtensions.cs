@@ -69,11 +69,12 @@ public static class OpenIddictServiceCollectionExtensions
             })
             .AddServer(options =>
             {
-                options.SetIssuer(new Uri(oidcOptions.GetIssuerBaseUri().AbsoluteUri.TrimEnd('/'), UriKind.Absolute));
-                options.SetAuthorizationEndpointUris("connect/authorize");
-                options.SetTokenEndpointUris("connect/token");
-                options.SetEndSessionEndpointUris("connect/endsession");
-                options.SetUserInfoEndpointUris("connect/userinfo");
+                Uri issuerBaseUri = oidcOptions.GetIssuerBaseUri();
+                options.SetIssuer(new Uri(issuerBaseUri.AbsoluteUri.TrimEnd('/'), UriKind.Absolute));
+                options.SetAuthorizationEndpointUris(new Uri(issuerBaseUri, "connect/authorize"));
+                options.SetTokenEndpointUris(new Uri(issuerBaseUri, "connect/token"));
+                options.SetEndSessionEndpointUris(new Uri(issuerBaseUri, "connect/endsession"));
+                options.SetUserInfoEndpointUris(new Uri(issuerBaseUri, "connect/userinfo"));
                 options.SetAccessTokenLifetime(TimeSpan.FromMinutes(15));
                 options.AllowAuthorizationCodeFlow()
                     .AllowRefreshTokenFlow();
