@@ -1,8 +1,16 @@
 using System.Net;
+using System.Threading.RateLimiting;
+using OpenSaur.Gateway.ConfigurationOptions;
+using OpenSaur.Gateway.Infrastructure;
+using OpenSaur.Gateway.Infrastructure.Middleware.CurcuitBreaker;
+using OpenSaur.Gateway.Infrastructure.Middleware.DirectForwarding;
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.RateLimiting;
 using Yarp.ReverseProxy.Forwarder;
 
 var builder = WebApplication.CreateBuilder(args);
+var rateLimitOptions = builder.Configuration.GetSection("Gateway:RateLimiting").Get<GatewayRateLimitingOptions>() ?? new GatewayRateLimitingOptions();
+var circuitBreakerOptions = builder.Configuration.GetSection("Gateway:CircuitBreaker").Get<GatewayCircuitBreakerOptions>() ?? new GatewayCircuitBreakerOptions();
 
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
@@ -14,12 +22,29 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
     options.KnownProxies.Clear();
 });
 
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(httpContext =>
+    {
+        var remoteIp = httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+        return RateLimitPartition.GetFixedWindowLimiter(
+            remoteIp,
+            _ => new FixedWindowRateLimiterOptions
+            {
+                AutoReplenishment = true,
+                PermitLimit = rateLimitOptions.PermitLimit,
+                QueueLimit = rateLimitOptions.QueueLimit,
+                QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                Window = TimeSpan.FromSeconds(rateLimitOptions.WindowSeconds)
+            });
+    });
+});
+
 builder.Services
     .AddReverseProxy()
     .LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"));
-
-var app = builder.Build();
-var forwarder = app.Services.GetRequiredService<IHttpForwarder>();
+builder.Services.AddSingleton(new GatewayCircuitBreaker(circuitBreakerOptions));
 
 var directForwardingHosts = builder.Configuration
     .GetSection("GatewayDirectForwarding:Hosts")
@@ -45,53 +70,19 @@ var forwarderRequestConfig = new ForwarderRequestConfig
     ActivityTimeout = TimeSpan.FromSeconds(100)
 };
 
+builder.Services.AddSingleton(new DirectForwardingContext
+{
+    Hosts = directForwardingHosts,
+    ForwarderHttpClient = forwarderHttpClient,
+    ForwarderRequestConfig = forwarderRequestConfig
+});
+
+var app = builder.Build();
+
 app.UseForwardedHeaders();
-
-app.Use(async (context, next) =>
-{
-    app.Logger.LogInformation(
-        "Gateway request received. Host: {Host}; X-Forwarded-Host: {ForwardedHost}; Path: {Path}",
-        context.Request.Host.Value,
-        context.Request.Headers["X-Forwarded-Host"].ToString(),
-        context.Request.Path.Value);
-
-    await next();
-});
-
-app.Use(async (context, next) =>
-{
-    directForwardingHosts.TryGetValue(context.Request.Host.Host, out var destinationPrefix);
-
-    if (destinationPrefix is null)
-    {
-        await next();
-        return;
-    }
-
-    app.Logger.LogInformation(
-        "Direct-forwarding request. Host: {Host}; Path: {Path}; Destination: {Destination}",
-        context.Request.Host.Value,
-        context.Request.Path.Value,
-        destinationPrefix);
-
-    var error = await forwarder.SendAsync(
-        context,
-        destinationPrefix,
-        forwarderHttpClient,
-        forwarderRequestConfig,
-        HttpTransformer.Default);
-
-    if (error != ForwarderError.None && !context.Response.HasStarted)
-    {
-        app.Logger.LogError(
-            "Direct forwarding failed. Host: {Host}; Path: {Path}; Error: {Error}",
-            context.Request.Host.Value,
-            context.Request.Path.Value,
-            error);
-
-        context.Response.StatusCode = StatusCodes.Status502BadGateway;
-    }
-});
+app.UseRateLimiter();
+app.UseCircuitBreaker();
+app.UseDirectForwarding();
 
 app.MapReverseProxy();
 
