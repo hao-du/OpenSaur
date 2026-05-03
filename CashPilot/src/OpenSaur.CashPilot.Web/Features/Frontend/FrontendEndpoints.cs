@@ -8,6 +8,8 @@ public static class FrontendEndpoints
     private static readonly string[] Routes =
     [
         "/",
+        "/prepare-session",
+        "/auth/callback",
     ];
 
     public static IEndpointRouteBuilder MapFrontEndRoutes(this IEndpointRouteBuilder app)

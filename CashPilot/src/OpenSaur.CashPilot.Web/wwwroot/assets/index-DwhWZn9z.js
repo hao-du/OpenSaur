@@ -14067,7 +14067,7 @@ function useViewTransitionState(to, { relative } = {}) {
 //#region src/infrastructure/config/Config.ts
 var import_client = /* @__PURE__ */ __toESM(require_client(), 1);
 function getConfig() {
-	const runtimeConfig = window.__ZENTRY_CONFIG__;
+	const runtimeConfig = window.__CASHPILOT_CONFIG__;
 	if (runtimeConfig == null) throw new Error("window.__CASHPILOT_CONFIG__ is missing.");
 	return runtimeConfig;
 }
@@ -18516,8 +18516,8 @@ function composeClasses(slots, getUtilityClass, classes = void 0) {
 }
 //#endregion
 //#region node_modules/@mui/system/esm/Container/createContainer.js
-var defaultTheme$2 = createTheme$1();
-var defaultCreateStyledComponent$1 = styled$1("div", {
+var defaultTheme$3 = createTheme$1();
+var defaultCreateStyledComponent$2 = styled$1("div", {
 	name: "MuiContainer",
 	slot: "Root",
 	overridesResolver: (props, styles) => {
@@ -18530,10 +18530,10 @@ var defaultCreateStyledComponent$1 = styled$1("div", {
 		];
 	}
 });
-var useThemePropsDefault$1 = (inProps) => useThemeProps({
+var useThemePropsDefault$2 = (inProps) => useThemeProps({
 	props: inProps,
 	name: "MuiContainer",
-	defaultTheme: defaultTheme$2
+	defaultTheme: defaultTheme$3
 });
 var useUtilityClasses$24 = (ownerState, componentName) => {
 	const getContainerUtilityClass = (slot) => {
@@ -18548,7 +18548,7 @@ var useUtilityClasses$24 = (ownerState, componentName) => {
 	] }, getContainerUtilityClass, classes);
 };
 function createContainer(options = {}) {
-	const { createStyledComponent = defaultCreateStyledComponent$1, useThemeProps = useThemePropsDefault$1, componentName = "MuiContainer" } = options;
+	const { createStyledComponent = defaultCreateStyledComponent$2, useThemeProps = useThemePropsDefault$2, componentName = "MuiContainer" } = options;
 	const ContainerRoot = createStyledComponent(({ theme, ownerState }) => ({
 		width: "100%",
 		marginLeft: "auto",
@@ -18589,6 +18589,268 @@ function createContainer(options = {}) {
 			...other
 		});
 	});
+}
+//#endregion
+//#region node_modules/@mui/utils/esm/isMuiElement/isMuiElement.js
+function isMuiElement(element, muiNames) {
+	return /* @__PURE__ */ import_react.isValidElement(element) && muiNames.indexOf(element.type.muiName ?? element.type?._payload?.value?.muiName) !== -1;
+}
+//#endregion
+//#region node_modules/@mui/system/esm/Grid/traverseBreakpoints.js
+var filterBreakpointKeys = (breakpointsKeys, responsiveKeys) => breakpointsKeys.filter((key) => responsiveKeys.includes(key));
+var traverseBreakpoints = (breakpoints, responsive, iterator) => {
+	const smallestBreakpoint = breakpoints.keys[0];
+	if (Array.isArray(responsive)) responsive.forEach((breakpointValue, index) => {
+		iterator((responsiveStyles, style) => {
+			if (index <= breakpoints.keys.length - 1) if (index === 0) Object.assign(responsiveStyles, style);
+			else responsiveStyles[breakpoints.up(breakpoints.keys[index])] = style;
+		}, breakpointValue);
+	});
+	else if (responsive && typeof responsive === "object") (Object.keys(responsive).length > breakpoints.keys.length ? breakpoints.keys : filterBreakpointKeys(breakpoints.keys, Object.keys(responsive))).forEach((key) => {
+		if (breakpoints.keys.includes(key)) {
+			const breakpointValue = responsive[key];
+			if (breakpointValue !== void 0) iterator((responsiveStyles, style) => {
+				if (smallestBreakpoint === key) Object.assign(responsiveStyles, style);
+				else responsiveStyles[breakpoints.up(key)] = style;
+			}, breakpointValue);
+		}
+	});
+	else if (typeof responsive === "number" || typeof responsive === "string") iterator((responsiveStyles, style) => {
+		Object.assign(responsiveStyles, style);
+	}, responsive);
+};
+//#endregion
+//#region node_modules/@mui/system/esm/Grid/gridGenerator.js
+function getSelfSpacingVar(axis) {
+	return `--Grid-${axis}Spacing`;
+}
+function getParentSpacingVar(axis) {
+	return `--Grid-parent-${axis}Spacing`;
+}
+var selfColumnsVar = "--Grid-columns";
+var parentColumnsVar = "--Grid-parent-columns";
+var generateGridSizeStyles = ({ theme, ownerState }) => {
+	const styles = {};
+	traverseBreakpoints(theme.breakpoints, ownerState.size, (appendStyle, value) => {
+		let style = {};
+		if (value === "grow") style = {
+			flexBasis: 0,
+			flexGrow: 1,
+			maxWidth: "100%"
+		};
+		if (value === "auto") style = {
+			flexBasis: "auto",
+			flexGrow: 0,
+			flexShrink: 0,
+			maxWidth: "none",
+			width: "auto"
+		};
+		if (typeof value === "number") style = {
+			flexGrow: 0,
+			flexBasis: "auto",
+			width: `calc(100% * ${value} / var(${parentColumnsVar}) - (var(${parentColumnsVar}) - ${value}) * (var(${getParentSpacingVar("column")}) / var(${parentColumnsVar})))`
+		};
+		appendStyle(styles, style);
+	});
+	return styles;
+};
+var generateGridOffsetStyles = ({ theme, ownerState }) => {
+	const styles = {};
+	traverseBreakpoints(theme.breakpoints, ownerState.offset, (appendStyle, value) => {
+		let style = {};
+		if (value === "auto") style = { marginLeft: "auto" };
+		if (typeof value === "number") style = { marginLeft: value === 0 ? "0px" : `calc(100% * ${value} / var(${parentColumnsVar}) + var(${getParentSpacingVar("column")}) * ${value} / var(${parentColumnsVar}))` };
+		appendStyle(styles, style);
+	});
+	return styles;
+};
+var generateGridColumnsStyles = ({ theme, ownerState }) => {
+	if (!ownerState.container) return {};
+	const styles = { [selfColumnsVar]: 12 };
+	traverseBreakpoints(theme.breakpoints, ownerState.columns, (appendStyle, value) => {
+		const columns = value ?? 12;
+		appendStyle(styles, {
+			[selfColumnsVar]: columns,
+			"> *": { [parentColumnsVar]: columns }
+		});
+	});
+	return styles;
+};
+var generateGridRowSpacingStyles = ({ theme, ownerState }) => {
+	if (!ownerState.container) return {};
+	const styles = {};
+	traverseBreakpoints(theme.breakpoints, ownerState.rowSpacing, (appendStyle, value) => {
+		const spacing = typeof value === "string" ? value : theme.spacing?.(value);
+		appendStyle(styles, {
+			[getSelfSpacingVar("row")]: spacing,
+			"> *": { [getParentSpacingVar("row")]: spacing }
+		});
+	});
+	return styles;
+};
+var generateGridColumnSpacingStyles = ({ theme, ownerState }) => {
+	if (!ownerState.container) return {};
+	const styles = {};
+	traverseBreakpoints(theme.breakpoints, ownerState.columnSpacing, (appendStyle, value) => {
+		const spacing = typeof value === "string" ? value : theme.spacing?.(value);
+		appendStyle(styles, {
+			[getSelfSpacingVar("column")]: spacing,
+			"> *": { [getParentSpacingVar("column")]: spacing }
+		});
+	});
+	return styles;
+};
+var generateGridDirectionStyles = ({ theme, ownerState }) => {
+	if (!ownerState.container) return {};
+	const styles = {};
+	traverseBreakpoints(theme.breakpoints, ownerState.direction, (appendStyle, value) => {
+		appendStyle(styles, { flexDirection: value });
+	});
+	return styles;
+};
+var generateGridStyles = ({ ownerState }) => {
+	return {
+		minWidth: 0,
+		boxSizing: "border-box",
+		...ownerState.container && {
+			display: "flex",
+			flexWrap: "wrap",
+			...ownerState.wrap && ownerState.wrap !== "wrap" && { flexWrap: ownerState.wrap },
+			gap: `var(${getSelfSpacingVar("row")}) var(${getSelfSpacingVar("column")})`
+		}
+	};
+};
+var generateSizeClassNames = (size) => {
+	const classNames = [];
+	Object.entries(size).forEach(([key, value]) => {
+		if (value !== false && value !== void 0) classNames.push(`grid-${key}-${String(value)}`);
+	});
+	return classNames;
+};
+var generateSpacingClassNames = (spacing, smallestBreakpoint = "xs") => {
+	function isValidSpacing(val) {
+		if (val === void 0) return false;
+		return typeof val === "string" && !Number.isNaN(Number(val)) || typeof val === "number" && val > 0;
+	}
+	if (isValidSpacing(spacing)) return [`spacing-${smallestBreakpoint}-${String(spacing)}`];
+	if (typeof spacing === "object" && !Array.isArray(spacing)) {
+		const classNames = [];
+		Object.entries(spacing).forEach(([key, value]) => {
+			if (isValidSpacing(value)) classNames.push(`spacing-${key}-${String(value)}`);
+		});
+		return classNames;
+	}
+	return [];
+};
+var generateDirectionClasses = (direction) => {
+	if (direction === void 0) return [];
+	if (typeof direction === "object") return Object.entries(direction).map(([key, value]) => `direction-${key}-${value}`);
+	return [`direction-xs-${String(direction)}`];
+};
+//#endregion
+//#region node_modules/@mui/system/esm/Grid/deleteLegacyGridProps.js
+/**
+* Deletes the legacy Grid component props from the `props` object and warns once about them if found.
+*
+* @param {object} props The props object to remove the legacy Grid props from.
+* @param {Breakpoints} breakpoints The breakpoints object.
+*/
+function deleteLegacyGridProps(props, breakpoints) {
+	const propsToWarn = [];
+	if (props.item !== void 0) {
+		delete props.item;
+		propsToWarn.push("item");
+	}
+	if (props.zeroMinWidth !== void 0) {
+		delete props.zeroMinWidth;
+		propsToWarn.push("zeroMinWidth");
+	}
+	breakpoints.keys.forEach((breakpoint) => {
+		if (props[breakpoint] !== void 0) {
+			propsToWarn.push(breakpoint);
+			delete props[breakpoint];
+		}
+	});
+}
+//#endregion
+//#region node_modules/@mui/system/esm/Grid/createGrid.js
+var defaultTheme$2 = createTheme$1();
+var defaultCreateStyledComponent$1 = styled$1("div", {
+	name: "MuiGrid",
+	slot: "Root"
+});
+function useThemePropsDefault$1(props) {
+	return useThemeProps({
+		props,
+		name: "MuiGrid",
+		defaultTheme: defaultTheme$2
+	});
+}
+function createGrid(options = {}) {
+	const { createStyledComponent = defaultCreateStyledComponent$1, useThemeProps = useThemePropsDefault$1, useTheme = useTheme$2, componentName = "MuiGrid" } = options;
+	const useUtilityClasses = (ownerState, theme) => {
+		const { container, direction, spacing, wrap, size } = ownerState;
+		return composeClasses({ root: [
+			"root",
+			container && "container",
+			wrap !== "wrap" && `wrap-xs-${String(wrap)}`,
+			...generateDirectionClasses(direction),
+			...generateSizeClassNames(size),
+			...container ? generateSpacingClassNames(spacing, theme.breakpoints.keys[0]) : []
+		] }, (slot) => generateUtilityClass(componentName, slot), {});
+	};
+	function parseResponsiveProp(propValue, breakpoints, shouldUseValue = () => true) {
+		const parsedProp = {};
+		if (propValue === null) return parsedProp;
+		if (Array.isArray(propValue)) propValue.forEach((value, index) => {
+			if (value !== null && shouldUseValue(value) && breakpoints.keys[index]) parsedProp[breakpoints.keys[index]] = value;
+		});
+		else if (typeof propValue === "object") Object.keys(propValue).forEach((key) => {
+			const value = propValue[key];
+			if (value !== null && value !== void 0 && shouldUseValue(value)) parsedProp[key] = value;
+		});
+		else parsedProp[breakpoints.keys[0]] = propValue;
+		return parsedProp;
+	}
+	const GridRoot = createStyledComponent(generateGridColumnsStyles, generateGridColumnSpacingStyles, generateGridRowSpacingStyles, generateGridSizeStyles, generateGridDirectionStyles, generateGridStyles, generateGridOffsetStyles);
+	const Grid = /* @__PURE__ */ import_react.forwardRef(function Grid(inProps, ref) {
+		const theme = useTheme();
+		const props = extendSxProp$1(useThemeProps(inProps));
+		deleteLegacyGridProps(props, theme.breakpoints);
+		const { className, children, columns: columnsProp = 12, container = false, component = "div", direction = "row", wrap = "wrap", size: sizeProp = {}, offset: offsetProp = {}, spacing: spacingProp = 0, rowSpacing: rowSpacingProp = spacingProp, columnSpacing: columnSpacingProp = spacingProp, unstable_level: level = 0, ...other } = props;
+		const size = parseResponsiveProp(sizeProp, theme.breakpoints, (val) => val !== false);
+		const offset = parseResponsiveProp(offsetProp, theme.breakpoints);
+		const columns = inProps.columns ?? (level ? void 0 : columnsProp);
+		const spacing = inProps.spacing ?? (level ? void 0 : spacingProp);
+		const rowSpacing = inProps.rowSpacing ?? inProps.spacing ?? (level ? void 0 : rowSpacingProp);
+		const columnSpacing = inProps.columnSpacing ?? inProps.spacing ?? (level ? void 0 : columnSpacingProp);
+		const ownerState = {
+			...props,
+			level,
+			columns,
+			container,
+			direction,
+			wrap,
+			spacing,
+			rowSpacing,
+			columnSpacing,
+			size,
+			offset
+		};
+		return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(GridRoot, {
+			ref,
+			as: component,
+			ownerState,
+			className: clsx(useUtilityClasses(ownerState, theme).root, className),
+			...other,
+			children: import_react.Children.map(children, (child) => {
+				if (/* @__PURE__ */ import_react.isValidElement(child) && isMuiElement(child, ["Grid"]) && container && child.props.container) return /* @__PURE__ */ import_react.cloneElement(child, { unstable_level: child.props?.unstable_level ?? level + 1 });
+				return child;
+			})
+		});
+	});
+	Grid.muiName = "Grid";
+	return Grid;
 }
 //#endregion
 //#region node_modules/@mui/system/esm/Stack/createStack.js
@@ -26314,6 +26576,34 @@ var Drawer = /* @__PURE__ */ import_react.forwardRef(function Drawer(inProps, re
 	});
 });
 //#endregion
+//#region node_modules/@mui/material/esm/Grid/Grid.js
+/**
+*
+* Demos:
+*
+* - [Grid](https://v7.mui.com/material-ui/react-grid/)
+*
+* API:
+*
+* - [Grid API](https://v7.mui.com/material-ui/api/grid/)
+*/
+var Grid = createGrid({
+	createStyledComponent: styled("div", {
+		name: "MuiGrid",
+		slot: "Root",
+		overridesResolver: (props, styles) => {
+			const { ownerState } = props;
+			return [styles.root, ownerState.container && styles.container];
+		}
+	}),
+	componentName: "MuiGrid",
+	useThemeProps: (inProps) => useDefaultProps({
+		props: inProps,
+		name: "MuiGrid"
+	}),
+	useTheme
+});
+//#endregion
 //#region node_modules/@mui/material/esm/Grow/Grow.js
 function getScale(value) {
 	return `scale(${value}, ${value ** 2})`;
@@ -28490,9 +28780,9 @@ function CenteredCardLayout({ children, description, title }) {
 										gap: 1.5
 									},
 									children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Box, {
-										alt: "Zentry",
+										alt: "CashPilot",
 										component: "img",
-										src: "/zentry-logo.svg",
+										src: "/logo.svg",
 										sx: {
 											display: "block",
 											height: 34,
@@ -28503,7 +28793,7 @@ function CenteredCardLayout({ children, description, title }) {
 											fontSize: "0.95rem",
 											letterSpacing: "0.14em"
 										},
-										children: "Zentry"
+										children: "CashPilot"
 									})]
 								}),
 								/* @__PURE__ */ (0, import_jsx_runtime.jsx)(PageTitleText, {
@@ -32095,7 +32385,7 @@ var translations = {
 		"profile.title": "My Profile",
 		"profile.userName": "User name",
 		"profile.workspace": "Workspace",
-		"profile.userInittials": "Zentry User",
+		"profile.userInittials": "Unknown User",
 		"roles.activeRequired": "No active permissions are available.",
 		"roles.createTitle": "Create role",
 		"roles.editTitle": "Edit role",
@@ -32340,7 +32630,7 @@ var translations = {
 		"profile.title": "Hồ sơ của tôi",
 		"profile.userName": "Tên đăng nhập",
 		"profile.workspace": "Không gian làm việc",
-		"profile.userInittials": "Người dùng Zentry",
+		"profile.userInittials": "Unknown User",
 		"roles.activeRequired": "Không có quyền đang hoạt động.",
 		"roles.createTitle": "Tạo vai trò",
 		"roles.editTitle": "Sửa vai trò",
@@ -32453,7 +32743,7 @@ function useSettingsQuery(enabled = true) {
 }
 //#endregion
 //#region src/features/settings/provider/SettingProvider.tsx
-var settingsStorageKey = "opensaur.zentry.settings";
+var settingsStorageKey = "opensaur.cashpilot.settings";
 var SettingContext = (0, import_react.createContext)(null);
 function normalizeLocale(locale) {
 	return locale === "en" || locale === "vi" ? locale : null;
@@ -32949,17 +33239,17 @@ function AppIcon({ icon: Icon, size = 18, strokeWidth = 2 }) {
 //#region src/infrastructure/theme/theme.ts
 var headerHeight = 64;
 var shellSpace = 2;
-var brandGreen = "#0b6e4f";
-var backgroundDefault = "#f5f7f4";
+var brandGreen = "#00ccff";
+var backgroundDefault = "#edf3f8";
 var backgroundPaper = "#ffffff";
 var textPrimary = "#15211b";
 var textSecondary = "#5f6c65";
-var borderSubtle = "rgba(11,110,79,0.10)";
-var borderDefault = "rgba(11,110,79,0.12)";
-var borderStrong = "rgba(11,110,79,0.24)";
-var navSelected = "rgba(11,110,79,0.10)";
-var navSelectedHover = "rgba(11,110,79,0.14)";
-var headerSurface = "rgba(245,247,244,0.92)";
+var borderSubtle = "rgba(0,204,255,0.10)";
+var borderDefault = "rgba(0,204,255,0.12)";
+var borderStrong = "rgba(0,204,255,0.24)";
+var navSelected = "rgba(0,204,255,0.10)";
+var navSelectedHover = "rgba(0,204,255,0.14)";
+var headerSurface = "rgba(237,243,248,0.92)";
 var theme = createTheme({
 	palette: {
 		background: {
@@ -33365,9 +33655,9 @@ function SideMenu({ currentYear }) {
 						gap: 1.5
 					},
 					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Box, {
-						alt: "Zentry",
+						alt: "CashPilot",
 						component: "img",
-						src: "/zentry-logo.svg",
+						src: "/logo.svg",
 						sx: {
 							display: "block",
 							height: 34,
@@ -33378,7 +33668,7 @@ function SideMenu({ currentYear }) {
 							fontSize: "0.95rem",
 							letterSpacing: "0.14em"
 						},
-						children: "Zentry"
+						children: "CashPilot"
 					})]
 				})
 			}),
@@ -33419,7 +33709,7 @@ function SideMenu({ currentYear }) {
 			}),
 			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Box, { sx: layoutStyles.flexGrow }),
 			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Divider, { sx: layoutStyles.fullWidthDividerSpacing }),
-			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(MetaText, { children: `Copyright © ${currentYear} Zentry.` })
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(MetaText, { children: `Copyright © ${currentYear} CashPilot.` })
 		]
 	});
 }
@@ -33576,19 +33866,85 @@ function PrepareSessionPage({ isRestoring }) {
 	});
 }
 //#endregion
+//#region src/features/dashboard/pages/DashboardPage.tsx
+function DashboardPage() {
+	const config = getConfig();
+	const { authSession } = useAuthSession();
+	const { formatDateTime, t } = useSettings();
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(DefaultLayout, {
+		subtitle: t("dashboard.subtitle"),
+		title: t("dashboard.title"),
+		children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Stack, {
+			spacing: 3,
+			children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Paper, {
+				elevation: 0,
+				sx: {
+					border: "1px solid rgba(11,110,79,0.12)",
+					p: 3
+				},
+				children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Stack, {
+					spacing: 2,
+					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Stack, {
+						spacing: .75,
+						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(PageTitleText, {
+							variant: "h6",
+							children: t("dashboard.sessionRuntime")
+						}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(BodyText, { children: [
+							t("dashboard.oidcRuntimeConfig"),
+							" ",
+							/* @__PURE__ */ (0, import_jsx_runtime.jsx)("code", { children: "/app-config.js" }),
+							"."
+						] })]
+					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Grid, {
+						container: true,
+						spacing: 2,
+						children: [
+							[t("dashboard.authenticated"), authSession == null ? t("common.no") : t("common.yes")],
+							[t("auth.tokenType"), authSession?.tokenType ?? t("common.missing")],
+							[t("dashboard.expiresAt"), authSession?.expiresAt ? formatDateTime(authSession.expiresAt) : t("common.missing")],
+							[t("auth.scope"), authSession?.scope ?? t("common.missing")],
+							[t("auth.idToken"), authSession?.idToken == null ? t("common.missing") : t("dashboard.idTokenIssued")],
+							[t("auth.authority"), config.authority],
+							[t("auth.clientId"), config.clientId],
+							[t("auth.redirectUri"), config.redirectUri],
+							[t("auth.postLogoutRedirectUri"), config.postLogoutRedirectUri],
+							[t("dashboard.configScope"), config.scope]
+						].map(([label, value]) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Grid, {
+							size: {
+								md: 6,
+								xs: 12
+							},
+							children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Stack, {
+								spacing: .5,
+								children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(LabelText, { children: label }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(BodyText, {
+									sx: { overflowWrap: "anywhere" },
+									children: value
+								})]
+							})
+						}, label))
+					})]
+				})
+			})
+		})
+	});
+}
+//#endregion
 //#region src/App.tsx
 function App() {
 	const { authSession, isRestoring } = useAuthSession();
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Routes, { children: [
-		/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Route, {
+		/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Route, {
 			element: isRestoring || authSession == null ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Navigate, {
 				replace: true,
 				to: "/prepare-session"
 			}) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Outlet, {}),
-			children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Route, {
+			children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Route, {
+				element: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(DashboardPage, {}),
+				path: "/"
+			}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Route, {
 				element: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ForbiddenPage, {}),
 				path: "/forbidden"
-			})
+			})]
 		}),
 		/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Route, {
 			element: authSession == null ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(PrepareSessionPage, { isRestoring }) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Navigate, {
@@ -33615,4 +33971,4 @@ import_client.createRoot(document.getElementById("root")).render(/* @__PURE__ */
 }) }));
 //#endregion
 
-//# sourceMappingURL=index-0pgkfKz5.js.map
+//# sourceMappingURL=index-DwhWZn9z.js.map

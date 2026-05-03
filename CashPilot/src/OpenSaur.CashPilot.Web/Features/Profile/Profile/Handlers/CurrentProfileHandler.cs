@@ -32,15 +32,16 @@ public static class CurrentProfileHandler
         if (currentUser is null)
         {
             return TypedResults.Ok(new CurrentProfileResponse(
+                Id: string.Empty,
                 Email: string.Empty, 
-                FirstName: string.Empty, 
-                IsImpersonating: false, 
-                IsSuperAdministrator: false, 
-                LastName: string.Empty, 
-                NavigationItems: [], 
-                Roles: [], 
-                UserName: string.Empty, 
-                WorkspaceName: string.Empty, 
+                FirstName: string.Empty,
+                IsImpersonating: false,
+                IsSuperAdministrator: false,
+                LastName: string.Empty,
+                NavigationItems: [],
+                Roles: [],
+                UserName: string.Empty,
+                WorkspaceName: string.Empty,
                 CanManage: false));
         }
 
@@ -49,6 +50,7 @@ public static class CurrentProfileHandler
         var canManage = ClaimHelper.HasPermission(user, Constants.Permissions.CashPilot.CanManage);
 
         return TypedResults.Ok(new CurrentProfileResponse(
+            Id: currentUser.Id.ToString(),
             Email: currentUser.Email,
             FirstName: currentUser.FirstName,
             IsImpersonating: isImpersonating,

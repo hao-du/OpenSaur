@@ -12,6 +12,5 @@ export type CurrentProfileDto = {
   userName: string;
   workspaceName?: string;
   isImpersonating?: boolean;
-  requirePasswordChange: boolean;
   navigationItems: NavigationItemDto[];
 };

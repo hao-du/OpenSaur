@@ -31,6 +31,9 @@ public static class SecurityHeadersMiddlewareExtensions
     private static string BuildContentSecurityPolicy(OidcOptions oidcOptions, IWebHostEnvironment environment)
     {
         var authority = new Uri(oidcOptions.Authority).GetLeftPart(UriPartial.Authority);
+        var connectSrc = environment.IsDevelopment()
+            ? $"connect-src 'self' {authority} http://localhost:* https://localhost:* ws://localhost:* wss://localhost:*;"
+            : $"connect-src 'self' {authority};";
         var upgradeInsecureRequests = environment.IsDevelopment()
             ? string.Empty
             : " upgrade-insecure-requests;";
@@ -39,7 +42,7 @@ public static class SecurityHeadersMiddlewareExtensions
             " ",
             "default-src 'self';",
             "base-uri 'self';",
-            $"connect-src 'self' {authority};",
+            connectSrc,
             "font-src 'self' data:;",
             "form-action 'self';",
             "frame-ancestors 'none';",

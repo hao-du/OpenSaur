@@ -1,6 +1,7 @@
 namespace OpenSaur.CashPilot.Web.Features.Profile;
 
 public sealed record CurrentProfileResponse(
+    string Id,
     string Email,
     string FirstName,
     bool IsImpersonating,

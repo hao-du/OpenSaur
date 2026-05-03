@@ -57,9 +57,9 @@ export function SideMenu({ currentYear }: SideMenuProps) {
       <Box sx={layoutStyles.sidebarBrandRow}>
         <Box sx={{ alignItems: "center", display: "flex", gap: 1.5 }}>
           <Box
-            alt="Zentry"
+            alt="CashPilot"
             component="img"
-            src="/zentry-logo.svg"
+            src="/logo.svg"
             sx={{
               display: "block",
               height: 34,
@@ -72,7 +72,7 @@ export function SideMenu({ currentYear }: SideMenuProps) {
               letterSpacing: "0.14em"
             }}
           >
-            Zentry
+            CashPilot
           </EyebrowText>
         </Box>
       </Box>
@@ -118,7 +118,7 @@ export function SideMenu({ currentYear }: SideMenuProps) {
       <Box sx={layoutStyles.flexGrow} />
       <Divider sx={layoutStyles.fullWidthDividerSpacing} />
       <MetaText>
-        {`Copyright © ${currentYear} Zentry.`}
+        {`Copyright © ${currentYear} CashPilot.`}
       </MetaText>
     </Box>
   );

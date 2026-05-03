@@ -3,17 +3,17 @@ import type { SxProps, Theme } from "@mui/material/styles";
 
 const headerHeight = 64;
 const shellSpace = 2;
-const brandGreen = "#0b6e4f";
-const backgroundDefault = "#f5f7f4";
+const brandGreen = "#00ccff";
+const backgroundDefault = "#edf3f8";
 const backgroundPaper = "#ffffff";
 const textPrimary = "#15211b";
 const textSecondary = "#5f6c65";
-const borderSubtle = "rgba(11,110,79,0.10)";
-const borderDefault = "rgba(11,110,79,0.12)";
-const borderStrong = "rgba(11,110,79,0.24)";
-const navSelected = "rgba(11,110,79,0.10)";
-const navSelectedHover = "rgba(11,110,79,0.14)";
-const headerSurface = "rgba(245,247,244,0.92)";
+const borderSubtle = "rgba(0,204,255,0.10)";
+const borderDefault = "rgba(0,204,255,0.12)";
+const borderStrong = "rgba(0,204,255,0.24)";
+const navSelected = "rgba(0,204,255,0.10)";
+const navSelectedHover = "rgba(0,204,255,0.14)";
+const headerSurface = "rgba(237,243,248,0.92)";
 
 export const theme = createTheme({
   palette: {

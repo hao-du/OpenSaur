@@ -2,12 +2,12 @@ import type { ConfigDto } from "./dtos/ConfigDto";
 
 declare global {
   interface Window {
-    __ZENTRY_CONFIG__?: ConfigDto;
+    __CASHPILOT_CONFIG__?: ConfigDto;
   }
 }
 
 export function getConfig(): ConfigDto {
-  const runtimeConfig = window.__ZENTRY_CONFIG__;
+  const runtimeConfig = window.__CASHPILOT_CONFIG__;
 
   if (runtimeConfig == null) {
     throw new Error("window.__CASHPILOT_CONFIG__ is missing.");

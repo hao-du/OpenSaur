@@ -21,7 +21,7 @@ type SettingContextValue = {
   timeZone: string;
 };
 
-const settingsStorageKey = "opensaur.zentry.settings";
+const settingsStorageKey = "opensaur.cashpilot.settings";
 const SettingContext = createContext<SettingContextValue | null>(null);
 
 function normalizeLocale(locale: string | null | undefined): AppLocale | null {
