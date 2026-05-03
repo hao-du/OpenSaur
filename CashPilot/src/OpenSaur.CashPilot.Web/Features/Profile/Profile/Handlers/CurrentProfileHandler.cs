@@ -4,7 +4,7 @@ using OpenSaur.CashPilot.Web.Features.Profile.Profile.Services;
 using OpenSaur.CashPilot.Web.Infrastructure;
 using OpenSaur.CashPilot.Web.Infrastructure.Database;
 using OpenSaur.CashPilot.Web.Infrastructure.Helpers;
-using OpenSaur.Zentry.Web.Features.Profile;
+using OpenSaur.CashPilot.Web.Features.Profile;
 using System.Security.Claims;
 
 namespace OpenSaur.CashPilot.Web.Features.Profile.Profile.Handlers;

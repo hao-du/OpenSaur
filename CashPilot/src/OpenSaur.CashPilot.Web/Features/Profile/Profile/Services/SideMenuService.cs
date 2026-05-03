@@ -1,4 +1,4 @@
-using OpenSaur.Zentry.Web.Features.Profile;
+using OpenSaur.CashPilot.Web.Features.Profile;
 
 namespace OpenSaur.CashPilot.Web.Features.Profile.Profile.Services;
 

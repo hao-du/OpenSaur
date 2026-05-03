@@ -4,8 +4,12 @@ using Microsoft.Extensions.Options;
 using OpenIddict.Validation.AspNetCore;
 using OpenSaur.CashPilot.Web.Features.Frontend;
 using OpenSaur.CashPilot.Web.Features.Frontend.Handlers;
+using OpenSaur.CashPilot.Web.Features.Profile;
+using OpenSaur.CashPilot.Web.Features.Profile.Profile.Services;
+using OpenSaur.CashPilot.Web.Features.Settings;
 using OpenSaur.CashPilot.Web.Infrastructure.Auth;
 using OpenSaur.CashPilot.Web.Infrastructure.ConfigurationOptions;
+using OpenSaur.CashPilot.Web.Infrastructure.Database;
 using OpenSaur.CashPilot.Web.Infrastructure.Hosting;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -14,6 +18,10 @@ var oidcOptions = builder.Configuration.GetSection(OidcOptions.SectionName).Get<
 var connectionString = builder.Configuration.GetConnectionString("CashPilotDb")
     ?? throw new InvalidOperationException("ConnectionStrings:CashPilotDb is required.");
 
+builder.Services.AddDbContext<CashPilotDbContext>(options =>
+{
+    options.UseNpgsql(connectionString);
+});
 
 builder.Services.AddHttpContextAccessor();
 builder.Services.Configure<OidcOptions>(builder.Configuration.GetSection("Oidc"));
@@ -43,6 +51,7 @@ builder.Services.AddAuthentication(options =>
 builder.Services.AddAuthorization(AppAuthorization.ConfigurePolicies);
 builder.Services.AddScoped<CreateFrontendRouteHandler>();
 builder.Services.AddScoped<CreateAppConfigJsHandler>();
+builder.Services.AddScoped<SideMenuService>();
 builder.Services.AddProblemDetails();
 
 var app = builder.Build();
@@ -57,5 +66,7 @@ app.UseAuthorization();
 
 // Map the custom frontend routes
 app.MapFrontEndRoutes();
+app.MapProfileEndpoints();
+app.MapSettingsEndpoints();
 
 app.Run();

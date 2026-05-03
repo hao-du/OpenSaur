@@ -1,4 +1,4 @@
-namespace OpenSaur.Zentry.Web.Features.Profile;
+namespace OpenSaur.CashPilot.Web.Features.Profile;
 
 public sealed record CurrentProfileResponse(
     string Email,

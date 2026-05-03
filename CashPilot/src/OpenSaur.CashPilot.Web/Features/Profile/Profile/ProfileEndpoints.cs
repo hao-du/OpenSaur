@@ -1,7 +1,7 @@
 using OpenSaur.CashPilot.Web.Features.Profile.Profile.Handlers;
 using OpenSaur.CashPilot.Web.Infrastructure.Auth;
 
-namespace OpenSaur.Zentry.Web.Features.Profile;
+namespace OpenSaur.CashPilot.Web.Features.Profile;
 
 public static class ProfileEndpoints
 {
