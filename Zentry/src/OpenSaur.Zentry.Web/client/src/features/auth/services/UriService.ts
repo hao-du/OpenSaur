@@ -1,4 +1,4 @@
-import { ConfigDto } from "../../../infrastructure/config/dtos/ConfigDto";
+import type { ConfigDto } from "../../../infrastructure/config/dtos/ConfigDto";
 import { CallbackResultDto } from "../dtos/CallbackResultDto";
 import { getPkceSession, savePkceSession } from "../storages/pkceStorage";
 
@@ -57,3 +57,4 @@ export function readCallbackResult(search: string): CallbackResultDto {
     storedState,
   };
 }
+

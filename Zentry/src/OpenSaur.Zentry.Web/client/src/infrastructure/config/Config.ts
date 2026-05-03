@@ -1,4 +1,4 @@
-import { ConfigDto } from "./dtos/ConfigDto";
+import type { ConfigDto } from "./dtos/ConfigDto";
 
 declare global {
   interface Window {
@@ -15,3 +15,4 @@ export function getConfig(): ConfigDto {
 
   return runtimeConfig;
 }
+

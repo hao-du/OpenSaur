@@ -1,4 +1,4 @@
-import { ConfigDto } from "../../../infrastructure/config/dtos/ConfigDto";
+import type { ConfigDto } from "../../../infrastructure/config/dtos/ConfigDto";
 import { client } from "../../../infrastructure/http/client";
 import { AuthSessionDto } from "../dtos/AuthSessionDto";
 import { TokenResponseDto } from "../dtos/TokenResponseDto";
@@ -55,3 +55,4 @@ function createAuthSession(tokenResponse: TokenResponseDto): AuthSessionDto {
     tokenType: tokenResponse.tokenType
   };
 }
+

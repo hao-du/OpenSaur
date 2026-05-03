@@ -1,6 +1,6 @@
 # Agents & Rules
 
-This document outlines the rules, guidelines, and behavioral expectations for AI agents working on the **CashPilot** project.
+This document outlines the rules, guidelines, and behavioral expectations for AI agents working on the **CashPilot** project. **Important**: This file is strictly for operational rules; application requirements and feature specs must be handled via OpenSpec and should not be added here.
 
 ## Core Principles
 - **Aesthetics First**: Every UI change must be premium, modern, and visually stunning.
