@@ -56,7 +56,7 @@ public static class CurrentProfileHandler
             IsImpersonating: isImpersonating,
             IsSuperAdministrator: isSuperAdministrator,
             LastName: currentUser.LastName,
-            NavigationItems: sideMenuService.BuildNavigationItems(canManage),
+            NavigationItems: sideMenuService.BuildNavigationItems(canManage || isSuperAdministrator),
             Roles: roles,
             UserName: userName,
             WorkspaceName: currentUser.WorkspaceName,

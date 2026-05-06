@@ -10,7 +10,7 @@ public static class SettingsEndpoints
     public static IEndpointRouteBuilder MapSettingsEndpoints(this IEndpointRouteBuilder app)
     {
         var settings = app.MapGroup("/api/settings")
-            .RequireAuthorization(AppAuthorization.CashPilotCanManagePolicyName);
+            .RequireAuthorization(AppAuthorization.CanAccessPolicyName);
 
         settings.MapGet("", GetSettingsHandler.HandleAsync);
 

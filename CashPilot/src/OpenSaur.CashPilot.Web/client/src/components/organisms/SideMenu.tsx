@@ -34,11 +34,7 @@ const navigationIcons: Record<string, LucideIcon> = {
 
 const navigationLabelKeys: Record<string, TranslationKey> = {
   "/": "nav.dashboard",
-  "/oidc-clients": "nav.oidcClients",
-  "/roles": "nav.roles",
-  "/settings": "nav.settings",
-  "/users": "nav.users",
-  "/workspaces": "nav.workspaces"
+  "/banks": "nav.banks",
 };
 
 type SideMenuProps = {

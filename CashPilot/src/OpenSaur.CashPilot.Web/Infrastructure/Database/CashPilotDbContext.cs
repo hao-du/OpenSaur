@@ -12,6 +12,7 @@ public sealed class CashPilotDbContext: DbContext
     }
 
     public DbSet<User> Users => Set<User>();
+    public DbSet<Bank> Banks => Set<Bank>();
 
     public override int SaveChanges(bool acceptAllChangesOnSuccess)
     {

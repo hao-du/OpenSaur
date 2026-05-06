@@ -217,7 +217,7 @@ function hashQueryKeyByOptions(queryKey, options) {
 	return (options?.queryKeyHashFn || hashKey)(queryKey);
 }
 function hashKey(queryKey) {
-	return JSON.stringify(queryKey, (_, val) => isPlainObject$2(val) ? Object.keys(val).sort().reduce((result, key) => {
+	return JSON.stringify(queryKey, (_, val) => isPlainObject$3(val) ? Object.keys(val).sort().reduce((result, key) => {
 		result[key] = val[key];
 		return result;
 	}, {}) : val);
@@ -233,7 +233,7 @@ function replaceEqualDeep(a, b, depth = 0) {
 	if (a === b) return a;
 	if (depth > 500) return b;
 	const array = isPlainArray(a) && isPlainArray(b);
-	if (!array && !(isPlainObject$2(a) && isPlainObject$2(b))) return b;
+	if (!array && !(isPlainObject$3(a) && isPlainObject$3(b))) return b;
 	const aSize = (array ? a : Object.keys(a)).length;
 	const bItems = array ? b : Object.keys(b);
 	const bSize = bItems.length;
@@ -266,7 +266,7 @@ function shallowEqualObjects(a, b) {
 function isPlainArray(value) {
 	return Array.isArray(value) && value.length === Object.keys(value).length;
 }
-function isPlainObject$2(o) {
+function isPlainObject$3(o) {
 	if (!hasObjectPrototype(o)) return false;
 	const ctor = o.constructor;
 	if (ctor === void 0) return true;
@@ -12717,7 +12717,7 @@ function useLocation() {
 	return import_react.useContext(LocationContext).location;
 }
 var navigateEffectWarning = `You should call navigate() in a React.useEffect(), not when your component is first rendered.`;
-function useIsomorphicLayoutEffect(cb) {
+function useIsomorphicLayoutEffect$1(cb) {
 	if (!import_react.useContext(NavigationContext).static) import_react.useLayoutEffect(cb);
 }
 function useNavigate() {
@@ -12732,7 +12732,7 @@ function useNavigateUnstable() {
 	let { pathname: locationPathname } = useLocation();
 	let routePathnamesJson = JSON.stringify(getResolveToMatches(matches));
 	let activeRef = import_react.useRef(false);
-	useIsomorphicLayoutEffect(() => {
+	useIsomorphicLayoutEffect$1(() => {
 		activeRef.current = true;
 	});
 	return import_react.useCallback((to, options = {}) => {
@@ -13052,7 +13052,7 @@ function useNavigateStable() {
 	let { router } = useDataRouterContext("useNavigate");
 	let id = useCurrentRouteId("useNavigate");
 	let activeRef = import_react.useRef(false);
-	useIsomorphicLayoutEffect(() => {
+	useIsomorphicLayoutEffect$1(() => {
 		activeRef.current = true;
 	});
 	return import_react.useCallback(async (to, options = {}) => {
@@ -15863,12 +15863,12 @@ tags.forEach(function(tagName) {
 });
 //#endregion
 //#region node_modules/@mui/styled-engine/esm/GlobalStyles/GlobalStyles.js
-function isEmpty(obj) {
+function isEmpty$2(obj) {
 	return obj === void 0 || obj === null || Object.keys(obj).length === 0;
 }
 function GlobalStyles$3(props) {
 	const { styles, defaultTheme = {} } = props;
-	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Global, { styles: typeof styles === "function" ? (themeInput) => styles(isEmpty(themeInput) ? defaultTheme : themeInput) : styles });
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Global, { styles: typeof styles === "function" ? (themeInput) => styles(isEmpty$2(themeInput) ? defaultTheme : themeInput) : styles });
 }
 //#endregion
 //#region node_modules/@mui/styled-engine/esm/index.js
@@ -15912,13 +15912,13 @@ var require_react_is_production = /* @__PURE__ */ __commonJSMin(((exports) => {
 var import_react_is = (/* @__PURE__ */ __commonJSMin(((exports, module) => {
 	module.exports = require_react_is_production();
 })))();
-function isPlainObject$1(item) {
+function isPlainObject$2(item) {
 	if (typeof item !== "object" || item === null) return false;
 	const prototype = Object.getPrototypeOf(item);
 	return (prototype === null || prototype === Object.prototype || Object.getPrototypeOf(prototype) === null) && !(Symbol.toStringTag in item) && !(Symbol.iterator in item);
 }
 function deepClone(source) {
-	if (/* @__PURE__ */ import_react.isValidElement(source) || (0, import_react_is.isValidElementType)(source) || !isPlainObject$1(source)) return source;
+	if (/* @__PURE__ */ import_react.isValidElement(source) || (0, import_react_is.isValidElementType)(source) || !isPlainObject$2(source)) return source;
 	const output = {};
 	Object.keys(source).forEach((key) => {
 		output[key] = deepClone(source[key]);
@@ -15945,10 +15945,10 @@ function deepClone(source) {
 */
 function deepmerge(target, source, options = { clone: true }) {
 	const output = options.clone ? { ...target } : target;
-	if (isPlainObject$1(target) && isPlainObject$1(source)) Object.keys(source).forEach((key) => {
+	if (isPlainObject$2(target) && isPlainObject$2(source)) Object.keys(source).forEach((key) => {
 		if (/* @__PURE__ */ import_react.isValidElement(source[key]) || (0, import_react_is.isValidElementType)(source[key])) output[key] = source[key];
-		else if (isPlainObject$1(source[key]) && Object.prototype.hasOwnProperty.call(target, key) && isPlainObject$1(target[key])) output[key] = deepmerge(target[key], source[key], options);
-		else if (options.clone) output[key] = isPlainObject$1(source[key]) ? deepClone(source[key]) : source[key];
+		else if (isPlainObject$2(source[key]) && Object.prototype.hasOwnProperty.call(target, key) && isPlainObject$2(target[key])) output[key] = deepmerge(target[key], source[key], options);
+		else if (options.clone) output[key] = isPlainObject$2(source[key]) ? deepClone(source[key]) : source[key];
 		else output[key] = source[key];
 	});
 	return output;
@@ -16192,7 +16192,7 @@ function getPath(obj, path, checkVars = true) {
 		return null;
 	}, obj);
 }
-function getStyleValue(themeMapping, transform, propValueFinal, userValue = propValueFinal) {
+function getStyleValue$1(themeMapping, transform, propValueFinal, userValue = propValueFinal) {
 	let value;
 	if (typeof themeMapping === "function") value = themeMapping(propValueFinal);
 	else if (Array.isArray(themeMapping)) value = themeMapping[propValueFinal] || userValue;
@@ -16208,8 +16208,8 @@ function style$2(options) {
 		const theme = props.theme;
 		const themeMapping = getPath(theme, themeKey) || {};
 		const styleFromPropValue = (propValueFinal) => {
-			let value = getStyleValue(themeMapping, transform, propValueFinal);
-			if (propValueFinal === value && typeof propValueFinal === "string") value = getStyleValue(themeMapping, transform, `${prop}${propValueFinal === "default" ? "" : capitalize(propValueFinal)}`, propValueFinal);
+			let value = getStyleValue$1(themeMapping, transform, propValueFinal);
+			if (propValueFinal === value && typeof propValueFinal === "string") value = getStyleValue$1(themeMapping, transform, `${prop}${propValueFinal === "default" ? "" : capitalize(propValueFinal)}`, propValueFinal);
 			if (cssProperty === false) return value;
 			return { [cssProperty]: value };
 		};
@@ -16707,8 +16707,8 @@ function unstable_createStyleFunctionSx() {
 		const themeMapping = getPath(theme, themeKey) || {};
 		if (style) return style(props);
 		const styleFromPropValue = (propValueFinal) => {
-			let value = getStyleValue(themeMapping, transform, propValueFinal);
-			if (propValueFinal === value && typeof propValueFinal === "string") value = getStyleValue(themeMapping, transform, `${prop}${propValueFinal === "default" ? "" : capitalize(propValueFinal)}`, propValueFinal);
+			let value = getStyleValue$1(themeMapping, transform, propValueFinal);
+			if (propValueFinal === value && typeof propValueFinal === "string") value = getStyleValue$1(themeMapping, transform, `${prop}${propValueFinal === "default" ? "" : capitalize(propValueFinal)}`, propValueFinal);
 			if (cssProperty === false) return value;
 			return { [cssProperty]: value };
 		};
@@ -16862,12 +16862,12 @@ function createTheme$1(options = {}, ...args) {
 }
 //#endregion
 //#region node_modules/@mui/system/esm/useThemeWithoutDefault/useThemeWithoutDefault.js
-function isObjectEmpty$1(obj) {
+function isObjectEmpty$2(obj) {
 	return Object.keys(obj).length === 0;
 }
 function useTheme$3(defaultTheme = null) {
 	const contextTheme = import_react.useContext(ThemeContext$1);
-	return !contextTheme || isObjectEmpty$1(contextTheme) ? defaultTheme : contextTheme;
+	return !contextTheme || isObjectEmpty$2(contextTheme) ? defaultTheme : contextTheme;
 }
 //#endregion
 //#region node_modules/@mui/system/esm/useTheme/useTheme.js
@@ -16917,7 +16917,7 @@ function extendSxProp$1(props) {
 	if (Array.isArray(inSx)) finalSx = [systemProps, ...inSx];
 	else if (typeof inSx === "function") finalSx = (...args) => {
 		const result = inSx(...args);
-		if (!isPlainObject$1(result)) return systemProps;
+		if (!isPlainObject$2(result)) return systemProps;
 		return {
 			...systemProps,
 			...result
@@ -17041,7 +17041,7 @@ function defaultOverridesResolver(slot) {
 	return (_props, styles) => styles[slot];
 }
 function attachTheme(props, themeId, defaultTheme) {
-	props.theme = isObjectEmpty(props.theme) ? defaultTheme : props.theme[themeId] || props.theme;
+	props.theme = isObjectEmpty$1(props.theme) ? defaultTheme : props.theme[themeId] || props.theme;
 }
 function processStyle(props, style, layerName) {
 	const resolvedStyle = typeof style === "function" ? style(props) : style;
@@ -17106,7 +17106,7 @@ function createStyled(input = {}) {
 			if (typeof style === "function") return function styleFunctionProcessor(props) {
 				return processStyle(props, style, props.theme.modularCssLayers ? layerName : void 0);
 			};
-			if (isPlainObject$1(style)) {
+			if (isPlainObject$2(style)) {
 				const serialized = preprocessStyles(style);
 				return function styleObjectProcessor(props) {
 					if (!serialized.variants) return props.theme.modularCssLayers ? shallowLayer(serialized.style, layerName) : serialized.style;
@@ -17167,7 +17167,7 @@ function generateStyledLabel(componentName, componentSlot) {
 	let label;
 	return label;
 }
-function isObjectEmpty(object) {
+function isObjectEmpty$1(object) {
 	for (const _ in object) return false;
 	return true;
 }
@@ -18535,7 +18535,7 @@ var useThemePropsDefault$2 = (inProps) => useThemeProps({
 	name: "MuiContainer",
 	defaultTheme: defaultTheme$3
 });
-var useUtilityClasses$24 = (ownerState, componentName) => {
+var useUtilityClasses$50 = (ownerState, componentName) => {
 	const getContainerUtilityClass = (slot) => {
 		return generateUtilityClass(componentName, slot);
 	};
@@ -18584,7 +18584,7 @@ function createContainer(options = {}) {
 		return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ContainerRoot, {
 			as: component,
 			ownerState,
-			className: clsx(useUtilityClasses$24(ownerState, componentName).root, className),
+			className: clsx(useUtilityClasses$50(ownerState, componentName).root, className),
 			ref,
 			...other
 		});
@@ -19346,7 +19346,7 @@ var zIndex = {
 //#endregion
 //#region node_modules/@mui/material/esm/styles/stringifyTheme.js
 function isSerializable(val) {
-	return isPlainObject$1(val) || typeof val === "undefined" || typeof val === "string" || typeof val === "boolean" || typeof val === "number" || Array.isArray(val);
+	return isPlainObject$2(val) || typeof val === "undefined" || typeof val === "string" || typeof val === "boolean" || typeof val === "number" || Array.isArray(val);
 }
 /**
 * `baseTheme` usually comes from `createTheme()` or `extendTheme()`.
@@ -19374,7 +19374,7 @@ function stringifyTheme(baseTheme = {}) {
 		for (let index = 0; index < array.length; index++) {
 			const [key, value] = array[index];
 			if (!isSerializable(value) || key.startsWith("unstable_")) delete object[key];
-			else if (isPlainObject$1(value)) {
+			else if (isPlainObject$2(value)) {
 				object[key] = { ...value };
 				serializeTheme(object[key]);
 			}
@@ -20137,7 +20137,7 @@ generateUtilityClasses("MuiSvgIcon", [
 ]);
 //#endregion
 //#region node_modules/@mui/material/esm/SvgIcon/SvgIcon.js
-var useUtilityClasses$23 = (ownerState) => {
+var useUtilityClasses$49 = (ownerState) => {
 	const { color, fontSize, classes } = ownerState;
 	return composeClasses({ root: [
 		"root",
@@ -20223,7 +20223,7 @@ var SvgIcon = /* @__PURE__ */ import_react.forwardRef(function SvgIcon(inProps, 
 	if (!inheritViewBox) more.viewBox = viewBox;
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(SvgIconRoot, {
 		as: component,
-		className: clsx(useUtilityClasses$23(ownerState).root, className),
+		className: clsx(useUtilityClasses$49(ownerState).root, className),
 		focusable: "false",
 		color: htmlColor,
 		"aria-hidden": titleAccess ? void 0 : true,
@@ -20273,6 +20273,9 @@ function debounce$1(func, wait = 166) {
 //#endregion
 //#region node_modules/@mui/material/esm/utils/debounce.js
 var debounce_default = debounce$1;
+//#endregion
+//#region node_modules/@mui/material/esm/utils/isMuiElement.js
+var isMuiElement_default = isMuiElement;
 //#endregion
 //#region node_modules/@mui/utils/esm/ownerDocument/ownerDocument.js
 function ownerDocument(node) {
@@ -21282,7 +21285,7 @@ generateUtilityClasses("MuiPaper", [
 ]);
 //#endregion
 //#region node_modules/@mui/material/esm/Paper/Paper.js
-var useUtilityClasses$22 = (ownerState) => {
+var useUtilityClasses$48 = (ownerState) => {
 	const { square, elevation, variant, classes } = ownerState;
 	return composeClasses({ root: [
 		"root",
@@ -21342,7 +21345,7 @@ var Paper = /* @__PURE__ */ import_react.forwardRef(function Paper(inProps, ref)
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(PaperRoot, {
 		as: component,
 		ownerState,
-		className: clsx(useUtilityClasses$22(ownerState).root, className),
+		className: clsx(useUtilityClasses$48(ownerState).root, className),
 		ref,
 		...other,
 		style: {
@@ -21737,7 +21740,7 @@ var buttonBaseClasses = generateUtilityClasses("MuiButtonBase", [
 ]);
 //#endregion
 //#region node_modules/@mui/material/esm/ButtonBase/ButtonBase.js
-var useUtilityClasses$21 = (ownerState) => {
+var useUtilityClasses$47 = (ownerState) => {
 	const { disabled, focusVisible, focusVisibleClassName, classes } = ownerState;
 	const composedClasses = composeClasses({ root: [
 		"root",
@@ -21876,7 +21879,7 @@ var ButtonBase = /* @__PURE__ */ import_react.forwardRef(function ButtonBase(inP
 		tabIndex,
 		focusVisible
 	};
-	const classes = useUtilityClasses$21(ownerState);
+	const classes = useUtilityClasses$47(ownerState);
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(ButtonBaseRoot, {
 		as: ComponentProp,
 		className: clsx(classes.root, className),
@@ -21950,6 +21953,36 @@ function createSimplePaletteValueFilter(additionalPropertiesToCheck = []) {
 	return ([, value]) => value && checkSimplePaletteColorValues(value, additionalPropertiesToCheck);
 }
 //#endregion
+//#region node_modules/@mui/material/esm/Alert/alertClasses.js
+function getAlertUtilityClass(slot) {
+	return generateUtilityClass("MuiAlert", slot);
+}
+var alertClasses = generateUtilityClasses("MuiAlert", [
+	"root",
+	"action",
+	"icon",
+	"message",
+	"filled",
+	"colorSuccess",
+	"colorInfo",
+	"colorWarning",
+	"colorError",
+	"filledSuccess",
+	"filledInfo",
+	"filledWarning",
+	"filledError",
+	"outlined",
+	"outlinedSuccess",
+	"outlinedInfo",
+	"outlinedWarning",
+	"outlinedError",
+	"standard",
+	"standardSuccess",
+	"standardInfo",
+	"standardWarning",
+	"standardError"
+]);
+//#endregion
 //#region node_modules/@mui/material/esm/CircularProgress/circularProgressClasses.js
 function getCircularProgressUtilityClass(slot) {
 	return generateUtilityClass("MuiCircularProgress", slot);
@@ -22001,7 +22034,7 @@ var rotateAnimation = typeof circularRotateKeyframe !== "string" ? css`
 var dashAnimation = typeof circularDashKeyframe !== "string" ? css`
         animation: ${circularDashKeyframe} 1.4s ease-in-out infinite;
       ` : null;
-var useUtilityClasses$20 = (ownerState) => {
+var useUtilityClasses$46 = (ownerState) => {
 	const { classes, variant, color, disableShrink } = ownerState;
 	return composeClasses({
 		root: [
@@ -22111,7 +22144,7 @@ var CircularProgress = /* @__PURE__ */ import_react.forwardRef(function Circular
 		variant,
 		enableTrackSlot
 	};
-	const classes = useUtilityClasses$20(ownerState);
+	const classes = useUtilityClasses$46(ownerState);
 	const circleStyle = {};
 	const rootStyle = {};
 	const rootProps = {};
@@ -22187,7 +22220,7 @@ var iconButtonClasses = generateUtilityClasses("MuiIconButton", [
 ]);
 //#endregion
 //#region node_modules/@mui/material/esm/IconButton/IconButton.js
-var useUtilityClasses$19 = (ownerState) => {
+var useUtilityClasses$45 = (ownerState) => {
 	const { classes, disabled, color, edge, size, loading } = ownerState;
 	return composeClasses({
 		root: [
@@ -22334,7 +22367,7 @@ var IconButton = /* @__PURE__ */ import_react.forwardRef(function IconButton(inP
 		loadingIndicator,
 		size
 	};
-	const classes = useUtilityClasses$19(ownerState);
+	const classes = useUtilityClasses$45(ownerState);
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(IconButtonRoot, {
 		id: loading ? loadingId : idProp,
 		className: clsx(classes.root, className),
@@ -22353,6 +22386,250 @@ var IconButton = /* @__PURE__ */ import_react.forwardRef(function IconButton(inP
 				children: loading && loadingIndicator
 			})
 		}), children]
+	});
+});
+//#endregion
+//#region node_modules/@mui/material/esm/internal/svg-icons/SuccessOutlined.js
+/**
+* @ignore - internal component.
+*/
+var SuccessOutlined_default = createSvgIcon(/* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4C12.76,4 13.5,4.11 14.2, 4.31L15.77,2.74C14.61,2.26 13.34,2 12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0, 0 22,12M7.91,10.08L6.5,11.5L11,16L21,6L19.59,4.58L11,13.17L7.91,10.08Z" }), "SuccessOutlined");
+//#endregion
+//#region node_modules/@mui/material/esm/internal/svg-icons/ReportProblemOutlined.js
+/**
+* @ignore - internal component.
+*/
+var ReportProblemOutlined_default = createSvgIcon(/* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M12 5.99L19.53 19H4.47L12 5.99M12 2L1 21h22L12 2zm1 14h-2v2h2v-2zm0-6h-2v4h2v-4z" }), "ReportProblemOutlined");
+//#endregion
+//#region node_modules/@mui/material/esm/internal/svg-icons/ErrorOutline.js
+/**
+* @ignore - internal component.
+*/
+var ErrorOutline_default = createSvgIcon(/* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M11 15h2v2h-2zm0-8h2v6h-2zm.99-5C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8z" }), "ErrorOutline");
+//#endregion
+//#region node_modules/@mui/material/esm/internal/svg-icons/InfoOutlined.js
+/**
+* @ignore - internal component.
+*/
+var InfoOutlined_default = createSvgIcon(/* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M11,9H13V7H11M12,20C7.59,20 4,16.41 4,12C4,7.59 7.59,4 12,4C16.41,4 20,7.59 20, 12C20,16.41 16.41,20 12,20M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10, 10 0 0,0 12,2M11,17H13V11H11V17Z" }), "InfoOutlined");
+//#endregion
+//#region node_modules/@mui/material/esm/internal/svg-icons/Close.js
+/**
+* @ignore - internal component.
+*
+* Alias to `Clear`.
+*/
+var Close_default = createSvgIcon(/* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" }), "Close");
+//#endregion
+//#region node_modules/@mui/material/esm/Alert/Alert.js
+var useUtilityClasses$44 = (ownerState) => {
+	const { variant, color, severity, classes } = ownerState;
+	return composeClasses({
+		root: [
+			"root",
+			`color${capitalize_default(color || severity)}`,
+			`${variant}${capitalize_default(color || severity)}`,
+			`${variant}`
+		],
+		icon: ["icon"],
+		message: ["message"],
+		action: ["action"]
+	}, getAlertUtilityClass, classes);
+};
+var AlertRoot = styled(Paper, {
+	name: "MuiAlert",
+	slot: "Root",
+	overridesResolver: (props, styles) => {
+		const { ownerState } = props;
+		return [
+			styles.root,
+			styles[ownerState.variant],
+			styles[`${ownerState.variant}${capitalize_default(ownerState.color || ownerState.severity)}`]
+		];
+	}
+})(memoTheme(({ theme }) => {
+	const getColor = theme.palette.mode === "light" ? theme.darken : theme.lighten;
+	const getBackgroundColor = theme.palette.mode === "light" ? theme.lighten : theme.darken;
+	return {
+		...theme.typography.body2,
+		backgroundColor: "transparent",
+		display: "flex",
+		padding: "6px 16px",
+		variants: [
+			...Object.entries(theme.palette).filter(createSimplePaletteValueFilter(["light"])).map(([color]) => ({
+				props: {
+					colorSeverity: color,
+					variant: "standard"
+				},
+				style: {
+					color: theme.vars ? theme.vars.palette.Alert[`${color}Color`] : getColor(theme.palette[color].light, .6),
+					backgroundColor: theme.vars ? theme.vars.palette.Alert[`${color}StandardBg`] : getBackgroundColor(theme.palette[color].light, .9),
+					[`& .${alertClasses.icon}`]: theme.vars ? { color: theme.vars.palette.Alert[`${color}IconColor`] } : { color: theme.palette[color].main }
+				}
+			})),
+			...Object.entries(theme.palette).filter(createSimplePaletteValueFilter(["light"])).map(([color]) => ({
+				props: {
+					colorSeverity: color,
+					variant: "outlined"
+				},
+				style: {
+					color: theme.vars ? theme.vars.palette.Alert[`${color}Color`] : getColor(theme.palette[color].light, .6),
+					border: `1px solid ${(theme.vars || theme).palette[color].light}`,
+					[`& .${alertClasses.icon}`]: theme.vars ? { color: theme.vars.palette.Alert[`${color}IconColor`] } : { color: theme.palette[color].main }
+				}
+			})),
+			...Object.entries(theme.palette).filter(createSimplePaletteValueFilter(["dark"])).map(([color]) => ({
+				props: {
+					colorSeverity: color,
+					variant: "filled"
+				},
+				style: {
+					fontWeight: theme.typography.fontWeightMedium,
+					...theme.vars ? {
+						color: theme.vars.palette.Alert[`${color}FilledColor`],
+						backgroundColor: theme.vars.palette.Alert[`${color}FilledBg`]
+					} : {
+						backgroundColor: theme.palette.mode === "dark" ? theme.palette[color].dark : theme.palette[color].main,
+						color: theme.palette.getContrastText(theme.palette[color].main)
+					}
+				}
+			}))
+		]
+	};
+}));
+var AlertIcon = styled("div", {
+	name: "MuiAlert",
+	slot: "Icon"
+})({
+	marginRight: 12,
+	padding: "7px 0",
+	display: "flex",
+	fontSize: 22,
+	opacity: .9
+});
+var AlertMessage = styled("div", {
+	name: "MuiAlert",
+	slot: "Message"
+})({
+	padding: "8px 0",
+	minWidth: 0,
+	overflow: "auto"
+});
+var AlertAction = styled("div", {
+	name: "MuiAlert",
+	slot: "Action"
+})({
+	display: "flex",
+	alignItems: "flex-start",
+	padding: "4px 0 0 16px",
+	marginLeft: "auto",
+	marginRight: -8
+});
+var defaultIconMapping = {
+	success: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(SuccessOutlined_default, { fontSize: "inherit" }),
+	warning: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ReportProblemOutlined_default, { fontSize: "inherit" }),
+	error: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ErrorOutline_default, { fontSize: "inherit" }),
+	info: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(InfoOutlined_default, { fontSize: "inherit" })
+};
+var Alert = /* @__PURE__ */ import_react.forwardRef(function Alert(inProps, ref) {
+	const props = useDefaultProps({
+		props: inProps,
+		name: "MuiAlert"
+	});
+	const { action, children, className, closeText = "Close", color, components = {}, componentsProps = {}, icon, iconMapping = defaultIconMapping, onClose, role = "alert", severity = "success", slotProps = {}, slots = {}, variant = "standard", ...other } = props;
+	const ownerState = {
+		...props,
+		color,
+		severity,
+		variant,
+		colorSeverity: color || severity
+	};
+	const classes = useUtilityClasses$44(ownerState);
+	const externalForwardedProps = {
+		slots: {
+			closeButton: components.CloseButton,
+			closeIcon: components.CloseIcon,
+			...slots
+		},
+		slotProps: {
+			...componentsProps,
+			...slotProps
+		}
+	};
+	const [RootSlot, rootSlotProps] = useSlot("root", {
+		ref,
+		shouldForwardComponentProp: true,
+		className: clsx(classes.root, className),
+		elementType: AlertRoot,
+		externalForwardedProps: {
+			...externalForwardedProps,
+			...other
+		},
+		ownerState,
+		additionalProps: {
+			role,
+			elevation: 0
+		}
+	});
+	const [IconSlot, iconSlotProps] = useSlot("icon", {
+		className: classes.icon,
+		elementType: AlertIcon,
+		externalForwardedProps,
+		ownerState
+	});
+	const [MessageSlot, messageSlotProps] = useSlot("message", {
+		className: classes.message,
+		elementType: AlertMessage,
+		externalForwardedProps,
+		ownerState
+	});
+	const [ActionSlot, actionSlotProps] = useSlot("action", {
+		className: classes.action,
+		elementType: AlertAction,
+		externalForwardedProps,
+		ownerState
+	});
+	const [CloseButtonSlot, closeButtonProps] = useSlot("closeButton", {
+		elementType: IconButton,
+		externalForwardedProps,
+		ownerState
+	});
+	const [CloseIconSlot, closeIconProps] = useSlot("closeIcon", {
+		elementType: Close_default,
+		externalForwardedProps,
+		ownerState
+	});
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(RootSlot, {
+		...rootSlotProps,
+		children: [
+			icon !== false ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(IconSlot, {
+				...iconSlotProps,
+				children: icon || iconMapping[severity] || defaultIconMapping[severity]
+			}) : null,
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(MessageSlot, {
+				...messageSlotProps,
+				children
+			}),
+			action != null ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ActionSlot, {
+				...actionSlotProps,
+				children: action
+			}) : null,
+			action == null && onClose ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ActionSlot, {
+				...actionSlotProps,
+				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(CloseButtonSlot, {
+					size: "small",
+					"aria-label": closeText,
+					title: closeText,
+					color: "inherit",
+					onClick: onClose,
+					...closeButtonProps,
+					children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(CloseIconSlot, {
+						fontSize: "small",
+						...closeIconProps
+					})
+				})
+			}) : null
+		]
 	});
 });
 //#endregion
@@ -22398,7 +22675,7 @@ var v6Colors = {
 	textDisabled: true
 };
 var extendSxProp = internal_createExtendSxProp();
-var useUtilityClasses$18 = (ownerState) => {
+var useUtilityClasses$43 = (ownerState) => {
 	const { align, gutterBottom, noWrap, paragraph, variant, classes } = ownerState;
 	return composeClasses({ root: [
 		"root",
@@ -22507,7 +22784,7 @@ var Typography = /* @__PURE__ */ import_react.forwardRef(function Typography(inP
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TypographyRoot, {
 		as: component || (paragraph ? "p" : variantMapping[variant] || defaultVariantMapping[variant]) || "span",
 		ref,
-		className: clsx(useUtilityClasses$18(ownerState).root, className),
+		className: clsx(useUtilityClasses$43(ownerState).root, className),
 		...other,
 		ownerState,
 		style: {
@@ -22540,7 +22817,7 @@ generateUtilityClasses("MuiAppBar", [
 ]);
 //#endregion
 //#region node_modules/@mui/material/esm/AppBar/AppBar.js
-var useUtilityClasses$17 = (ownerState) => {
+var useUtilityClasses$42 = (ownerState) => {
 	const { color, position, classes } = ownerState;
 	return composeClasses({ root: [
 		"root",
@@ -22678,7 +22955,7 @@ var AppBar = /* @__PURE__ */ import_react.forwardRef(function AppBar(inProps, re
 		component: "header",
 		ownerState,
 		elevation: 4,
-		className: clsx(useUtilityClasses$17(ownerState).root, className, position === "fixed" && "mui-fixed"),
+		className: clsx(useUtilityClasses$42(ownerState).root, className, position === "fixed" && "mui-fixed"),
 		ref,
 		...other
 	});
@@ -22739,7 +23016,7 @@ function getWindow(node) {
 function isElement(node) {
 	return node instanceof getWindow(node).Element || node instanceof Element;
 }
-function isHTMLElement$1(node) {
+function isHTMLElement$2(node) {
 	return node instanceof getWindow(node).HTMLElement || node instanceof HTMLElement;
 }
 function isShadowRoot(node) {
@@ -22754,7 +23031,7 @@ function applyStyles(_ref) {
 		var style = state.styles[name] || {};
 		var attributes = state.attributes[name] || {};
 		var element = state.elements[name];
-		if (!isHTMLElement$1(element) || !getNodeName(element)) return;
+		if (!isHTMLElement$2(element) || !getNodeName(element)) return;
 		Object.assign(element.style, style);
 		Object.keys(attributes).forEach(function(name) {
 			var value = attributes[name];
@@ -22786,7 +23063,7 @@ function effect$2(_ref2) {
 				style[property] = "";
 				return style;
 			}, {});
-			if (!isHTMLElement$1(element) || !getNodeName(element)) return;
+			if (!isHTMLElement$2(element) || !getNodeName(element)) return;
 			Object.assign(element.style, style);
 			Object.keys(attributes).forEach(function(attribute) {
 				element.removeAttribute(attribute);
@@ -22834,7 +23111,7 @@ function getBoundingClientRect(element, includeScale, isFixedStrategy) {
 	var clientRect = element.getBoundingClientRect();
 	var scaleX = 1;
 	var scaleY = 1;
-	if (includeScale && isHTMLElement$1(element)) {
+	if (includeScale && isHTMLElement$2(element)) {
 		scaleX = element.offsetWidth > 0 ? round$1(clientRect.width) / element.offsetWidth || 1 : 1;
 		scaleY = element.offsetHeight > 0 ? round$1(clientRect.height) / element.offsetHeight || 1 : 1;
 	}
@@ -22912,17 +23189,17 @@ function getParentNode(element) {
 //#endregion
 //#region node_modules/@popperjs/core/lib/dom-utils/getOffsetParent.js
 function getTrueOffsetParent(element) {
-	if (!isHTMLElement$1(element) || getComputedStyle(element).position === "fixed") return null;
+	if (!isHTMLElement$2(element) || getComputedStyle(element).position === "fixed") return null;
 	return element.offsetParent;
 }
 function getContainingBlock(element) {
 	var isFirefox = /firefox/i.test(getUAString());
-	if (/Trident/i.test(getUAString()) && isHTMLElement$1(element)) {
+	if (/Trident/i.test(getUAString()) && isHTMLElement$2(element)) {
 		if (getComputedStyle(element).position === "fixed") return null;
 	}
 	var currentNode = getParentNode(element);
 	if (isShadowRoot(currentNode)) currentNode = currentNode.host;
-	while (isHTMLElement$1(currentNode) && ["html", "body"].indexOf(getNodeName(currentNode)) < 0) {
+	while (isHTMLElement$2(currentNode) && ["html", "body"].indexOf(getNodeName(currentNode)) < 0) {
 		var css = getComputedStyle(currentNode);
 		if (css.transform !== "none" || css.perspective !== "none" || css.contain === "paint" || ["transform", "perspective"].indexOf(css.willChange) !== -1 || isFirefox && css.willChange === "filter" || isFirefox && css.filter && css.filter !== "none") return currentNode;
 		else currentNode = currentNode.parentNode;
@@ -23260,7 +23537,7 @@ function getScrollParent(node) {
 		"body",
 		"#document"
 	].indexOf(getNodeName(node)) >= 0) return node.ownerDocument.body;
-	if (isHTMLElement$1(node) && isScrollParent(node)) return node;
+	if (isHTMLElement$2(node) && isScrollParent(node)) return node;
 	return getScrollParent(getParentNode(node));
 }
 //#endregion
@@ -23304,7 +23581,7 @@ function getClientRectFromMixedType(element, clippingParent, strategy) {
 }
 function getClippingParents(element) {
 	var clippingParents = listScrollParents(getParentNode(element));
-	var clipperElement = ["absolute", "fixed"].indexOf(getComputedStyle(element).position) >= 0 && isHTMLElement$1(element) ? getOffsetParent(element) : element;
+	var clipperElement = ["absolute", "fixed"].indexOf(getComputedStyle(element).position) >= 0 && isHTMLElement$2(element) ? getOffsetParent(element) : element;
 	if (!isElement(clipperElement)) return [];
 	return clippingParents.filter(function(clippingParent) {
 		return isElement(clippingParent) && contains(clippingParent, clipperElement) && getNodeName(clippingParent) !== "body";
@@ -23748,7 +24025,7 @@ function getHTMLElementScroll(element) {
 //#endregion
 //#region node_modules/@popperjs/core/lib/dom-utils/getNodeScroll.js
 function getNodeScroll(node) {
-	if (node === getWindow(node) || !isHTMLElement$1(node)) return getWindowScroll(node);
+	if (node === getWindow(node) || !isHTMLElement$2(node)) return getWindowScroll(node);
 	else return getHTMLElementScroll(node);
 }
 //#endregion
@@ -23761,8 +24038,8 @@ function isElementScaled(element) {
 }
 function getCompositeRect(elementOrVirtualElement, offsetParent, isFixed) {
 	if (isFixed === void 0) isFixed = false;
-	var isOffsetParentAnElement = isHTMLElement$1(offsetParent);
-	var offsetParentIsScaled = isHTMLElement$1(offsetParent) && isElementScaled(offsetParent);
+	var isOffsetParentAnElement = isHTMLElement$2(offsetParent);
+	var offsetParentIsScaled = isHTMLElement$2(offsetParent) && isElementScaled(offsetParent);
 	var documentElement = getDocumentElement(offsetParent);
 	var rect = getBoundingClientRect(elementOrVirtualElement, offsetParentIsScaled, isFixed);
 	var scroll = {
@@ -23775,7 +24052,7 @@ function getCompositeRect(elementOrVirtualElement, offsetParent, isFixed) {
 	};
 	if (isOffsetParentAnElement || !isOffsetParentAnElement && !isFixed) {
 		if (getNodeName(offsetParent) !== "body" || isScrollParent(documentElement)) scroll = getNodeScroll(offsetParent);
-		if (isHTMLElement$1(offsetParent)) {
+		if (isHTMLElement$2(offsetParent)) {
 			offsets = getBoundingClientRect(offsetParent, true);
 			offsets.x += offsetParent.clientLeft;
 			offsets.y += offsetParent.clientTop;
@@ -24077,10 +24354,10 @@ function flipPlacement(placement, direction) {
 function resolveAnchorEl$1(anchorEl) {
 	return typeof anchorEl === "function" ? anchorEl() : anchorEl;
 }
-function isHTMLElement(element) {
+function isHTMLElement$1(element) {
 	return element.nodeType !== void 0;
 }
-var useUtilityClasses$16 = (ownerState) => {
+var useUtilityClasses$41 = (ownerState) => {
 	const { classes } = ownerState;
 	return composeClasses({ root: ["root"] }, getPopperUtilityClass, classes);
 };
@@ -24154,7 +24431,7 @@ var PopperTooltip = /* @__PURE__ */ import_react.forwardRef(function PopperToolt
 	]);
 	const childProps = { placement };
 	if (TransitionProps !== null) childProps.TransitionProps = TransitionProps;
-	const classes = useUtilityClasses$16(props);
+	const classes = useUtilityClasses$41(props);
 	const Root = slots.root ?? "div";
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Root, {
 		...useSlotProps({
@@ -24187,7 +24464,7 @@ var PopperRoot = styled(/* @__PURE__ */ import_react.forwardRef(function Popper(
 	if (containerProp) container = containerProp;
 	else if (anchorEl) {
 		const resolvedAnchorEl = resolveAnchorEl$1(anchorEl);
-		container = resolvedAnchorEl && isHTMLElement(resolvedAnchorEl) ? ownerDocument(resolvedAnchorEl).body : ownerDocument(null).body;
+		container = resolvedAnchorEl && isHTMLElement$1(resolvedAnchorEl) ? ownerDocument(resolvedAnchorEl).body : ownerDocument(null).body;
 	}
 	const display = !open && keepMounted && (!transition || exited) ? "none" : void 0;
 	const transitionProps = transition ? {
@@ -24268,6 +24545,1069 @@ var Popper = /* @__PURE__ */ import_react.forwardRef(function Popper(inProps, re
 	});
 });
 //#endregion
+//#region node_modules/@mui/material/esm/internal/svg-icons/Cancel.js
+/**
+* @ignore - internal component.
+*/
+var Cancel_default = createSvgIcon(/* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M12 2C6.47 2 2 6.47 2 12s4.47 10 10 10 10-4.47 10-10S17.53 2 12 2zm5 13.59L15.59 17 12 13.41 8.41 17 7 15.59 10.59 12 7 8.41 8.41 7 12 10.59 15.59 7 17 8.41 13.41 12 17 15.59z" }), "Cancel");
+//#endregion
+//#region node_modules/@mui/material/esm/Chip/chipClasses.js
+function getChipUtilityClass(slot) {
+	return generateUtilityClass("MuiChip", slot);
+}
+var chipClasses = generateUtilityClasses("MuiChip", [
+	"root",
+	"sizeSmall",
+	"sizeMedium",
+	"colorDefault",
+	"colorError",
+	"colorInfo",
+	"colorPrimary",
+	"colorSecondary",
+	"colorSuccess",
+	"colorWarning",
+	"disabled",
+	"clickable",
+	"clickableColorPrimary",
+	"clickableColorSecondary",
+	"deletable",
+	"deletableColorPrimary",
+	"deletableColorSecondary",
+	"outlined",
+	"filled",
+	"outlinedPrimary",
+	"outlinedSecondary",
+	"filledPrimary",
+	"filledSecondary",
+	"avatar",
+	"avatarSmall",
+	"avatarMedium",
+	"avatarColorPrimary",
+	"avatarColorSecondary",
+	"icon",
+	"iconSmall",
+	"iconMedium",
+	"iconColorPrimary",
+	"iconColorSecondary",
+	"label",
+	"labelSmall",
+	"labelMedium",
+	"deleteIcon",
+	"deleteIconSmall",
+	"deleteIconMedium",
+	"deleteIconColorPrimary",
+	"deleteIconColorSecondary",
+	"deleteIconOutlinedColorPrimary",
+	"deleteIconOutlinedColorSecondary",
+	"deleteIconFilledColorPrimary",
+	"deleteIconFilledColorSecondary",
+	"focusVisible"
+]);
+//#endregion
+//#region node_modules/@mui/material/esm/Chip/Chip.js
+var useUtilityClasses$40 = (ownerState) => {
+	const { classes, disabled, size, color, iconColor, onDelete, clickable, variant } = ownerState;
+	return composeClasses({
+		root: [
+			"root",
+			variant,
+			disabled && "disabled",
+			`size${capitalize_default(size)}`,
+			`color${capitalize_default(color)}`,
+			clickable && "clickable",
+			clickable && `clickableColor${capitalize_default(color)}`,
+			onDelete && "deletable",
+			onDelete && `deletableColor${capitalize_default(color)}`,
+			`${variant}${capitalize_default(color)}`
+		],
+		label: ["label", `label${capitalize_default(size)}`],
+		avatar: [
+			"avatar",
+			`avatar${capitalize_default(size)}`,
+			`avatarColor${capitalize_default(color)}`
+		],
+		icon: [
+			"icon",
+			`icon${capitalize_default(size)}`,
+			`iconColor${capitalize_default(iconColor)}`
+		],
+		deleteIcon: [
+			"deleteIcon",
+			`deleteIcon${capitalize_default(size)}`,
+			`deleteIconColor${capitalize_default(color)}`,
+			`deleteIcon${capitalize_default(variant)}Color${capitalize_default(color)}`
+		]
+	}, getChipUtilityClass, classes);
+};
+var ChipRoot = styled("div", {
+	name: "MuiChip",
+	slot: "Root",
+	overridesResolver: (props, styles) => {
+		const { ownerState } = props;
+		const { color, iconColor, clickable, onDelete, size, variant } = ownerState;
+		return [
+			{ [`& .${chipClasses.avatar}`]: styles.avatar },
+			{ [`& .${chipClasses.avatar}`]: styles[`avatar${capitalize_default(size)}`] },
+			{ [`& .${chipClasses.avatar}`]: styles[`avatarColor${capitalize_default(color)}`] },
+			{ [`& .${chipClasses.icon}`]: styles.icon },
+			{ [`& .${chipClasses.icon}`]: styles[`icon${capitalize_default(size)}`] },
+			{ [`& .${chipClasses.icon}`]: styles[`iconColor${capitalize_default(iconColor)}`] },
+			{ [`& .${chipClasses.deleteIcon}`]: styles.deleteIcon },
+			{ [`& .${chipClasses.deleteIcon}`]: styles[`deleteIcon${capitalize_default(size)}`] },
+			{ [`& .${chipClasses.deleteIcon}`]: styles[`deleteIconColor${capitalize_default(color)}`] },
+			{ [`& .${chipClasses.deleteIcon}`]: styles[`deleteIcon${capitalize_default(variant)}Color${capitalize_default(color)}`] },
+			styles.root,
+			styles[`size${capitalize_default(size)}`],
+			styles[`color${capitalize_default(color)}`],
+			clickable && styles.clickable,
+			clickable && color !== "default" && styles[`clickableColor${capitalize_default(color)}`],
+			onDelete && styles.deletable,
+			onDelete && color !== "default" && styles[`deletableColor${capitalize_default(color)}`],
+			styles[variant],
+			styles[`${variant}${capitalize_default(color)}`]
+		];
+	}
+})(memoTheme(({ theme }) => {
+	const textColor = theme.palette.mode === "light" ? theme.palette.grey[700] : theme.palette.grey[300];
+	return {
+		maxWidth: "100%",
+		fontFamily: theme.typography.fontFamily,
+		fontSize: theme.typography.pxToRem(13),
+		display: "inline-flex",
+		alignItems: "center",
+		justifyContent: "center",
+		height: 32,
+		lineHeight: 1.5,
+		color: (theme.vars || theme).palette.text.primary,
+		backgroundColor: (theme.vars || theme).palette.action.selected,
+		borderRadius: 32 / 2,
+		whiteSpace: "nowrap",
+		transition: theme.transitions.create(["background-color", "box-shadow"]),
+		cursor: "unset",
+		outline: 0,
+		textDecoration: "none",
+		border: 0,
+		padding: 0,
+		verticalAlign: "middle",
+		boxSizing: "border-box",
+		[`&.${chipClasses.disabled}`]: {
+			opacity: (theme.vars || theme).palette.action.disabledOpacity,
+			pointerEvents: "none"
+		},
+		[`& .${chipClasses.avatar}`]: {
+			marginLeft: 5,
+			marginRight: -6,
+			width: 24,
+			height: 24,
+			color: theme.vars ? theme.vars.palette.Chip.defaultAvatarColor : textColor,
+			fontSize: theme.typography.pxToRem(12)
+		},
+		[`& .${chipClasses.avatarColorPrimary}`]: {
+			color: (theme.vars || theme).palette.primary.contrastText,
+			backgroundColor: (theme.vars || theme).palette.primary.dark
+		},
+		[`& .${chipClasses.avatarColorSecondary}`]: {
+			color: (theme.vars || theme).palette.secondary.contrastText,
+			backgroundColor: (theme.vars || theme).palette.secondary.dark
+		},
+		[`& .${chipClasses.avatarSmall}`]: {
+			marginLeft: 4,
+			marginRight: -4,
+			width: 18,
+			height: 18,
+			fontSize: theme.typography.pxToRem(10)
+		},
+		[`& .${chipClasses.icon}`]: {
+			marginLeft: 5,
+			marginRight: -6
+		},
+		[`& .${chipClasses.deleteIcon}`]: {
+			WebkitTapHighlightColor: "transparent",
+			color: theme.alpha((theme.vars || theme).palette.text.primary, .26),
+			fontSize: 22,
+			cursor: "pointer",
+			margin: "0 5px 0 -6px",
+			"&:hover": { color: theme.alpha((theme.vars || theme).palette.text.primary, .4) }
+		},
+		variants: [
+			{
+				props: { size: "small" },
+				style: {
+					height: 24,
+					[`& .${chipClasses.icon}`]: {
+						fontSize: 18,
+						marginLeft: 4,
+						marginRight: -4
+					},
+					[`& .${chipClasses.deleteIcon}`]: {
+						fontSize: 16,
+						marginRight: 4,
+						marginLeft: -4
+					}
+				}
+			},
+			...Object.entries(theme.palette).filter(createSimplePaletteValueFilter(["contrastText"])).map(([color]) => {
+				return {
+					props: { color },
+					style: {
+						backgroundColor: (theme.vars || theme).palette[color].main,
+						color: (theme.vars || theme).palette[color].contrastText,
+						[`& .${chipClasses.deleteIcon}`]: {
+							color: theme.alpha((theme.vars || theme).palette[color].contrastText, .7),
+							"&:hover, &:active": { color: (theme.vars || theme).palette[color].contrastText }
+						}
+					}
+				};
+			}),
+			{
+				props: (props) => props.iconColor === props.color,
+				style: { [`& .${chipClasses.icon}`]: { color: theme.vars ? theme.vars.palette.Chip.defaultIconColor : textColor } }
+			},
+			{
+				props: (props) => props.iconColor === props.color && props.color !== "default",
+				style: { [`& .${chipClasses.icon}`]: { color: "inherit" } }
+			},
+			{
+				props: { onDelete: true },
+				style: { [`&.${chipClasses.focusVisible}`]: { backgroundColor: theme.alpha((theme.vars || theme).palette.action.selected, `${(theme.vars || theme).palette.action.selectedOpacity} + ${(theme.vars || theme).palette.action.focusOpacity}`) } }
+			},
+			...Object.entries(theme.palette).filter(createSimplePaletteValueFilter(["dark"])).map(([color]) => {
+				return {
+					props: {
+						color,
+						onDelete: true
+					},
+					style: { [`&.${chipClasses.focusVisible}`]: { background: (theme.vars || theme).palette[color].dark } }
+				};
+			}),
+			{
+				props: { clickable: true },
+				style: {
+					userSelect: "none",
+					WebkitTapHighlightColor: "transparent",
+					cursor: "pointer",
+					"&:hover": { backgroundColor: theme.alpha((theme.vars || theme).palette.action.selected, `${(theme.vars || theme).palette.action.selectedOpacity} + ${(theme.vars || theme).palette.action.hoverOpacity}`) },
+					[`&.${chipClasses.focusVisible}`]: { backgroundColor: theme.alpha((theme.vars || theme).palette.action.selected, `${(theme.vars || theme).palette.action.selectedOpacity} + ${(theme.vars || theme).palette.action.focusOpacity}`) },
+					"&:active": { boxShadow: (theme.vars || theme).shadows[1] }
+				}
+			},
+			...Object.entries(theme.palette).filter(createSimplePaletteValueFilter(["dark"])).map(([color]) => ({
+				props: {
+					color,
+					clickable: true
+				},
+				style: { [`&:hover, &.${chipClasses.focusVisible}`]: { backgroundColor: (theme.vars || theme).palette[color].dark } }
+			})),
+			{
+				props: { variant: "outlined" },
+				style: {
+					backgroundColor: "transparent",
+					border: theme.vars ? `1px solid ${theme.vars.palette.Chip.defaultBorder}` : `1px solid ${theme.palette.mode === "light" ? theme.palette.grey[400] : theme.palette.grey[700]}`,
+					[`&.${chipClasses.clickable}:hover`]: { backgroundColor: (theme.vars || theme).palette.action.hover },
+					[`&.${chipClasses.focusVisible}`]: { backgroundColor: (theme.vars || theme).palette.action.focus },
+					[`& .${chipClasses.avatar}`]: { marginLeft: 4 },
+					[`& .${chipClasses.avatarSmall}`]: { marginLeft: 2 },
+					[`& .${chipClasses.icon}`]: { marginLeft: 4 },
+					[`& .${chipClasses.iconSmall}`]: { marginLeft: 2 },
+					[`& .${chipClasses.deleteIcon}`]: { marginRight: 5 },
+					[`& .${chipClasses.deleteIconSmall}`]: { marginRight: 3 }
+				}
+			},
+			...Object.entries(theme.palette).filter(createSimplePaletteValueFilter()).map(([color]) => ({
+				props: {
+					variant: "outlined",
+					color
+				},
+				style: {
+					color: (theme.vars || theme).palette[color].main,
+					border: `1px solid ${theme.alpha((theme.vars || theme).palette[color].main, .7)}`,
+					[`&.${chipClasses.clickable}:hover`]: { backgroundColor: theme.alpha((theme.vars || theme).palette[color].main, (theme.vars || theme).palette.action.hoverOpacity) },
+					[`&.${chipClasses.focusVisible}`]: { backgroundColor: theme.alpha((theme.vars || theme).palette[color].main, (theme.vars || theme).palette.action.focusOpacity) },
+					[`& .${chipClasses.deleteIcon}`]: {
+						color: theme.alpha((theme.vars || theme).palette[color].main, .7),
+						"&:hover, &:active": { color: (theme.vars || theme).palette[color].main }
+					}
+				}
+			}))
+		]
+	};
+}));
+var ChipLabel = styled("span", {
+	name: "MuiChip",
+	slot: "Label",
+	overridesResolver: (props, styles) => {
+		const { ownerState } = props;
+		const { size } = ownerState;
+		return [styles.label, styles[`label${capitalize_default(size)}`]];
+	}
+})({
+	overflow: "hidden",
+	textOverflow: "ellipsis",
+	paddingLeft: 12,
+	paddingRight: 12,
+	whiteSpace: "nowrap",
+	variants: [
+		{
+			props: { variant: "outlined" },
+			style: {
+				paddingLeft: 11,
+				paddingRight: 11
+			}
+		},
+		{
+			props: { size: "small" },
+			style: {
+				paddingLeft: 8,
+				paddingRight: 8
+			}
+		},
+		{
+			props: {
+				size: "small",
+				variant: "outlined"
+			},
+			style: {
+				paddingLeft: 7,
+				paddingRight: 7
+			}
+		}
+	]
+});
+function isDeleteKeyboardEvent(keyboardEvent) {
+	return keyboardEvent.key === "Backspace" || keyboardEvent.key === "Delete";
+}
+/**
+* Chips represent complex entities in small blocks, such as a contact.
+*/
+var Chip = /* @__PURE__ */ import_react.forwardRef(function Chip(inProps, ref) {
+	const props = useDefaultProps({
+		props: inProps,
+		name: "MuiChip"
+	});
+	const { avatar: avatarProp, className, clickable: clickableProp, color = "default", component: ComponentProp, deleteIcon: deleteIconProp, disabled = false, icon: iconProp, label, onClick, onDelete, onKeyDown, onKeyUp, size = "medium", variant = "filled", tabIndex, skipFocusWhenDisabled = false, slots = {}, slotProps = {}, ...other } = props;
+	const handleRef = useForkRef_default(import_react.useRef(null), ref);
+	const handleDeleteIconClick = (event) => {
+		event.stopPropagation();
+		onDelete(event);
+	};
+	const handleKeyDown = (event) => {
+		if (event.currentTarget === event.target && isDeleteKeyboardEvent(event)) event.preventDefault();
+		if (onKeyDown) onKeyDown(event);
+	};
+	const handleKeyUp = (event) => {
+		if (event.currentTarget === event.target) {
+			if (onDelete && isDeleteKeyboardEvent(event)) onDelete(event);
+		}
+		if (onKeyUp) onKeyUp(event);
+	};
+	const clickable = clickableProp !== false && onClick ? true : clickableProp;
+	const component = clickable || onDelete ? ButtonBase : ComponentProp || "div";
+	const ownerState = {
+		...props,
+		component,
+		disabled,
+		size,
+		color,
+		iconColor: /* @__PURE__ */ import_react.isValidElement(iconProp) ? iconProp.props.color || color : color,
+		onDelete: !!onDelete,
+		clickable,
+		variant
+	};
+	const classes = useUtilityClasses$40(ownerState);
+	const moreProps = component === ButtonBase ? {
+		component: ComponentProp || "div",
+		focusVisibleClassName: classes.focusVisible,
+		...onDelete && { disableRipple: true }
+	} : {};
+	let deleteIcon = null;
+	if (onDelete) deleteIcon = deleteIconProp && /* @__PURE__ */ import_react.isValidElement(deleteIconProp) ? /* @__PURE__ */ import_react.cloneElement(deleteIconProp, {
+		className: clsx(deleteIconProp.props.className, classes.deleteIcon),
+		onClick: handleDeleteIconClick
+	}) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Cancel_default, {
+		className: classes.deleteIcon,
+		onClick: handleDeleteIconClick
+	});
+	let avatar = null;
+	if (avatarProp && /* @__PURE__ */ import_react.isValidElement(avatarProp)) avatar = /* @__PURE__ */ import_react.cloneElement(avatarProp, { className: clsx(classes.avatar, avatarProp.props.className) });
+	let icon = null;
+	if (iconProp && /* @__PURE__ */ import_react.isValidElement(iconProp)) icon = /* @__PURE__ */ import_react.cloneElement(iconProp, { className: clsx(classes.icon, iconProp.props.className) });
+	const externalForwardedProps = {
+		slots,
+		slotProps
+	};
+	const [RootSlot, rootProps] = useSlot("root", {
+		elementType: ChipRoot,
+		externalForwardedProps: {
+			...externalForwardedProps,
+			...other
+		},
+		ownerState,
+		shouldForwardComponentProp: true,
+		ref: handleRef,
+		className: clsx(classes.root, className),
+		additionalProps: {
+			disabled: clickable && disabled ? true : void 0,
+			tabIndex: skipFocusWhenDisabled && disabled ? -1 : tabIndex,
+			...moreProps
+		},
+		getSlotProps: (handlers) => ({
+			...handlers,
+			onClick: (event) => {
+				handlers.onClick?.(event);
+				onClick?.(event);
+			},
+			onKeyDown: (event) => {
+				handlers.onKeyDown?.(event);
+				handleKeyDown(event);
+			},
+			onKeyUp: (event) => {
+				handlers.onKeyUp?.(event);
+				handleKeyUp(event);
+			}
+		})
+	});
+	const [LabelSlot, labelProps] = useSlot("label", {
+		elementType: ChipLabel,
+		externalForwardedProps,
+		ownerState,
+		className: classes.label
+	});
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(RootSlot, {
+		as: component,
+		...rootProps,
+		children: [
+			avatar || icon,
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(LabelSlot, {
+				...labelProps,
+				children: label
+			}),
+			deleteIcon
+		]
+	});
+});
+//#endregion
+//#region node_modules/@mui/material/esm/TextareaAutosize/TextareaAutosize.js
+function getStyleValue(value) {
+	return parseInt(value, 10) || 0;
+}
+var styles$3 = { shadow: {
+	visibility: "hidden",
+	position: "absolute",
+	overflow: "hidden",
+	height: 0,
+	top: 0,
+	left: 0,
+	transform: "translateZ(0)"
+} };
+function isObjectEmpty(object) {
+	for (const _ in object) return false;
+	return true;
+}
+function isEmpty$1(obj) {
+	return isObjectEmpty(obj) || obj.outerHeightStyle === 0 && !obj.overflowing;
+}
+/**
+*
+* Demos:
+*
+* - [Textarea Autosize](https://v7.mui.com/material-ui/react-textarea-autosize/)
+*
+* API:
+*
+* - [TextareaAutosize API](https://v7.mui.com/material-ui/api/textarea-autosize/)
+*/
+var TextareaAutosize = /* @__PURE__ */ import_react.forwardRef(function TextareaAutosize(props, forwardedRef) {
+	const { onChange, maxRows, minRows = 1, style, value, ...other } = props;
+	const { current: isControlled } = import_react.useRef(value != null);
+	const textareaRef = import_react.useRef(null);
+	const handleRef = useForkRef(forwardedRef, textareaRef);
+	const heightRef = import_react.useRef(null);
+	const hiddenTextareaRef = import_react.useRef(null);
+	const calculateTextareaStyles = import_react.useCallback(() => {
+		const textarea = textareaRef.current;
+		const hiddenTextarea = hiddenTextareaRef.current;
+		if (!textarea || !hiddenTextarea) return;
+		const computedStyle = ownerWindow(textarea).getComputedStyle(textarea);
+		if (computedStyle.width === "0px") return {
+			outerHeightStyle: 0,
+			overflowing: false
+		};
+		hiddenTextarea.style.width = computedStyle.width;
+		hiddenTextarea.value = textarea.value || props.placeholder || "x";
+		if (hiddenTextarea.value.slice(-1) === "\n") hiddenTextarea.value += " ";
+		const boxSizing = computedStyle.boxSizing;
+		const padding = getStyleValue(computedStyle.paddingBottom) + getStyleValue(computedStyle.paddingTop);
+		const border = getStyleValue(computedStyle.borderBottomWidth) + getStyleValue(computedStyle.borderTopWidth);
+		const innerHeight = hiddenTextarea.scrollHeight;
+		hiddenTextarea.value = "x";
+		const singleRowHeight = hiddenTextarea.scrollHeight;
+		let outerHeight = innerHeight;
+		if (minRows) outerHeight = Math.max(Number(minRows) * singleRowHeight, outerHeight);
+		if (maxRows) outerHeight = Math.min(Number(maxRows) * singleRowHeight, outerHeight);
+		outerHeight = Math.max(outerHeight, singleRowHeight);
+		return {
+			outerHeightStyle: outerHeight + (boxSizing === "border-box" ? padding + border : 0),
+			overflowing: Math.abs(outerHeight - innerHeight) <= 1
+		};
+	}, [
+		maxRows,
+		minRows,
+		props.placeholder
+	]);
+	const didHeightChange = useEventCallback(() => {
+		const textarea = textareaRef.current;
+		const textareaStyles = calculateTextareaStyles();
+		if (!textarea || !textareaStyles || isEmpty$1(textareaStyles)) return false;
+		const outerHeightStyle = textareaStyles.outerHeightStyle;
+		return heightRef.current != null && heightRef.current !== outerHeightStyle;
+	});
+	const syncHeight = import_react.useCallback(() => {
+		const textarea = textareaRef.current;
+		const textareaStyles = calculateTextareaStyles();
+		if (!textarea || !textareaStyles || isEmpty$1(textareaStyles)) return;
+		const outerHeightStyle = textareaStyles.outerHeightStyle;
+		if (heightRef.current !== outerHeightStyle) {
+			heightRef.current = outerHeightStyle;
+			textarea.style.height = `${outerHeightStyle}px`;
+		}
+		textarea.style.overflow = textareaStyles.overflowing ? "hidden" : "";
+	}, [calculateTextareaStyles]);
+	const frameRef = import_react.useRef(-1);
+	useEnhancedEffect(() => {
+		const debouncedHandleResize = debounce$1(syncHeight);
+		const textarea = textareaRef?.current;
+		if (!textarea) return;
+		const containerWindow = ownerWindow(textarea);
+		containerWindow.addEventListener("resize", debouncedHandleResize);
+		let resizeObserver;
+		if (typeof ResizeObserver !== "undefined") {
+			resizeObserver = new ResizeObserver(() => {
+				if (didHeightChange()) {
+					resizeObserver.unobserve(textarea);
+					cancelAnimationFrame(frameRef.current);
+					syncHeight();
+					frameRef.current = requestAnimationFrame(() => {
+						resizeObserver.observe(textarea);
+					});
+				}
+			});
+			resizeObserver.observe(textarea);
+		}
+		return () => {
+			debouncedHandleResize.clear();
+			cancelAnimationFrame(frameRef.current);
+			containerWindow.removeEventListener("resize", debouncedHandleResize);
+			if (resizeObserver) resizeObserver.disconnect();
+		};
+	}, [
+		calculateTextareaStyles,
+		syncHeight,
+		didHeightChange
+	]);
+	useEnhancedEffect(() => {
+		syncHeight();
+	});
+	const handleChange = (event) => {
+		if (!isControlled) syncHeight();
+		const textarea = event.target;
+		const countOfCharacters = textarea.value.length;
+		const isLastCharacterNewLine = textarea.value.endsWith("\n");
+		const isEndOfTheLine = textarea.selectionStart === countOfCharacters;
+		if (isLastCharacterNewLine && isEndOfTheLine) textarea.setSelectionRange(countOfCharacters, countOfCharacters);
+		if (onChange) onChange(event);
+	};
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_react.Fragment, { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("textarea", {
+		value,
+		onChange: handleChange,
+		ref: handleRef,
+		rows: minRows,
+		style,
+		...other
+	}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("textarea", {
+		"aria-hidden": true,
+		className: props.className,
+		readOnly: true,
+		ref: hiddenTextareaRef,
+		tabIndex: -1,
+		style: {
+			...styles$3.shadow,
+			...style,
+			paddingTop: 0,
+			paddingBottom: 0
+		}
+	})] });
+});
+//#endregion
+//#region node_modules/@mui/material/esm/FormControl/formControlState.js
+function formControlState({ props, states, muiFormControl }) {
+	return states.reduce((acc, state) => {
+		acc[state] = props[state];
+		if (muiFormControl) {
+			if (typeof props[state] === "undefined") acc[state] = muiFormControl[state];
+		}
+		return acc;
+	}, {});
+}
+//#endregion
+//#region node_modules/@mui/material/esm/FormControl/FormControlContext.js
+/**
+* @ignore - internal component.
+*/
+var FormControlContext = /* @__PURE__ */ import_react.createContext(void 0);
+//#endregion
+//#region node_modules/@mui/material/esm/FormControl/useFormControl.js
+function useFormControl() {
+	return import_react.useContext(FormControlContext);
+}
+//#endregion
+//#region node_modules/@mui/material/esm/InputBase/utils.js
+function hasValue(value) {
+	return value != null && !(Array.isArray(value) && value.length === 0);
+}
+function isFilled(obj, SSR = false) {
+	return obj && (hasValue(obj.value) && obj.value !== "" || SSR && hasValue(obj.defaultValue) && obj.defaultValue !== "");
+}
+function isAdornedStart(obj) {
+	return obj.startAdornment;
+}
+//#endregion
+//#region node_modules/@mui/material/esm/InputBase/inputBaseClasses.js
+function getInputBaseUtilityClass(slot) {
+	return generateUtilityClass("MuiInputBase", slot);
+}
+var inputBaseClasses = generateUtilityClasses("MuiInputBase", [
+	"root",
+	"formControl",
+	"focused",
+	"disabled",
+	"adornedStart",
+	"adornedEnd",
+	"error",
+	"sizeSmall",
+	"multiline",
+	"colorSecondary",
+	"fullWidth",
+	"hiddenLabel",
+	"readOnly",
+	"input",
+	"inputSizeSmall",
+	"inputMultiline",
+	"inputTypeSearch",
+	"inputAdornedStart",
+	"inputAdornedEnd",
+	"inputHiddenLabel"
+]);
+//#endregion
+//#region node_modules/@mui/material/esm/InputBase/InputBase.js
+var _InputGlobalStyles;
+var rootOverridesResolver = (props, styles) => {
+	const { ownerState } = props;
+	return [
+		styles.root,
+		ownerState.formControl && styles.formControl,
+		ownerState.startAdornment && styles.adornedStart,
+		ownerState.endAdornment && styles.adornedEnd,
+		ownerState.error && styles.error,
+		ownerState.size === "small" && styles.sizeSmall,
+		ownerState.multiline && styles.multiline,
+		ownerState.color && styles[`color${capitalize_default(ownerState.color)}`],
+		ownerState.fullWidth && styles.fullWidth,
+		ownerState.hiddenLabel && styles.hiddenLabel
+	];
+};
+var inputOverridesResolver = (props, styles) => {
+	const { ownerState } = props;
+	return [
+		styles.input,
+		ownerState.size === "small" && styles.inputSizeSmall,
+		ownerState.multiline && styles.inputMultiline,
+		ownerState.type === "search" && styles.inputTypeSearch,
+		ownerState.startAdornment && styles.inputAdornedStart,
+		ownerState.endAdornment && styles.inputAdornedEnd,
+		ownerState.hiddenLabel && styles.inputHiddenLabel
+	];
+};
+var useUtilityClasses$39 = (ownerState) => {
+	const { classes, color, disabled, error, endAdornment, focused, formControl, fullWidth, hiddenLabel, multiline, readOnly, size, startAdornment, type } = ownerState;
+	return composeClasses({
+		root: [
+			"root",
+			`color${capitalize_default(color)}`,
+			disabled && "disabled",
+			error && "error",
+			fullWidth && "fullWidth",
+			focused && "focused",
+			formControl && "formControl",
+			size && size !== "medium" && `size${capitalize_default(size)}`,
+			multiline && "multiline",
+			startAdornment && "adornedStart",
+			endAdornment && "adornedEnd",
+			hiddenLabel && "hiddenLabel",
+			readOnly && "readOnly"
+		],
+		input: [
+			"input",
+			disabled && "disabled",
+			type === "search" && "inputTypeSearch",
+			multiline && "inputMultiline",
+			size === "small" && "inputSizeSmall",
+			hiddenLabel && "inputHiddenLabel",
+			startAdornment && "inputAdornedStart",
+			endAdornment && "inputAdornedEnd",
+			readOnly && "readOnly"
+		]
+	}, getInputBaseUtilityClass, classes);
+};
+var InputBaseRoot = styled("div", {
+	name: "MuiInputBase",
+	slot: "Root",
+	overridesResolver: rootOverridesResolver
+})(memoTheme(({ theme }) => ({
+	...theme.typography.body1,
+	color: (theme.vars || theme).palette.text.primary,
+	lineHeight: "1.4375em",
+	boxSizing: "border-box",
+	position: "relative",
+	cursor: "text",
+	display: "inline-flex",
+	alignItems: "center",
+	[`&.${inputBaseClasses.disabled}`]: {
+		color: (theme.vars || theme).palette.text.disabled,
+		cursor: "default"
+	},
+	variants: [
+		{
+			props: ({ ownerState }) => ownerState.multiline,
+			style: { padding: "4px 0 5px" }
+		},
+		{
+			props: ({ ownerState, size }) => ownerState.multiline && size === "small",
+			style: { paddingTop: 1 }
+		},
+		{
+			props: ({ ownerState }) => ownerState.fullWidth,
+			style: { width: "100%" }
+		}
+	]
+})));
+var InputBaseInput = styled("input", {
+	name: "MuiInputBase",
+	slot: "Input",
+	overridesResolver: inputOverridesResolver
+})(memoTheme(({ theme }) => {
+	const light = theme.palette.mode === "light";
+	const placeholder = {
+		color: "currentColor",
+		...theme.vars ? { opacity: theme.vars.opacity.inputPlaceholder } : { opacity: light ? .42 : .5 },
+		transition: theme.transitions.create("opacity", { duration: theme.transitions.duration.shorter })
+	};
+	const placeholderHidden = { opacity: "0 !important" };
+	const placeholderVisible = theme.vars ? { opacity: theme.vars.opacity.inputPlaceholder } : { opacity: light ? .42 : .5 };
+	return {
+		font: "inherit",
+		letterSpacing: "inherit",
+		color: "currentColor",
+		padding: "4px 0 5px",
+		border: 0,
+		boxSizing: "content-box",
+		background: "none",
+		height: "1.4375em",
+		margin: 0,
+		WebkitTapHighlightColor: "transparent",
+		display: "block",
+		minWidth: 0,
+		width: "100%",
+		"&::-webkit-input-placeholder": placeholder,
+		"&::-moz-placeholder": placeholder,
+		"&::-ms-input-placeholder": placeholder,
+		"&:focus": { outline: 0 },
+		"&:invalid": { boxShadow: "none" },
+		"&::-webkit-search-decoration": { WebkitAppearance: "none" },
+		[`label[data-shrink=false] + .${inputBaseClasses.formControl} &`]: {
+			"&::-webkit-input-placeholder": placeholderHidden,
+			"&::-moz-placeholder": placeholderHidden,
+			"&::-ms-input-placeholder": placeholderHidden,
+			"&:focus::-webkit-input-placeholder": placeholderVisible,
+			"&:focus::-moz-placeholder": placeholderVisible,
+			"&:focus::-ms-input-placeholder": placeholderVisible
+		},
+		[`&.${inputBaseClasses.disabled}`]: {
+			opacity: 1,
+			WebkitTextFillColor: (theme.vars || theme).palette.text.disabled
+		},
+		variants: [
+			{
+				props: ({ ownerState }) => !ownerState.disableInjectingGlobalStyles,
+				style: {
+					animationName: "mui-auto-fill-cancel",
+					animationDuration: "10ms",
+					"&:-webkit-autofill": {
+						animationDuration: "5000s",
+						animationName: "mui-auto-fill"
+					}
+				}
+			},
+			{
+				props: { size: "small" },
+				style: { paddingTop: 1 }
+			},
+			{
+				props: ({ ownerState }) => ownerState.multiline,
+				style: {
+					height: "auto",
+					resize: "none",
+					padding: 0,
+					paddingTop: 0
+				}
+			},
+			{
+				props: { type: "search" },
+				style: { MozAppearance: "textfield" }
+			}
+		]
+	};
+}));
+var InputGlobalStyles = globalCss({
+	"@keyframes mui-auto-fill": { from: { display: "block" } },
+	"@keyframes mui-auto-fill-cancel": { from: { display: "block" } }
+});
+/**
+* `InputBase` contains as few styles as possible.
+* It aims to be a simple building block for creating an input.
+* It contains a load of style reset and some state logic.
+*/
+var InputBase = /* @__PURE__ */ import_react.forwardRef(function InputBase(inProps, ref) {
+	const props = useDefaultProps({
+		props: inProps,
+		name: "MuiInputBase"
+	});
+	const { "aria-describedby": ariaDescribedby, autoComplete, autoFocus, className, color, components = {}, componentsProps = {}, defaultValue, disabled, disableInjectingGlobalStyles, endAdornment, error, fullWidth = false, id, inputComponent = "input", inputProps: inputPropsProp = {}, inputRef: inputRefProp, margin, maxRows, minRows, multiline = false, name, onBlur, onChange, onClick, onFocus, onKeyDown, onKeyUp, placeholder, readOnly, renderSuffix, rows, size, slotProps = {}, slots = {}, startAdornment, type = "text", value: valueProp, ...other } = props;
+	const value = inputPropsProp.value != null ? inputPropsProp.value : valueProp;
+	const { current: isControlled } = import_react.useRef(value != null);
+	const inputRef = import_react.useRef();
+	const handleInputRefWarning = import_react.useCallback((instance) => {}, []);
+	const handleInputRef = useForkRef_default(inputRef, inputRefProp, inputPropsProp.ref, handleInputRefWarning);
+	const [focused, setFocused] = import_react.useState(false);
+	const muiFormControl = useFormControl();
+	const fcs = formControlState({
+		props,
+		muiFormControl,
+		states: [
+			"color",
+			"disabled",
+			"error",
+			"hiddenLabel",
+			"size",
+			"required",
+			"filled"
+		]
+	});
+	fcs.focused = muiFormControl ? muiFormControl.focused : focused;
+	import_react.useEffect(() => {
+		if (!muiFormControl && disabled && focused) {
+			setFocused(false);
+			if (onBlur) onBlur();
+		}
+	}, [
+		muiFormControl,
+		disabled,
+		focused,
+		onBlur
+	]);
+	const onFilled = muiFormControl && muiFormControl.onFilled;
+	const onEmpty = muiFormControl && muiFormControl.onEmpty;
+	const checkDirty = import_react.useCallback((obj) => {
+		if (isFilled(obj)) {
+			if (onFilled) onFilled();
+		} else if (onEmpty) onEmpty();
+	}, [onFilled, onEmpty]);
+	useEnhancedEffect_default(() => {
+		if (isControlled) checkDirty({ value });
+	}, [
+		value,
+		checkDirty,
+		isControlled
+	]);
+	const handleFocus = (event) => {
+		if (onFocus) onFocus(event);
+		if (inputPropsProp.onFocus) inputPropsProp.onFocus(event);
+		if (muiFormControl && muiFormControl.onFocus) muiFormControl.onFocus(event);
+		else setFocused(true);
+	};
+	const handleBlur = (event) => {
+		if (onBlur) onBlur(event);
+		if (inputPropsProp.onBlur) inputPropsProp.onBlur(event);
+		if (muiFormControl && muiFormControl.onBlur) muiFormControl.onBlur(event);
+		else setFocused(false);
+	};
+	const handleChange = (event, ...args) => {
+		if (!isControlled) {
+			const element = event.target || inputRef.current;
+			if (element == null) throw new Error(formatMuiErrorMessage(1));
+			checkDirty({ value: element.value });
+		}
+		if (inputPropsProp.onChange) inputPropsProp.onChange(event, ...args);
+		if (onChange) onChange(event, ...args);
+	};
+	import_react.useEffect(() => {
+		checkDirty(inputRef.current);
+	}, []);
+	const handleClick = (event) => {
+		if (inputRef.current && event.currentTarget === event.target) inputRef.current.focus();
+		if (onClick) onClick(event);
+	};
+	let InputComponent = inputComponent;
+	let inputProps = inputPropsProp;
+	if (multiline && InputComponent === "input") {
+		if (rows) inputProps = {
+			type: void 0,
+			minRows: rows,
+			maxRows: rows,
+			...inputProps
+		};
+		else inputProps = {
+			type: void 0,
+			maxRows,
+			minRows,
+			...inputProps
+		};
+		InputComponent = TextareaAutosize;
+	}
+	const handleAutoFill = (event) => {
+		checkDirty(event.animationName === "mui-auto-fill-cancel" ? inputRef.current : { value: "x" });
+	};
+	import_react.useEffect(() => {
+		if (muiFormControl) muiFormControl.setAdornedStart(Boolean(startAdornment));
+	}, [muiFormControl, startAdornment]);
+	const ownerState = {
+		...props,
+		color: fcs.color || "primary",
+		disabled: fcs.disabled,
+		endAdornment,
+		error: fcs.error,
+		focused: fcs.focused,
+		formControl: muiFormControl,
+		fullWidth,
+		hiddenLabel: fcs.hiddenLabel,
+		multiline,
+		size: fcs.size,
+		startAdornment,
+		type
+	};
+	const classes = useUtilityClasses$39(ownerState);
+	const Root = slots.root || components.Root || InputBaseRoot;
+	const rootProps = slotProps.root || componentsProps.root || {};
+	const Input = slots.input || components.Input || InputBaseInput;
+	inputProps = {
+		...inputProps,
+		...slotProps.input ?? componentsProps.input
+	};
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_react.Fragment, { children: [!disableInjectingGlobalStyles && typeof InputGlobalStyles === "function" && (_InputGlobalStyles || (_InputGlobalStyles = /* @__PURE__ */ (0, import_jsx_runtime.jsx)(InputGlobalStyles, {}))), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Root, {
+		...rootProps,
+		ref,
+		onClick: handleClick,
+		...other,
+		...!isHostComponent(Root) && { ownerState: {
+			...ownerState,
+			...rootProps.ownerState
+		} },
+		className: clsx(classes.root, rootProps.className, className, readOnly && "MuiInputBase-readOnly"),
+		children: [
+			startAdornment,
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(FormControlContext.Provider, {
+				value: null,
+				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Input, {
+					"aria-invalid": fcs.error,
+					"aria-describedby": ariaDescribedby,
+					autoComplete,
+					autoFocus,
+					defaultValue,
+					disabled: fcs.disabled,
+					id,
+					onAnimationStart: handleAutoFill,
+					name,
+					placeholder,
+					readOnly,
+					required: fcs.required,
+					rows,
+					value,
+					onKeyDown,
+					onKeyUp,
+					type,
+					...inputProps,
+					...!isHostComponent(Input) && {
+						as: InputComponent,
+						ownerState: {
+							...ownerState,
+							...inputProps.ownerState
+						}
+					},
+					ref: handleInputRef,
+					className: clsx(classes.input, inputProps.className, readOnly && "MuiInputBase-readOnly"),
+					onBlur: handleBlur,
+					onChange: handleChange,
+					onFocus: handleFocus
+				})
+			}),
+			endAdornment,
+			renderSuffix ? renderSuffix({
+				...fcs,
+				startAdornment
+			}) : null
+		]
+	})] });
+});
+//#endregion
+//#region node_modules/@mui/material/esm/Input/inputClasses.js
+function getInputUtilityClass(slot) {
+	return generateUtilityClass("MuiInput", slot);
+}
+var inputClasses = {
+	...inputBaseClasses,
+	...generateUtilityClasses("MuiInput", [
+		"root",
+		"underline",
+		"input"
+	])
+};
+//#endregion
+//#region node_modules/@mui/material/esm/OutlinedInput/outlinedInputClasses.js
+function getOutlinedInputUtilityClass(slot) {
+	return generateUtilityClass("MuiOutlinedInput", slot);
+}
+var outlinedInputClasses = {
+	...inputBaseClasses,
+	...generateUtilityClasses("MuiOutlinedInput", [
+		"root",
+		"notchedOutline",
+		"input"
+	])
+};
+//#endregion
+//#region node_modules/@mui/material/esm/FilledInput/filledInputClasses.js
+function getFilledInputUtilityClass(slot) {
+	return generateUtilityClass("MuiFilledInput", slot);
+}
+var filledInputClasses = {
+	...inputBaseClasses,
+	...generateUtilityClasses("MuiFilledInput", [
+		"root",
+		"underline",
+		"input",
+		"adornedStart",
+		"adornedEnd",
+		"sizeSmall",
+		"multiline",
+		"hiddenLabel"
+	])
+};
+//#endregion
+//#region node_modules/@mui/material/esm/internal/svg-icons/ArrowDropDown.js
+/**
+* @ignore - internal component.
+*/
+var ArrowDropDown_default = createSvgIcon(/* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M7 10l5 5 5-5z" }), "ArrowDropDown");
+//#endregion
 //#region node_modules/@mui/material/esm/internal/svg-icons/Person.js
 /**
 * @ignore - internal component.
@@ -24289,7 +25629,7 @@ generateUtilityClasses("MuiAvatar", [
 ]);
 //#endregion
 //#region node_modules/@mui/material/esm/Avatar/Avatar.js
-var useUtilityClasses$15 = (ownerState) => {
+var useUtilityClasses$38 = (ownerState) => {
 	const { classes, variant, colorDefault } = ownerState;
 	return composeClasses({
 		root: [
@@ -24417,7 +25757,7 @@ var Avatar$1 = /* @__PURE__ */ import_react.forwardRef(function Avatar(inProps, 
 	const hasImgNotFailing = hasImg && loaded !== "error";
 	ownerState.colorDefault = !hasImgNotFailing;
 	delete ownerState.ownerState;
-	const classes = useUtilityClasses$15(ownerState);
+	const classes = useUtilityClasses$38(ownerState);
 	const [RootSlot, rootSlotProps] = useSlot("root", {
 		ref,
 		className: clsx(classes.root, className),
@@ -24552,7 +25892,7 @@ function getBackdropUtilityClass(slot) {
 generateUtilityClasses("MuiBackdrop", ["root", "invisible"]);
 //#endregion
 //#region node_modules/@mui/material/esm/Backdrop/Backdrop.js
-var useUtilityClasses$14 = (ownerState) => {
+var useUtilityClasses$37 = (ownerState) => {
 	const { classes, invisible } = ownerState;
 	return composeClasses({ root: ["root", invisible && "invisible"] }, getBackdropUtilityClass, classes);
 };
@@ -24590,7 +25930,7 @@ var Backdrop = /* @__PURE__ */ import_react.forwardRef(function Backdrop(inProps
 		component,
 		invisible
 	};
-	const classes = useUtilityClasses$14(ownerState);
+	const classes = useUtilityClasses$37(ownerState);
 	const externalForwardedProps = {
 		component,
 		slots: {
@@ -24720,7 +26060,7 @@ var ButtonGroupContext = /* @__PURE__ */ import_react.createContext({});
 var ButtonGroupButtonContext = /* @__PURE__ */ import_react.createContext(void 0);
 //#endregion
 //#region node_modules/@mui/material/esm/Button/Button.js
-var useUtilityClasses$13 = (ownerState) => {
+var useUtilityClasses$36 = (ownerState) => {
 	const { color, disableElevation, fullWidth, size, variant, loading, loadingPosition, classes } = ownerState;
 	const composedClasses = composeClasses({
 		root: [
@@ -25155,7 +26495,7 @@ var Button = /* @__PURE__ */ import_react.forwardRef(function Button(inProps, re
 		type,
 		variant
 	};
-	const classes = useUtilityClasses$13(ownerState);
+	const classes = useUtilityClasses$36(ownerState);
 	const startIcon = (startIconProp || loading && loadingPosition === "start") && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ButtonStartIcon, {
 		className: classes.startIcon,
 		ownerState,
@@ -25201,6 +26541,319 @@ var Button = /* @__PURE__ */ import_react.forwardRef(function Button(inProps, re
 			loadingPosition === "end" && loader,
 			endIcon
 		]
+	});
+});
+//#endregion
+//#region node_modules/@mui/material/esm/internal/switchBaseClasses.js
+function getSwitchBaseUtilityClass(slot) {
+	return generateUtilityClass("PrivateSwitchBase", slot);
+}
+generateUtilityClasses("PrivateSwitchBase", [
+	"root",
+	"checked",
+	"disabled",
+	"input",
+	"edgeStart",
+	"edgeEnd"
+]);
+//#endregion
+//#region node_modules/@mui/material/esm/internal/SwitchBase.js
+var useUtilityClasses$35 = (ownerState) => {
+	const { classes, checked, disabled, edge } = ownerState;
+	return composeClasses({
+		root: [
+			"root",
+			checked && "checked",
+			disabled && "disabled",
+			edge && `edge${capitalize_default(edge)}`
+		],
+		input: ["input"]
+	}, getSwitchBaseUtilityClass, classes);
+};
+var SwitchBaseRoot = styled(ButtonBase, { name: "MuiSwitchBase" })({
+	padding: 9,
+	borderRadius: "50%",
+	variants: [
+		{
+			props: {
+				edge: "start",
+				size: "small"
+			},
+			style: { marginLeft: -3 }
+		},
+		{
+			props: ({ edge, ownerState }) => edge === "start" && ownerState.size !== "small",
+			style: { marginLeft: -12 }
+		},
+		{
+			props: {
+				edge: "end",
+				size: "small"
+			},
+			style: { marginRight: -3 }
+		},
+		{
+			props: ({ edge, ownerState }) => edge === "end" && ownerState.size !== "small",
+			style: { marginRight: -12 }
+		}
+	]
+});
+var SwitchBaseInput = styled("input", {
+	name: "MuiSwitchBase",
+	shouldForwardProp: rootShouldForwardProp
+})({
+	cursor: "inherit",
+	position: "absolute",
+	opacity: 0,
+	width: "100%",
+	height: "100%",
+	top: 0,
+	left: 0,
+	margin: 0,
+	padding: 0,
+	zIndex: 1
+});
+/**
+* @ignore - internal component.
+*/
+var SwitchBase = /* @__PURE__ */ import_react.forwardRef(function SwitchBase(props, ref) {
+	const { autoFocus, checked: checkedProp, checkedIcon, defaultChecked, disabled: disabledProp, disableFocusRipple = false, edge = false, icon, id, inputProps, inputRef, name, onBlur, onChange, onFocus, readOnly, required = false, tabIndex, type, value, slots = {}, slotProps = {}, ...other } = props;
+	const [checked, setCheckedState] = useControlled_default({
+		controlled: checkedProp,
+		default: Boolean(defaultChecked),
+		name: "SwitchBase",
+		state: "checked"
+	});
+	const muiFormControl = useFormControl();
+	const handleFocus = (event) => {
+		if (onFocus) onFocus(event);
+		if (muiFormControl && muiFormControl.onFocus) muiFormControl.onFocus(event);
+	};
+	const handleBlur = (event) => {
+		if (onBlur) onBlur(event);
+		if (muiFormControl && muiFormControl.onBlur) muiFormControl.onBlur(event);
+	};
+	const handleInputChange = (event) => {
+		if (event.nativeEvent.defaultPrevented || readOnly) return;
+		const newChecked = event.target.checked;
+		setCheckedState(newChecked);
+		if (onChange) onChange(event, newChecked);
+	};
+	let disabled = disabledProp;
+	if (muiFormControl) {
+		if (typeof disabled === "undefined") disabled = muiFormControl.disabled;
+	}
+	const hasLabelFor = type === "checkbox" || type === "radio";
+	const ownerState = {
+		...props,
+		checked,
+		disabled,
+		disableFocusRipple,
+		edge
+	};
+	const classes = useUtilityClasses$35(ownerState);
+	const externalForwardedProps = {
+		slots,
+		slotProps: {
+			input: inputProps,
+			...slotProps
+		}
+	};
+	const [RootSlot, rootSlotProps] = useSlot("root", {
+		ref,
+		elementType: SwitchBaseRoot,
+		className: classes.root,
+		shouldForwardComponentProp: true,
+		externalForwardedProps: {
+			...externalForwardedProps,
+			component: "span",
+			...other
+		},
+		getSlotProps: (handlers) => ({
+			...handlers,
+			onFocus: (event) => {
+				handlers.onFocus?.(event);
+				handleFocus(event);
+			},
+			onBlur: (event) => {
+				handlers.onBlur?.(event);
+				handleBlur(event);
+			}
+		}),
+		ownerState,
+		additionalProps: {
+			centerRipple: true,
+			focusRipple: !disableFocusRipple,
+			role: void 0,
+			tabIndex: null
+		}
+	});
+	const [InputSlot, inputSlotProps] = useSlot("input", {
+		ref: inputRef,
+		elementType: SwitchBaseInput,
+		className: classes.input,
+		externalForwardedProps,
+		getSlotProps: (handlers) => ({
+			...handlers,
+			onChange: (event) => {
+				handlers.onChange?.(event);
+				handleInputChange(event);
+			}
+		}),
+		ownerState,
+		additionalProps: {
+			autoFocus,
+			checked: checkedProp,
+			defaultChecked,
+			disabled,
+			id: hasLabelFor ? id : void 0,
+			name,
+			readOnly,
+			required,
+			tabIndex,
+			type,
+			...type === "checkbox" && value === void 0 ? {} : { value }
+		}
+	});
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(RootSlot, {
+		...rootSlotProps,
+		children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(InputSlot, { ...inputSlotProps }), checked ? checkedIcon : icon]
+	});
+});
+//#endregion
+//#region node_modules/@mui/material/esm/internal/svg-icons/CheckBoxOutlineBlank.js
+/**
+* @ignore - internal component.
+*/
+var CheckBoxOutlineBlank_default = createSvgIcon(/* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M19 5v14H5V5h14m0-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2z" }), "CheckBoxOutlineBlank");
+//#endregion
+//#region node_modules/@mui/material/esm/internal/svg-icons/CheckBox.js
+/**
+* @ignore - internal component.
+*/
+var CheckBox_default = createSvgIcon(/* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M19 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.11 0 2-.9 2-2V5c0-1.1-.89-2-2-2zm-9 14l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" }), "CheckBox");
+//#endregion
+//#region node_modules/@mui/material/esm/internal/svg-icons/IndeterminateCheckBox.js
+/**
+* @ignore - internal component.
+*/
+var IndeterminateCheckBox_default = createSvgIcon(/* @__PURE__ */ (0, import_jsx_runtime.jsx)("path", { d: "M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10H7v-2h10v2z" }), "IndeterminateCheckBox");
+//#endregion
+//#region node_modules/@mui/material/esm/Checkbox/checkboxClasses.js
+function getCheckboxUtilityClass(slot) {
+	return generateUtilityClass("MuiCheckbox", slot);
+}
+var checkboxClasses = generateUtilityClasses("MuiCheckbox", [
+	"root",
+	"checked",
+	"disabled",
+	"indeterminate",
+	"colorPrimary",
+	"colorSecondary",
+	"sizeSmall",
+	"sizeMedium"
+]);
+//#endregion
+//#region node_modules/@mui/material/esm/Checkbox/Checkbox.js
+var useUtilityClasses$34 = (ownerState) => {
+	const { classes, indeterminate, color, size } = ownerState;
+	const composedClasses = composeClasses({ root: [
+		"root",
+		indeterminate && "indeterminate",
+		`color${capitalize_default(color)}`,
+		`size${capitalize_default(size)}`
+	] }, getCheckboxUtilityClass, classes);
+	return {
+		...classes,
+		...composedClasses
+	};
+};
+var CheckboxRoot = styled(SwitchBase, {
+	shouldForwardProp: (prop) => rootShouldForwardProp(prop) || prop === "classes",
+	name: "MuiCheckbox",
+	slot: "Root",
+	overridesResolver: (props, styles) => {
+		const { ownerState } = props;
+		return [
+			styles.root,
+			ownerState.indeterminate && styles.indeterminate,
+			styles[`size${capitalize_default(ownerState.size)}`],
+			ownerState.color !== "default" && styles[`color${capitalize_default(ownerState.color)}`]
+		];
+	}
+})(memoTheme(({ theme }) => ({
+	color: (theme.vars || theme).palette.text.secondary,
+	variants: [
+		{
+			props: {
+				color: "default",
+				disableRipple: false
+			},
+			style: { "&:hover": { backgroundColor: theme.alpha((theme.vars || theme).palette.action.active, (theme.vars || theme).palette.action.hoverOpacity) } }
+		},
+		...Object.entries(theme.palette).filter(createSimplePaletteValueFilter()).map(([color]) => ({
+			props: {
+				color,
+				disableRipple: false
+			},
+			style: { "&:hover": { backgroundColor: theme.alpha((theme.vars || theme).palette[color].main, (theme.vars || theme).palette.action.hoverOpacity) } }
+		})),
+		...Object.entries(theme.palette).filter(createSimplePaletteValueFilter()).map(([color]) => ({
+			props: { color },
+			style: {
+				[`&.${checkboxClasses.checked}, &.${checkboxClasses.indeterminate}`]: { color: (theme.vars || theme).palette[color].main },
+				[`&.${checkboxClasses.disabled}`]: { color: (theme.vars || theme).palette.action.disabled }
+			}
+		})),
+		{
+			props: { disableRipple: false },
+			style: { "&:hover": { "@media (hover: none)": { backgroundColor: "transparent" } } }
+		}
+	]
+})));
+var defaultCheckedIcon = /* @__PURE__ */ (0, import_jsx_runtime.jsx)(CheckBox_default, {});
+var defaultIcon = /* @__PURE__ */ (0, import_jsx_runtime.jsx)(CheckBoxOutlineBlank_default, {});
+var defaultIndeterminateIcon = /* @__PURE__ */ (0, import_jsx_runtime.jsx)(IndeterminateCheckBox_default, {});
+var Checkbox = /* @__PURE__ */ import_react.forwardRef(function Checkbox(inProps, ref) {
+	const props = useDefaultProps({
+		props: inProps,
+		name: "MuiCheckbox"
+	});
+	const { checkedIcon = defaultCheckedIcon, color = "primary", icon: iconProp = defaultIcon, indeterminate = false, indeterminateIcon: indeterminateIconProp = defaultIndeterminateIcon, inputProps, size = "medium", disableRipple = false, className, slots = {}, slotProps = {}, ...other } = props;
+	const icon = indeterminate ? indeterminateIconProp : iconProp;
+	const indeterminateIcon = indeterminate ? indeterminateIconProp : checkedIcon;
+	const ownerState = {
+		...props,
+		disableRipple,
+		color,
+		indeterminate,
+		size
+	};
+	const classes = useUtilityClasses$34(ownerState);
+	const externalInputProps = slotProps.input ?? inputProps;
+	const [RootSlot, rootSlotProps] = useSlot("root", {
+		ref,
+		elementType: CheckboxRoot,
+		className: clsx(classes.root, className),
+		shouldForwardComponentProp: true,
+		externalForwardedProps: {
+			slots,
+			slotProps,
+			...other
+		},
+		ownerState,
+		additionalProps: {
+			type: "checkbox",
+			icon: /* @__PURE__ */ import_react.cloneElement(icon, { fontSize: icon.props.fontSize ?? size }),
+			checkedIcon: /* @__PURE__ */ import_react.cloneElement(indeterminateIcon, { fontSize: indeterminateIcon.props.fontSize ?? size }),
+			disableRipple,
+			slots,
+			slotProps: { input: mergeSlotProps$1(typeof externalInputProps === "function" ? externalInputProps(ownerState) : externalInputProps, { "data-indeterminate": indeterminate }) }
+		}
+	});
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(RootSlot, {
+		...rootSlotProps,
+		classes
 	});
 });
 //#endregion
@@ -25805,7 +27458,7 @@ generateUtilityClasses("MuiModal", [
 ]);
 //#endregion
 //#region node_modules/@mui/material/esm/Modal/Modal.js
-var useUtilityClasses$12 = (ownerState) => {
+var useUtilityClasses$33 = (ownerState) => {
 	const { open, exited, classes } = ownerState;
 	return composeClasses({
 		root: ["root", !open && exited && "hidden"],
@@ -25874,7 +27527,7 @@ var Modal = /* @__PURE__ */ import_react.forwardRef(function Modal(inProps, ref)
 		...propsWithDefaults,
 		exited
 	};
-	const classes = useUtilityClasses$12(ownerState);
+	const classes = useUtilityClasses$33(ownerState);
 	const childProps = {};
 	if (children.props.tabIndex === void 0) childProps.tabIndex = "-1";
 	if (hasTransition) {
@@ -25941,6 +27594,430 @@ var Modal = /* @__PURE__ */ import_react.forwardRef(function Modal(inProps, ref)
 	});
 });
 //#endregion
+//#region node_modules/@mui/material/esm/Dialog/dialogClasses.js
+function getDialogUtilityClass(slot) {
+	return generateUtilityClass("MuiDialog", slot);
+}
+var dialogClasses = generateUtilityClasses("MuiDialog", [
+	"root",
+	"backdrop",
+	"scrollPaper",
+	"scrollBody",
+	"container",
+	"paper",
+	"paperScrollPaper",
+	"paperScrollBody",
+	"paperWidthFalse",
+	"paperWidthXs",
+	"paperWidthSm",
+	"paperWidthMd",
+	"paperWidthLg",
+	"paperWidthXl",
+	"paperFullWidth",
+	"paperFullScreen"
+]);
+//#endregion
+//#region node_modules/@mui/material/esm/Dialog/DialogContext.js
+var DialogContext = /* @__PURE__ */ import_react.createContext({});
+//#endregion
+//#region node_modules/@mui/material/esm/Dialog/Dialog.js
+var DialogBackdrop = styled(Backdrop, {
+	name: "MuiDialog",
+	slot: "Backdrop"
+})({ zIndex: -1 });
+var useUtilityClasses$32 = (ownerState) => {
+	const { classes, scroll, maxWidth, fullWidth, fullScreen } = ownerState;
+	return composeClasses({
+		root: ["root"],
+		backdrop: ["backdrop"],
+		container: ["container", `scroll${capitalize_default(scroll)}`],
+		paper: [
+			"paper",
+			`paperScroll${capitalize_default(scroll)}`,
+			`paperWidth${capitalize_default(String(maxWidth))}`,
+			fullWidth && "paperFullWidth",
+			fullScreen && "paperFullScreen"
+		]
+	}, getDialogUtilityClass, classes);
+};
+var DialogRoot = styled(Modal, {
+	name: "MuiDialog",
+	slot: "Root"
+})({ "@media print": { position: "absolute !important" } });
+var DialogContainer = styled("div", {
+	name: "MuiDialog",
+	slot: "Container",
+	overridesResolver: (props, styles) => {
+		const { ownerState } = props;
+		return [styles.container, styles[`scroll${capitalize_default(ownerState.scroll)}`]];
+	}
+})({
+	height: "100%",
+	"@media print": { height: "auto" },
+	outline: 0,
+	variants: [{
+		props: { scroll: "paper" },
+		style: {
+			display: "flex",
+			justifyContent: "center",
+			alignItems: "center"
+		}
+	}, {
+		props: { scroll: "body" },
+		style: {
+			overflowY: "auto",
+			overflowX: "hidden",
+			textAlign: "center",
+			"&::after": {
+				content: "\"\"",
+				display: "inline-block",
+				verticalAlign: "middle",
+				height: "100%",
+				width: "0"
+			}
+		}
+	}]
+});
+var DialogPaper = styled(Paper, {
+	name: "MuiDialog",
+	slot: "Paper",
+	overridesResolver: (props, styles) => {
+		const { ownerState } = props;
+		return [
+			styles.paper,
+			styles[`scrollPaper${capitalize_default(ownerState.scroll)}`],
+			styles[`paperWidth${capitalize_default(String(ownerState.maxWidth))}`],
+			ownerState.fullWidth && styles.paperFullWidth,
+			ownerState.fullScreen && styles.paperFullScreen
+		];
+	}
+})(memoTheme(({ theme }) => ({
+	margin: 32,
+	position: "relative",
+	overflowY: "auto",
+	"@media print": {
+		overflowY: "visible",
+		boxShadow: "none"
+	},
+	variants: [
+		{
+			props: { scroll: "paper" },
+			style: {
+				display: "flex",
+				flexDirection: "column",
+				maxHeight: "calc(100% - 64px)"
+			}
+		},
+		{
+			props: { scroll: "body" },
+			style: {
+				display: "inline-block",
+				verticalAlign: "middle",
+				textAlign: "initial"
+			}
+		},
+		{
+			props: ({ ownerState }) => !ownerState.maxWidth,
+			style: { maxWidth: "calc(100% - 64px)" }
+		},
+		{
+			props: { maxWidth: "xs" },
+			style: {
+				maxWidth: theme.breakpoints.unit === "px" ? Math.max(theme.breakpoints.values.xs, 444) : `max(${theme.breakpoints.values.xs}${theme.breakpoints.unit}, 444px)`,
+				[`&.${dialogClasses.paperScrollBody}`]: { [theme.breakpoints.down(Math.max(theme.breakpoints.values.xs, 444) + 64)]: { maxWidth: "calc(100% - 64px)" } }
+			}
+		},
+		...Object.keys(theme.breakpoints.values).filter((maxWidth) => maxWidth !== "xs").map((maxWidth) => ({
+			props: { maxWidth },
+			style: {
+				maxWidth: `${theme.breakpoints.values[maxWidth]}${theme.breakpoints.unit}`,
+				[`&.${dialogClasses.paperScrollBody}`]: { [theme.breakpoints.down(theme.breakpoints.values[maxWidth] + 64)]: { maxWidth: "calc(100% - 64px)" } }
+			}
+		})),
+		{
+			props: ({ ownerState }) => ownerState.fullWidth,
+			style: { width: "calc(100% - 64px)" }
+		},
+		{
+			props: ({ ownerState }) => ownerState.fullScreen,
+			style: {
+				margin: 0,
+				width: "100%",
+				maxWidth: "100%",
+				height: "100%",
+				maxHeight: "none",
+				borderRadius: 0,
+				[`&.${dialogClasses.paperScrollBody}`]: {
+					margin: 0,
+					maxWidth: "100%"
+				}
+			}
+		}
+	]
+})));
+/**
+* Dialogs are overlaid modal paper based components with a backdrop.
+*/
+var Dialog = /* @__PURE__ */ import_react.forwardRef(function Dialog(inProps, ref) {
+	const props = useDefaultProps({
+		props: inProps,
+		name: "MuiDialog"
+	});
+	const theme = useTheme();
+	const defaultTransitionDuration = {
+		enter: theme.transitions.duration.enteringScreen,
+		exit: theme.transitions.duration.leavingScreen
+	};
+	const { "aria-describedby": ariaDescribedby, "aria-labelledby": ariaLabelledbyProp, "aria-modal": ariaModal = true, BackdropComponent, BackdropProps, children, className, disableEscapeKeyDown = false, fullScreen = false, fullWidth = false, maxWidth = "sm", onClick, onClose, open, PaperComponent = Paper, PaperProps = {}, role = "dialog", scroll = "paper", slots = {}, slotProps = {}, TransitionComponent = Fade, transitionDuration = defaultTransitionDuration, TransitionProps, ...other } = props;
+	const ownerState = {
+		...props,
+		disableEscapeKeyDown,
+		fullScreen,
+		fullWidth,
+		maxWidth,
+		scroll
+	};
+	const classes = useUtilityClasses$32(ownerState);
+	const backdropClick = import_react.useRef();
+	const handleMouseDown = (event) => {
+		backdropClick.current = event.target === event.currentTarget;
+	};
+	const handleBackdropClick = (event) => {
+		if (onClick) onClick(event);
+		if (!backdropClick.current) return;
+		backdropClick.current = null;
+		if (onClose) onClose(event, "backdropClick");
+	};
+	const ariaLabelledby = useId(ariaLabelledbyProp);
+	const dialogContextValue = import_react.useMemo(() => {
+		return { titleId: ariaLabelledby };
+	}, [ariaLabelledby]);
+	const externalForwardedProps = {
+		slots: {
+			transition: TransitionComponent,
+			...slots
+		},
+		slotProps: {
+			transition: TransitionProps,
+			paper: PaperProps,
+			backdrop: BackdropProps,
+			...slotProps
+		}
+	};
+	const [RootSlot, rootSlotProps] = useSlot("root", {
+		elementType: DialogRoot,
+		shouldForwardComponentProp: true,
+		externalForwardedProps,
+		ownerState,
+		className: clsx(classes.root, className),
+		ref
+	});
+	const [BackdropSlot, backdropSlotProps] = useSlot("backdrop", {
+		elementType: DialogBackdrop,
+		shouldForwardComponentProp: true,
+		externalForwardedProps,
+		ownerState,
+		className: classes.backdrop
+	});
+	const [PaperSlot, paperSlotProps] = useSlot("paper", {
+		elementType: DialogPaper,
+		shouldForwardComponentProp: true,
+		externalForwardedProps,
+		ownerState,
+		className: clsx(classes.paper, PaperProps.className)
+	});
+	const [ContainerSlot, containerSlotProps] = useSlot("container", {
+		elementType: DialogContainer,
+		externalForwardedProps,
+		ownerState,
+		className: classes.container
+	});
+	const [TransitionSlot, transitionSlotProps] = useSlot("transition", {
+		elementType: Fade,
+		externalForwardedProps,
+		ownerState,
+		additionalProps: {
+			appear: true,
+			in: open,
+			timeout: transitionDuration,
+			role: "presentation"
+		}
+	});
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(RootSlot, {
+		closeAfterTransition: true,
+		slots: { backdrop: BackdropSlot },
+		slotProps: { backdrop: {
+			transitionDuration,
+			as: BackdropComponent,
+			...backdropSlotProps
+		} },
+		disableEscapeKeyDown,
+		onClose,
+		open,
+		onClick: handleBackdropClick,
+		...rootSlotProps,
+		...other,
+		children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TransitionSlot, {
+			...transitionSlotProps,
+			children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ContainerSlot, {
+				onMouseDown: handleMouseDown,
+				...containerSlotProps,
+				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(PaperSlot, {
+					as: PaperComponent,
+					elevation: 24,
+					role,
+					"aria-describedby": ariaDescribedby,
+					"aria-labelledby": ariaLabelledby,
+					"aria-modal": ariaModal,
+					...paperSlotProps,
+					children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(DialogContext.Provider, {
+						value: dialogContextValue,
+						children
+					})
+				})
+			})
+		})
+	});
+});
+//#endregion
+//#region node_modules/@mui/material/esm/DialogActions/dialogActionsClasses.js
+function getDialogActionsUtilityClass(slot) {
+	return generateUtilityClass("MuiDialogActions", slot);
+}
+generateUtilityClasses("MuiDialogActions", ["root", "spacing"]);
+//#endregion
+//#region node_modules/@mui/material/esm/DialogActions/DialogActions.js
+var useUtilityClasses$31 = (ownerState) => {
+	const { classes, disableSpacing } = ownerState;
+	return composeClasses({ root: ["root", !disableSpacing && "spacing"] }, getDialogActionsUtilityClass, classes);
+};
+var DialogActionsRoot = styled("div", {
+	name: "MuiDialogActions",
+	slot: "Root",
+	overridesResolver: (props, styles) => {
+		const { ownerState } = props;
+		return [styles.root, !ownerState.disableSpacing && styles.spacing];
+	}
+})({
+	display: "flex",
+	alignItems: "center",
+	padding: 8,
+	justifyContent: "flex-end",
+	flex: "0 0 auto",
+	variants: [{
+		props: ({ ownerState }) => !ownerState.disableSpacing,
+		style: { "& > :not(style) ~ :not(style)": { marginLeft: 8 } }
+	}]
+});
+var DialogActions = /* @__PURE__ */ import_react.forwardRef(function DialogActions(inProps, ref) {
+	const props = useDefaultProps({
+		props: inProps,
+		name: "MuiDialogActions"
+	});
+	const { className, disableSpacing = false, ...other } = props;
+	const ownerState = {
+		...props,
+		disableSpacing
+	};
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(DialogActionsRoot, {
+		className: clsx(useUtilityClasses$31(ownerState).root, className),
+		ownerState,
+		ref,
+		...other
+	});
+});
+//#endregion
+//#region node_modules/@mui/material/esm/DialogContent/dialogContentClasses.js
+function getDialogContentUtilityClass(slot) {
+	return generateUtilityClass("MuiDialogContent", slot);
+}
+generateUtilityClasses("MuiDialogContent", ["root", "dividers"]);
+//#endregion
+//#region node_modules/@mui/material/esm/DialogTitle/dialogTitleClasses.js
+function getDialogTitleUtilityClass(slot) {
+	return generateUtilityClass("MuiDialogTitle", slot);
+}
+var dialogTitleClasses = generateUtilityClasses("MuiDialogTitle", ["root"]);
+//#endregion
+//#region node_modules/@mui/material/esm/DialogContent/DialogContent.js
+var useUtilityClasses$30 = (ownerState) => {
+	const { classes, dividers } = ownerState;
+	return composeClasses({ root: ["root", dividers && "dividers"] }, getDialogContentUtilityClass, classes);
+};
+var DialogContentRoot = styled("div", {
+	name: "MuiDialogContent",
+	slot: "Root",
+	overridesResolver: (props, styles) => {
+		const { ownerState } = props;
+		return [styles.root, ownerState.dividers && styles.dividers];
+	}
+})(memoTheme(({ theme }) => ({
+	flex: "1 1 auto",
+	WebkitOverflowScrolling: "touch",
+	overflowY: "auto",
+	padding: "20px 24px",
+	variants: [{
+		props: ({ ownerState }) => ownerState.dividers,
+		style: {
+			padding: "16px 24px",
+			borderTop: `1px solid ${(theme.vars || theme).palette.divider}`,
+			borderBottom: `1px solid ${(theme.vars || theme).palette.divider}`
+		}
+	}, {
+		props: ({ ownerState }) => !ownerState.dividers,
+		style: { [`.${dialogTitleClasses.root} + &`]: { paddingTop: 0 } }
+	}]
+})));
+var DialogContent = /* @__PURE__ */ import_react.forwardRef(function DialogContent(inProps, ref) {
+	const props = useDefaultProps({
+		props: inProps,
+		name: "MuiDialogContent"
+	});
+	const { className, dividers = false, ...other } = props;
+	const ownerState = {
+		...props,
+		dividers
+	};
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(DialogContentRoot, {
+		className: clsx(useUtilityClasses$30(ownerState).root, className),
+		ownerState,
+		ref,
+		...other
+	});
+});
+//#endregion
+//#region node_modules/@mui/material/esm/DialogTitle/DialogTitle.js
+var useUtilityClasses$29 = (ownerState) => {
+	const { classes } = ownerState;
+	return composeClasses({ root: ["root"] }, getDialogTitleUtilityClass, classes);
+};
+var DialogTitleRoot = styled(Typography, {
+	name: "MuiDialogTitle",
+	slot: "Root"
+})({
+	padding: "16px 24px",
+	flex: "0 0 auto"
+});
+var DialogTitle = /* @__PURE__ */ import_react.forwardRef(function DialogTitle(inProps, ref) {
+	const props = useDefaultProps({
+		props: inProps,
+		name: "MuiDialogTitle"
+	});
+	const { className, id: idProp, ...other } = props;
+	const ownerState = props;
+	const classes = useUtilityClasses$29(ownerState);
+	const { titleId = idProp } = import_react.useContext(DialogContext);
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(DialogTitleRoot, {
+		component: "h2",
+		className: clsx(classes.root, className),
+		ownerState,
+		ref,
+		variant: "h6",
+		id: idProp ?? titleId,
+		...other
+	});
+});
+//#endregion
 //#region node_modules/@mui/material/esm/Divider/dividerClasses.js
 function getDividerUtilityClass(slot) {
 	return generateUtilityClass("MuiDivider", slot);
@@ -25963,7 +28040,7 @@ var dividerClasses = generateUtilityClasses("MuiDivider", [
 ]);
 //#endregion
 //#region node_modules/@mui/material/esm/Divider/Divider.js
-var useUtilityClasses$11 = (ownerState) => {
+var useUtilityClasses$28 = (ownerState) => {
 	const { absolute, children, classes, flexItem, light, orientation, textAlign, variant } = ownerState;
 	return composeClasses({
 		root: [
@@ -26145,7 +28222,7 @@ var Divider = /* @__PURE__ */ import_react.forwardRef(function Divider(inProps, 
 		textAlign,
 		variant
 	};
-	const classes = useUtilityClasses$11(ownerState);
+	const classes = useUtilityClasses$28(ownerState);
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(DividerRoot, {
 		as: component,
 		className: clsx(classes.root, className),
@@ -26348,7 +28425,7 @@ var overridesResolver$2 = (props, styles) => {
 		ownerState.variant === "temporary" && styles.modal
 	];
 };
-var useUtilityClasses$10 = (ownerState) => {
+var useUtilityClasses$27 = (ownerState) => {
 	const { classes, anchor, variant } = ownerState;
 	return composeClasses({
 		root: ["root", `anchor${capitalize_default(anchor)}`],
@@ -26485,7 +28562,7 @@ var Drawer = /* @__PURE__ */ import_react.forwardRef(function Drawer(inProps, re
 		variant,
 		...other
 	};
-	const classes = useUtilityClasses$10(ownerState);
+	const classes = useUtilityClasses$27(ownerState);
 	const externalForwardedProps = {
 		slots: {
 			transition: TransitionComponent,
@@ -26573,6 +28650,790 @@ var Drawer = /* @__PURE__ */ import_react.forwardRef(function Drawer(inProps, re
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(RootSlot, {
 		...rootSlotProps,
 		children: slidingDrawer
+	});
+});
+//#endregion
+//#region node_modules/@mui/material/esm/FilledInput/FilledInput.js
+var useUtilityClasses$26 = (ownerState) => {
+	const { classes, disableUnderline, startAdornment, endAdornment, size, hiddenLabel, multiline } = ownerState;
+	const composedClasses = composeClasses({
+		root: [
+			"root",
+			!disableUnderline && "underline",
+			startAdornment && "adornedStart",
+			endAdornment && "adornedEnd",
+			size === "small" && `size${capitalize_default(size)}`,
+			hiddenLabel && "hiddenLabel",
+			multiline && "multiline"
+		],
+		input: ["input"]
+	}, getFilledInputUtilityClass, classes);
+	return {
+		...classes,
+		...composedClasses
+	};
+};
+var FilledInputRoot = styled(InputBaseRoot, {
+	shouldForwardProp: (prop) => rootShouldForwardProp(prop) || prop === "classes",
+	name: "MuiFilledInput",
+	slot: "Root",
+	overridesResolver: (props, styles) => {
+		const { ownerState } = props;
+		return [...rootOverridesResolver(props, styles), !ownerState.disableUnderline && styles.underline];
+	}
+})(memoTheme(({ theme }) => {
+	const light = theme.palette.mode === "light";
+	const bottomLineColor = light ? "rgba(0, 0, 0, 0.42)" : "rgba(255, 255, 255, 0.7)";
+	const backgroundColor = light ? "rgba(0, 0, 0, 0.06)" : "rgba(255, 255, 255, 0.09)";
+	const hoverBackground = light ? "rgba(0, 0, 0, 0.09)" : "rgba(255, 255, 255, 0.13)";
+	const disabledBackground = light ? "rgba(0, 0, 0, 0.12)" : "rgba(255, 255, 255, 0.12)";
+	return {
+		position: "relative",
+		backgroundColor: theme.vars ? theme.vars.palette.FilledInput.bg : backgroundColor,
+		borderTopLeftRadius: (theme.vars || theme).shape.borderRadius,
+		borderTopRightRadius: (theme.vars || theme).shape.borderRadius,
+		transition: theme.transitions.create("background-color", {
+			duration: theme.transitions.duration.shorter,
+			easing: theme.transitions.easing.easeOut
+		}),
+		"&:hover": {
+			backgroundColor: theme.vars ? theme.vars.palette.FilledInput.hoverBg : hoverBackground,
+			"@media (hover: none)": { backgroundColor: theme.vars ? theme.vars.palette.FilledInput.bg : backgroundColor }
+		},
+		[`&.${filledInputClasses.focused}`]: { backgroundColor: theme.vars ? theme.vars.palette.FilledInput.bg : backgroundColor },
+		[`&.${filledInputClasses.disabled}`]: { backgroundColor: theme.vars ? theme.vars.palette.FilledInput.disabledBg : disabledBackground },
+		variants: [
+			{
+				props: ({ ownerState }) => !ownerState.disableUnderline,
+				style: {
+					"&::after": {
+						left: 0,
+						bottom: 0,
+						content: "\"\"",
+						position: "absolute",
+						right: 0,
+						transform: "scaleX(0)",
+						transition: theme.transitions.create("transform", {
+							duration: theme.transitions.duration.shorter,
+							easing: theme.transitions.easing.easeOut
+						}),
+						pointerEvents: "none"
+					},
+					[`&.${filledInputClasses.focused}:after`]: { transform: "scaleX(1) translateX(0)" },
+					[`&.${filledInputClasses.error}`]: { "&::before, &::after": { borderBottomColor: (theme.vars || theme).palette.error.main } },
+					"&::before": {
+						borderBottom: `1px solid ${theme.vars ? theme.alpha(theme.vars.palette.common.onBackground, theme.vars.opacity.inputUnderline) : bottomLineColor}`,
+						left: 0,
+						bottom: 0,
+						content: "\"\"",
+						position: "absolute",
+						right: 0,
+						transition: theme.transitions.create("border-bottom-color", { duration: theme.transitions.duration.shorter }),
+						pointerEvents: "none"
+					},
+					[`&:hover:not(.${filledInputClasses.disabled}, .${filledInputClasses.error}):before`]: { borderBottom: `1px solid ${(theme.vars || theme).palette.text.primary}` },
+					[`&.${filledInputClasses.disabled}:before`]: { borderBottomStyle: "dotted" }
+				}
+			},
+			...Object.entries(theme.palette).filter(createSimplePaletteValueFilter()).map(([color]) => ({
+				props: {
+					disableUnderline: false,
+					color
+				},
+				style: { "&::after": { borderBottom: `2px solid ${(theme.vars || theme).palette[color]?.main}` } }
+			})),
+			{
+				props: ({ ownerState }) => ownerState.startAdornment,
+				style: { paddingLeft: 12 }
+			},
+			{
+				props: ({ ownerState }) => ownerState.endAdornment,
+				style: { paddingRight: 12 }
+			},
+			{
+				props: ({ ownerState }) => ownerState.multiline,
+				style: { padding: "25px 12px 8px" }
+			},
+			{
+				props: ({ ownerState, size }) => ownerState.multiline && size === "small",
+				style: {
+					paddingTop: 21,
+					paddingBottom: 4
+				}
+			},
+			{
+				props: ({ ownerState }) => ownerState.multiline && ownerState.hiddenLabel,
+				style: {
+					paddingTop: 16,
+					paddingBottom: 17
+				}
+			},
+			{
+				props: ({ ownerState }) => ownerState.multiline && ownerState.hiddenLabel && ownerState.size === "small",
+				style: {
+					paddingTop: 8,
+					paddingBottom: 9
+				}
+			}
+		]
+	};
+}));
+var FilledInputInput = styled(InputBaseInput, {
+	name: "MuiFilledInput",
+	slot: "Input",
+	overridesResolver: inputOverridesResolver
+})(memoTheme(({ theme }) => ({
+	paddingTop: 25,
+	paddingRight: 12,
+	paddingBottom: 8,
+	paddingLeft: 12,
+	...!theme.vars && { "&:-webkit-autofill": {
+		WebkitBoxShadow: theme.palette.mode === "light" ? null : "0 0 0 100px #266798 inset",
+		WebkitTextFillColor: theme.palette.mode === "light" ? null : "#fff",
+		caretColor: theme.palette.mode === "light" ? null : "#fff",
+		borderTopLeftRadius: "inherit",
+		borderTopRightRadius: "inherit"
+	} },
+	...theme.vars && {
+		"&:-webkit-autofill": {
+			borderTopLeftRadius: "inherit",
+			borderTopRightRadius: "inherit"
+		},
+		[theme.getColorSchemeSelector("dark")]: { "&:-webkit-autofill": {
+			WebkitBoxShadow: "0 0 0 100px #266798 inset",
+			WebkitTextFillColor: "#fff",
+			caretColor: "#fff"
+		} }
+	},
+	variants: [
+		{
+			props: { size: "small" },
+			style: {
+				paddingTop: 21,
+				paddingBottom: 4
+			}
+		},
+		{
+			props: ({ ownerState }) => ownerState.hiddenLabel,
+			style: {
+				paddingTop: 16,
+				paddingBottom: 17
+			}
+		},
+		{
+			props: ({ ownerState }) => ownerState.startAdornment,
+			style: { paddingLeft: 0 }
+		},
+		{
+			props: ({ ownerState }) => ownerState.endAdornment,
+			style: { paddingRight: 0 }
+		},
+		{
+			props: ({ ownerState }) => ownerState.hiddenLabel && ownerState.size === "small",
+			style: {
+				paddingTop: 8,
+				paddingBottom: 9
+			}
+		},
+		{
+			props: ({ ownerState }) => ownerState.multiline,
+			style: {
+				paddingTop: 0,
+				paddingBottom: 0,
+				paddingLeft: 0,
+				paddingRight: 0
+			}
+		}
+	]
+})));
+var FilledInput = /* @__PURE__ */ import_react.forwardRef(function FilledInput(inProps, ref) {
+	const props = useDefaultProps({
+		props: inProps,
+		name: "MuiFilledInput"
+	});
+	const { disableUnderline = false, components = {}, componentsProps: componentsPropsProp, fullWidth = false, hiddenLabel, inputComponent = "input", multiline = false, slotProps, slots = {}, type = "text", ...other } = props;
+	const ownerState = {
+		...props,
+		disableUnderline,
+		fullWidth,
+		inputComponent,
+		multiline,
+		type
+	};
+	const classes = useUtilityClasses$26(props);
+	const filledInputComponentsProps = {
+		root: { ownerState },
+		input: { ownerState }
+	};
+	const componentsProps = slotProps ?? componentsPropsProp ? deepmerge(filledInputComponentsProps, slotProps ?? componentsPropsProp) : filledInputComponentsProps;
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(InputBase, {
+		slots: {
+			root: slots.root ?? components.Root ?? FilledInputRoot,
+			input: slots.input ?? components.Input ?? FilledInputInput
+		},
+		slotProps: componentsProps,
+		fullWidth,
+		inputComponent,
+		multiline,
+		ref,
+		type,
+		...other,
+		classes
+	});
+});
+FilledInput.muiName = "Input";
+//#endregion
+//#region node_modules/@mui/material/esm/FormControl/formControlClasses.js
+function getFormControlUtilityClasses(slot) {
+	return generateUtilityClass("MuiFormControl", slot);
+}
+generateUtilityClasses("MuiFormControl", [
+	"root",
+	"marginNone",
+	"marginNormal",
+	"marginDense",
+	"fullWidth",
+	"disabled"
+]);
+//#endregion
+//#region node_modules/@mui/material/esm/FormControl/FormControl.js
+var useUtilityClasses$25 = (ownerState) => {
+	const { classes, margin, fullWidth } = ownerState;
+	return composeClasses({ root: [
+		"root",
+		margin !== "none" && `margin${capitalize_default(margin)}`,
+		fullWidth && "fullWidth"
+	] }, getFormControlUtilityClasses, classes);
+};
+var FormControlRoot = styled("div", {
+	name: "MuiFormControl",
+	slot: "Root",
+	overridesResolver: (props, styles) => {
+		const { ownerState } = props;
+		return [
+			styles.root,
+			styles[`margin${capitalize_default(ownerState.margin)}`],
+			ownerState.fullWidth && styles.fullWidth
+		];
+	}
+})({
+	display: "inline-flex",
+	flexDirection: "column",
+	position: "relative",
+	minWidth: 0,
+	padding: 0,
+	margin: 0,
+	border: 0,
+	verticalAlign: "top",
+	variants: [
+		{
+			props: { margin: "normal" },
+			style: {
+				marginTop: 16,
+				marginBottom: 8
+			}
+		},
+		{
+			props: { margin: "dense" },
+			style: {
+				marginTop: 8,
+				marginBottom: 4
+			}
+		},
+		{
+			props: { fullWidth: true },
+			style: { width: "100%" }
+		}
+	]
+});
+/**
+* Provides context such as filled/focused/error/required for form inputs.
+* Relying on the context provides high flexibility and ensures that the state always stays
+* consistent across the children of the `FormControl`.
+* This context is used by the following components:
+*
+*  - FormLabel
+*  - FormHelperText
+*  - Input
+*  - InputLabel
+*
+* You can find one composition example below and more going to [the demos](/material-ui/react-text-field/#components).
+*
+* ```jsx
+* <FormControl>
+*   <InputLabel htmlFor="my-input">Email address</InputLabel>
+*   <Input id="my-input" aria-describedby="my-helper-text" />
+*   <FormHelperText id="my-helper-text">We'll never share your email.</FormHelperText>
+* </FormControl>
+* ```
+*
+* ⚠️ Only one `InputBase` can be used within a FormControl because it creates visual inconsistencies.
+* For instance, only one input can be focused at the same time, the state shouldn't be shared.
+*/
+var FormControl = /* @__PURE__ */ import_react.forwardRef(function FormControl(inProps, ref) {
+	const props = useDefaultProps({
+		props: inProps,
+		name: "MuiFormControl"
+	});
+	const { children, className, color = "primary", component = "div", disabled = false, error = false, focused: visuallyFocused, fullWidth = false, hiddenLabel = false, margin = "none", required = false, size = "medium", variant = "outlined", ...other } = props;
+	const ownerState = {
+		...props,
+		color,
+		component,
+		disabled,
+		error,
+		fullWidth,
+		hiddenLabel,
+		margin,
+		required,
+		size,
+		variant
+	};
+	const classes = useUtilityClasses$25(ownerState);
+	const [adornedStart, setAdornedStart] = import_react.useState(() => {
+		let initialAdornedStart = false;
+		if (children) import_react.Children.forEach(children, (child) => {
+			if (!isMuiElement_default(child, ["Input", "Select"])) return;
+			const input = isMuiElement_default(child, ["Select"]) ? child.props.input : child;
+			if (input && isAdornedStart(input.props)) initialAdornedStart = true;
+		});
+		return initialAdornedStart;
+	});
+	const [filled, setFilled] = import_react.useState(() => {
+		let initialFilled = false;
+		if (children) import_react.Children.forEach(children, (child) => {
+			if (!isMuiElement_default(child, ["Input", "Select"])) return;
+			if (isFilled(child.props, true) || isFilled(child.props.inputProps, true)) initialFilled = true;
+		});
+		return initialFilled;
+	});
+	const [focusedState, setFocused] = import_react.useState(false);
+	if (disabled && focusedState) setFocused(false);
+	const focused = visuallyFocused !== void 0 && !disabled ? visuallyFocused : focusedState;
+	let registerEffect;
+	import_react.useRef(false);
+	const onFilled = import_react.useCallback(() => {
+		setFilled(true);
+	}, []);
+	const onEmpty = import_react.useCallback(() => {
+		setFilled(false);
+	}, []);
+	const childContext = import_react.useMemo(() => {
+		return {
+			adornedStart,
+			setAdornedStart,
+			color,
+			disabled,
+			error,
+			filled,
+			focused,
+			fullWidth,
+			hiddenLabel,
+			size,
+			onBlur: () => {
+				setFocused(false);
+			},
+			onFocus: () => {
+				setFocused(true);
+			},
+			onEmpty,
+			onFilled,
+			registerEffect,
+			required,
+			variant
+		};
+	}, [
+		adornedStart,
+		color,
+		disabled,
+		error,
+		filled,
+		focused,
+		fullWidth,
+		hiddenLabel,
+		registerEffect,
+		onEmpty,
+		onFilled,
+		required,
+		size,
+		variant
+	]);
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(FormControlContext.Provider, {
+		value: childContext,
+		children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(FormControlRoot, {
+			as: component,
+			ownerState,
+			className: clsx(classes.root, className),
+			ref,
+			...other,
+			children
+		})
+	});
+});
+//#endregion
+//#region node_modules/@mui/material/esm/FormControlLabel/formControlLabelClasses.js
+function getFormControlLabelUtilityClasses(slot) {
+	return generateUtilityClass("MuiFormControlLabel", slot);
+}
+var formControlLabelClasses = generateUtilityClasses("MuiFormControlLabel", [
+	"root",
+	"labelPlacementStart",
+	"labelPlacementTop",
+	"labelPlacementBottom",
+	"disabled",
+	"label",
+	"error",
+	"required",
+	"asterisk"
+]);
+//#endregion
+//#region node_modules/@mui/material/esm/FormControlLabel/FormControlLabel.js
+var useUtilityClasses$24 = (ownerState) => {
+	const { classes, disabled, labelPlacement, error, required } = ownerState;
+	return composeClasses({
+		root: [
+			"root",
+			disabled && "disabled",
+			`labelPlacement${capitalize_default(labelPlacement)}`,
+			error && "error",
+			required && "required"
+		],
+		label: ["label", disabled && "disabled"],
+		asterisk: ["asterisk", error && "error"]
+	}, getFormControlLabelUtilityClasses, classes);
+};
+var FormControlLabelRoot = styled("label", {
+	name: "MuiFormControlLabel",
+	slot: "Root",
+	overridesResolver: (props, styles) => {
+		const { ownerState } = props;
+		return [
+			{ [`& .${formControlLabelClasses.label}`]: styles.label },
+			styles.root,
+			styles[`labelPlacement${capitalize_default(ownerState.labelPlacement)}`]
+		];
+	}
+})(memoTheme(({ theme }) => ({
+	display: "inline-flex",
+	alignItems: "center",
+	cursor: "pointer",
+	verticalAlign: "middle",
+	WebkitTapHighlightColor: "transparent",
+	marginLeft: -11,
+	marginRight: 16,
+	[`&.${formControlLabelClasses.disabled}`]: { cursor: "default" },
+	[`& .${formControlLabelClasses.label}`]: { [`&.${formControlLabelClasses.disabled}`]: { color: (theme.vars || theme).palette.text.disabled } },
+	variants: [
+		{
+			props: { labelPlacement: "start" },
+			style: {
+				flexDirection: "row-reverse",
+				marginRight: -11
+			}
+		},
+		{
+			props: { labelPlacement: "top" },
+			style: { flexDirection: "column-reverse" }
+		},
+		{
+			props: { labelPlacement: "bottom" },
+			style: { flexDirection: "column" }
+		},
+		{
+			props: ({ labelPlacement }) => labelPlacement === "start" || labelPlacement === "top" || labelPlacement === "bottom",
+			style: { marginLeft: 16 }
+		}
+	]
+})));
+var AsteriskComponent$1 = styled("span", {
+	name: "MuiFormControlLabel",
+	slot: "Asterisk"
+})(memoTheme(({ theme }) => ({ [`&.${formControlLabelClasses.error}`]: { color: (theme.vars || theme).palette.error.main } })));
+/**
+* Drop-in replacement of the `Radio`, `Switch` and `Checkbox` component.
+* Use this component if you want to display an extra label.
+*/
+var FormControlLabel = /* @__PURE__ */ import_react.forwardRef(function FormControlLabel(inProps, ref) {
+	const props = useDefaultProps({
+		props: inProps,
+		name: "MuiFormControlLabel"
+	});
+	const { checked, className, componentsProps = {}, control, disabled: disabledProp, disableTypography, inputRef, label: labelProp, labelPlacement = "end", name, onChange, required: requiredProp, slots = {}, slotProps = {}, value, ...other } = props;
+	const muiFormControl = useFormControl();
+	const disabled = disabledProp ?? control.props.disabled ?? muiFormControl?.disabled;
+	const required = requiredProp ?? control.props.required;
+	const controlProps = {
+		disabled,
+		required
+	};
+	[
+		"checked",
+		"name",
+		"onChange",
+		"value",
+		"inputRef"
+	].forEach((key) => {
+		if (typeof control.props[key] === "undefined" && typeof props[key] !== "undefined") controlProps[key] = props[key];
+	});
+	const fcs = formControlState({
+		props,
+		muiFormControl,
+		states: ["error"]
+	});
+	const ownerState = {
+		...props,
+		disabled,
+		labelPlacement,
+		required,
+		error: fcs.error
+	};
+	const classes = useUtilityClasses$24(ownerState);
+	const [TypographySlot, typographySlotProps] = useSlot("typography", {
+		elementType: Typography,
+		externalForwardedProps: {
+			slots,
+			slotProps: {
+				...componentsProps,
+				...slotProps
+			}
+		},
+		ownerState
+	});
+	let label = labelProp;
+	if (label != null && label.type !== Typography && !disableTypography) label = /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TypographySlot, {
+		component: "span",
+		...typographySlotProps,
+		className: clsx(classes.label, typographySlotProps?.className),
+		children: label
+	});
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(FormControlLabelRoot, {
+		className: clsx(classes.root, className),
+		ownerState,
+		ref,
+		...other,
+		children: [/* @__PURE__ */ import_react.cloneElement(control, controlProps), required ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", { children: [label, /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(AsteriskComponent$1, {
+			ownerState,
+			"aria-hidden": true,
+			className: classes.asterisk,
+			children: [" ", "*"]
+		})] }) : label]
+	});
+});
+//#endregion
+//#region node_modules/@mui/material/esm/FormHelperText/formHelperTextClasses.js
+function getFormHelperTextUtilityClasses(slot) {
+	return generateUtilityClass("MuiFormHelperText", slot);
+}
+var formHelperTextClasses = generateUtilityClasses("MuiFormHelperText", [
+	"root",
+	"error",
+	"disabled",
+	"sizeSmall",
+	"sizeMedium",
+	"contained",
+	"focused",
+	"filled",
+	"required"
+]);
+//#endregion
+//#region node_modules/@mui/material/esm/FormHelperText/FormHelperText.js
+var _span$2;
+var useUtilityClasses$23 = (ownerState) => {
+	const { classes, contained, size, disabled, error, filled, focused, required } = ownerState;
+	return composeClasses({ root: [
+		"root",
+		disabled && "disabled",
+		error && "error",
+		size && `size${capitalize_default(size)}`,
+		contained && "contained",
+		focused && "focused",
+		filled && "filled",
+		required && "required"
+	] }, getFormHelperTextUtilityClasses, classes);
+};
+var FormHelperTextRoot = styled("p", {
+	name: "MuiFormHelperText",
+	slot: "Root",
+	overridesResolver: (props, styles) => {
+		const { ownerState } = props;
+		return [
+			styles.root,
+			ownerState.size && styles[`size${capitalize_default(ownerState.size)}`],
+			ownerState.contained && styles.contained,
+			ownerState.filled && styles.filled
+		];
+	}
+})(memoTheme(({ theme }) => ({
+	color: (theme.vars || theme).palette.text.secondary,
+	...theme.typography.caption,
+	textAlign: "left",
+	marginTop: 3,
+	marginRight: 0,
+	marginBottom: 0,
+	marginLeft: 0,
+	[`&.${formHelperTextClasses.disabled}`]: { color: (theme.vars || theme).palette.text.disabled },
+	[`&.${formHelperTextClasses.error}`]: { color: (theme.vars || theme).palette.error.main },
+	variants: [{
+		props: { size: "small" },
+		style: { marginTop: 4 }
+	}, {
+		props: ({ ownerState }) => ownerState.contained,
+		style: {
+			marginLeft: 14,
+			marginRight: 14
+		}
+	}]
+})));
+var FormHelperText = /* @__PURE__ */ import_react.forwardRef(function FormHelperText(inProps, ref) {
+	const props = useDefaultProps({
+		props: inProps,
+		name: "MuiFormHelperText"
+	});
+	const { children, className, component = "p", disabled, error, filled, focused, margin, required, variant, ...other } = props;
+	const fcs = formControlState({
+		props,
+		muiFormControl: useFormControl(),
+		states: [
+			"variant",
+			"size",
+			"disabled",
+			"error",
+			"filled",
+			"focused",
+			"required"
+		]
+	});
+	const ownerState = {
+		...props,
+		component,
+		contained: fcs.variant === "filled" || fcs.variant === "outlined",
+		variant: fcs.variant,
+		size: fcs.size,
+		disabled: fcs.disabled,
+		error: fcs.error,
+		filled: fcs.filled,
+		focused: fcs.focused,
+		required: fcs.required
+	};
+	delete ownerState.ownerState;
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(FormHelperTextRoot, {
+		as: component,
+		className: clsx(useUtilityClasses$23(ownerState).root, className),
+		ref,
+		...other,
+		ownerState,
+		children: children === " " ? _span$2 || (_span$2 = /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+			className: "notranslate",
+			"aria-hidden": true,
+			children: "​"
+		})) : children
+	});
+});
+//#endregion
+//#region node_modules/@mui/material/esm/FormLabel/formLabelClasses.js
+function getFormLabelUtilityClasses(slot) {
+	return generateUtilityClass("MuiFormLabel", slot);
+}
+var formLabelClasses = generateUtilityClasses("MuiFormLabel", [
+	"root",
+	"colorSecondary",
+	"focused",
+	"disabled",
+	"error",
+	"filled",
+	"required",
+	"asterisk"
+]);
+//#endregion
+//#region node_modules/@mui/material/esm/FormLabel/FormLabel.js
+var useUtilityClasses$22 = (ownerState) => {
+	const { classes, color, focused, disabled, error, filled, required } = ownerState;
+	return composeClasses({
+		root: [
+			"root",
+			`color${capitalize_default(color)}`,
+			disabled && "disabled",
+			error && "error",
+			filled && "filled",
+			focused && "focused",
+			required && "required"
+		],
+		asterisk: ["asterisk", error && "error"]
+	}, getFormLabelUtilityClasses, classes);
+};
+var FormLabelRoot = styled("label", {
+	name: "MuiFormLabel",
+	slot: "Root",
+	overridesResolver: (props, styles) => {
+		const { ownerState } = props;
+		return [
+			styles.root,
+			ownerState.color === "secondary" && styles.colorSecondary,
+			ownerState.filled && styles.filled
+		];
+	}
+})(memoTheme(({ theme }) => ({
+	color: (theme.vars || theme).palette.text.secondary,
+	...theme.typography.body1,
+	lineHeight: "1.4375em",
+	padding: 0,
+	position: "relative",
+	variants: [...Object.entries(theme.palette).filter(createSimplePaletteValueFilter()).map(([color]) => ({
+		props: { color },
+		style: { [`&.${formLabelClasses.focused}`]: { color: (theme.vars || theme).palette[color].main } }
+	})), {
+		props: {},
+		style: {
+			[`&.${formLabelClasses.disabled}`]: { color: (theme.vars || theme).palette.text.disabled },
+			[`&.${formLabelClasses.error}`]: { color: (theme.vars || theme).palette.error.main }
+		}
+	}]
+})));
+var AsteriskComponent = styled("span", {
+	name: "MuiFormLabel",
+	slot: "Asterisk"
+})(memoTheme(({ theme }) => ({ [`&.${formLabelClasses.error}`]: { color: (theme.vars || theme).palette.error.main } })));
+var FormLabel = /* @__PURE__ */ import_react.forwardRef(function FormLabel(inProps, ref) {
+	const props = useDefaultProps({
+		props: inProps,
+		name: "MuiFormLabel"
+	});
+	const { children, className, color, component = "label", disabled, error, filled, focused, required, ...other } = props;
+	const fcs = formControlState({
+		props,
+		muiFormControl: useFormControl(),
+		states: [
+			"color",
+			"required",
+			"focused",
+			"disabled",
+			"error",
+			"filled"
+		]
+	});
+	const ownerState = {
+		...props,
+		color: fcs.color || "primary",
+		component,
+		disabled: fcs.disabled,
+		error: fcs.error,
+		filled: fcs.filled,
+		focused: fcs.focused,
+		required: fcs.required
+	};
+	const classes = useUtilityClasses$22(ownerState);
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(FormLabelRoot, {
+		as: component,
+		ownerState,
+		className: clsx(classes.root, className),
+		ref,
+		...other,
+		children: [children, fcs.required && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(AsteriskComponent, {
+			ownerState,
+			"aria-hidden": true,
+			className: classes.asterisk,
+			children: [" ", "*"]
+		})]
 	});
 });
 //#endregion
@@ -26724,6 +29585,304 @@ var Grow = /* @__PURE__ */ import_react.forwardRef(function Grow(props, ref) {
 });
 if (Grow) Grow.muiSupportAuto = true;
 //#endregion
+//#region node_modules/@mui/material/esm/Input/Input.js
+var useUtilityClasses$21 = (ownerState) => {
+	const { classes, disableUnderline } = ownerState;
+	const composedClasses = composeClasses({
+		root: ["root", !disableUnderline && "underline"],
+		input: ["input"]
+	}, getInputUtilityClass, classes);
+	return {
+		...classes,
+		...composedClasses
+	};
+};
+var InputRoot = styled(InputBaseRoot, {
+	shouldForwardProp: (prop) => rootShouldForwardProp(prop) || prop === "classes",
+	name: "MuiInput",
+	slot: "Root",
+	overridesResolver: (props, styles) => {
+		const { ownerState } = props;
+		return [...rootOverridesResolver(props, styles), !ownerState.disableUnderline && styles.underline];
+	}
+})(memoTheme(({ theme }) => {
+	let bottomLineColor = theme.palette.mode === "light" ? "rgba(0, 0, 0, 0.42)" : "rgba(255, 255, 255, 0.7)";
+	if (theme.vars) bottomLineColor = theme.alpha(theme.vars.palette.common.onBackground, theme.vars.opacity.inputUnderline);
+	return {
+		position: "relative",
+		variants: [
+			{
+				props: ({ ownerState }) => ownerState.formControl,
+				style: { "label + &": { marginTop: 16 } }
+			},
+			{
+				props: ({ ownerState }) => !ownerState.disableUnderline,
+				style: {
+					"&::after": {
+						left: 0,
+						bottom: 0,
+						content: "\"\"",
+						position: "absolute",
+						right: 0,
+						transform: "scaleX(0)",
+						transition: theme.transitions.create("transform", {
+							duration: theme.transitions.duration.shorter,
+							easing: theme.transitions.easing.easeOut
+						}),
+						pointerEvents: "none"
+					},
+					[`&.${inputClasses.focused}:after`]: { transform: "scaleX(1) translateX(0)" },
+					[`&.${inputClasses.error}`]: { "&::before, &::after": { borderBottomColor: (theme.vars || theme).palette.error.main } },
+					"&::before": {
+						borderBottom: `1px solid ${bottomLineColor}`,
+						left: 0,
+						bottom: 0,
+						content: "\"\"",
+						position: "absolute",
+						right: 0,
+						transition: theme.transitions.create("border-bottom-color", { duration: theme.transitions.duration.shorter }),
+						pointerEvents: "none"
+					},
+					[`&:hover:not(.${inputClasses.disabled}, .${inputClasses.error}):before`]: {
+						borderBottom: `2px solid ${(theme.vars || theme).palette.text.primary}`,
+						"@media (hover: none)": { borderBottom: `1px solid ${bottomLineColor}` }
+					},
+					[`&.${inputClasses.disabled}:before`]: { borderBottomStyle: "dotted" }
+				}
+			},
+			...Object.entries(theme.palette).filter(createSimplePaletteValueFilter()).map(([color]) => ({
+				props: {
+					color,
+					disableUnderline: false
+				},
+				style: { "&::after": { borderBottom: `2px solid ${(theme.vars || theme).palette[color].main}` } }
+			}))
+		]
+	};
+}));
+var InputInput = styled(InputBaseInput, {
+	name: "MuiInput",
+	slot: "Input",
+	overridesResolver: inputOverridesResolver
+})({});
+var Input = /* @__PURE__ */ import_react.forwardRef(function Input(inProps, ref) {
+	const props = useDefaultProps({
+		props: inProps,
+		name: "MuiInput"
+	});
+	const { disableUnderline = false, components = {}, componentsProps: componentsPropsProp, fullWidth = false, inputComponent = "input", multiline = false, slotProps, slots = {}, type = "text", ...other } = props;
+	const classes = useUtilityClasses$21(props);
+	const inputComponentsProps = { root: { ownerState: { disableUnderline } } };
+	const componentsProps = slotProps ?? componentsPropsProp ? deepmerge(slotProps ?? componentsPropsProp, inputComponentsProps) : inputComponentsProps;
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(InputBase, {
+		slots: {
+			root: slots.root ?? components.Root ?? InputRoot,
+			input: slots.input ?? components.Input ?? InputInput
+		},
+		slotProps: componentsProps,
+		fullWidth,
+		inputComponent,
+		multiline,
+		ref,
+		type,
+		...other,
+		classes
+	});
+});
+Input.muiName = "Input";
+//#endregion
+//#region node_modules/@mui/material/esm/InputLabel/inputLabelClasses.js
+function getInputLabelUtilityClasses(slot) {
+	return generateUtilityClass("MuiInputLabel", slot);
+}
+generateUtilityClasses("MuiInputLabel", [
+	"root",
+	"focused",
+	"disabled",
+	"error",
+	"required",
+	"asterisk",
+	"formControl",
+	"sizeSmall",
+	"shrink",
+	"animated",
+	"standard",
+	"filled",
+	"outlined"
+]);
+//#endregion
+//#region node_modules/@mui/material/esm/InputLabel/InputLabel.js
+var useUtilityClasses$20 = (ownerState) => {
+	const { classes, formControl, size, shrink, disableAnimation, variant, required } = ownerState;
+	const composedClasses = composeClasses({
+		root: [
+			"root",
+			formControl && "formControl",
+			!disableAnimation && "animated",
+			shrink && "shrink",
+			size && size !== "medium" && `size${capitalize_default(size)}`,
+			variant
+		],
+		asterisk: [required && "asterisk"]
+	}, getInputLabelUtilityClasses, classes);
+	return {
+		...classes,
+		...composedClasses
+	};
+};
+var InputLabelRoot = styled(FormLabel, {
+	shouldForwardProp: (prop) => rootShouldForwardProp(prop) || prop === "classes",
+	name: "MuiInputLabel",
+	slot: "Root",
+	overridesResolver: (props, styles) => {
+		const { ownerState } = props;
+		return [
+			{ [`& .${formLabelClasses.asterisk}`]: styles.asterisk },
+			styles.root,
+			ownerState.formControl && styles.formControl,
+			ownerState.size === "small" && styles.sizeSmall,
+			ownerState.shrink && styles.shrink,
+			!ownerState.disableAnimation && styles.animated,
+			ownerState.focused && styles.focused,
+			styles[ownerState.variant]
+		];
+	}
+})(memoTheme(({ theme }) => ({
+	display: "block",
+	transformOrigin: "top left",
+	whiteSpace: "nowrap",
+	overflow: "hidden",
+	textOverflow: "ellipsis",
+	maxWidth: "100%",
+	variants: [
+		{
+			props: ({ ownerState }) => ownerState.formControl,
+			style: {
+				position: "absolute",
+				left: 0,
+				top: 0,
+				transform: "translate(0, 20px) scale(1)"
+			}
+		},
+		{
+			props: { size: "small" },
+			style: { transform: "translate(0, 17px) scale(1)" }
+		},
+		{
+			props: ({ ownerState }) => ownerState.shrink,
+			style: {
+				transform: "translate(0, -1.5px) scale(0.75)",
+				transformOrigin: "top left",
+				maxWidth: "133%"
+			}
+		},
+		{
+			props: ({ ownerState }) => !ownerState.disableAnimation,
+			style: { transition: theme.transitions.create([
+				"color",
+				"transform",
+				"max-width"
+			], {
+				duration: theme.transitions.duration.shorter,
+				easing: theme.transitions.easing.easeOut
+			}) }
+		},
+		{
+			props: { variant: "filled" },
+			style: {
+				zIndex: 1,
+				pointerEvents: "none",
+				transform: "translate(12px, 16px) scale(1)",
+				maxWidth: "calc(100% - 24px)"
+			}
+		},
+		{
+			props: {
+				variant: "filled",
+				size: "small"
+			},
+			style: { transform: "translate(12px, 13px) scale(1)" }
+		},
+		{
+			props: ({ variant, ownerState }) => variant === "filled" && ownerState.shrink,
+			style: {
+				userSelect: "none",
+				pointerEvents: "auto",
+				transform: "translate(12px, 7px) scale(0.75)",
+				maxWidth: "calc(133% - 24px)"
+			}
+		},
+		{
+			props: ({ variant, ownerState, size }) => variant === "filled" && ownerState.shrink && size === "small",
+			style: { transform: "translate(12px, 4px) scale(0.75)" }
+		},
+		{
+			props: { variant: "outlined" },
+			style: {
+				zIndex: 1,
+				pointerEvents: "none",
+				transform: "translate(14px, 16px) scale(1)",
+				maxWidth: "calc(100% - 24px)"
+			}
+		},
+		{
+			props: {
+				variant: "outlined",
+				size: "small"
+			},
+			style: { transform: "translate(14px, 9px) scale(1)" }
+		},
+		{
+			props: ({ variant, ownerState }) => variant === "outlined" && ownerState.shrink,
+			style: {
+				userSelect: "none",
+				pointerEvents: "auto",
+				maxWidth: "calc(133% - 32px)",
+				transform: "translate(14px, -9px) scale(0.75)"
+			}
+		}
+	]
+})));
+var InputLabel = /* @__PURE__ */ import_react.forwardRef(function InputLabel(inProps, ref) {
+	const props = useDefaultProps({
+		name: "MuiInputLabel",
+		props: inProps
+	});
+	const { disableAnimation = false, margin, shrink: shrinkProp, variant, className, ...other } = props;
+	const muiFormControl = useFormControl();
+	let shrink = shrinkProp;
+	if (typeof shrink === "undefined" && muiFormControl) shrink = muiFormControl.filled || muiFormControl.focused || muiFormControl.adornedStart;
+	const fcs = formControlState({
+		props,
+		muiFormControl,
+		states: [
+			"size",
+			"variant",
+			"required",
+			"focused"
+		]
+	});
+	const ownerState = {
+		...props,
+		disableAnimation,
+		formControl: muiFormControl,
+		shrink,
+		size: fcs.size,
+		variant: fcs.variant,
+		required: fcs.required,
+		focused: fcs.focused
+	};
+	const classes = useUtilityClasses$20(ownerState);
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(InputLabelRoot, {
+		"data-shrink": shrink,
+		ref,
+		className: clsx(classes.root, className),
+		...other,
+		ownerState,
+		classes
+	});
+});
+//#endregion
 //#region node_modules/@mui/material/esm/List/ListContext.js
 /**
 * @ignore - internal component.
@@ -26742,7 +29901,7 @@ generateUtilityClasses("MuiList", [
 ]);
 //#endregion
 //#region node_modules/@mui/material/esm/List/List.js
-var useUtilityClasses$9 = (ownerState) => {
+var useUtilityClasses$19 = (ownerState) => {
 	const { classes, disablePadding, dense, subheader } = ownerState;
 	return composeClasses({ root: [
 		"root",
@@ -26792,7 +29951,7 @@ var List = /* @__PURE__ */ import_react.forwardRef(function List(inProps, ref) {
 		dense,
 		disablePadding
 	};
-	const classes = useUtilityClasses$9(ownerState);
+	const classes = useUtilityClasses$19(ownerState);
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ListContext.Provider, {
 		value: context,
 		children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(ListRoot, {
@@ -26832,7 +29991,7 @@ var overridesResolver$1 = (props, styles) => {
 		!ownerState.disableGutters && styles.gutters
 	];
 };
-var useUtilityClasses$8 = (ownerState) => {
+var useUtilityClasses$18 = (ownerState) => {
 	const { alignItems, classes, dense, disabled, disableGutters, divider, selected } = ownerState;
 	const composedClasses = composeClasses({ root: [
 		"root",
@@ -26940,7 +30099,7 @@ var ListItemButton = /* @__PURE__ */ import_react.forwardRef(function ListItemBu
 		divider,
 		selected
 	};
-	const classes = useUtilityClasses$8(ownerState);
+	const classes = useUtilityClasses$18(ownerState);
 	const handleRef = useForkRef_default(listItemRef, ref);
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ListContext.Provider, {
 		value: childContext,
@@ -26965,7 +30124,7 @@ function getListItemIconUtilityClass(slot) {
 var listItemIconClasses = generateUtilityClasses("MuiListItemIcon", ["root", "alignItemsFlexStart"]);
 //#endregion
 //#region node_modules/@mui/material/esm/ListItemIcon/ListItemIcon.js
-var useUtilityClasses$7 = (ownerState) => {
+var useUtilityClasses$17 = (ownerState) => {
 	const { alignItems, classes } = ownerState;
 	return composeClasses({ root: ["root", alignItems === "flex-start" && "alignItemsFlexStart"] }, getListItemIconUtilityClass, classes);
 };
@@ -27001,7 +30160,7 @@ var ListItemIcon = /* @__PURE__ */ import_react.forwardRef(function ListItemIcon
 		alignItems: context.alignItems
 	};
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ListItemIconRoot, {
-		className: clsx(useUtilityClasses$7(ownerState).root, className),
+		className: clsx(useUtilityClasses$17(ownerState).root, className),
 		ownerState,
 		ref,
 		...other
@@ -27022,7 +30181,7 @@ var listItemTextClasses = generateUtilityClasses("MuiListItemText", [
 ]);
 //#endregion
 //#region node_modules/@mui/material/esm/ListItemText/ListItemText.js
-var useUtilityClasses$6 = (ownerState) => {
+var useUtilityClasses$16 = (ownerState) => {
 	const { classes, inset, primary, secondary, dense } = ownerState;
 	return composeClasses({
 		root: [
@@ -27084,7 +30243,7 @@ var ListItemText = /* @__PURE__ */ import_react.forwardRef(function ListItemText
 		secondary: !!secondary,
 		dense
 	};
-	const classes = useUtilityClasses$6(ownerState);
+	const classes = useUtilityClasses$16(ownerState);
 	const externalForwardedProps = {
 		slots,
 		slotProps: {
@@ -27316,7 +30475,7 @@ function getTransformOriginValue(transformOrigin) {
 function resolveAnchorEl(anchorEl) {
 	return typeof anchorEl === "function" ? anchorEl() : anchorEl;
 }
-var useUtilityClasses$5 = (ownerState) => {
+var useUtilityClasses$15 = (ownerState) => {
 	const { classes } = ownerState;
 	return composeClasses({
 		root: ["root"],
@@ -27364,7 +30523,7 @@ var Popover = /* @__PURE__ */ import_react.forwardRef(function Popover(inProps, 
 		transitionDuration: transitionDurationProp,
 		TransitionProps
 	};
-	const classes = useUtilityClasses$5(ownerState);
+	const classes = useUtilityClasses$15(ownerState);
 	const getAnchorOffset = import_react.useCallback(() => {
 		if (anchorReference === "anchorPosition") return anchorPosition;
 		const resolvedAnchorEl = resolveAnchorEl(anchorEl);
@@ -27581,7 +30740,7 @@ var LTR_ORIGIN = {
 	vertical: "top",
 	horizontal: "left"
 };
-var useUtilityClasses$4 = (ownerState) => {
+var useUtilityClasses$14 = (ownerState) => {
 	const { classes } = ownerState;
 	return composeClasses({
 		root: ["root"],
@@ -27623,7 +30782,7 @@ var Menu$1 = /* @__PURE__ */ import_react.forwardRef(function Menu(inProps, ref)
 		TransitionProps,
 		variant
 	};
-	const classes = useUtilityClasses$4(ownerState);
+	const classes = useUtilityClasses$14(ownerState);
 	const autoFocusItem = autoFocus && !disableAutoFocusItem && open;
 	const menuListActionsRef = import_react.useRef(null);
 	const handleEntering = (element, isAppearing) => {
@@ -27742,12 +30901,933 @@ var menuItemClasses = generateUtilityClasses("MuiMenuItem", [
 	"selected"
 ]);
 //#endregion
+//#region node_modules/@mui/material/esm/NativeSelect/nativeSelectClasses.js
+function getNativeSelectUtilityClasses(slot) {
+	return generateUtilityClass("MuiNativeSelect", slot);
+}
+var nativeSelectClasses = generateUtilityClasses("MuiNativeSelect", [
+	"root",
+	"select",
+	"multiple",
+	"filled",
+	"outlined",
+	"standard",
+	"disabled",
+	"icon",
+	"iconOpen",
+	"iconFilled",
+	"iconOutlined",
+	"iconStandard",
+	"nativeInput",
+	"error"
+]);
+//#endregion
+//#region node_modules/@mui/material/esm/NativeSelect/NativeSelectInput.js
+var useUtilityClasses$13 = (ownerState) => {
+	const { classes, variant, disabled, multiple, open, error } = ownerState;
+	return composeClasses({
+		select: [
+			"select",
+			variant,
+			disabled && "disabled",
+			multiple && "multiple",
+			error && "error"
+		],
+		icon: [
+			"icon",
+			`icon${capitalize_default(variant)}`,
+			open && "iconOpen",
+			disabled && "disabled"
+		]
+	}, getNativeSelectUtilityClasses, classes);
+};
+var StyledSelectSelect = styled("select", { name: "MuiNativeSelect" })(({ theme }) => ({
+	MozAppearance: "none",
+	WebkitAppearance: "none",
+	userSelect: "none",
+	borderRadius: 0,
+	cursor: "pointer",
+	"&:focus": { borderRadius: 0 },
+	[`&.${nativeSelectClasses.disabled}`]: { cursor: "default" },
+	"&[multiple]": { height: "auto" },
+	"&:not([multiple]) option, &:not([multiple]) optgroup": { backgroundColor: (theme.vars || theme).palette.background.paper },
+	variants: [
+		{
+			props: ({ ownerState }) => ownerState.variant !== "filled" && ownerState.variant !== "outlined",
+			style: { "&&&": {
+				paddingRight: 24,
+				minWidth: 16
+			} }
+		},
+		{
+			props: { variant: "filled" },
+			style: { "&&&": { paddingRight: 32 } }
+		},
+		{
+			props: { variant: "outlined" },
+			style: {
+				borderRadius: (theme.vars || theme).shape.borderRadius,
+				"&:focus": { borderRadius: (theme.vars || theme).shape.borderRadius },
+				"&&&": { paddingRight: 32 }
+			}
+		}
+	]
+}));
+var NativeSelectSelect = styled(StyledSelectSelect, {
+	name: "MuiNativeSelect",
+	slot: "Select",
+	shouldForwardProp: rootShouldForwardProp,
+	overridesResolver: (props, styles) => {
+		const { ownerState } = props;
+		return [
+			styles.select,
+			styles[ownerState.variant],
+			ownerState.error && styles.error,
+			{ [`&.${nativeSelectClasses.multiple}`]: styles.multiple }
+		];
+	}
+})({});
+var StyledSelectIcon = styled("svg", { name: "MuiNativeSelect" })(({ theme }) => ({
+	position: "absolute",
+	right: 0,
+	top: "calc(50% - .5em)",
+	pointerEvents: "none",
+	color: (theme.vars || theme).palette.action.active,
+	[`&.${nativeSelectClasses.disabled}`]: { color: (theme.vars || theme).palette.action.disabled },
+	variants: [
+		{
+			props: ({ ownerState }) => ownerState.open,
+			style: { transform: "rotate(180deg)" }
+		},
+		{
+			props: { variant: "filled" },
+			style: { right: 7 }
+		},
+		{
+			props: { variant: "outlined" },
+			style: { right: 7 }
+		}
+	]
+}));
+var NativeSelectIcon = styled(StyledSelectIcon, {
+	name: "MuiNativeSelect",
+	slot: "Icon",
+	overridesResolver: (props, styles) => {
+		const { ownerState } = props;
+		return [
+			styles.icon,
+			ownerState.variant && styles[`icon${capitalize_default(ownerState.variant)}`],
+			ownerState.open && styles.iconOpen
+		];
+	}
+})({});
+/**
+* @ignore - internal component.
+*/
+var NativeSelectInput = /* @__PURE__ */ import_react.forwardRef(function NativeSelectInput(props, ref) {
+	const { className, disabled, error, IconComponent, inputRef, variant = "standard", ...other } = props;
+	const ownerState = {
+		...props,
+		disabled,
+		variant,
+		error
+	};
+	const classes = useUtilityClasses$13(ownerState);
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_react.Fragment, { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(NativeSelectSelect, {
+		ownerState,
+		className: clsx(classes.select, className),
+		disabled,
+		ref: inputRef || ref,
+		...other
+	}), props.multiple ? null : /* @__PURE__ */ (0, import_jsx_runtime.jsx)(NativeSelectIcon, {
+		as: IconComponent,
+		ownerState,
+		className: classes.icon
+	})] });
+});
+//#endregion
+//#region node_modules/@mui/material/esm/Select/selectClasses.js
+function getSelectUtilityClasses(slot) {
+	return generateUtilityClass("MuiSelect", slot);
+}
+var selectClasses = generateUtilityClasses("MuiSelect", [
+	"root",
+	"select",
+	"multiple",
+	"filled",
+	"outlined",
+	"standard",
+	"disabled",
+	"focused",
+	"icon",
+	"iconOpen",
+	"iconFilled",
+	"iconOutlined",
+	"iconStandard",
+	"nativeInput",
+	"error"
+]);
+//#endregion
+//#region node_modules/@mui/material/esm/Select/utils/getOpenInteractionType.js
+function getOpenInteractionType(event) {
+	if (!event) return null;
+	if (event.type === "mousedown" || event.type === "pointerdown" || event.type === "touchstart") return "pointer";
+	if (event.type === "keydown" || event.type === "click" && event.detail === 0) return "keyboard";
+	return null;
+}
+//#endregion
+//#region node_modules/@mui/material/esm/Select/utils/isEmpty.js
+function isEmpty(display) {
+	return display == null || typeof display === "string" && !display.trim();
+}
+//#endregion
+//#region node_modules/@mui/material/esm/Select/utils/areEqualValues.js
+function areEqualValues(a, b) {
+	if (typeof b === "object" && b !== null) return a === b;
+	return String(a) === String(b);
+}
+//#endregion
 //#region node_modules/@mui/material/esm/Select/utils/SelectFocusSourceContext.js
 var SelectFocusSourceContext = /* @__PURE__ */ import_react.createContext(null);
 function useSelectFocusSource() {
 	return import_react.useContext(SelectFocusSourceContext);
 }
-SelectFocusSourceContext.Provider;
+var SelectFocusSourceProvider = SelectFocusSourceContext.Provider;
+//#endregion
+//#region node_modules/@mui/material/esm/Select/SelectInput.js
+var _span$1;
+var SelectSelect = styled(StyledSelectSelect, {
+	name: "MuiSelect",
+	slot: "Select",
+	overridesResolver: (props, styles) => {
+		const { ownerState } = props;
+		return [
+			{ [`&.${selectClasses.select}`]: styles.select },
+			{ [`&.${selectClasses.select}`]: styles[ownerState.variant] },
+			{ [`&.${selectClasses.error}`]: styles.error },
+			{ [`&.${selectClasses.multiple}`]: styles.multiple }
+		];
+	}
+})({ [`&.${selectClasses.select}`]: {
+	height: "auto",
+	minHeight: "1.4375em",
+	textOverflow: "ellipsis",
+	whiteSpace: "nowrap",
+	overflow: "hidden"
+} });
+var SelectIcon = styled(StyledSelectIcon, {
+	name: "MuiSelect",
+	slot: "Icon",
+	overridesResolver: (props, styles) => {
+		const { ownerState } = props;
+		return [
+			styles.icon,
+			ownerState.variant && styles[`icon${capitalize_default(ownerState.variant)}`],
+			ownerState.open && styles.iconOpen
+		];
+	}
+})({});
+var SelectNativeInput = styled("input", {
+	shouldForwardProp: (prop) => slotShouldForwardProp(prop) && prop !== "classes",
+	name: "MuiSelect",
+	slot: "NativeInput"
+})({
+	bottom: 0,
+	left: 0,
+	position: "absolute",
+	opacity: 0,
+	pointerEvents: "none",
+	width: "100%",
+	boxSizing: "border-box"
+});
+var useUtilityClasses$12 = (ownerState) => {
+	const { classes, variant, disabled, multiple, open, error } = ownerState;
+	return composeClasses({
+		select: [
+			"select",
+			variant,
+			disabled && "disabled",
+			multiple && "multiple",
+			error && "error"
+		],
+		icon: [
+			"icon",
+			`icon${capitalize_default(variant)}`,
+			open && "iconOpen",
+			disabled && "disabled"
+		],
+		nativeInput: ["nativeInput"]
+	}, getSelectUtilityClasses, classes);
+};
+/**
+* @ignore - internal component.
+*/
+var SelectInput = /* @__PURE__ */ import_react.forwardRef(function SelectInput(props, ref) {
+	const { "aria-describedby": ariaDescribedby, "aria-label": ariaLabel, autoFocus, autoWidth, children, className, defaultOpen, defaultValue, disabled, displayEmpty, error = false, IconComponent, inputRef: inputRefProp, labelId, MenuProps = {}, multiple, name, onBlur, onChange, onClose, onFocus, onKeyDown, onMouseDown, onOpen, open: openProp, readOnly, renderValue, required, SelectDisplayProps = {}, tabIndex: tabIndexProp, type, value: valueProp, variant = "standard", ...other } = props;
+	const [value, setValueState] = useControlled_default({
+		controlled: valueProp,
+		default: defaultValue,
+		name: "Select"
+	});
+	const [openState, setOpenState] = useControlled_default({
+		controlled: openProp,
+		default: defaultOpen,
+		name: "Select"
+	});
+	const inputRef = import_react.useRef(null);
+	const displayRef = import_react.useRef(null);
+	const [displayNode, setDisplayNode] = import_react.useState(null);
+	const { current: isOpenControlled } = import_react.useRef(openProp != null);
+	const [menuMinWidthState, setMenuMinWidthState] = import_react.useState();
+	const [openInteractionType, setOpenInteractionType] = import_react.useState(null);
+	const handleRef = useForkRef_default(ref, inputRefProp);
+	const handleDisplayRef = import_react.useCallback((node) => {
+		displayRef.current = node;
+		if (node) setDisplayNode(node);
+	}, []);
+	const anchorElement = displayNode?.parentNode;
+	import_react.useImperativeHandle(handleRef, () => ({
+		focus: () => {
+			displayRef.current.focus();
+		},
+		node: inputRef.current,
+		value
+	}), [value]);
+	const open = displayNode !== null && openState;
+	import_react.useEffect(() => {
+		if (!open || !anchorElement || autoWidth) return;
+		if (typeof ResizeObserver === "undefined") return;
+		const observer = new ResizeObserver(() => {
+			setMenuMinWidthState(anchorElement.clientWidth);
+		});
+		observer.observe(anchorElement);
+		return () => {
+			observer.disconnect();
+		};
+	}, [
+		open,
+		anchorElement,
+		autoWidth
+	]);
+	import_react.useEffect(() => {
+		if (defaultOpen && openState && displayNode && !isOpenControlled) {
+			setMenuMinWidthState(autoWidth ? null : anchorElement.clientWidth);
+			displayRef.current.focus();
+		}
+	}, [displayNode, autoWidth]);
+	import_react.useEffect(() => {
+		if (autoFocus) displayRef.current.focus();
+	}, [autoFocus]);
+	import_react.useEffect(() => {
+		if (!labelId) return;
+		const label = ownerDocument_default(displayRef.current).getElementById(labelId);
+		if (label) {
+			const handler = () => {
+				if (getSelection().isCollapsed) displayRef.current.focus();
+			};
+			label.addEventListener("click", handler);
+			return () => {
+				label.removeEventListener("click", handler);
+			};
+		}
+	}, [labelId]);
+	const update = (openParam, event) => {
+		if (openParam) {
+			setOpenInteractionType(getOpenInteractionType(event));
+			if (onOpen) onOpen(event);
+		} else {
+			setOpenInteractionType(null);
+			if (onClose) onClose(event);
+		}
+		if (!isOpenControlled) {
+			setMenuMinWidthState(autoWidth ? null : anchorElement.clientWidth);
+			setOpenState(openParam);
+		}
+	};
+	const handleMouseDown = (event) => {
+		onMouseDown?.(event);
+		if (event.button !== 0) return;
+		event.preventDefault();
+		displayRef.current.focus();
+		update(true, event);
+	};
+	const handleClose = (event) => {
+		update(false, event);
+	};
+	const childrenArray = import_react.Children.toArray(children);
+	const handleChange = (event) => {
+		const child = childrenArray.find((childItem) => childItem.props.value === event.target.value);
+		if (child === void 0) return;
+		setValueState(child.props.value);
+		if (onChange) onChange(event, child);
+	};
+	const handleItemClick = (child) => (event) => {
+		let newValue;
+		if (!event.currentTarget.hasAttribute("tabindex")) return;
+		if (multiple) {
+			newValue = Array.isArray(value) ? value.slice() : [];
+			const itemIndex = value.indexOf(child.props.value);
+			if (itemIndex === -1) newValue.push(child.props.value);
+			else newValue.splice(itemIndex, 1);
+		} else newValue = child.props.value;
+		if (child.props.onClick) child.props.onClick(event);
+		if (value !== newValue) {
+			setValueState(newValue);
+			if (onChange) {
+				const nativeEvent = event.nativeEvent || event;
+				const clonedEvent = new nativeEvent.constructor(nativeEvent.type, nativeEvent);
+				Object.defineProperty(clonedEvent, "target", {
+					writable: true,
+					value: {
+						value: newValue,
+						name
+					}
+				});
+				onChange(clonedEvent, child);
+			}
+		}
+		if (!multiple) update(false, event);
+	};
+	const handleKeyDown = (event) => {
+		if (!readOnly) {
+			if ([
+				" ",
+				"ArrowUp",
+				"ArrowDown",
+				"Enter"
+			].includes(event.key)) {
+				event.preventDefault();
+				update(true, event);
+			}
+			onKeyDown?.(event);
+		}
+	};
+	const handleBlur = (event) => {
+		if (!open && onBlur) {
+			Object.defineProperty(event, "target", {
+				writable: true,
+				value: {
+					value,
+					name
+				}
+			});
+			onBlur(event);
+		}
+	};
+	delete other["aria-invalid"];
+	let display;
+	let displaySingle;
+	const displayMultiple = [];
+	let computeDisplay = false;
+	if (isFilled({ value }) || displayEmpty) if (renderValue) display = renderValue(value);
+	else computeDisplay = true;
+	const items = childrenArray.map((child) => {
+		if (!/* @__PURE__ */ import_react.isValidElement(child)) return null;
+		let selected;
+		if (multiple) {
+			if (!Array.isArray(value)) throw new Error(formatMuiErrorMessage(2));
+			selected = value.some((v) => areEqualValues(v, child.props.value));
+			if (selected && computeDisplay) displayMultiple.push(child.props.children);
+		} else {
+			selected = areEqualValues(value, child.props.value);
+			if (selected && computeDisplay) displaySingle = child.props.children;
+		}
+		if (selected);
+		return /* @__PURE__ */ import_react.cloneElement(child, {
+			"aria-selected": selected ? "true" : "false",
+			onClick: handleItemClick(child),
+			onKeyUp: (event) => {
+				if (event.key === " ") event.preventDefault();
+				if (child.props.onKeyUp) child.props.onKeyUp(event);
+			},
+			role: "option",
+			selected,
+			value: void 0,
+			"data-value": child.props.value
+		});
+	});
+	if (computeDisplay) if (multiple) if (displayMultiple.length === 0) display = null;
+	else display = displayMultiple.reduce((output, child, index) => {
+		output.push(child);
+		if (index < displayMultiple.length - 1) output.push(", ");
+		return output;
+	}, []);
+	else display = displaySingle;
+	let menuMinWidth = menuMinWidthState;
+	if (!autoWidth && isOpenControlled && displayNode) menuMinWidth = anchorElement.clientWidth;
+	let tabIndex;
+	if (typeof tabIndexProp !== "undefined") tabIndex = tabIndexProp;
+	else tabIndex = disabled ? null : 0;
+	const buttonId = SelectDisplayProps.id || (name ? `mui-component-select-${name}` : void 0);
+	const ownerState = {
+		...props,
+		variant,
+		value,
+		open,
+		error
+	};
+	const classes = useUtilityClasses$12(ownerState);
+	const paperProps = {
+		...MenuProps.PaperProps,
+		...typeof MenuProps.slotProps?.paper === "function" ? MenuProps.slotProps.paper(ownerState) : MenuProps.slotProps?.paper
+	};
+	const listProps = {
+		...MenuProps.MenuListProps,
+		...typeof MenuProps.slotProps?.list === "function" ? MenuProps.slotProps.list(ownerState) : MenuProps.slotProps?.list
+	};
+	const listboxId = useId();
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_react.Fragment, { children: [
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)(SelectSelect, {
+			as: "div",
+			ref: handleDisplayRef,
+			tabIndex,
+			role: "combobox",
+			"aria-controls": open ? listboxId : void 0,
+			"aria-disabled": disabled ? "true" : void 0,
+			"aria-expanded": open ? "true" : "false",
+			"aria-haspopup": "listbox",
+			"aria-label": ariaLabel,
+			"aria-labelledby": [labelId, buttonId].filter(Boolean).join(" ") || void 0,
+			"aria-describedby": ariaDescribedby,
+			"aria-required": required ? "true" : void 0,
+			"aria-invalid": error ? "true" : void 0,
+			onKeyDown: handleKeyDown,
+			onMouseDown: disabled || readOnly ? null : handleMouseDown,
+			onBlur: handleBlur,
+			onFocus,
+			...SelectDisplayProps,
+			ownerState,
+			className: clsx(SelectDisplayProps.className, classes.select, className),
+			id: buttonId,
+			children: isEmpty(display) ? _span$1 || (_span$1 = /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+				className: "notranslate",
+				"aria-hidden": true,
+				children: "​"
+			})) : display
+		}),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)(SelectNativeInput, {
+			"aria-invalid": error,
+			value: Array.isArray(value) ? value.join(",") : value,
+			name,
+			ref: inputRef,
+			"aria-hidden": true,
+			onChange: handleChange,
+			tabIndex: -1,
+			disabled,
+			className: classes.nativeInput,
+			autoFocus,
+			required,
+			...other,
+			ownerState
+		}),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)(SelectIcon, {
+			as: IconComponent,
+			className: classes.icon,
+			ownerState
+		}),
+		/* @__PURE__ */ (0, import_jsx_runtime.jsx)(SelectFocusSourceProvider, {
+			value: openInteractionType,
+			children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Menu$1, {
+				id: `menu-${name || ""}`,
+				anchorEl: anchorElement,
+				open,
+				onClose: handleClose,
+				anchorOrigin: {
+					vertical: "bottom",
+					horizontal: "center"
+				},
+				transformOrigin: {
+					vertical: "top",
+					horizontal: "center"
+				},
+				...MenuProps,
+				slotProps: {
+					...MenuProps.slotProps,
+					list: {
+						"aria-labelledby": labelId,
+						role: "listbox",
+						"aria-multiselectable": multiple ? "true" : void 0,
+						disableListWrap: true,
+						id: listboxId,
+						...listProps
+					},
+					paper: {
+						...paperProps,
+						style: {
+							minWidth: menuMinWidth,
+							...paperProps != null ? paperProps.style : null
+						}
+					}
+				},
+				children: items
+			})
+		})
+	] });
+});
+//#endregion
+//#region node_modules/@mui/material/esm/OutlinedInput/NotchedOutline.js
+var _span;
+var NotchedOutlineRoot$1 = styled("fieldset", {
+	name: "MuiNotchedOutlined",
+	shouldForwardProp: rootShouldForwardProp
+})({
+	textAlign: "left",
+	position: "absolute",
+	bottom: 0,
+	right: 0,
+	top: -5,
+	left: 0,
+	margin: 0,
+	padding: "0 8px",
+	pointerEvents: "none",
+	borderRadius: "inherit",
+	borderStyle: "solid",
+	borderWidth: 1,
+	overflow: "hidden",
+	minWidth: "0%"
+});
+var NotchedOutlineLegend = styled("legend", {
+	name: "MuiNotchedOutlined",
+	shouldForwardProp: rootShouldForwardProp
+})(memoTheme(({ theme }) => ({
+	float: "unset",
+	width: "auto",
+	overflow: "hidden",
+	variants: [
+		{
+			props: ({ ownerState }) => !ownerState.withLabel,
+			style: {
+				padding: 0,
+				lineHeight: "11px",
+				transition: theme.transitions.create("width", {
+					duration: 150,
+					easing: theme.transitions.easing.easeOut
+				})
+			}
+		},
+		{
+			props: ({ ownerState }) => ownerState.withLabel,
+			style: {
+				display: "block",
+				padding: 0,
+				height: 11,
+				fontSize: "0.75em",
+				visibility: "hidden",
+				maxWidth: .01,
+				transition: theme.transitions.create("max-width", {
+					duration: 50,
+					easing: theme.transitions.easing.easeOut
+				}),
+				whiteSpace: "nowrap",
+				"& > span": {
+					paddingLeft: 5,
+					paddingRight: 5,
+					display: "inline-block",
+					opacity: 0,
+					visibility: "visible"
+				}
+			}
+		},
+		{
+			props: ({ ownerState }) => ownerState.withLabel && ownerState.notched,
+			style: {
+				maxWidth: "100%",
+				transition: theme.transitions.create("max-width", {
+					duration: 100,
+					easing: theme.transitions.easing.easeOut,
+					delay: 50
+				})
+			}
+		}
+	]
+})));
+/**
+* @ignore - internal component.
+*/
+function NotchedOutline(props) {
+	const { children, classes, className, label, notched, ...other } = props;
+	const withLabel = label != null && label !== "";
+	const ownerState = {
+		...props,
+		notched,
+		withLabel
+	};
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(NotchedOutlineRoot$1, {
+		"aria-hidden": true,
+		className,
+		ownerState,
+		...other,
+		children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(NotchedOutlineLegend, {
+			ownerState,
+			children: withLabel ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: label }) : _span || (_span = /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+				className: "notranslate",
+				"aria-hidden": true,
+				children: "​"
+			}))
+		})
+	});
+}
+//#endregion
+//#region node_modules/@mui/material/esm/OutlinedInput/OutlinedInput.js
+var useUtilityClasses$11 = (ownerState) => {
+	const { classes } = ownerState;
+	const composedClasses = composeClasses({
+		root: ["root"],
+		notchedOutline: ["notchedOutline"],
+		input: ["input"]
+	}, getOutlinedInputUtilityClass, classes);
+	return {
+		...classes,
+		...composedClasses
+	};
+};
+var OutlinedInputRoot = styled(InputBaseRoot, {
+	shouldForwardProp: (prop) => rootShouldForwardProp(prop) || prop === "classes",
+	name: "MuiOutlinedInput",
+	slot: "Root",
+	overridesResolver: rootOverridesResolver
+})(memoTheme(({ theme }) => {
+	const borderColor = theme.palette.mode === "light" ? "rgba(0, 0, 0, 0.23)" : "rgba(255, 255, 255, 0.23)";
+	return {
+		position: "relative",
+		borderRadius: (theme.vars || theme).shape.borderRadius,
+		[`&:hover .${outlinedInputClasses.notchedOutline}`]: { borderColor: (theme.vars || theme).palette.text.primary },
+		"@media (hover: none)": { [`&:hover .${outlinedInputClasses.notchedOutline}`]: { borderColor: theme.vars ? theme.alpha(theme.vars.palette.common.onBackground, .23) : borderColor } },
+		[`&.${outlinedInputClasses.focused} .${outlinedInputClasses.notchedOutline}`]: { borderWidth: 2 },
+		variants: [
+			...Object.entries(theme.palette).filter(createSimplePaletteValueFilter()).map(([color]) => ({
+				props: { color },
+				style: { [`&.${outlinedInputClasses.focused} .${outlinedInputClasses.notchedOutline}`]: { borderColor: (theme.vars || theme).palette[color].main } }
+			})),
+			{
+				props: {},
+				style: {
+					[`&.${outlinedInputClasses.error} .${outlinedInputClasses.notchedOutline}`]: { borderColor: (theme.vars || theme).palette.error.main },
+					[`&.${outlinedInputClasses.disabled} .${outlinedInputClasses.notchedOutline}`]: { borderColor: (theme.vars || theme).palette.action.disabled }
+				}
+			},
+			{
+				props: ({ ownerState }) => ownerState.startAdornment,
+				style: { paddingLeft: 14 }
+			},
+			{
+				props: ({ ownerState }) => ownerState.endAdornment,
+				style: { paddingRight: 14 }
+			},
+			{
+				props: ({ ownerState }) => ownerState.multiline,
+				style: { padding: "16.5px 14px" }
+			},
+			{
+				props: ({ ownerState, size }) => ownerState.multiline && size === "small",
+				style: { padding: "8.5px 14px" }
+			}
+		]
+	};
+}));
+var NotchedOutlineRoot = styled(NotchedOutline, {
+	name: "MuiOutlinedInput",
+	slot: "NotchedOutline"
+})(memoTheme(({ theme }) => {
+	const borderColor = theme.palette.mode === "light" ? "rgba(0, 0, 0, 0.23)" : "rgba(255, 255, 255, 0.23)";
+	return { borderColor: theme.vars ? theme.alpha(theme.vars.palette.common.onBackground, .23) : borderColor };
+}));
+var OutlinedInputInput = styled(InputBaseInput, {
+	name: "MuiOutlinedInput",
+	slot: "Input",
+	overridesResolver: inputOverridesResolver
+})(memoTheme(({ theme }) => ({
+	padding: "16.5px 14px",
+	...!theme.vars && { "&:-webkit-autofill": {
+		WebkitBoxShadow: theme.palette.mode === "light" ? null : "0 0 0 100px #266798 inset",
+		WebkitTextFillColor: theme.palette.mode === "light" ? null : "#fff",
+		caretColor: theme.palette.mode === "light" ? null : "#fff",
+		borderRadius: "inherit"
+	} },
+	...theme.vars && {
+		"&:-webkit-autofill": { borderRadius: "inherit" },
+		[theme.getColorSchemeSelector("dark")]: { "&:-webkit-autofill": {
+			WebkitBoxShadow: "0 0 0 100px #266798 inset",
+			WebkitTextFillColor: "#fff",
+			caretColor: "#fff"
+		} }
+	},
+	variants: [
+		{
+			props: { size: "small" },
+			style: { padding: "8.5px 14px" }
+		},
+		{
+			props: ({ ownerState }) => ownerState.multiline,
+			style: { padding: 0 }
+		},
+		{
+			props: ({ ownerState }) => ownerState.startAdornment,
+			style: { paddingLeft: 0 }
+		},
+		{
+			props: ({ ownerState }) => ownerState.endAdornment,
+			style: { paddingRight: 0 }
+		}
+	]
+})));
+var OutlinedInput = /* @__PURE__ */ import_react.forwardRef(function OutlinedInput(inProps, ref) {
+	const props = useDefaultProps({
+		props: inProps,
+		name: "MuiOutlinedInput"
+	});
+	const { components = {}, fullWidth = false, inputComponent = "input", label, multiline = false, notched, slots = {}, slotProps = {}, type = "text", ...other } = props;
+	const classes = useUtilityClasses$11(props);
+	const muiFormControl = useFormControl();
+	const fcs = formControlState({
+		props,
+		muiFormControl,
+		states: [
+			"color",
+			"disabled",
+			"error",
+			"focused",
+			"hiddenLabel",
+			"size",
+			"required"
+		]
+	});
+	const ownerState = {
+		...props,
+		color: fcs.color || "primary",
+		disabled: fcs.disabled,
+		error: fcs.error,
+		focused: fcs.focused,
+		formControl: muiFormControl,
+		fullWidth,
+		hiddenLabel: fcs.hiddenLabel,
+		multiline,
+		size: fcs.size,
+		type
+	};
+	const RootSlot = slots.root ?? components.Root ?? OutlinedInputRoot;
+	const InputSlot = slots.input ?? components.Input ?? OutlinedInputInput;
+	const [NotchedSlot, notchedProps] = useSlot("notchedOutline", {
+		elementType: NotchedOutlineRoot,
+		className: classes.notchedOutline,
+		shouldForwardComponentProp: true,
+		ownerState,
+		externalForwardedProps: {
+			slots,
+			slotProps
+		},
+		additionalProps: { label: label != null && label !== "" && fcs.required ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_react.Fragment, { children: [
+			label,
+			" ",
+			"*"
+		] }) : label }
+	});
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(InputBase, {
+		slots: {
+			root: RootSlot,
+			input: InputSlot
+		},
+		slotProps,
+		renderSuffix: (state) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(NotchedSlot, {
+			...notchedProps,
+			notched: typeof notched !== "undefined" ? notched : Boolean(state.startAdornment || state.filled || state.focused)
+		}),
+		fullWidth,
+		inputComponent,
+		multiline,
+		ref,
+		type,
+		...other,
+		classes: {
+			...classes,
+			notchedOutline: null
+		}
+	});
+});
+OutlinedInput.muiName = "Input";
+//#endregion
+//#region node_modules/@mui/material/esm/Select/Select.js
+var useUtilityClasses$10 = (ownerState) => {
+	const { classes } = ownerState;
+	const composedClasses = composeClasses({ root: ["root"] }, getSelectUtilityClasses, classes);
+	return {
+		...classes,
+		...composedClasses
+	};
+};
+var styledRootConfig = {
+	name: "MuiSelect",
+	slot: "Root",
+	shouldForwardProp: (prop) => rootShouldForwardProp(prop) && prop !== "variant"
+};
+var StyledInput = styled(Input, styledRootConfig)("");
+var StyledOutlinedInput = styled(OutlinedInput, styledRootConfig)("");
+var StyledFilledInput = styled(FilledInput, styledRootConfig)("");
+var Select = /* @__PURE__ */ import_react.forwardRef(function Select(inProps, ref) {
+	const props = useDefaultProps({
+		name: "MuiSelect",
+		props: inProps
+	});
+	const { autoWidth = false, children, classes: classesProp = {}, className, defaultOpen = false, displayEmpty = false, IconComponent = ArrowDropDown_default, id, input, inputProps, label, labelId, MenuProps, multiple = false, native = false, onClose, onOpen, open, renderValue, SelectDisplayProps, variant: variantProp = "outlined", ...other } = props;
+	const inputComponent = native ? NativeSelectInput : SelectInput;
+	const fcs = formControlState({
+		props,
+		muiFormControl: useFormControl(),
+		states: ["variant", "error"]
+	});
+	const variant = fcs.variant || variantProp;
+	const ownerState = {
+		...props,
+		variant,
+		classes: classesProp
+	};
+	const classes = useUtilityClasses$10(ownerState);
+	const { root, ...restOfClasses } = classes;
+	const InputComponent = input || {
+		standard: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(StyledInput, { ownerState }),
+		outlined: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(StyledOutlinedInput, {
+			label,
+			ownerState
+		}),
+		filled: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(StyledFilledInput, { ownerState })
+	}[variant];
+	const inputComponentRef = useForkRef_default(ref, getReactElementRef(InputComponent));
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(import_react.Fragment, { children: /* @__PURE__ */ import_react.cloneElement(InputComponent, {
+		inputComponent,
+		inputProps: {
+			children,
+			error: fcs.error,
+			IconComponent,
+			variant,
+			type: void 0,
+			multiple,
+			...native ? { id } : {
+				autoWidth,
+				defaultOpen,
+				displayEmpty,
+				labelId,
+				MenuProps,
+				onClose,
+				onOpen,
+				open,
+				renderValue,
+				SelectDisplayProps: {
+					id,
+					...SelectDisplayProps
+				}
+			},
+			...inputProps,
+			classes: inputProps ? deepmerge(restOfClasses, inputProps.classes) : restOfClasses,
+			...input ? input.props.inputProps : {}
+		},
+		...(multiple && native || displayEmpty) && variant === "outlined" ? { notched: true } : {},
+		ref: inputComponentRef,
+		className: clsx(InputComponent.props.className, className, classes.root),
+		...!input && { variant },
+		...other
+	}) });
+});
+Select.muiName = "Select";
 //#endregion
 //#region node_modules/@mui/material/esm/MenuItem/MenuItem.js
 /**
@@ -27774,7 +31854,7 @@ var overridesResolver = (props, styles) => {
 		!ownerState.disableGutters && styles.gutters
 	];
 };
-var useUtilityClasses$3 = (ownerState) => {
+var useUtilityClasses$9 = (ownerState) => {
 	const { disabled, dense, divider, disableGutters, selected, classes } = ownerState;
 	const composedClasses = composeClasses({ root: [
 		"root",
@@ -27891,7 +31971,7 @@ var MenuItem = /* @__PURE__ */ import_react.forwardRef(function MenuItem(inProps
 		divider,
 		disableGutters
 	};
-	const classes = useUtilityClasses$3(props);
+	const classes = useUtilityClasses$9(props);
 	const handleRef = useForkRef_default(menuItemRef, ref);
 	let tabIndex;
 	if (!props.disabled) tabIndex = tabIndexProp !== void 0 ? tabIndexProp : -1;
@@ -27929,7 +32009,7 @@ generateUtilityClasses("MuiSkeleton", [
 ]);
 //#endregion
 //#region node_modules/@mui/material/esm/Skeleton/Skeleton.js
-var useUtilityClasses$2 = (ownerState) => {
+var useUtilityClasses$8 = (ownerState) => {
 	const { classes, variant, animation, hasChildren, width, height } = ownerState;
 	return composeClasses({ root: [
 		"root",
@@ -28079,7 +32159,7 @@ var Skeleton = /* @__PURE__ */ import_react.forwardRef(function Skeleton(inProps
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(SkeletonRoot, {
 		as: component,
 		ref,
-		className: clsx(useUtilityClasses$2(ownerState).root, className),
+		className: clsx(useUtilityClasses$8(ownerState).root, className),
 		ownerState,
 		...other,
 		style: {
@@ -28113,7 +32193,7 @@ var tooltipClasses = generateUtilityClasses("MuiTooltip", [
 function round(value) {
 	return Math.round(value * 1e5) / 1e5;
 }
-var useUtilityClasses$1 = (ownerState) => {
+var useUtilityClasses$7 = (ownerState) => {
 	const { classes, disableInteractive, arrow, touch, placement } = ownerState;
 	return composeClasses({
 		popper: [
@@ -28539,7 +32619,7 @@ var Tooltip = /* @__PURE__ */ import_react.forwardRef(function Tooltip(inProps, 
 		PopperProps.popperOptions,
 		resolvedPopperProps?.popperOptions
 	]);
-	const classes = useUtilityClasses$1(ownerState);
+	const classes = useUtilityClasses$7(ownerState);
 	const resolvedTransitionProps = typeof slotProps.transition === "function" ? slotProps.transition(ownerState) : slotProps.transition;
 	const externalForwardedProps = {
 		slots: {
@@ -28628,6 +32708,343 @@ var Stack = createStack({
 	})
 });
 //#endregion
+//#region node_modules/@mui/material/esm/Table/TableContext.js
+/**
+* @ignore - internal component.
+*/
+var TableContext = /* @__PURE__ */ import_react.createContext();
+//#endregion
+//#region node_modules/@mui/material/esm/Table/tableClasses.js
+function getTableUtilityClass(slot) {
+	return generateUtilityClass("MuiTable", slot);
+}
+generateUtilityClasses("MuiTable", ["root", "stickyHeader"]);
+//#endregion
+//#region node_modules/@mui/material/esm/Table/Table.js
+var useUtilityClasses$6 = (ownerState) => {
+	const { classes, stickyHeader } = ownerState;
+	return composeClasses({ root: ["root", stickyHeader && "stickyHeader"] }, getTableUtilityClass, classes);
+};
+var TableRoot = styled("table", {
+	name: "MuiTable",
+	slot: "Root",
+	overridesResolver: (props, styles) => {
+		const { ownerState } = props;
+		return [styles.root, ownerState.stickyHeader && styles.stickyHeader];
+	}
+})(memoTheme(({ theme }) => ({
+	display: "table",
+	width: "100%",
+	borderCollapse: "collapse",
+	borderSpacing: 0,
+	"& caption": {
+		...theme.typography.body2,
+		padding: theme.spacing(2),
+		color: (theme.vars || theme).palette.text.secondary,
+		textAlign: "left",
+		captionSide: "bottom"
+	},
+	variants: [{
+		props: ({ ownerState }) => ownerState.stickyHeader,
+		style: { borderCollapse: "separate" }
+	}]
+})));
+var defaultComponent$3 = "table";
+var Table = /* @__PURE__ */ import_react.forwardRef(function Table(inProps, ref) {
+	const props = useDefaultProps({
+		props: inProps,
+		name: "MuiTable"
+	});
+	const { className, component = defaultComponent$3, padding = "normal", size = "medium", stickyHeader = false, ...other } = props;
+	const ownerState = {
+		...props,
+		component,
+		padding,
+		size,
+		stickyHeader
+	};
+	const classes = useUtilityClasses$6(ownerState);
+	const table = import_react.useMemo(() => ({
+		padding,
+		size,
+		stickyHeader
+	}), [
+		padding,
+		size,
+		stickyHeader
+	]);
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TableContext.Provider, {
+		value: table,
+		children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TableRoot, {
+			as: component,
+			role: component === defaultComponent$3 ? null : "table",
+			ref,
+			className: clsx(classes.root, className),
+			ownerState,
+			...other
+		})
+	});
+});
+//#endregion
+//#region node_modules/@mui/material/esm/Table/Tablelvl2Context.js
+/**
+* @ignore - internal component.
+*/
+var Tablelvl2Context = /* @__PURE__ */ import_react.createContext();
+//#endregion
+//#region node_modules/@mui/material/esm/TableBody/tableBodyClasses.js
+function getTableBodyUtilityClass(slot) {
+	return generateUtilityClass("MuiTableBody", slot);
+}
+generateUtilityClasses("MuiTableBody", ["root"]);
+//#endregion
+//#region node_modules/@mui/material/esm/TableBody/TableBody.js
+var useUtilityClasses$5 = (ownerState) => {
+	const { classes } = ownerState;
+	return composeClasses({ root: ["root"] }, getTableBodyUtilityClass, classes);
+};
+var TableBodyRoot = styled("tbody", {
+	name: "MuiTableBody",
+	slot: "Root"
+})({ display: "table-row-group" });
+var tablelvl2$1 = { variant: "body" };
+var defaultComponent$2 = "tbody";
+var TableBody = /* @__PURE__ */ import_react.forwardRef(function TableBody(inProps, ref) {
+	const props = useDefaultProps({
+		props: inProps,
+		name: "MuiTableBody"
+	});
+	const { className, component = defaultComponent$2, ...other } = props;
+	const ownerState = {
+		...props,
+		component
+	};
+	const classes = useUtilityClasses$5(ownerState);
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Tablelvl2Context.Provider, {
+		value: tablelvl2$1,
+		children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TableBodyRoot, {
+			className: clsx(classes.root, className),
+			as: component,
+			ref,
+			role: component === defaultComponent$2 ? null : "rowgroup",
+			ownerState,
+			...other
+		})
+	});
+});
+//#endregion
+//#region node_modules/@mui/material/esm/TableCell/tableCellClasses.js
+function getTableCellUtilityClass(slot) {
+	return generateUtilityClass("MuiTableCell", slot);
+}
+var tableCellClasses = generateUtilityClasses("MuiTableCell", [
+	"root",
+	"head",
+	"body",
+	"footer",
+	"sizeSmall",
+	"sizeMedium",
+	"paddingCheckbox",
+	"paddingNone",
+	"alignLeft",
+	"alignCenter",
+	"alignRight",
+	"alignJustify",
+	"stickyHeader"
+]);
+//#endregion
+//#region node_modules/@mui/material/esm/TableCell/TableCell.js
+var useUtilityClasses$4 = (ownerState) => {
+	const { classes, variant, align, padding, size, stickyHeader } = ownerState;
+	return composeClasses({ root: [
+		"root",
+		variant,
+		stickyHeader && "stickyHeader",
+		align !== "inherit" && `align${capitalize_default(align)}`,
+		padding !== "normal" && `padding${capitalize_default(padding)}`,
+		`size${capitalize_default(size)}`
+	] }, getTableCellUtilityClass, classes);
+};
+var TableCellRoot = styled("td", {
+	name: "MuiTableCell",
+	slot: "Root",
+	overridesResolver: (props, styles) => {
+		const { ownerState } = props;
+		return [
+			styles.root,
+			styles[ownerState.variant],
+			styles[`size${capitalize_default(ownerState.size)}`],
+			ownerState.padding !== "normal" && styles[`padding${capitalize_default(ownerState.padding)}`],
+			ownerState.align !== "inherit" && styles[`align${capitalize_default(ownerState.align)}`],
+			ownerState.stickyHeader && styles.stickyHeader
+		];
+	}
+})(memoTheme(({ theme }) => ({
+	...theme.typography.body2,
+	display: "table-cell",
+	verticalAlign: "inherit",
+	borderBottom: theme.vars ? `1px solid ${theme.vars.palette.TableCell.border}` : `1px solid
+    ${theme.palette.mode === "light" ? theme.lighten(theme.alpha(theme.palette.divider, 1), .88) : theme.darken(theme.alpha(theme.palette.divider, 1), .68)}`,
+	textAlign: "left",
+	padding: 16,
+	variants: [
+		{
+			props: { variant: "head" },
+			style: {
+				color: (theme.vars || theme).palette.text.primary,
+				lineHeight: theme.typography.pxToRem(24),
+				fontWeight: theme.typography.fontWeightMedium
+			}
+		},
+		{
+			props: { variant: "body" },
+			style: { color: (theme.vars || theme).palette.text.primary }
+		},
+		{
+			props: { variant: "footer" },
+			style: {
+				color: (theme.vars || theme).palette.text.secondary,
+				lineHeight: theme.typography.pxToRem(21),
+				fontSize: theme.typography.pxToRem(12)
+			}
+		},
+		{
+			props: { size: "small" },
+			style: {
+				padding: "6px 16px",
+				[`&.${tableCellClasses.paddingCheckbox}`]: {
+					width: 24,
+					padding: "0 12px 0 16px",
+					"& > *": { padding: 0 }
+				}
+			}
+		},
+		{
+			props: { padding: "checkbox" },
+			style: {
+				width: 48,
+				padding: "0 0 0 4px"
+			}
+		},
+		{
+			props: { padding: "none" },
+			style: { padding: 0 }
+		},
+		{
+			props: { align: "left" },
+			style: { textAlign: "left" }
+		},
+		{
+			props: { align: "center" },
+			style: { textAlign: "center" }
+		},
+		{
+			props: { align: "right" },
+			style: {
+				textAlign: "right",
+				flexDirection: "row-reverse"
+			}
+		},
+		{
+			props: { align: "justify" },
+			style: { textAlign: "justify" }
+		},
+		{
+			props: ({ ownerState }) => ownerState.stickyHeader,
+			style: {
+				position: "sticky",
+				top: 0,
+				zIndex: 2,
+				backgroundColor: (theme.vars || theme).palette.background.default
+			}
+		}
+	]
+})));
+/**
+* The component renders a `<th>` element when the parent context is a header
+* or otherwise a `<td>` element.
+*/
+var TableCell = /* @__PURE__ */ import_react.forwardRef(function TableCell(inProps, ref) {
+	const props = useDefaultProps({
+		props: inProps,
+		name: "MuiTableCell"
+	});
+	const { align = "inherit", className, component: componentProp, padding: paddingProp, scope: scopeProp, size: sizeProp, sortDirection, variant: variantProp, ...other } = props;
+	const table = import_react.useContext(TableContext);
+	const tablelvl2 = import_react.useContext(Tablelvl2Context);
+	const isHeadCell = tablelvl2 && tablelvl2.variant === "head";
+	let component;
+	if (componentProp) component = componentProp;
+	else component = isHeadCell ? "th" : "td";
+	let scope = scopeProp;
+	if (component === "td") scope = void 0;
+	else if (!scope && isHeadCell) scope = "col";
+	const variant = variantProp || tablelvl2 && tablelvl2.variant;
+	const ownerState = {
+		...props,
+		align,
+		component,
+		padding: paddingProp || (table && table.padding ? table.padding : "normal"),
+		size: sizeProp || (table && table.size ? table.size : "medium"),
+		sortDirection,
+		stickyHeader: variant === "head" && table && table.stickyHeader,
+		variant
+	};
+	const classes = useUtilityClasses$4(ownerState);
+	let ariaSort = null;
+	if (sortDirection) ariaSort = sortDirection === "asc" ? "ascending" : "descending";
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TableCellRoot, {
+		as: component,
+		ref,
+		className: clsx(classes.root, className),
+		"aria-sort": ariaSort,
+		scope,
+		ownerState,
+		...other
+	});
+});
+//#endregion
+//#region node_modules/@mui/material/esm/TableHead/tableHeadClasses.js
+function getTableHeadUtilityClass(slot) {
+	return generateUtilityClass("MuiTableHead", slot);
+}
+generateUtilityClasses("MuiTableHead", ["root"]);
+//#endregion
+//#region node_modules/@mui/material/esm/TableHead/TableHead.js
+var useUtilityClasses$3 = (ownerState) => {
+	const { classes } = ownerState;
+	return composeClasses({ root: ["root"] }, getTableHeadUtilityClass, classes);
+};
+var TableHeadRoot = styled("thead", {
+	name: "MuiTableHead",
+	slot: "Root"
+})({ display: "table-header-group" });
+var tablelvl2 = { variant: "head" };
+var defaultComponent$1 = "thead";
+var TableHead = /* @__PURE__ */ import_react.forwardRef(function TableHead(inProps, ref) {
+	const props = useDefaultProps({
+		props: inProps,
+		name: "MuiTableHead"
+	});
+	const { className, component = defaultComponent$1, ...other } = props;
+	const ownerState = {
+		...props,
+		component
+	};
+	const classes = useUtilityClasses$3(ownerState);
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Tablelvl2Context.Provider, {
+		value: tablelvl2,
+		children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TableHeadRoot, {
+			as: component,
+			className: clsx(classes.root, className),
+			ref,
+			role: component === defaultComponent$1 ? null : "rowgroup",
+			ownerState,
+			...other
+		})
+	});
+});
+//#endregion
 //#region node_modules/@mui/material/esm/Toolbar/toolbarClasses.js
 function getToolbarUtilityClass(slot) {
 	return generateUtilityClass("MuiToolbar", slot);
@@ -28640,7 +33057,7 @@ generateUtilityClasses("MuiToolbar", [
 ]);
 //#endregion
 //#region node_modules/@mui/material/esm/Toolbar/Toolbar.js
-var useUtilityClasses = (ownerState) => {
+var useUtilityClasses$2 = (ownerState) => {
 	const { classes, disableGutters, variant } = ownerState;
 	return composeClasses({ root: [
 		"root",
@@ -28699,10 +33116,276 @@ var Toolbar = /* @__PURE__ */ import_react.forwardRef(function Toolbar(inProps, 
 	};
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ToolbarRoot, {
 		as: component,
-		className: clsx(useUtilityClasses(ownerState).root, className),
+		className: clsx(useUtilityClasses$2(ownerState).root, className),
 		ref,
 		ownerState,
 		...other
+	});
+});
+//#endregion
+//#region node_modules/@mui/material/esm/TableRow/tableRowClasses.js
+function getTableRowUtilityClass(slot) {
+	return generateUtilityClass("MuiTableRow", slot);
+}
+var tableRowClasses = generateUtilityClasses("MuiTableRow", [
+	"root",
+	"selected",
+	"hover",
+	"head",
+	"footer"
+]);
+//#endregion
+//#region node_modules/@mui/material/esm/TableRow/TableRow.js
+var useUtilityClasses$1 = (ownerState) => {
+	const { classes, selected, hover, head, footer } = ownerState;
+	return composeClasses({ root: [
+		"root",
+		selected && "selected",
+		hover && "hover",
+		head && "head",
+		footer && "footer"
+	] }, getTableRowUtilityClass, classes);
+};
+var TableRowRoot = styled("tr", {
+	name: "MuiTableRow",
+	slot: "Root",
+	overridesResolver: (props, styles) => {
+		const { ownerState } = props;
+		return [
+			styles.root,
+			ownerState.head && styles.head,
+			ownerState.footer && styles.footer
+		];
+	}
+})(memoTheme(({ theme }) => ({
+	color: "inherit",
+	display: "table-row",
+	verticalAlign: "middle",
+	outline: 0,
+	[`&.${tableRowClasses.hover}:hover`]: { backgroundColor: (theme.vars || theme).palette.action.hover },
+	[`&.${tableRowClasses.selected}`]: {
+		backgroundColor: theme.alpha((theme.vars || theme).palette.primary.main, (theme.vars || theme).palette.action.selectedOpacity),
+		"&:hover": { backgroundColor: theme.alpha((theme.vars || theme).palette.primary.main, `${(theme.vars || theme).palette.action.selectedOpacity} + ${(theme.vars || theme).palette.action.hoverOpacity}`) }
+	}
+})));
+var defaultComponent = "tr";
+/**
+* Will automatically set dynamic row height
+* based on the material table element parent (head, body, etc).
+*/
+var TableRow = /* @__PURE__ */ import_react.forwardRef(function TableRow(inProps, ref) {
+	const props = useDefaultProps({
+		props: inProps,
+		name: "MuiTableRow"
+	});
+	const { className, component = defaultComponent, hover = false, selected = false, ...other } = props;
+	const tablelvl2 = import_react.useContext(Tablelvl2Context);
+	const ownerState = {
+		...props,
+		component,
+		hover,
+		selected,
+		head: tablelvl2 && tablelvl2.variant === "head",
+		footer: tablelvl2 && tablelvl2.variant === "footer"
+	};
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TableRowRoot, {
+		as: component,
+		ref,
+		className: clsx(useUtilityClasses$1(ownerState).root, className),
+		role: component === defaultComponent ? null : "row",
+		ownerState,
+		...other
+	});
+});
+//#endregion
+//#region node_modules/@mui/material/esm/TextField/textFieldClasses.js
+function getTextFieldUtilityClass(slot) {
+	return generateUtilityClass("MuiTextField", slot);
+}
+generateUtilityClasses("MuiTextField", ["root"]);
+//#endregion
+//#region node_modules/@mui/material/esm/TextField/TextField.js
+var variantComponent = {
+	standard: Input,
+	filled: FilledInput,
+	outlined: OutlinedInput
+};
+var useUtilityClasses = (ownerState) => {
+	const { classes } = ownerState;
+	return composeClasses({ root: ["root"] }, getTextFieldUtilityClass, classes);
+};
+var TextFieldRoot = styled(FormControl, {
+	name: "MuiTextField",
+	slot: "Root"
+})({});
+/**
+* The `TextField` is a convenience wrapper for the most common cases (80%).
+* It cannot be all things to all people, otherwise the API would grow out of control.
+*
+* ## Advanced Configuration
+*
+* It's important to understand that the text field is a simple abstraction
+* on top of the following components:
+*
+* - [FormControl](/material-ui/api/form-control/)
+* - [InputLabel](/material-ui/api/input-label/)
+* - [FilledInput](/material-ui/api/filled-input/)
+* - [OutlinedInput](/material-ui/api/outlined-input/)
+* - [Input](/material-ui/api/input/)
+* - [FormHelperText](/material-ui/api/form-helper-text/)
+*
+* If you wish to alter the props applied to the `input` element, you can do so as follows:
+*
+* ```jsx
+* const inputProps = {
+*   step: 300,
+* };
+*
+* return <TextField id="time" type="time" inputProps={inputProps} />;
+* ```
+*
+* For advanced cases, please look at the source of TextField by clicking on the
+* "Edit this page" button above. Consider either:
+*
+* - using the upper case props for passing values directly to the components
+* - using the underlying components directly as shown in the demos
+*/
+var TextField = /* @__PURE__ */ import_react.forwardRef(function TextField(inProps, ref) {
+	const props = useDefaultProps({
+		props: inProps,
+		name: "MuiTextField"
+	});
+	const { autoComplete, autoFocus = false, children, className, color = "primary", defaultValue, disabled = false, error = false, FormHelperTextProps: FormHelperTextPropsProp, fullWidth = false, helperText, id: idOverride, InputLabelProps: InputLabelPropsProp, inputProps: inputPropsProp, InputProps: InputPropsProp, inputRef, label, maxRows, minRows, multiline = false, name, onBlur, onChange, onFocus, placeholder, required = false, rows, select = false, SelectProps: SelectPropsProp, slots = {}, slotProps = {}, type, value, variant = "outlined", ...other } = props;
+	const ownerState = {
+		...props,
+		autoFocus,
+		color,
+		disabled,
+		error,
+		fullWidth,
+		multiline,
+		required,
+		select,
+		variant
+	};
+	const classes = useUtilityClasses(ownerState);
+	const id = useId(idOverride);
+	const helperTextId = helperText && id ? `${id}-helper-text` : void 0;
+	const inputLabelId = label && id ? `${id}-label` : void 0;
+	const InputComponent = variantComponent[variant];
+	const externalForwardedProps = {
+		slots,
+		slotProps: {
+			input: InputPropsProp,
+			inputLabel: InputLabelPropsProp,
+			htmlInput: inputPropsProp,
+			formHelperText: FormHelperTextPropsProp,
+			select: SelectPropsProp,
+			...slotProps
+		}
+	};
+	const inputAdditionalProps = {};
+	const inputLabelSlotProps = externalForwardedProps.slotProps.inputLabel;
+	if (variant === "outlined") {
+		if (inputLabelSlotProps && typeof inputLabelSlotProps.shrink !== "undefined") inputAdditionalProps.notched = inputLabelSlotProps.shrink;
+		inputAdditionalProps.label = label;
+	}
+	if (select) {
+		if (!SelectPropsProp || !SelectPropsProp.native) inputAdditionalProps.id = void 0;
+		inputAdditionalProps["aria-describedby"] = void 0;
+	}
+	const [RootSlot, rootProps] = useSlot("root", {
+		elementType: TextFieldRoot,
+		shouldForwardComponentProp: true,
+		externalForwardedProps: {
+			...externalForwardedProps,
+			...other
+		},
+		ownerState,
+		className: clsx(classes.root, className),
+		ref,
+		additionalProps: {
+			disabled,
+			error,
+			fullWidth,
+			required,
+			color,
+			variant
+		}
+	});
+	const [InputSlot, inputProps] = useSlot("input", {
+		elementType: InputComponent,
+		externalForwardedProps,
+		additionalProps: inputAdditionalProps,
+		ownerState
+	});
+	const [InputLabelSlot, inputLabelProps] = useSlot("inputLabel", {
+		elementType: InputLabel,
+		externalForwardedProps,
+		ownerState
+	});
+	const [HtmlInputSlot, htmlInputProps] = useSlot("htmlInput", {
+		elementType: "input",
+		externalForwardedProps,
+		ownerState
+	});
+	const [FormHelperTextSlot, formHelperTextProps] = useSlot("formHelperText", {
+		elementType: FormHelperText,
+		externalForwardedProps,
+		ownerState
+	});
+	const [SelectSlot, selectProps] = useSlot("select", {
+		elementType: Select,
+		externalForwardedProps,
+		ownerState
+	});
+	const InputElement = /* @__PURE__ */ (0, import_jsx_runtime.jsx)(InputSlot, {
+		"aria-describedby": helperTextId,
+		autoComplete,
+		autoFocus,
+		defaultValue,
+		fullWidth,
+		multiline,
+		name,
+		rows,
+		maxRows,
+		minRows,
+		type,
+		value,
+		id,
+		inputRef,
+		onBlur,
+		onChange,
+		onFocus,
+		placeholder,
+		inputProps: htmlInputProps,
+		slots: { input: slots.htmlInput ? HtmlInputSlot : void 0 },
+		...inputProps
+	});
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(RootSlot, {
+		...rootProps,
+		children: [
+			label != null && label !== "" && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(InputLabelSlot, {
+				htmlFor: id,
+				id: inputLabelId,
+				...inputLabelProps,
+				children: label
+			}),
+			select ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(SelectSlot, {
+				"aria-describedby": helperTextId,
+				id,
+				labelId: inputLabelId,
+				value,
+				input: InputElement,
+				...selectProps,
+				children
+			}) : InputElement,
+			helperText && /* @__PURE__ */ (0, import_jsx_runtime.jsx)(FormHelperTextSlot, {
+				id: helperTextId,
+				...formHelperTextProps,
+				children: helperText
+			})
+		]
 	});
 });
 //#endregion
@@ -28854,7 +33537,7 @@ var { isArray } = Array;
 *
 * @returns {boolean} True if the value is undefined, otherwise false
 */
-var isUndefined = typeOfTest("undefined");
+var isUndefined$1 = typeOfTest("undefined");
 /**
 * Determine if a value is a Buffer
 *
@@ -28863,7 +33546,7 @@ var isUndefined = typeOfTest("undefined");
 * @returns {boolean} True if value is a Buffer, otherwise false
 */
 function isBuffer(val) {
-	return val !== null && !isUndefined(val) && val.constructor !== null && !isUndefined(val.constructor) && isFunction$1(val.constructor.isBuffer) && val.constructor.isBuffer(val);
+	return val !== null && !isUndefined$1(val) && val.constructor !== null && !isUndefined$1(val.constructor) && isFunction$2(val.constructor.isBuffer) && val.constructor.isBuffer(val);
 }
 /**
 * Determine if a value is an ArrayBuffer
@@ -28893,14 +33576,14 @@ function isArrayBufferView(val) {
 *
 * @returns {boolean} True if value is a String, otherwise false
 */
-var isString = typeOfTest("string");
+var isString$1 = typeOfTest("string");
 /**
 * Determine if a value is a Function
 *
 * @param {*} val The value to test
 * @returns {boolean} True if value is a Function, otherwise false
 */
-var isFunction$1 = typeOfTest("function");
+var isFunction$2 = typeOfTest("function");
 /**
 * Determine if a value is a Number
 *
@@ -28916,14 +33599,14 @@ var isNumber = typeOfTest("number");
 *
 * @returns {boolean} True if value is an Object, otherwise false
 */
-var isObject = (thing) => thing !== null && typeof thing === "object";
+var isObject$1 = (thing) => thing !== null && typeof thing === "object";
 /**
 * Determine if a value is a Boolean
 *
 * @param {*} thing The value to test
 * @returns {boolean} True if value is a Boolean, otherwise false
 */
-var isBoolean = (thing) => thing === true || thing === false;
+var isBoolean$1 = (thing) => thing === true || thing === false;
 /**
 * Determine if a value is a plain Object
 *
@@ -28931,7 +33614,7 @@ var isBoolean = (thing) => thing === true || thing === false;
 *
 * @returns {boolean} True if value is a plain Object, otherwise false
 */
-var isPlainObject = (val) => {
+var isPlainObject$1 = (val) => {
 	if (kindOf(val) !== "object") return false;
 	const prototype = getPrototypeOf(val);
 	return (prototype === null || prototype === Object.prototype || Object.getPrototypeOf(prototype) === null) && !(toStringTag in val) && !(iterator in val);
@@ -28943,8 +33626,8 @@ var isPlainObject = (val) => {
 *
 * @returns {boolean} True if value is an empty object, otherwise false
 */
-var isEmptyObject = (val) => {
-	if (!isObject(val) || isBuffer(val)) return false;
+var isEmptyObject$1 = (val) => {
+	if (!isObject$1(val) || isBuffer(val)) return false;
 	try {
 		return Object.keys(val).length === 0 && Object.getPrototypeOf(val) === Object.prototype;
 	} catch (e) {
@@ -29013,7 +33696,7 @@ var isFileList = kindOfTest("FileList");
 *
 * @returns {boolean} True if value is a Stream, otherwise false
 */
-var isStream = (val) => isObject(val) && isFunction$1(val.pipe);
+var isStream = (val) => isObject$1(val) && isFunction$2(val.pipe);
 /**
 * Determine if a value is a FormData
 *
@@ -29035,9 +33718,9 @@ var isFormData = (thing) => {
 	if (FormDataCtor && thing instanceof FormDataCtor) return true;
 	const proto = getPrototypeOf(thing);
 	if (!proto || proto === Object.prototype) return false;
-	if (!isFunction$1(thing.append)) return false;
+	if (!isFunction$2(thing.append)) return false;
 	const kind = kindOf(thing);
-	return kind === "formdata" || kind === "object" && isFunction$1(thing.toString) && thing.toString() === "[object FormData]";
+	return kind === "formdata" || kind === "object" && isFunction$2(thing.toString) && thing.toString() === "[object FormData]";
 };
 /**
 * Determine if a value is a URLSearchParams object
@@ -29120,7 +33803,7 @@ var _global = (() => {
 	if (typeof globalThis !== "undefined") return globalThis;
 	return typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : global;
 })();
-var isContextDefined = (context) => !isUndefined(context) && context !== _global;
+var isContextDefined = (context) => !isUndefined$1(context) && context !== _global;
 /**
 * Accepts varargs expecting each argument to be an object, then
 * immutably merges the properties of each object and returns result.
@@ -29146,10 +33829,10 @@ function merge(...objs) {
 		if (key === "__proto__" || key === "constructor" || key === "prototype") return;
 		const targetKey = caseless && findKey(result, key) || key;
 		const existing = hasOwnProperty(result, targetKey) ? result[targetKey] : void 0;
-		if (isPlainObject(existing) && isPlainObject(val)) result[targetKey] = merge(existing, val);
-		else if (isPlainObject(val)) result[targetKey] = merge({}, val);
+		if (isPlainObject$1(existing) && isPlainObject$1(val)) result[targetKey] = merge(existing, val);
+		else if (isPlainObject$1(val)) result[targetKey] = merge({}, val);
 		else if (isArray(val)) result[targetKey] = val.slice();
-		else if (!skipUndefined || !isUndefined(val)) result[targetKey] = val;
+		else if (!skipUndefined || !isUndefined$1(val)) result[targetKey] = val;
 	};
 	for (let i = 0, l = objs.length; i < l; i++) objs[i] && forEach(objs[i], assignValue);
 	return result;
@@ -29167,7 +33850,7 @@ function merge(...objs) {
 */
 var extend = (a, b, thisArg, { allOwnKeys } = {}) => {
 	forEach(b, (val, key) => {
-		if (thisArg && isFunction$1(val)) Object.defineProperty(a, key, {
+		if (thisArg && isFunction$2(val)) Object.defineProperty(a, key, {
 			__proto__: null,
 			value: bind(val, thisArg),
 			writable: true,
@@ -29354,13 +34037,13 @@ var reduceDescriptors = (obj, reducer) => {
 */
 var freezeMethods = (obj) => {
 	reduceDescriptors(obj, (descriptor, name) => {
-		if (isFunction$1(obj) && [
+		if (isFunction$2(obj) && [
 			"arguments",
 			"caller",
 			"callee"
 		].includes(name)) return false;
 		const value = obj[name];
-		if (!isFunction$1(value)) return;
+		if (!isFunction$2(value)) return;
 		descriptor.enumerable = false;
 		if ("writable" in descriptor) {
 			descriptor.writable = false;
@@ -29401,7 +34084,7 @@ var toFiniteNumber = (value, defaultValue) => {
 * @returns {boolean}
 */
 function isSpecCompliantForm(thing) {
-	return !!(thing && isFunction$1(thing.append) && thing[toStringTag] === "FormData" && thing[iterator]);
+	return !!(thing && isFunction$2(thing.append) && thing[toStringTag] === "FormData" && thing[iterator]);
 }
 /**
 * Recursively converts an object to a JSON-compatible object, handling circular references and Buffers.
@@ -29412,7 +34095,7 @@ function isSpecCompliantForm(thing) {
 var toJSONObject = (obj) => {
 	const stack = new Array(10);
 	const visit = (source, i) => {
-		if (isObject(source)) {
+		if (isObject$1(source)) {
 			if (stack.indexOf(source) >= 0) return;
 			if (isBuffer(source)) return source;
 			if (!("toJSON" in source)) {
@@ -29420,7 +34103,7 @@ var toJSONObject = (obj) => {
 				const target = isArray(source) ? [] : {};
 				forEach(source, (value, key) => {
 					const reducedValue = visit(value, i + 1);
-					!isUndefined(reducedValue) && (target[key] = reducedValue);
+					!isUndefined$1(reducedValue) && (target[key] = reducedValue);
 				});
 				stack[i] = void 0;
 				return target;
@@ -29443,7 +34126,7 @@ var isAsyncFn = kindOfTest("AsyncFunction");
 * @param {*} thing - The value to test.
 * @returns {boolean} True if value is thenable, otherwise false.
 */
-var isThenable = (thing) => thing && (isObject(thing) || isFunction$1(thing)) && isFunction$1(thing.then) && isFunction$1(thing.catch);
+var isThenable = (thing) => thing && (isObject$1(thing) || isFunction$2(thing)) && isFunction$2(thing.then) && isFunction$2(thing.catch);
 /**
 * Provides a cross-platform setImmediate implementation.
 * Uses native setImmediate if available, otherwise falls back to postMessage or setTimeout.
@@ -29463,7 +34146,7 @@ var _setImmediate = ((setImmediateSupported, postMessageSupported) => {
 			_global.postMessage(token, "*");
 		};
 	})(`axios@${Math.random()}`, []) : (cb) => setTimeout(cb);
-})(typeof setImmediate === "function", isFunction$1(_global.postMessage));
+})(typeof setImmediate === "function", isFunction$2(_global.postMessage));
 /**
 * Schedules a microtask or asynchronous callback as soon as possible.
 * Uses queueMicrotask if available, otherwise falls back to process.nextTick or _setImmediate.
@@ -29471,31 +34154,31 @@ var _setImmediate = ((setImmediateSupported, postMessageSupported) => {
 * @type {Function}
 */
 var asap = typeof queueMicrotask !== "undefined" ? queueMicrotask.bind(_global) : typeof process !== "undefined" && process.nextTick || _setImmediate;
-var isIterable = (thing) => thing != null && isFunction$1(thing[iterator]);
+var isIterable = (thing) => thing != null && isFunction$2(thing[iterator]);
 var utils_default = {
 	isArray,
 	isArrayBuffer,
 	isBuffer,
 	isFormData,
 	isArrayBufferView,
-	isString,
+	isString: isString$1,
 	isNumber,
-	isBoolean,
-	isObject,
-	isPlainObject,
-	isEmptyObject,
+	isBoolean: isBoolean$1,
+	isObject: isObject$1,
+	isPlainObject: isPlainObject$1,
+	isEmptyObject: isEmptyObject$1,
 	isReadableStream,
 	isRequest,
 	isResponse,
 	isHeaders,
-	isUndefined,
+	isUndefined: isUndefined$1,
 	isDate,
 	isFile,
 	isReactNativeBlob,
 	isReactNative,
 	isBlob,
 	isRegExp,
-	isFunction: isFunction$1,
+	isFunction: isFunction$2,
 	isStream,
 	isURLSearchParams,
 	isTypedArray,
@@ -31137,7 +35820,7 @@ var VERSION$1 = "1.16.0";
 //#endregion
 //#region node_modules/axios/lib/adapters/fetch.js
 var DEFAULT_CHUNK_SIZE = 64 * 1024;
-var { isFunction } = utils_default;
+var { isFunction: isFunction$1 } = utils_default;
 var test = (fn, ...args) => {
 	try {
 		return !!fn(...args);
@@ -31153,11 +35836,11 @@ var factory = (env) => {
 		Response: globalObject.Response
 	}, env);
 	const { fetch: envFetch, Request, Response } = env;
-	const isFetchSupported = envFetch ? isFunction(envFetch) : typeof fetch === "function";
-	const isRequestSupported = isFunction(Request);
-	const isResponseSupported = isFunction(Response);
+	const isFetchSupported = envFetch ? isFunction$1(envFetch) : typeof fetch === "function";
+	const isRequestSupported = isFunction$1(Request);
+	const isResponseSupported = isFunction$1(Response);
 	if (!isFetchSupported) return false;
-	const isReadableStreamSupported = isFetchSupported && isFunction(ReadableStream);
+	const isReadableStreamSupported = isFetchSupported && isFunction$1(ReadableStream);
 	const encodeText = isFetchSupported && (typeof TextEncoder === "function" ? ((encoder) => (str) => encoder.encode(str))(new TextEncoder()) : async (str) => new Uint8Array(await new Request(str).arrayBuffer()));
 	const supportsRequestStream = isRequestSupported && isReadableStreamSupported && test(() => {
 		let duplexAccessed = false;
@@ -32237,26 +36920,10 @@ function getSupportedTimeZones() {
 //#region src/features/settings/provider/translations.ts
 var translations = {
 	en: {
-		"action.apply": "Apply",
-		"action.applying": "Applying...",
-		"action.assignRoles": "Assign Roles",
-		"action.assignUsers": "Assign Users",
 		"action.backToDashboard": "Back to dashboard",
 		"action.cancel": "Cancel",
 		"action.confirm": "Confirm",
-		"action.continue": "Continue",
-		"action.create": "Create",
-		"action.delete": "Delete",
-		"action.edit": "Edit",
-		"action.filter": "Filter",
-		"action.impersonate": "Impersonate",
-		"action.ok": "OK",
-		"action.resetFilters": "Reset filters",
-		"action.resetPassword": "Reset Password",
-		"action.retry": "Retry",
 		"action.returnToDashboard": "Return to dashboard",
-		"action.save": "Save",
-		"action.saving": "Saving...",
 		"action.working": "Working...",
 		"auth.authority": "Authority",
 		"auth.callbackCode": "Code",
@@ -32281,227 +36948,40 @@ var translations = {
 		"auth.storedPkceState": "Stored PKCE state",
 		"auth.tokenExchangeFailed": "Token exchange failed.",
 		"auth.tokenType": "Token type",
-		"common.actions": "Actions",
-		"common.active": "Active",
-		"common.all": "All",
-		"common.description": "Description",
-		"common.email": "Email",
-		"common.inactive": "Inactive",
 		"common.missing": "(Missing)",
-		"common.name": "Name",
 		"common.no": "No",
 		"common.none": "(None)",
 		"common.notVerifiable": "(Not verifiable)",
-		"common.status": "Status",
-		"common.unlimited": "Unlimited",
 		"common.yes": "Yes",
 		"dashboard.authenticated": "Authenticated",
-		"dashboard.activeUsers": "Active users",
-		"dashboard.activeWorkspaces": "Active workspaces",
-		"dashboard.availableRoles": "Available roles",
 		"dashboard.configScope": "Config scope",
 		"dashboard.expiresAt": "Expires at",
 		"dashboard.idTokenIssued": "Issued",
-		"dashboard.inactiveUsers": "Inactive users",
-		"dashboard.licenseUsage": "License usage",
-		"dashboard.loadingSummary": "Loading dashboard summary...",
-		"dashboard.quickActions": "Quick actions",
-		"dashboard.quickActions.globalDescription": "Open the global administration surfaces for workspace, role, and user operations.",
-		"dashboard.quickActions.openUsers": "Open users",
-		"dashboard.quickActions.openWorkspaces": "Open workspaces",
-		"dashboard.quickActions.roleCatalog": "Manage role catalog",
-		"dashboard.quickActions.workspaceDescription": "Manage users and roles for the current workspace.",
-		"dashboard.roleCatalog": "Role catalog",
 		"dashboard.sessionRuntime": "Session and runtime",
-		"dashboard.totalWorkspaces": "Total workspaces",
 		"dashboard.oidcRuntimeConfig": "OIDC runtime config loaded from",
 		"dashboard.subtitle": "Protected dashboard backed by frontend auth state from the CoreGate code exchange.",
 		"dashboard.title": "Dashboard",
-		"dashboard.unavailableDetail": "The dashboard summary could not be loaded right now.",
-		"dashboard.unlimited": "Unlimited",
 		"forbidden.body": "This area is restricted to super administrators in Zentry.",
 		"forbidden.help": "If you believe you should have access, contact an administrator or return to the dashboard.",
 		"forbidden.subtitle": "Your account is signed in, but it does not have permission to use this area.",
 		"forbidden.title": "403 Forbidden",
+		"nav.banks": "Ngân hàng",
 		"nav.dashboard": "Dashboard",
 		"nav.impersonationMode": "Impersonation mode",
-		"nav.oidcClients": "OIDC Clients",
 		"nav.openAccountMenu": "Open account menu",
 		"nav.openNavigation": "Open navigation",
 		"nav.primaryNavigation": "Primary navigation",
 		"nav.protectedWorkspace": "Protected workspace",
-		"nav.roles": "Roles",
 		"nav.settings": "Settings",
-		"nav.users": "Users",
-		"nav.workspaces": "Workspaces",
-		"oidc.client": "Client",
-		"oidc.clientIdOrName": "Client ID or name",
-		"oidc.clientIdRequired": "Client ID is required.",
-		"oidc.clientSecret": "Client secret",
-		"oidc.clientSecretRequired": "Client secret is required.",
-		"oidc.clientSecretRequiredForConfidential": "Client secret is required for confidential clients.",
-		"oidc.clientType": "Client type",
-		"oidc.clientTypeRequired": "Client type is required.",
-		"oidc.confidential": "Confidential",
-		"oidc.createTitle": "Create application",
-		"oidc.deleteMessage": "Delete {name}? This action cannot be undone.",
-		"oidc.deleteTitle": "Delete application",
-		"oidc.displayName": "Display name",
-		"oidc.displayNameHelper": "How this client appears in Zentry.",
-		"oidc.displayNameRequired": "Display name is required.",
-		"oidc.editTitle": "Edit application",
-		"oidc.filterTitle": "Filter applications",
-		"oidc.keepSecretHelper": "Leave blank to keep the current client secret.",
-		"oidc.loadingApplications": "Loading applications...",
-		"oidc.loadingApplication": "Loading application...",
-		"oidc.noApplicationsBody": "Create a managed OIDC client to register redirect URIs, scopes, and logout paths from Zentry.",
-		"oidc.noApplicationsTitle": "No applications yet",
-		"oidc.postLogoutRedirectUris": "Post-logout redirect URIs",
-		"oidc.postLogoutRedirectUrisHelper": "Optional absolute post-logout redirect URI per line.",
-		"oidc.publicClientSecretHelper": "Public PKCE clients do not use a client secret.",
-		"oidc.publicPkce": "Public (PKCE)",
-		"oidc.publicPkceHelper": "Public clients use authorization code + PKCE without a client secret.",
-		"oidc.redirectUris": "Redirect URIs",
-		"oidc.redirectUrisHelper": "One absolute redirect URI per line.",
-		"oidc.redirectUrisRequired": "At least one redirect URI is required.",
-		"oidc.scopeHelper": "Space-separated scopes issued to this application.",
-		"oidc.scopeRequired": "Scope is required.",
-		"oidc.subtitle": "Manage OpenID Connect applications registered through CoreGate.",
-		"oidc.title": "OIDC Clients",
-		"oidc.unableToLoad": "Unable to load OIDC clients.",
-		"profile.changePassword": "Change password",
-		"profile.changePasswordConfirmMessage": "Your account will be marked to change password on the next login. Are you sure you want to change your password now?",
-		"profile.changePasswordConfirmTitle": "Change password?",
-		"profile.currentLocale": "Current locale",
-		"profile.currentTimeZone": "Current time zone",
-		"profile.email": "Email",
-		"profile.firstName": "First name",
-		"profile.lastName": "Last name",
 		"profile.logout": "Logout",
 		"profile.myProfile": "My Profile",
-		"profile.noRoles": "No roles assigned",
-		"profile.roles": "Roles",
-		"profile.subtitle": "Review the account and workspace context for your current session.",
-		"profile.title": "My Profile",
-		"profile.userName": "User name",
-		"profile.workspace": "Workspace",
-		"profile.userInittials": "Unknown User",
-		"roles.activeRequired": "No active permissions are available.",
-		"roles.createTitle": "Create role",
-		"roles.editTitle": "Edit role",
-		"roles.filterSearch": "Role name or description",
-		"roles.filterTitle": "Filter roles",
-		"roles.loadingRole": "Loading role...",
-		"roles.loadingRoles": "Loading roles...",
-		"roles.loadingUsers": "Loading users...",
-		"roles.nameRequired": "Role name is required.",
-		"roles.noActiveUsers": "No active users found in this workspace.",
-		"roles.noRolesBody": "Create a role to start assigning permissions and making it available to workspaces.",
-		"roles.noRolesTitle": "No roles found",
-		"roles.permissionScope": "Permission scope",
-		"roles.permissions": "Permissions",
-		"roles.role": "Role",
-		"roles.searchUsers": "Search users",
-		"roles.subtitle": "Manage role definitions and permission assignments.",
-		"roles.title": "Roles",
-		"roles.unableToLoad": "Unable to load roles.",
-		"roles.users": "Users",
-		"settings.language": "Language",
-		"settings.language.english": "English",
-		"settings.language.vietnamese": "Vietnamese",
-		"settings.loadError": "Unable to load settings.",
-		"settings.loading": "Loading settings...",
-		"settings.previewDescription": "Preview how dates and times will appear with these settings.",
-		"settings.previewInvalidTimeZone": "Choose a valid IANA time zone to preview date and time formatting.",
-		"settings.saved": "Settings saved.",
-		"settings.subtitle": "Choose your language and time zone preferences.",
-		"settings.timeZone": "Time zone",
-		"settings.title": "Settings",
-		"settings.updateError": "Unable to update settings.",
-		"users.assignTitle": "Assign Roles",
-		"users.changeRequired": "Change required",
-		"users.createTitle": "Create user",
-		"users.current": "Current",
-		"users.editTitle": "Edit user",
-		"users.emailRequired": "Email is required.",
-		"users.filterSearch": "Name, email, or role",
-		"users.filterTitle": "Filter users",
-		"users.firstName": "First name",
-		"users.lastName": "Last name",
-		"users.loadingRoles": "Loading roles...",
-		"users.loadingUser": "Loading user...",
-		"users.loadingUsers": "Loading users...",
-		"users.newTemporaryPassword": "New temporary password",
-		"users.newTemporaryPasswordRequired": "New temporary password is required.",
-		"users.noAssignableRoles": "No assignable roles found in this workspace.",
-		"users.noRoles": "No roles",
-		"users.noUsersBody": "Create a user to grant access inside the current workspace.",
-		"users.noUsersTitle": "No users found",
-		"users.password": "Password",
-		"users.passwordMinLength": "Password must be at least 8 characters.",
-		"users.requirePasswordChange": "Require password change",
-		"users.resetPasswordInfo": "The user will be required to change this password on next sign-in.",
-		"users.resetPasswordTitle": "Reset Password",
-		"users.roles": "Roles",
-		"users.searchRoles": "Search roles",
-		"users.subtitle": "Manage users in the current workspace.",
-		"users.temporaryPassword": "Temporary password",
-		"users.temporaryPasswordRequired": "Temporary password is required.",
-		"users.title": "Users",
-		"users.unableToLoad": "Unable to load users.",
-		"users.user": "User",
-		"users.userIsActive": "User is active",
-		"users.userName": "User name",
-		"users.userNameRequired": "User name is required.",
-		"workspaces.assignedRoles": "Assigned roles",
-		"workspaces.createActiveRoles": "Create active roles before assigning them to a workspace.",
-		"workspaces.createTitle": "Create workspace",
-		"workspaces.editTitle": "Edit workspace",
-		"workspaces.filterSearch": "Workspace name or description",
-		"workspaces.filterTitle": "Filter workspaces",
-		"workspaces.impersonationLoadError": "Unable to load workspace users.",
-		"workspaces.impersonationStartError": "Unable to start impersonation.",
-		"workspaces.leaveBlankLimit": "Leave blank for no workspace limit.",
-		"workspaces.loadingWorkspace": "Loading workspace...",
-		"workspaces.loadingWorkspaces": "Loading workspaces...",
-		"workspaces.loginAs": "Login as",
-		"workspaces.maxActiveUsers": "Max active users",
-		"workspaces.maxActiveUsersField": "Maximum active users",
-		"workspaces.maxActiveUsersInvalid": "Maximum active users must be a whole number that is zero or greater.",
-		"workspaces.noAssignableRoles": "No assignable roles found.",
-		"workspaces.noRolesAssigned": "No roles assigned",
-		"workspaces.noWorkspacesBody": "Create a workspace to control role availability and workspace-specific user access in Zentry.",
-		"workspaces.noWorkspacesTitle": "No workspaces yet",
-		"workspaces.searchActiveRoles": "Search active roles",
-		"workspaces.subtitle": "Manage workspaces and the roles available inside each workspace.",
-		"workspaces.title": "Workspaces",
-		"workspaces.unableToLoad": "Unable to load workspaces.",
-		"workspaces.workspace": "Workspace",
-		"workspaces.workspaceIsActive": "Workspace is active",
-		"workspaces.workspaceName": "Workspace name",
-		"workspaces.workspaceNameRequired": "Workspace name is required."
+		"profile.userInittials": "Unknown User"
 	},
 	vi: {
-		"action.apply": "Áp dụng",
-		"action.applying": "Đang áp dụng...",
-		"action.assignRoles": "Gán vai trò",
-		"action.assignUsers": "Gán người dùng",
 		"action.backToDashboard": "Về bảng điều khiển",
 		"action.cancel": "Hủy",
 		"action.confirm": "Xác nhận",
-		"action.continue": "Tiếp tục",
-		"action.create": "Tạo",
-		"action.delete": "Xóa",
-		"action.edit": "Sửa",
-		"action.filter": "Lọc",
-		"action.impersonate": "Đăng nhập thay",
-		"action.ok": "OK",
-		"action.resetFilters": "Đặt lại bộ lọc",
-		"action.resetPassword": "Đặt lại mật khẩu",
-		"action.retry": "Thử lại",
 		"action.returnToDashboard": "Quay lại bảng điều khiển",
-		"action.save": "Lưu",
-		"action.saving": "Đang lưu...",
 		"action.working": "Đang xử lý...",
 		"auth.authority": "Authority",
 		"auth.callbackCode": "Mã",
@@ -32526,205 +37006,34 @@ var translations = {
 		"auth.storedPkceState": "State PKCE đã lưu",
 		"auth.tokenExchangeFailed": "Đổi token thất bại.",
 		"auth.tokenType": "Loại token",
-		"common.actions": "Thao tác",
-		"common.active": "Đang hoạt động",
-		"common.all": "Tất cả",
-		"common.description": "Mô tả",
-		"common.email": "Email",
-		"common.inactive": "Ngừng hoạt động",
 		"common.missing": "(Thiếu)",
-		"common.name": "Tên",
 		"common.no": "Không",
 		"common.none": "(Không có)",
 		"common.notVerifiable": "(Không thể xác minh)",
-		"common.status": "Trạng thái",
-		"common.unlimited": "Không giới hạn",
 		"common.yes": "Có",
 		"dashboard.authenticated": "Đã xác thực",
-		"dashboard.activeUsers": "Người dùng đang hoạt động",
-		"dashboard.activeWorkspaces": "Không gian làm việc đang hoạt động",
-		"dashboard.availableRoles": "Vai trò khả dụng",
 		"dashboard.configScope": "Scope cấu hình",
 		"dashboard.expiresAt": "Hết hạn lúc",
 		"dashboard.idTokenIssued": "Đã cấp",
-		"dashboard.inactiveUsers": "Người dùng không hoạt động",
-		"dashboard.licenseUsage": "Mức sử dụng giấy phép",
-		"dashboard.loadingSummary": "Đang tải dữ liệu tổng quan...",
 		"dashboard.oidcRuntimeConfig": "Cấu hình OIDC runtime được tải từ",
-		"dashboard.quickActions": "Thao tác nhanh",
-		"dashboard.quickActions.globalDescription": "Mở các màn hình quản trị toàn cục cho không gian làm việc, vai trò và người dùng.",
-		"dashboard.quickActions.openUsers": "Mở người dùng",
-		"dashboard.quickActions.openWorkspaces": "Mở không gian làm việc",
-		"dashboard.quickActions.roleCatalog": "Quản lý danh mục vai trò",
-		"dashboard.quickActions.workspaceDescription": "Quản lý người dùng và vai trò cho không gian làm việc hiện tại.",
-		"dashboard.roleCatalog": "Danh mục vai trò",
 		"dashboard.sessionRuntime": "Phiên đăng nhập và runtime",
 		"dashboard.subtitle": "Bảng điều khiển được bảo vệ bằng trạng thái xác thực frontend từ CoreGate.",
 		"dashboard.title": "Bảng điều khiển",
-		"dashboard.totalWorkspaces": "Tổng số không gian làm việc",
-		"dashboard.unavailableDetail": "Không thể tải dữ liệu tổng quan của bảng điều khiển lúc này.",
-		"dashboard.unlimited": "Không giới hạn",
 		"forbidden.body": "Khu vực này chỉ dành cho super administrator trong Zentry.",
 		"forbidden.help": "Nếu bạn cho rằng mình cần quyền truy cập, hãy liên hệ quản trị viên hoặc quay lại bảng điều khiển.",
 		"forbidden.subtitle": "Tài khoản của bạn đã đăng nhập nhưng không có quyền dùng khu vực này.",
 		"forbidden.title": "403 Bị từ chối",
+		"nav.banks": "Ngân hàng",
 		"nav.dashboard": "Bảng điều khiển",
 		"nav.impersonationMode": "Chế độ đăng nhập thay",
-		"nav.oidcClients": "OIDC Clients",
 		"nav.openAccountMenu": "Mở menu tài khoản",
 		"nav.openNavigation": "Mở điều hướng",
 		"nav.primaryNavigation": "Điều hướng chính",
 		"nav.protectedWorkspace": "Không gian làm việc được bảo vệ",
-		"nav.roles": "Vai trò",
 		"nav.settings": "Cài đặt",
-		"nav.users": "Người dùng",
-		"nav.workspaces": "Không gian làm việc",
-		"oidc.client": "Client",
-		"oidc.clientIdOrName": "Client ID hoặc tên",
-		"oidc.clientIdRequired": "Client ID là bắt buộc.",
-		"oidc.clientSecret": "Client secret",
-		"oidc.clientSecretRequired": "Client secret là bắt buộc.",
-		"oidc.clientSecretRequiredForConfidential": "Client secret là bắt buộc cho confidential client.",
-		"oidc.clientType": "Loại client",
-		"oidc.clientTypeRequired": "Loại client là bắt buộc.",
-		"oidc.confidential": "Confidential",
-		"oidc.createTitle": "Tạo ứng dụng",
-		"oidc.deleteMessage": "Xóa {name}? Hành động này không thể hoàn tác.",
-		"oidc.deleteTitle": "Xóa ứng dụng",
-		"oidc.displayName": "Tên hiển thị",
-		"oidc.displayNameHelper": "Cách client này hiển thị trong Zentry.",
-		"oidc.displayNameRequired": "Tên hiển thị là bắt buộc.",
-		"oidc.editTitle": "Sửa ứng dụng",
-		"oidc.filterTitle": "Lọc ứng dụng",
-		"oidc.keepSecretHelper": "Để trống để giữ client secret hiện tại.",
-		"oidc.loadingApplications": "Đang tải ứng dụng...",
-		"oidc.loadingApplication": "Đang tải ứng dụng...",
-		"oidc.noApplicationsBody": "Tạo OIDC client được quản lý để đăng ký redirect URI, scope và logout path từ Zentry.",
-		"oidc.noApplicationsTitle": "Chưa có ứng dụng",
-		"oidc.postLogoutRedirectUris": "Post-logout redirect URI",
-		"oidc.postLogoutRedirectUrisHelper": "Mỗi dòng một post-logout redirect URI tuyệt đối, không bắt buộc.",
-		"oidc.publicClientSecretHelper": "Public PKCE client không dùng client secret.",
-		"oidc.publicPkce": "Public (PKCE)",
-		"oidc.publicPkceHelper": "Public client dùng authorization code + PKCE không cần client secret.",
-		"oidc.redirectUris": "Redirect URI",
-		"oidc.redirectUrisHelper": "Mỗi dòng một redirect URI tuyệt đối.",
-		"oidc.redirectUrisRequired": "Cần ít nhất một redirect URI.",
-		"oidc.scopeHelper": "Các scope cấp cho ứng dụng, phân tách bằng khoảng trắng.",
-		"oidc.scopeRequired": "Scope là bắt buộc.",
-		"oidc.subtitle": "Quản lý ứng dụng OpenID Connect đăng ký qua CoreGate.",
-		"oidc.title": "OIDC Clients",
-		"oidc.unableToLoad": "Không thể tải OIDC clients.",
-		"profile.changePassword": "Đổi mật khẩu",
-		"profile.changePasswordConfirmMessage": "Tài khoản của bạn sẽ được đánh dấu cần đổi mật khẩu ở lần đăng nhập tiếp theo. Bạn có chắc muốn đổi mật khẩu bây giờ không?",
-		"profile.changePasswordConfirmTitle": "Đổi mật khẩu?",
-		"profile.currentLocale": "Ngôn ngữ hiện tại",
-		"profile.currentTimeZone": "Múi giờ hiện tại",
-		"profile.email": "Email",
-		"profile.firstName": "Tên",
-		"profile.lastName": "Họ",
 		"profile.logout": "Đăng xuất",
 		"profile.myProfile": "Hồ sơ của tôi",
-		"profile.noRoles": "Chưa gán vai trò",
-		"profile.roles": "Vai trò",
-		"profile.subtitle": "Xem thông tin tài khoản và ngữ cảnh không gian làm việc của phiên hiện tại.",
-		"profile.title": "Hồ sơ của tôi",
-		"profile.userName": "Tên đăng nhập",
-		"profile.workspace": "Không gian làm việc",
-		"profile.userInittials": "Unknown User",
-		"roles.activeRequired": "Không có quyền đang hoạt động.",
-		"roles.createTitle": "Tạo vai trò",
-		"roles.editTitle": "Sửa vai trò",
-		"roles.filterSearch": "Tên hoặc mô tả vai trò",
-		"roles.filterTitle": "Lọc vai trò",
-		"roles.loadingRole": "Đang tải vai trò...",
-		"roles.loadingRoles": "Đang tải vai trò...",
-		"roles.loadingUsers": "Đang tải người dùng...",
-		"roles.nameRequired": "Tên vai trò là bắt buộc.",
-		"roles.noActiveUsers": "Không có người dùng đang hoạt động trong không gian làm việc này.",
-		"roles.noRolesBody": "Tạo vai trò để bắt đầu gán quyền và cho phép dùng trong không gian làm việc.",
-		"roles.noRolesTitle": "Không tìm thấy vai trò",
-		"roles.permissionScope": "Nhóm quyền",
-		"roles.permissions": "Quyền",
-		"roles.role": "Vai trò",
-		"roles.searchUsers": "Tìm người dùng",
-		"roles.subtitle": "Quản lý định nghĩa vai trò và gán quyền.",
-		"roles.title": "Vai trò",
-		"roles.unableToLoad": "Không thể tải vai trò.",
-		"roles.users": "Người dùng",
-		"settings.language": "Ngôn ngữ",
-		"settings.language.english": "Tiếng Anh",
-		"settings.language.vietnamese": "Tiếng Việt",
-		"settings.loadError": "Không thể tải cài đặt.",
-		"settings.loading": "Đang tải cài đặt...",
-		"settings.previewDescription": "Xem trước cách ngày và giờ hiển thị với các cài đặt này.",
-		"settings.previewInvalidTimeZone": "Chọn múi giờ IANA hợp lệ để xem trước định dạng ngày giờ.",
-		"settings.saved": "Đã lưu cài đặt.",
-		"settings.subtitle": "Chọn tùy chọn ngôn ngữ và múi giờ.",
-		"settings.timeZone": "Múi giờ",
-		"settings.title": "Cài đặt",
-		"settings.updateError": "Không thể cập nhật cài đặt.",
-		"users.assignTitle": "Gán vai trò",
-		"users.changeRequired": "Cần đổi",
-		"users.createTitle": "Tạo người dùng",
-		"users.current": "Hiện tại",
-		"users.editTitle": "Sửa người dùng",
-		"users.emailRequired": "Email là bắt buộc.",
-		"users.filterSearch": "Tên, email hoặc vai trò",
-		"users.filterTitle": "Lọc người dùng",
-		"users.firstName": "Tên",
-		"users.lastName": "Họ",
-		"users.loadingRoles": "Đang tải vai trò...",
-		"users.loadingUser": "Đang tải người dùng...",
-		"users.loadingUsers": "Đang tải người dùng...",
-		"users.newTemporaryPassword": "Mật khẩu tạm mới",
-		"users.newTemporaryPasswordRequired": "Mật khẩu tạm mới là bắt buộc.",
-		"users.noAssignableRoles": "Không có vai trò có thể gán trong không gian làm việc này.",
-		"users.noRoles": "Không có vai trò",
-		"users.noUsersBody": "Tạo người dùng để cấp quyền truy cập trong không gian làm việc hiện tại.",
-		"users.noUsersTitle": "Không tìm thấy người dùng",
-		"users.password": "Mật khẩu",
-		"users.passwordMinLength": "Mật khẩu phải có ít nhất 8 ký tự.",
-		"users.requirePasswordChange": "Yêu cầu đổi mật khẩu",
-		"users.resetPasswordInfo": "Người dùng sẽ phải đổi mật khẩu này trong lần đăng nhập tiếp theo.",
-		"users.resetPasswordTitle": "Đặt lại mật khẩu",
-		"users.roles": "Vai trò",
-		"users.searchRoles": "Tìm vai trò",
-		"users.subtitle": "Quản lý người dùng trong không gian làm việc hiện tại.",
-		"users.temporaryPassword": "Mật khẩu tạm",
-		"users.temporaryPasswordRequired": "Mật khẩu tạm là bắt buộc.",
-		"users.title": "Người dùng",
-		"users.unableToLoad": "Không thể tải người dùng.",
-		"users.user": "Người dùng",
-		"users.userIsActive": "Người dùng đang hoạt động",
-		"users.userName": "Tên đăng nhập",
-		"users.userNameRequired": "Tên đăng nhập là bắt buộc.",
-		"workspaces.assignedRoles": "Vai trò đã gán",
-		"workspaces.createActiveRoles": "Tạo vai trò đang hoạt động trước khi gán cho không gian làm việc.",
-		"workspaces.createTitle": "Tạo không gian làm việc",
-		"workspaces.editTitle": "Sửa không gian làm việc",
-		"workspaces.filterSearch": "Tên hoặc mô tả không gian làm việc",
-		"workspaces.filterTitle": "Lọc không gian làm việc",
-		"workspaces.impersonationLoadError": "Không thể tải người dùng của không gian làm việc.",
-		"workspaces.impersonationStartError": "Không thể bắt đầu đăng nhập thay.",
-		"workspaces.leaveBlankLimit": "Để trống nếu không giới hạn không gian làm việc.",
-		"workspaces.loadingWorkspace": "Đang tải không gian làm việc...",
-		"workspaces.loadingWorkspaces": "Đang tải không gian làm việc...",
-		"workspaces.loginAs": "Đăng nhập với tư cách",
-		"workspaces.maxActiveUsers": "Số người dùng hoạt động tối đa",
-		"workspaces.maxActiveUsersField": "Số người dùng hoạt động tối đa",
-		"workspaces.maxActiveUsersInvalid": "Số người dùng hoạt động tối đa phải là số nguyên từ 0 trở lên.",
-		"workspaces.noAssignableRoles": "Không có vai trò có thể gán.",
-		"workspaces.noRolesAssigned": "Chưa gán vai trò",
-		"workspaces.noWorkspacesBody": "Tạo không gian làm việc để kiểm soát vai trò và quyền truy cập người dùng theo không gian làm việc trong Zentry.",
-		"workspaces.noWorkspacesTitle": "Chưa có không gian làm việc",
-		"workspaces.searchActiveRoles": "Tìm vai trò đang hoạt động",
-		"workspaces.subtitle": "Quản lý không gian làm việc và vai trò có thể dùng trong từng không gian làm việc.",
-		"workspaces.title": "Không gian làm việc",
-		"workspaces.unableToLoad": "Không thể tải không gian làm việc.",
-		"workspaces.workspace": "Không gian làm việc",
-		"workspaces.workspaceIsActive": "Không gian làm việc đang hoạt động",
-		"workspaces.workspaceName": "Tên không gian làm việc",
-		"workspaces.workspaceNameRequired": "Tên không gian làm việc là bắt buộc."
+		"profile.userInittials": "Unknown User"
 	}
 };
 //#endregion
@@ -32974,7 +37283,34 @@ function ActionButton({ children, noWrap = true, sx, variant = "contained", ...p
 	const sxItems = Array.isArray(sx) ? sx : [sx];
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
 		...props,
-		sx: [noWrap ? { whiteSpace: "nowrap" } : {}, ...sxItems],
+		sx: [
+			{
+				borderRadius: 1.25,
+				fontSize: "0.88rem",
+				fontWeight: 500,
+				letterSpacing: "0.04em",
+				minHeight: 38,
+				px: 2,
+				textTransform: "uppercase",
+				transition: "all 120ms ease",
+				...variant === "contained" ? {
+					boxShadow: "none",
+					"&:hover": {
+						boxShadow: "none",
+						filter: "brightness(0.96)"
+					}
+				} : {
+					borderWidth: 1,
+					"&:hover": {
+						borderWidth: 1,
+						bgcolor: "rgba(0,204,255,0.08)"
+					}
+				},
+				"&.Mui-disabled": { opacity: .6 }
+			},
+			noWrap ? { whiteSpace: "nowrap" } : {},
+			...sxItems
+		],
 		variant,
 		children
 	});
@@ -33226,6 +37562,13 @@ var UserRound = createLucideIcon("user-round", [["circle", {
 }], ["path", {
 	d: "M20 21a8 8 0 0 0-16 0",
 	key: "rfgkzh"
+}]]);
+var X = createLucideIcon("x", [["path", {
+	d: "M18 6 6 18",
+	key: "1bl5f8"
+}], ["path", {
+	d: "m6 6 12 12",
+	key: "d8bk6v"
 }]]);
 //#endregion
 //#region src/components/icons/AppIcon.tsx
@@ -33631,11 +37974,7 @@ var navigationIcons = {
 };
 var navigationLabelKeys = {
 	"/": "nav.dashboard",
-	"/oidc-clients": "nav.oidcClients",
-	"/roles": "nav.roles",
-	"/settings": "nav.settings",
-	"/users": "nav.users",
-	"/workspaces": "nav.workspaces"
+	"/banks": "nav.banks"
 };
 function SideMenu({ currentYear }) {
 	const location = useLocation();
@@ -33929,6 +38268,2472 @@ function DashboardPage() {
 	});
 }
 //#endregion
+//#region node_modules/react-hook-form/dist/index.esm.mjs
+var isCheckBoxInput = (element) => element.type === "checkbox";
+var isDateObject = (value) => value instanceof Date;
+var isNullOrUndefined = (value) => value == null;
+var isObjectType = (value) => typeof value === "object";
+var isObject = (value) => !isNullOrUndefined(value) && !Array.isArray(value) && isObjectType(value) && !isDateObject(value);
+var getEventValue = (event) => isObject(event) && event.target ? isCheckBoxInput(event.target) ? event.target.checked : event.target.value : event;
+var isNameInFieldArray = (names, name) => name.split(".").some((part, index, arr) => !isNaN(Number(part)) && names.has(arr.slice(0, index).join(".")));
+var isPlainObject = (tempObject) => {
+	const prototypeCopy = tempObject.constructor && tempObject.constructor.prototype;
+	return isObject(prototypeCopy) && prototypeCopy.hasOwnProperty("isPrototypeOf");
+};
+var isWeb = typeof window !== "undefined" && typeof window.HTMLElement !== "undefined" && typeof document !== "undefined";
+function cloneObject(data) {
+	if (data instanceof Date) return new Date(data);
+	const isFileListInstance = typeof FileList !== "undefined" && data instanceof FileList;
+	if (isWeb && (data instanceof Blob || isFileListInstance)) return data;
+	const isArray = Array.isArray(data);
+	if (!isArray && !(isObject(data) && isPlainObject(data))) return data;
+	const copy = isArray ? [] : Object.create(Object.getPrototypeOf(data));
+	for (const key in data) if (Object.prototype.hasOwnProperty.call(data, key)) copy[key] = cloneObject(data[key]);
+	return copy;
+}
+var isKey = (value) => /^\w*$/.test(value);
+var isUndefined = (val) => val === void 0;
+var compact = (value) => Array.isArray(value) ? value.filter(Boolean) : [];
+var stringToPath = (input) => compact(input.replace(/["|']|\]/g, "").split(/\.|\[/));
+var get = (object, path, defaultValue) => {
+	if (!path || !isObject(object)) return defaultValue;
+	const result = (isKey(path) ? [path] : stringToPath(path)).reduce((result, key) => {
+		return isNullOrUndefined(result) ? void 0 : result[key];
+	}, object);
+	return isUndefined(result) || result === object ? isUndefined(object[path]) ? defaultValue : object[path] : result;
+};
+var isBoolean = (value) => typeof value === "boolean";
+var isFunction = (value) => typeof value === "function";
+var set = (object, path, value) => {
+	let index = -1;
+	const tempPath = isKey(path) ? [path] : stringToPath(path);
+	const length = tempPath.length;
+	const lastIndex = length - 1;
+	while (++index < length) {
+		const key = tempPath[index];
+		let newValue = value;
+		if (index !== lastIndex) {
+			const objValue = object[key];
+			newValue = isObject(objValue) || Array.isArray(objValue) ? objValue : !isNaN(+tempPath[index + 1]) ? [] : {};
+		}
+		if (key === "__proto__" || key === "constructor" || key === "prototype") return;
+		object[key] = newValue;
+		object = object[key];
+	}
+};
+var EVENTS = {
+	BLUR: "blur",
+	FOCUS_OUT: "focusout",
+	CHANGE: "change",
+	SUBMIT: "submit",
+	TRIGGER: "trigger",
+	VALID: "valid"
+};
+var VALIDATION_MODE = {
+	onBlur: "onBlur",
+	onChange: "onChange",
+	onSubmit: "onSubmit",
+	onTouched: "onTouched",
+	all: "all"
+};
+var INPUT_VALIDATION_RULES = {
+	max: "max",
+	min: "min",
+	maxLength: "maxLength",
+	minLength: "minLength",
+	pattern: "pattern",
+	required: "required",
+	validate: "validate"
+};
+var FORM_ERROR_TYPE = "form";
+var ROOT_ERROR_TYPE = "root";
+/**
+* Separate context for `control` to prevent unnecessary rerenders.
+* Internal hooks that only need control use this instead of full form context.
+*/
+var HookFormControlContext = import_react.createContext(null);
+HookFormControlContext.displayName = "HookFormControlContext";
+/**
+* @internal Internal hook to access only control from context.
+*/
+var useFormControlContext = () => import_react.useContext(HookFormControlContext);
+var getProxyFormState = (formState, control, localProxyFormState, isRoot = true) => {
+	const result = {};
+	for (const key in formState) Object.defineProperty(result, key, { get: () => {
+		const _key = key;
+		if (control._proxyFormState[_key] !== VALIDATION_MODE.all) control._proxyFormState[_key] = !isRoot || VALIDATION_MODE.all;
+		localProxyFormState && (localProxyFormState[_key] = true);
+		return formState[_key];
+	} });
+	return result;
+};
+var useIsomorphicLayoutEffect = typeof window !== "undefined" ? import_react.useLayoutEffect : import_react.useEffect;
+/**
+* This custom hook allows you to subscribe to each form state, and isolate the re-render at the custom hook level. It has its scope in terms of form state subscription, so it would not affect other useFormState and useForm. Using this hook can reduce the re-render impact on large and complex form application.
+*
+* @remarks
+* [API](https://react-hook-form.com/docs/useformstate) • [Demo](https://codesandbox.io/s/useformstate-75xly)
+*
+* @param props - include options on specify fields to subscribe. {@link UseFormStateReturn}
+*
+* @example
+* ```tsx
+* function App() {
+*   const { register, handleSubmit, control } = useForm({
+*     defaultValues: {
+*     firstName: "firstName"
+*   }});
+*   const { dirtyFields } = useFormState({
+*     control
+*   });
+*   const onSubmit = (data) => console.log(data);
+*
+*   return (
+*     <form onSubmit={handleSubmit(onSubmit)}>
+*       <input {...register("firstName")} placeholder="First Name" />
+*       {dirtyFields.firstName && <p>Field is dirty.</p>}
+*       <input type="submit" />
+*     </form>
+*   );
+* }
+* ```
+*/
+function useFormState(props) {
+	const formControl = useFormControlContext();
+	const { control = formControl, disabled, name, exact } = props || {};
+	const [formState, updateFormState] = import_react.useState(() => ({
+		...control._formState,
+		defaultValues: control._defaultValues
+	}));
+	const _localProxyFormState = import_react.useRef({
+		isDirty: false,
+		isLoading: false,
+		dirtyFields: false,
+		touchedFields: false,
+		validatingFields: false,
+		isValidating: false,
+		isValid: false,
+		errors: false
+	});
+	useIsomorphicLayoutEffect(() => control._subscribe({
+		name,
+		formState: _localProxyFormState.current,
+		exact,
+		callback: (formState) => {
+			!disabled && updateFormState({
+				...control._formState,
+				...formState,
+				defaultValues: control._defaultValues
+			});
+		}
+	}), [
+		name,
+		disabled,
+		exact
+	]);
+	import_react.useEffect(() => {
+		_localProxyFormState.current.isValid && control._setValid(true);
+	}, [control]);
+	return import_react.useMemo(() => getProxyFormState(formState, control, _localProxyFormState.current, false), [formState, control]);
+}
+var isString = (value) => typeof value === "string";
+var generateWatchOutput = (names, _names, formValues, isGlobal, defaultValue) => {
+	if (isString(names)) {
+		isGlobal && _names.watch.add(names);
+		return get(formValues, names, defaultValue);
+	}
+	if (Array.isArray(names)) return names.map((fieldName) => (isGlobal && _names.watch.add(fieldName), get(formValues, fieldName)));
+	isGlobal && (_names.watchAll = true);
+	return formValues;
+};
+var isPrimitive = (value) => isNullOrUndefined(value) || !isObjectType(value);
+function deepEqual(object1, object2, visited = /* @__PURE__ */ new WeakSet()) {
+	if (object1 === object2) return true;
+	if (isPrimitive(object1) || isPrimitive(object2)) return Object.is(object1, object2);
+	if (isDateObject(object1) && isDateObject(object2)) return Object.is(object1.getTime(), object2.getTime());
+	const keys1 = Object.keys(object1);
+	const keys2 = Object.keys(object2);
+	if (keys1.length !== keys2.length) return false;
+	if (visited.has(object1) || visited.has(object2)) return true;
+	visited.add(object1);
+	visited.add(object2);
+	for (const key of keys1) {
+		const val1 = object1[key];
+		if (!(key in object2)) return false;
+		if (key !== "ref") {
+			const val2 = object2[key];
+			if (isDateObject(val1) && isDateObject(val2) || (isObject(val1) || Array.isArray(val1)) && (isObject(val2) || Array.isArray(val2)) ? !deepEqual(val1, val2, visited) : !Object.is(val1, val2)) return false;
+		}
+	}
+	return true;
+}
+/**
+* Custom hook to subscribe to field change and isolate re-rendering at the component level.
+*
+* @remarks
+*
+* [API](https://react-hook-form.com/docs/usewatch) • [Demo](https://codesandbox.io/s/react-hook-form-v7-ts-usewatch-h9i5e)
+*
+* @example
+* ```tsx
+* const { control } = useForm();
+* const values = useWatch({
+*   name: "fieldName"
+*   control,
+* })
+* ```
+*/
+function useWatch(props) {
+	const formControl = useFormControlContext();
+	const { control = formControl, name, defaultValue, disabled, exact, compute } = props || {};
+	const _defaultValue = import_react.useRef(defaultValue);
+	const _compute = import_react.useRef(compute);
+	const _computeFormValues = import_react.useRef(void 0);
+	const _prevControl = import_react.useRef(control);
+	const _prevName = import_react.useRef(name);
+	_compute.current = compute;
+	const [value, updateValue] = import_react.useState(() => {
+		const defaultValue = control._getWatch(name, _defaultValue.current);
+		return _compute.current ? _compute.current(defaultValue) : defaultValue;
+	});
+	const getCurrentOutput = import_react.useCallback((values) => {
+		const formValues = generateWatchOutput(name, control._names, values || control._formValues, false, _defaultValue.current);
+		return _compute.current ? _compute.current(formValues) : formValues;
+	}, [
+		control._formValues,
+		control._names,
+		name
+	]);
+	const refreshValue = import_react.useCallback((values) => {
+		if (!disabled) {
+			const formValues = generateWatchOutput(name, control._names, values || control._formValues, false, _defaultValue.current);
+			if (_compute.current) {
+				const computedFormValues = _compute.current(formValues);
+				if (!deepEqual(computedFormValues, _computeFormValues.current)) {
+					updateValue(computedFormValues);
+					_computeFormValues.current = computedFormValues;
+				}
+			} else updateValue(formValues);
+		}
+	}, [
+		control._formValues,
+		control._names,
+		disabled,
+		name
+	]);
+	useIsomorphicLayoutEffect(() => {
+		if (_prevControl.current !== control || !deepEqual(_prevName.current, name)) {
+			_prevControl.current = control;
+			_prevName.current = name;
+			refreshValue();
+		}
+		return control._subscribe({
+			name,
+			formState: { values: true },
+			exact,
+			callback: (formState) => {
+				refreshValue(formState.values);
+			}
+		});
+	}, [
+		control,
+		exact,
+		name,
+		refreshValue
+	]);
+	import_react.useEffect(() => control._removeUnmounted());
+	const controlChanged = _prevControl.current !== control;
+	const prevName = _prevName.current;
+	const computedOutput = import_react.useMemo(() => {
+		if (disabled) return null;
+		const nameChanged = !controlChanged && !deepEqual(prevName, name);
+		return controlChanged || nameChanged ? getCurrentOutput() : null;
+	}, [
+		disabled,
+		controlChanged,
+		name,
+		prevName,
+		getCurrentOutput
+	]);
+	return computedOutput !== null ? computedOutput : value;
+}
+/**
+* Custom hook to work with controlled component, this function provide you with both form and field level state. Re-render is isolated at the hook level.
+*
+* @remarks
+* [API](https://react-hook-form.com/docs/usecontroller) • [Demo](https://codesandbox.io/s/usecontroller-0o8px)
+*
+* @param props - the path name to the form field value, and validation rules.
+*
+* @returns field properties, field and form state. {@link UseControllerReturn}
+*
+* @example
+* ```tsx
+* function Input(props) {
+*   const { field, fieldState, formState } = useController(props);
+*   return (
+*     <div>
+*       <input {...field} placeholder={props.name} />
+*       <p>{fieldState.isTouched && "Touched"}</p>
+*       <p>{formState.isSubmitted ? "submitted" : ""}</p>
+*     </div>
+*   );
+* }
+* ```
+*/
+function useController(props) {
+	const formControl = useFormControlContext();
+	const { name, disabled, control = formControl, shouldUnregister, defaultValue, exact = true } = props;
+	const isArrayField = isNameInFieldArray(control._names.array, name);
+	const value = useWatch({
+		control,
+		name,
+		defaultValue: import_react.useMemo(() => get(control._formValues, name, get(control._defaultValues, name, defaultValue)), [
+			control,
+			name,
+			defaultValue
+		]),
+		exact
+	});
+	const formState = useFormState({
+		control,
+		name,
+		exact
+	});
+	const _props = import_react.useRef(props);
+	const _registerProps = import_react.useRef(control.register(name, {
+		...props.rules,
+		value,
+		...isBoolean(props.disabled) ? { disabled: props.disabled } : {}
+	}));
+	_props.current = props;
+	const fieldState = import_react.useMemo(() => Object.defineProperties({}, {
+		invalid: {
+			enumerable: true,
+			get: () => !!get(formState.errors, name)
+		},
+		isDirty: {
+			enumerable: true,
+			get: () => !!get(formState.dirtyFields, name)
+		},
+		isTouched: {
+			enumerable: true,
+			get: () => !!get(formState.touchedFields, name)
+		},
+		isValidating: {
+			enumerable: true,
+			get: () => !!get(formState.validatingFields, name)
+		},
+		error: {
+			enumerable: true,
+			get: () => get(formState.errors, name)
+		}
+	}), [formState, name]);
+	const onChange = import_react.useCallback((event) => _registerProps.current.onChange({
+		target: {
+			value: getEventValue(event),
+			name
+		},
+		type: EVENTS.CHANGE
+	}), [name]);
+	const onBlur = import_react.useCallback(() => _registerProps.current.onBlur({
+		target: {
+			value: get(control._formValues, name),
+			name
+		},
+		type: EVENTS.BLUR
+	}), [name, control._formValues]);
+	const ref = import_react.useCallback((elm) => {
+		const field = get(control._fields, name);
+		if (field && field._f && elm) field._f.ref = {
+			focus: () => isFunction(elm.focus) && elm.focus(),
+			select: () => isFunction(elm.select) && elm.select(),
+			setCustomValidity: (message) => isFunction(elm.setCustomValidity) && elm.setCustomValidity(message),
+			reportValidity: () => isFunction(elm.reportValidity) && elm.reportValidity()
+		};
+	}, [control._fields, name]);
+	const field = import_react.useMemo(() => ({
+		name,
+		value,
+		...isBoolean(disabled) || formState.disabled ? { disabled: formState.disabled || disabled } : {},
+		onChange,
+		onBlur,
+		ref
+	}), [
+		name,
+		disabled,
+		formState.disabled,
+		onChange,
+		onBlur,
+		ref,
+		value
+	]);
+	import_react.useEffect(() => {
+		const _shouldUnregisterField = control._options.shouldUnregister || shouldUnregister;
+		control.register(name, {
+			..._props.current.rules,
+			...isBoolean(_props.current.disabled) ? { disabled: _props.current.disabled } : {}
+		});
+		const updateMounted = (name, value) => {
+			const field = get(control._fields, name);
+			if (field && field._f) field._f.mount = value;
+		};
+		updateMounted(name, true);
+		if (_shouldUnregisterField) {
+			const value = cloneObject(get(control._options.defaultValues, name, _props.current.defaultValue));
+			set(control._defaultValues, name, value);
+			if (isUndefined(get(control._formValues, name))) set(control._formValues, name, value);
+		}
+		!isArrayField && control.register(name);
+		return () => {
+			(isArrayField ? _shouldUnregisterField && !control._state.action : _shouldUnregisterField) ? control.unregister(name) : updateMounted(name, false);
+		};
+	}, [
+		name,
+		control,
+		isArrayField,
+		shouldUnregister
+	]);
+	import_react.useEffect(() => {
+		control._setDisabledField({
+			disabled,
+			name
+		});
+	}, [
+		disabled,
+		name,
+		control
+	]);
+	return import_react.useMemo(() => ({
+		field,
+		formState,
+		fieldState
+	}), [
+		field,
+		formState,
+		fieldState
+	]);
+}
+/**
+* Component based on `useController` hook to work with controlled component.
+*
+* @remarks
+* [API](https://react-hook-form.com/docs/usecontroller/controller) • [Demo](https://codesandbox.io/s/react-hook-form-v6-controller-ts-jwyzw) • [Video](https://www.youtube.com/watch?v=N2UNk_UCVyA)
+*
+* @param props - the path name to the form field value, and validation rules.
+*
+* @returns provide field handler functions, field and form state.
+*
+* @example
+* ```tsx
+* function App() {
+*   const { control } = useForm<FormValues>({
+*     defaultValues: {
+*       test: ""
+*     }
+*   });
+*
+*   return (
+*     <form>
+*       <Controller
+*         control={control}
+*         name="test"
+*         render={({ field: { onChange, onBlur, value, ref }, formState, fieldState }) => (
+*           <>
+*             <input
+*               onChange={onChange} // send value to hook form
+*               onBlur={onBlur} // notify when input is touched
+*               value={value} // return updated value
+*               ref={ref} // set ref for focus management
+*             />
+*             <p>{formState.isSubmitted ? "submitted" : ""}</p>
+*             <p>{fieldState.isTouched ? "touched" : ""}</p>
+*           </>
+*         )}
+*       />
+*     </form>
+*   );
+* }
+* ```
+*/
+var Controller = (props) => props.render(useController(props));
+var HookFormContext = import_react.createContext(null);
+HookFormContext.displayName = "HookFormContext";
+var appendErrors = (name, validateAllFieldCriteria, errors, type, message) => validateAllFieldCriteria ? {
+	...errors[name],
+	types: {
+		...errors[name] && errors[name].types ? errors[name].types : {},
+		[type]: message || true
+	}
+} : {};
+var convertToArrayPayload = (value) => Array.isArray(value) ? value : [value];
+var createSubject = () => {
+	let _observers = [];
+	const next = (value) => {
+		for (const observer of _observers) observer.next && observer.next(value);
+	};
+	const subscribe = (observer) => {
+		_observers.push(observer);
+		return { unsubscribe: () => {
+			_observers = _observers.filter((o) => o !== observer);
+		} };
+	};
+	const unsubscribe = () => {
+		_observers = [];
+	};
+	return {
+		get observers() {
+			return _observers;
+		},
+		next,
+		subscribe,
+		unsubscribe
+	};
+};
+function extractFormValues(fieldsState, formValues) {
+	const values = {};
+	for (const key in fieldsState) if (fieldsState.hasOwnProperty(key)) {
+		const fieldState = fieldsState[key];
+		const fieldValue = formValues[key];
+		if (fieldState && isObject(fieldState) && fieldValue) {
+			const nestedFieldsState = extractFormValues(fieldState, fieldValue);
+			if (isObject(nestedFieldsState)) values[key] = nestedFieldsState;
+		} else if (fieldsState[key]) values[key] = fieldValue;
+	}
+	return values;
+}
+var isEmptyObject = (value) => isObject(value) && !Object.keys(value).length;
+var isFileInput = (element) => element.type === "file";
+var isHTMLElement = (value) => {
+	if (!isWeb) return false;
+	const owner = value ? value.ownerDocument : 0;
+	return value instanceof (owner && owner.defaultView ? owner.defaultView.HTMLElement : HTMLElement);
+};
+var isMultipleSelect = (element) => element.type === `select-multiple`;
+var isRadioInput = (element) => element.type === "radio";
+var isRadioOrCheckbox = (ref) => isRadioInput(ref) || isCheckBoxInput(ref);
+var live = (ref) => isHTMLElement(ref) && ref.isConnected;
+function baseGet(object, updatePath) {
+	const length = updatePath.slice(0, -1).length;
+	let index = 0;
+	while (index < length) {
+		if (isNullOrUndefined(object)) {
+			object = void 0;
+			break;
+		}
+		object = object[updatePath[index]];
+		index++;
+	}
+	return object;
+}
+function isEmptyArray(obj) {
+	for (const key in obj) if (obj.hasOwnProperty(key) && !isUndefined(obj[key])) return false;
+	return true;
+}
+function unset(object, path) {
+	if (isString(path) && Object.prototype.hasOwnProperty.call(object, path)) {
+		delete object[path];
+		return object;
+	}
+	const paths = Array.isArray(path) ? path : isKey(path) ? [path] : stringToPath(path);
+	const childObject = paths.length === 1 ? object : baseGet(object, paths);
+	const index = paths.length - 1;
+	const key = paths[index];
+	if (childObject) delete childObject[key];
+	if (index !== 0 && (isObject(childObject) && isEmptyObject(childObject) || Array.isArray(childObject) && isEmptyArray(childObject))) unset(object, paths.slice(0, -1));
+	return object;
+}
+var objectHasFunction = (data) => {
+	for (const key in data) if (isFunction(data[key])) return true;
+	return false;
+};
+function isTraversable(value) {
+	return Array.isArray(value) || isObject(value) && !objectHasFunction(value);
+}
+function markFieldsDirty(data, fields = {}) {
+	for (const key in data) {
+		const value = data[key];
+		if (isTraversable(value)) {
+			fields[key] = Array.isArray(value) ? [] : {};
+			markFieldsDirty(value, fields[key]);
+		} else if (!isUndefined(value)) fields[key] = true;
+	}
+	return fields;
+}
+function pruneDirtyFields(value) {
+	if (value === false) return;
+	if (value === true) return true;
+	if (Array.isArray(value)) {
+		const result = value.map((value) => pruneDirtyFields(value));
+		return result.some((value) => value !== void 0) ? result : void 0;
+	}
+	if (isObject(value)) {
+		const result = {};
+		for (const key in value) {
+			const pruned = pruneDirtyFields(value[key]);
+			if (!isUndefined(pruned)) result[key] = pruned;
+		}
+		return Object.keys(result).length ? result : void 0;
+	}
+}
+function getDirtyFields(data, formValues, dirtyFieldsFromValues) {
+	if (!dirtyFieldsFromValues) dirtyFieldsFromValues = markFieldsDirty(formValues);
+	for (const key in data) {
+		const value = data[key];
+		if (isTraversable(value)) if (isUndefined(formValues) || isPrimitive(dirtyFieldsFromValues[key])) dirtyFieldsFromValues[key] = markFieldsDirty(value, Array.isArray(value) ? [] : {});
+		else getDirtyFields(value, isNullOrUndefined(formValues) ? {} : formValues[key], dirtyFieldsFromValues[key]);
+		else {
+			const formValue = formValues[key];
+			dirtyFieldsFromValues[key] = !deepEqual(value, formValue);
+		}
+	}
+	return pruneDirtyFields(dirtyFieldsFromValues) || {};
+}
+var defaultResult = {
+	value: false,
+	isValid: false
+};
+var validResult = {
+	value: true,
+	isValid: true
+};
+var getCheckboxValue = (options) => {
+	if (Array.isArray(options)) {
+		if (options.length > 1) {
+			const values = options.filter((option) => option && option.checked && !option.disabled).map((option) => option.value);
+			return {
+				value: values,
+				isValid: !!values.length
+			};
+		}
+		return options[0].checked && !options[0].disabled ? options[0].attributes && !isUndefined(options[0].attributes.value) ? isUndefined(options[0].value) || options[0].value === "" ? validResult : {
+			value: options[0].value,
+			isValid: true
+		} : validResult : defaultResult;
+	}
+	return defaultResult;
+};
+var getFieldValueAs = (value, { valueAsNumber, valueAsDate, setValueAs }) => isUndefined(value) ? value : valueAsNumber ? value === "" ? NaN : value ? +value : value : valueAsDate && isString(value) ? new Date(value) : setValueAs ? setValueAs(value) : value;
+var defaultReturn = {
+	isValid: false,
+	value: null
+};
+var getRadioValue = (options) => Array.isArray(options) ? options.reduce((previous, option) => option && option.checked && !option.disabled ? {
+	isValid: true,
+	value: option.value
+} : previous, defaultReturn) : defaultReturn;
+function getFieldValue(_f) {
+	const ref = _f.ref;
+	if (isFileInput(ref)) return ref.files;
+	if (isRadioInput(ref)) return getRadioValue(_f.refs).value;
+	if (isMultipleSelect(ref)) return [...ref.selectedOptions].map(({ value }) => value);
+	if (isCheckBoxInput(ref)) return getCheckboxValue(_f.refs).value;
+	return getFieldValueAs(isUndefined(ref.value) ? _f.ref.value : ref.value, _f);
+}
+var getResolverOptions = (fieldsNames, _fields, criteriaMode, shouldUseNativeValidation) => {
+	const fields = {};
+	for (const name of fieldsNames) {
+		const field = get(_fields, name);
+		field && set(fields, name, field._f);
+	}
+	return {
+		criteriaMode,
+		names: [...fieldsNames],
+		fields,
+		shouldUseNativeValidation
+	};
+};
+var isRegex = (value) => value instanceof RegExp;
+var getRuleValue = (rule) => isUndefined(rule) ? rule : isRegex(rule) ? rule.source : isObject(rule) ? isRegex(rule.value) ? rule.value.source : rule.value : rule;
+var getValidationModes = (mode) => ({
+	isOnSubmit: !mode || mode === VALIDATION_MODE.onSubmit,
+	isOnBlur: mode === VALIDATION_MODE.onBlur,
+	isOnChange: mode === VALIDATION_MODE.onChange,
+	isOnAll: mode === VALIDATION_MODE.all,
+	isOnTouch: mode === VALIDATION_MODE.onTouched
+});
+var ASYNC_FUNCTION = "AsyncFunction";
+var hasPromiseValidation = (fieldReference) => !!fieldReference && !!fieldReference.validate && !!(isFunction(fieldReference.validate) && fieldReference.validate.constructor.name === ASYNC_FUNCTION || isObject(fieldReference.validate) && Object.values(fieldReference.validate).find((validateFunction) => validateFunction.constructor.name === ASYNC_FUNCTION));
+var hasValidation = (options) => options.mount && (options.required || options.min || options.max || options.maxLength || options.minLength || options.pattern || options.validate);
+var isWatched = (name, _names, isBlurEvent) => !isBlurEvent && (_names.watchAll || _names.watch.has(name) || [..._names.watch].some((watchName) => name.startsWith(watchName) && /^\.\w+/.test(name.slice(watchName.length))));
+var iterateFieldsByAction = (fields, action, fieldsNames, abortEarly) => {
+	for (const key of fieldsNames || Object.keys(fields)) {
+		const field = get(fields, key);
+		if (field) {
+			const { _f, ...currentField } = field;
+			if (_f) {
+				if (_f.refs && _f.refs[0] && action(_f.refs[0], key) && !abortEarly) return true;
+				else if (_f.ref && action(_f.ref, _f.name) && !abortEarly) return true;
+				else if (iterateFieldsByAction(currentField, action)) break;
+			} else if (isObject(currentField)) {
+				if (iterateFieldsByAction(currentField, action)) break;
+			}
+		}
+	}
+};
+function schemaErrorLookup(errors, _fields, name) {
+	const error = get(errors, name);
+	if (error || isKey(name)) return {
+		error,
+		name
+	};
+	const names = name.split(".");
+	while (names.length) {
+		const fieldName = names.join(".");
+		const field = get(_fields, fieldName);
+		const foundError = get(errors, fieldName);
+		if (field && !Array.isArray(field) && name !== fieldName) return { name };
+		if (foundError && foundError.type) return {
+			name: fieldName,
+			error: foundError
+		};
+		if (foundError && foundError.root && foundError.root.type) return {
+			name: `${fieldName}.root`,
+			error: foundError.root
+		};
+		names.pop();
+	}
+	return { name };
+}
+var shouldRenderFormState = (formStateData, _proxyFormState, updateFormState, isRoot) => {
+	updateFormState(formStateData);
+	const { name, ...formState } = formStateData;
+	return isEmptyObject(formState) || isRoot && Object.keys(formState).length >= Object.keys(_proxyFormState).length || Object.keys(formState).find((key) => _proxyFormState[key] === (!isRoot || VALIDATION_MODE.all));
+};
+var shouldSubscribeByName = (name, signalName, exact) => !name || !signalName || name === signalName || convertToArrayPayload(name).some((currentName) => currentName && (exact ? currentName === signalName : currentName.startsWith(signalName) || signalName.startsWith(currentName)));
+var skipValidation = (isBlurEvent, isTouched, isSubmitted, reValidateMode, mode) => {
+	if (mode.isOnAll) return false;
+	else if (!isSubmitted && mode.isOnTouch) return !(isTouched || isBlurEvent);
+	else if (isSubmitted ? reValidateMode.isOnBlur : mode.isOnBlur) return !isBlurEvent;
+	else if (isSubmitted ? reValidateMode.isOnChange : mode.isOnChange) return isBlurEvent;
+	return true;
+};
+var unsetEmptyArray = (ref, name) => !compact(get(ref, name)).length && unset(ref, name);
+var updateFieldArrayRootError = (errors, error, name) => {
+	const fieldArrayErrors = convertToArrayPayload(get(errors, name));
+	set(fieldArrayErrors, ROOT_ERROR_TYPE, error[name]);
+	set(errors, name, fieldArrayErrors);
+	return errors;
+};
+function getValidateError(result, ref, type = "validate") {
+	if (isString(result) || Array.isArray(result) && result.every(isString) || isBoolean(result) && !result) return {
+		type,
+		message: isString(result) ? result : "",
+		ref
+	};
+}
+var getValueAndMessage = (validationData) => isObject(validationData) && !isRegex(validationData) ? validationData : {
+	value: validationData,
+	message: ""
+};
+var validateField = async (field, disabledFieldNames, formValues, validateAllFieldCriteria, shouldUseNativeValidation, isFieldArray) => {
+	const { ref, refs, required, maxLength, minLength, min, max, pattern, validate, name, valueAsNumber, mount } = field._f;
+	const inputValue = get(formValues, name);
+	if (!mount || disabledFieldNames.has(name)) return {};
+	const inputRef = refs ? refs[0] : ref;
+	const setCustomValidity = (message) => {
+		if (shouldUseNativeValidation && inputRef.reportValidity) {
+			inputRef.setCustomValidity(isBoolean(message) ? "" : message || "");
+			inputRef.reportValidity();
+		}
+	};
+	const error = {};
+	const isRadio = isRadioInput(ref);
+	const isCheckBox = isCheckBoxInput(ref);
+	const isRadioOrCheckbox = isRadio || isCheckBox;
+	const isEmpty = (valueAsNumber || isFileInput(ref)) && isUndefined(ref.value) && isUndefined(inputValue) || isHTMLElement(ref) && ref.value === "" || inputValue === "" || Array.isArray(inputValue) && !inputValue.length || valueAsNumber && typeof inputValue === "number" && isNaN(inputValue);
+	const appendErrorsCurry = appendErrors.bind(null, name, validateAllFieldCriteria, error);
+	const getMinMaxMessage = (exceedMax, maxLengthMessage, minLengthMessage, maxType = INPUT_VALIDATION_RULES.maxLength, minType = INPUT_VALIDATION_RULES.minLength) => {
+		const message = exceedMax ? maxLengthMessage : minLengthMessage;
+		error[name] = {
+			type: exceedMax ? maxType : minType,
+			message,
+			ref,
+			...appendErrorsCurry(exceedMax ? maxType : minType, message)
+		};
+	};
+	if (isFieldArray ? !Array.isArray(inputValue) || !inputValue.length : required && (!isRadioOrCheckbox && (isEmpty || isNullOrUndefined(inputValue)) || isBoolean(inputValue) && !inputValue || isCheckBox && !getCheckboxValue(refs).isValid || isRadio && !getRadioValue(refs).isValid)) {
+		const { value, message } = isString(required) ? {
+			value: !!required,
+			message: required
+		} : getValueAndMessage(required);
+		if (value) {
+			error[name] = {
+				type: INPUT_VALIDATION_RULES.required,
+				message,
+				ref: inputRef,
+				...appendErrorsCurry(INPUT_VALIDATION_RULES.required, message)
+			};
+			if (!validateAllFieldCriteria) {
+				setCustomValidity(message);
+				return error;
+			}
+		}
+	}
+	if (!isEmpty && (!isNullOrUndefined(min) || !isNullOrUndefined(max))) {
+		let exceedMax;
+		let exceedMin;
+		const maxOutput = getValueAndMessage(max);
+		const minOutput = getValueAndMessage(min);
+		if (!isNullOrUndefined(inputValue) && !isNaN(inputValue)) {
+			const valueNumber = ref.valueAsNumber || (inputValue ? +inputValue : inputValue);
+			if (!isNullOrUndefined(maxOutput.value)) exceedMax = valueNumber > maxOutput.value;
+			if (!isNullOrUndefined(minOutput.value)) exceedMin = valueNumber < minOutput.value;
+		} else {
+			const valueDate = ref.valueAsDate || new Date(inputValue);
+			const convertTimeToDate = (time) => /* @__PURE__ */ new Date((/* @__PURE__ */ new Date()).toDateString() + " " + time);
+			const isTime = ref.type == "time";
+			const isWeek = ref.type == "week";
+			if (isString(maxOutput.value) && inputValue) exceedMax = isTime ? convertTimeToDate(inputValue) > convertTimeToDate(maxOutput.value) : isWeek ? inputValue > maxOutput.value : valueDate > new Date(maxOutput.value);
+			if (isString(minOutput.value) && inputValue) exceedMin = isTime ? convertTimeToDate(inputValue) < convertTimeToDate(minOutput.value) : isWeek ? inputValue < minOutput.value : valueDate < new Date(minOutput.value);
+		}
+		if (exceedMax || exceedMin) {
+			getMinMaxMessage(!!exceedMax, maxOutput.message, minOutput.message, INPUT_VALIDATION_RULES.max, INPUT_VALIDATION_RULES.min);
+			if (!validateAllFieldCriteria) {
+				setCustomValidity(error[name].message);
+				return error;
+			}
+		}
+	}
+	if ((maxLength || minLength) && !isEmpty && (isString(inputValue) || isFieldArray && Array.isArray(inputValue))) {
+		const maxLengthOutput = getValueAndMessage(maxLength);
+		const minLengthOutput = getValueAndMessage(minLength);
+		const exceedMax = !isNullOrUndefined(maxLengthOutput.value) && inputValue.length > +maxLengthOutput.value;
+		const exceedMin = !isNullOrUndefined(minLengthOutput.value) && inputValue.length < +minLengthOutput.value;
+		if (exceedMax || exceedMin) {
+			getMinMaxMessage(exceedMax, maxLengthOutput.message, minLengthOutput.message);
+			if (!validateAllFieldCriteria) {
+				setCustomValidity(error[name].message);
+				return error;
+			}
+		}
+	}
+	if (pattern && !isEmpty && isString(inputValue)) {
+		const { value: patternValue, message } = getValueAndMessage(pattern);
+		if (isRegex(patternValue) && !inputValue.match(patternValue)) {
+			error[name] = {
+				type: INPUT_VALIDATION_RULES.pattern,
+				message,
+				ref,
+				...appendErrorsCurry(INPUT_VALIDATION_RULES.pattern, message)
+			};
+			if (!validateAllFieldCriteria) {
+				setCustomValidity(message);
+				return error;
+			}
+		}
+	}
+	if (validate) {
+		if (isFunction(validate)) {
+			const validateError = getValidateError(await validate(inputValue, formValues), inputRef);
+			if (validateError) {
+				error[name] = {
+					...validateError,
+					...appendErrorsCurry(INPUT_VALIDATION_RULES.validate, validateError.message)
+				};
+				if (!validateAllFieldCriteria) {
+					setCustomValidity(validateError.message);
+					return error;
+				}
+			}
+		} else if (isObject(validate)) {
+			let validationResult = {};
+			for (const key in validate) {
+				if (!isEmptyObject(validationResult) && !validateAllFieldCriteria) break;
+				const validateError = getValidateError(await validate[key](inputValue, formValues), inputRef, key);
+				if (validateError) {
+					validationResult = {
+						...validateError,
+						...appendErrorsCurry(key, validateError.message)
+					};
+					setCustomValidity(validateError.message);
+					if (validateAllFieldCriteria) error[name] = validationResult;
+				}
+			}
+			if (!isEmptyObject(validationResult)) {
+				error[name] = {
+					ref: inputRef,
+					...validationResult
+				};
+				if (!validateAllFieldCriteria) return error;
+			}
+		}
+	}
+	setCustomValidity(true);
+	return error;
+};
+var defaultOptions = {
+	mode: VALIDATION_MODE.onSubmit,
+	reValidateMode: VALIDATION_MODE.onChange,
+	shouldFocusError: true
+};
+var DEFAULT_FORM_STATE = {
+	submitCount: 0,
+	isDirty: false,
+	isReady: false,
+	isValidating: false,
+	isSubmitted: false,
+	isSubmitting: false,
+	isSubmitSuccessful: false,
+	isValid: false,
+	touchedFields: {},
+	dirtyFields: {},
+	validatingFields: {}
+};
+function createFormControl(props = {}) {
+	let _options = {
+		...defaultOptions,
+		...props
+	};
+	let _formState = {
+		...cloneObject(DEFAULT_FORM_STATE),
+		isLoading: isFunction(_options.defaultValues),
+		errors: _options.errors || {},
+		disabled: _options.disabled || false
+	};
+	let _fields = {};
+	let _defaultValues = isObject(_options.defaultValues) || isObject(_options.values) ? cloneObject(_options.defaultValues || _options.values) || {} : {};
+	let _formValues = _options.shouldUnregister ? {} : cloneObject(_defaultValues);
+	let _state = {
+		action: false,
+		mount: false,
+		watch: false,
+		keepIsValid: false
+	};
+	let _names = {
+		mount: /* @__PURE__ */ new Set(),
+		disabled: /* @__PURE__ */ new Set(),
+		unMount: /* @__PURE__ */ new Set(),
+		array: /* @__PURE__ */ new Set(),
+		watch: /* @__PURE__ */ new Set(),
+		registerName: /* @__PURE__ */ new Set()
+	};
+	let delayErrorCallback;
+	let timer = 0;
+	const defaultProxyFormState = {
+		isDirty: false,
+		dirtyFields: false,
+		validatingFields: false,
+		touchedFields: false,
+		isValidating: false,
+		isValid: false,
+		errors: false
+	};
+	const _proxyFormState = { ...defaultProxyFormState };
+	let _proxySubscribeFormState = { ..._proxyFormState };
+	const _subjects = {
+		array: createSubject(),
+		state: createSubject()
+	};
+	const shouldDisplayAllAssociatedErrors = _options.criteriaMode === VALIDATION_MODE.all;
+	const debounce = (callback) => (wait) => {
+		clearTimeout(timer);
+		timer = setTimeout(callback, wait);
+	};
+	const _setValid = async (shouldUpdateValid) => {
+		if (_state.keepIsValid) return;
+		if (!_options.disabled && (_proxyFormState.isValid || _proxySubscribeFormState.isValid || shouldUpdateValid)) {
+			let isValid;
+			if (_options.resolver) {
+				isValid = isEmptyObject((await _runSchema()).errors);
+				_updateIsValidating();
+			} else isValid = await executeBuiltInValidation({
+				fields: _fields,
+				onlyCheckValid: true,
+				eventType: EVENTS.VALID
+			});
+			if (isValid !== _formState.isValid) _subjects.state.next({ isValid });
+		}
+	};
+	const _updateIsValidating = (names, isValidating) => {
+		if (!_options.disabled && (_proxyFormState.isValidating || _proxyFormState.validatingFields || _proxySubscribeFormState.isValidating || _proxySubscribeFormState.validatingFields)) {
+			(names || Array.from(_names.mount)).forEach((name) => {
+				if (name) isValidating ? set(_formState.validatingFields, name, isValidating) : unset(_formState.validatingFields, name);
+			});
+			_subjects.state.next({
+				validatingFields: _formState.validatingFields,
+				isValidating: !isEmptyObject(_formState.validatingFields)
+			});
+		}
+	};
+	const _updateDirtyFields = () => {
+		_formState.dirtyFields = getDirtyFields(_defaultValues, _formValues);
+	};
+	const _setFieldArray = (name, values = [], method, args, shouldSetValues = true, shouldUpdateFieldsAndState = true) => {
+		if (args && method && !_options.disabled) {
+			_state.action = true;
+			if (shouldUpdateFieldsAndState && Array.isArray(get(_fields, name))) {
+				const fieldValues = method(get(_fields, name), args.argA, args.argB);
+				shouldSetValues && set(_fields, name, fieldValues);
+			}
+			if (shouldUpdateFieldsAndState && Array.isArray(get(_formState.errors, name))) {
+				const errors = method(get(_formState.errors, name), args.argA, args.argB);
+				shouldSetValues && set(_formState.errors, name, errors);
+				unsetEmptyArray(_formState.errors, name);
+			}
+			if ((_proxyFormState.touchedFields || _proxySubscribeFormState.touchedFields) && shouldUpdateFieldsAndState && Array.isArray(get(_formState.touchedFields, name))) {
+				const touchedFields = method(get(_formState.touchedFields, name), args.argA, args.argB);
+				shouldSetValues && set(_formState.touchedFields, name, touchedFields);
+			}
+			if (_proxyFormState.dirtyFields || _proxySubscribeFormState.dirtyFields) _updateDirtyFields();
+			_subjects.state.next({
+				name,
+				isDirty: _getDirty(name, values),
+				dirtyFields: _formState.dirtyFields,
+				errors: _formState.errors,
+				isValid: _formState.isValid
+			});
+		} else set(_formValues, name, values);
+	};
+	const updateErrors = (name, error) => {
+		set(_formState.errors, name, error);
+		_subjects.state.next({ errors: _formState.errors });
+	};
+	const _setErrors = (errors) => {
+		_formState.errors = errors;
+		_subjects.state.next({
+			errors: _formState.errors,
+			isValid: false
+		});
+	};
+	const updateValidAndValue = (name, shouldSkipSetValueAs, value, ref) => {
+		const field = get(_fields, name);
+		if (field) {
+			const wasUnsetInFormValues = isUndefined(get(_formValues, name));
+			const defaultValue = get(_formValues, name, isUndefined(value) ? get(_defaultValues, name) : value);
+			isUndefined(defaultValue) || ref && ref.defaultChecked || shouldSkipSetValueAs ? set(_formValues, name, shouldSkipSetValueAs ? defaultValue : getFieldValue(field._f)) : setFieldValue(name, defaultValue);
+			if (_state.mount && !_state.action) {
+				_setValid();
+				if (wasUnsetInFormValues && _formState.isDirty && (_proxyFormState.isDirty || _proxySubscribeFormState.isDirty)) {
+					if (!_getDirty()) {
+						_formState.isDirty = false;
+						_subjects.state.next({ ..._formState });
+					}
+				}
+			}
+		}
+	};
+	const updateTouchAndDirty = (name, fieldValue, isBlurEvent, shouldDirty, shouldRender) => {
+		let shouldUpdateField = false;
+		let isPreviousDirty = false;
+		const output = { name };
+		if (!_options.disabled) {
+			if (!isBlurEvent || shouldDirty) {
+				if (_proxyFormState.isDirty || _proxySubscribeFormState.isDirty) {
+					isPreviousDirty = _formState.isDirty;
+					_formState.isDirty = output.isDirty = _getDirty();
+					shouldUpdateField = isPreviousDirty !== output.isDirty;
+				}
+				const isCurrentFieldPristine = deepEqual(get(_defaultValues, name), fieldValue);
+				isPreviousDirty = !!get(_formState.dirtyFields, name);
+				isCurrentFieldPristine ? unset(_formState.dirtyFields, name) : set(_formState.dirtyFields, name, true);
+				output.dirtyFields = _formState.dirtyFields;
+				shouldUpdateField = shouldUpdateField || (_proxyFormState.dirtyFields || _proxySubscribeFormState.dirtyFields) && isPreviousDirty !== !isCurrentFieldPristine;
+			}
+			if (isBlurEvent) {
+				const isPreviousFieldTouched = get(_formState.touchedFields, name);
+				if (!isPreviousFieldTouched) {
+					set(_formState.touchedFields, name, isBlurEvent);
+					output.touchedFields = _formState.touchedFields;
+					shouldUpdateField = shouldUpdateField || (_proxyFormState.touchedFields || _proxySubscribeFormState.touchedFields) && isPreviousFieldTouched !== isBlurEvent;
+				}
+			}
+			shouldUpdateField && shouldRender && _subjects.state.next(output);
+		}
+		return shouldUpdateField ? output : {};
+	};
+	const shouldRenderByError = (name, isValid, error, fieldState) => {
+		const previousFieldError = get(_formState.errors, name);
+		const shouldUpdateValid = (_proxyFormState.isValid || _proxySubscribeFormState.isValid) && isBoolean(isValid) && _formState.isValid !== isValid;
+		if (_options.delayError && error) {
+			delayErrorCallback = debounce(() => updateErrors(name, error));
+			delayErrorCallback(_options.delayError);
+		} else {
+			clearTimeout(timer);
+			delayErrorCallback = null;
+			error ? set(_formState.errors, name, error) : unset(_formState.errors, name);
+		}
+		if ((error ? !deepEqual(previousFieldError, error) : previousFieldError) || !isEmptyObject(fieldState) || shouldUpdateValid) {
+			const updatedFormState = {
+				...fieldState,
+				...shouldUpdateValid && isBoolean(isValid) ? { isValid } : {},
+				errors: _formState.errors,
+				name
+			};
+			_formState = {
+				..._formState,
+				...updatedFormState
+			};
+			_subjects.state.next(updatedFormState);
+		}
+	};
+	const _runSchema = async (name) => {
+		_updateIsValidating(name, true);
+		return await _options.resolver(_formValues, _options.context, getResolverOptions(name || _names.mount, _fields, _options.criteriaMode, _options.shouldUseNativeValidation));
+	};
+	const executeSchemaAndUpdateState = async (names) => {
+		const { errors } = await _runSchema(names);
+		_updateIsValidating(names);
+		if (names) for (const name of names) {
+			const error = get(errors, name);
+			error ? set(_formState.errors, name, error) : unset(_formState.errors, name);
+		}
+		else _formState.errors = errors;
+		return errors;
+	};
+	const validateForm = async ({ name, eventType }) => {
+		if (props.validate) {
+			const result = await props.validate({
+				formValues: _formValues,
+				formState: _formState,
+				name,
+				eventType
+			});
+			if (isObject(result)) {
+				for (const key in result) if (result[key]) setError(`${FORM_ERROR_TYPE}.${key}`, {
+					message: isString(result.message) ? result.message : "",
+					type: INPUT_VALIDATION_RULES.validate
+				});
+			} else if (isString(result) || !result) setError(FORM_ERROR_TYPE, {
+				message: result || "",
+				type: INPUT_VALIDATION_RULES.validate
+			});
+			else clearErrors(FORM_ERROR_TYPE);
+			return result;
+		}
+		return true;
+	};
+	const executeBuiltInValidation = async ({ fields, onlyCheckValid, name, eventType, context = {
+		valid: true,
+		runRootValidation: false
+	} }) => {
+		if (props.validate) {
+			context.runRootValidation = true;
+			if (!await validateForm({
+				name,
+				eventType
+			})) {
+				context.valid = false;
+				if (onlyCheckValid) return context.valid;
+			}
+		}
+		for (const name in fields) {
+			const field = fields[name];
+			if (field) {
+				const { _f, ...fieldValue } = field;
+				if (_f) {
+					const isFieldArrayRoot = _names.array.has(_f.name);
+					const isPromiseFunction = field._f && hasPromiseValidation(field._f);
+					if (isPromiseFunction && _proxyFormState.validatingFields) _updateIsValidating([_f.name], true);
+					const fieldError = await validateField(field, _names.disabled, _formValues, shouldDisplayAllAssociatedErrors, _options.shouldUseNativeValidation && !onlyCheckValid, isFieldArrayRoot);
+					if (isPromiseFunction && _proxyFormState.validatingFields) _updateIsValidating([_f.name]);
+					if (fieldError[_f.name]) {
+						context.valid = false;
+						if (onlyCheckValid) break;
+					}
+					!onlyCheckValid && (get(fieldError, _f.name) ? isFieldArrayRoot ? updateFieldArrayRootError(_formState.errors, fieldError, _f.name) : set(_formState.errors, _f.name, fieldError[_f.name]) : unset(_formState.errors, _f.name));
+					if (props.shouldUseNativeValidation && fieldError[_f.name]) break;
+				}
+				!isEmptyObject(fieldValue) && await executeBuiltInValidation({
+					context,
+					onlyCheckValid,
+					fields: fieldValue,
+					name,
+					eventType
+				});
+			}
+		}
+		return context.valid;
+	};
+	const _removeUnmounted = () => {
+		for (const name of _names.unMount) {
+			const field = get(_fields, name);
+			field && (field._f.refs ? field._f.refs.every((ref) => !live(ref)) : !live(field._f.ref)) && unregister(name);
+		}
+		_names.unMount = /* @__PURE__ */ new Set();
+	};
+	const _getDirty = (name, data) => !_options.disabled && (name && data && set(_formValues, name, data), !deepEqual(getValues(), _defaultValues));
+	const _getWatch = (names, defaultValue, isGlobal) => generateWatchOutput(names, _names, { ..._state.mount ? _formValues : isUndefined(defaultValue) ? _defaultValues : isString(names) ? { [names]: defaultValue } : defaultValue }, isGlobal, defaultValue);
+	const _getFieldArray = (name) => compact(get(_state.mount ? _formValues : _defaultValues, name, _options.shouldUnregister ? get(_defaultValues, name, []) : []));
+	const setFieldValue = (name, value, options = {}) => {
+		const field = get(_fields, name);
+		let fieldValue = value;
+		if (field) {
+			const fieldReference = field._f;
+			if (fieldReference) {
+				!fieldReference.disabled && set(_formValues, name, getFieldValueAs(value, fieldReference));
+				fieldValue = isHTMLElement(fieldReference.ref) && isNullOrUndefined(value) ? "" : value;
+				if (isMultipleSelect(fieldReference.ref)) [...fieldReference.ref.options].forEach((optionRef) => optionRef.selected = fieldValue.includes(optionRef.value));
+				else if (fieldReference.refs) if (isCheckBoxInput(fieldReference.ref)) fieldReference.refs.forEach((checkboxRef) => {
+					if (!checkboxRef.defaultChecked || !checkboxRef.disabled) if (Array.isArray(fieldValue)) checkboxRef.checked = !!fieldValue.find((data) => data === checkboxRef.value);
+					else checkboxRef.checked = fieldValue === checkboxRef.value || !!fieldValue;
+				});
+				else fieldReference.refs.forEach((radioRef) => radioRef.checked = radioRef.value === fieldValue);
+				else if (isFileInput(fieldReference.ref)) fieldReference.ref.value = "";
+				else {
+					fieldReference.ref.value = fieldValue;
+					if (!fieldReference.ref.type) _subjects.state.next({
+						name,
+						values: cloneObject(_formValues)
+					});
+				}
+			}
+		}
+		(options.shouldDirty || options.shouldTouch) && updateTouchAndDirty(name, fieldValue, options.shouldTouch, options.shouldDirty, true);
+		options.shouldValidate && trigger(name);
+	};
+	const setFieldValues = (name, value, options) => {
+		for (const fieldKey in value) {
+			if (!value.hasOwnProperty(fieldKey)) return;
+			const fieldValue = value[fieldKey];
+			const fieldName = name + "." + fieldKey;
+			const field = get(_fields, fieldName);
+			(_names.array.has(name) || isObject(fieldValue) || field && !field._f) && !isDateObject(fieldValue) ? setFieldValues(fieldName, fieldValue, options) : setFieldValue(fieldName, fieldValue, options);
+		}
+	};
+	const setValue = (name, value, options = {}) => {
+		const field = get(_fields, name);
+		const isFieldArray = _names.array.has(name);
+		const cloneValue = cloneObject(value);
+		const isValueUnchanged = deepEqual(get(_formValues, name), cloneValue);
+		set(_formValues, name, cloneValue);
+		if (isFieldArray) {
+			_subjects.array.next({
+				name,
+				values: cloneObject(_formValues)
+			});
+			if ((_proxyFormState.isDirty || _proxyFormState.dirtyFields || _proxySubscribeFormState.isDirty || _proxySubscribeFormState.dirtyFields) && options.shouldDirty) {
+				_updateDirtyFields();
+				_subjects.state.next({
+					name,
+					dirtyFields: _formState.dirtyFields,
+					isDirty: _getDirty(name, cloneValue)
+				});
+			}
+		} else {
+			const isEmpty = Array.isArray(cloneValue) && !cloneValue.length || isEmptyObject(cloneValue);
+			if (!field || field._f || isNullOrUndefined(cloneValue) || isEmpty) setFieldValue(name, cloneValue, options);
+			else setFieldValues(name, cloneValue, options);
+		}
+		if (!isValueUnchanged) {
+			const watched = isWatched(name, _names);
+			_subjects.state.next({
+				...watched && _formState,
+				name: _state.mount || watched ? name : void 0,
+				values: cloneObject(_formValues)
+			});
+		}
+	};
+	const setValues = (formValues) => {
+		const updatedFormValues = isFunction(formValues) ? formValues(_formValues) : formValues;
+		if (!deepEqual(_formValues, updatedFormValues)) {
+			_formValues = {
+				..._formValues,
+				...updatedFormValues
+			};
+			_subjects.state.next({
+				..._formState,
+				values: _formValues
+			});
+		}
+	};
+	const onChange = async (event) => {
+		_state.mount = true;
+		const target = event.target;
+		let name = target.name;
+		let isFieldValueUpdated = true;
+		const field = get(_fields, name);
+		const _updateIsFieldValueUpdated = (fieldValue) => {
+			isFieldValueUpdated = Number.isNaN(fieldValue) || isDateObject(fieldValue) && isNaN(fieldValue.getTime()) || deepEqual(fieldValue, get(_formValues, name, fieldValue));
+		};
+		const validationModeBeforeSubmit = getValidationModes(_options.mode);
+		const validationModeAfterSubmit = getValidationModes(_options.reValidateMode);
+		if (field) {
+			let error;
+			let isValid;
+			const fieldValue = target.type ? getFieldValue(field._f) : getEventValue(event);
+			const isBlurEvent = event.type === EVENTS.BLUR || event.type === EVENTS.FOCUS_OUT;
+			const shouldSkipValidation = !hasValidation(field._f) && !props.validate && !_options.resolver && !get(_formState.errors, name) && !field._f.deps || skipValidation(isBlurEvent, get(_formState.touchedFields, name), _formState.isSubmitted, validationModeAfterSubmit, validationModeBeforeSubmit);
+			const watched = isWatched(name, _names, isBlurEvent);
+			set(_formValues, name, fieldValue);
+			if (isBlurEvent) {
+				if (!target || !target.readOnly) {
+					field._f.onBlur && field._f.onBlur(event);
+					delayErrorCallback && delayErrorCallback(0);
+				}
+			} else if (field._f.onChange) field._f.onChange(event);
+			const fieldState = updateTouchAndDirty(name, fieldValue, isBlurEvent);
+			const shouldRender = !isEmptyObject(fieldState) || watched;
+			!isBlurEvent && _subjects.state.next({
+				name,
+				type: event.type,
+				values: cloneObject(_formValues)
+			});
+			if (shouldSkipValidation) {
+				if (_proxyFormState.isValid || _proxySubscribeFormState.isValid) {
+					if (_options.mode === "onBlur") {
+						if (isBlurEvent) _setValid();
+					} else if (!isBlurEvent) _setValid();
+				}
+				return shouldRender && _subjects.state.next({
+					name,
+					...watched ? {} : fieldState
+				});
+			}
+			if (!_options.resolver && props.validate) await validateForm({
+				name,
+				eventType: event.type
+			});
+			!isBlurEvent && watched && _subjects.state.next({ ..._formState });
+			if (_options.resolver) {
+				const { errors } = await _runSchema([name]);
+				_updateIsValidating([name]);
+				_updateIsFieldValueUpdated(fieldValue);
+				if (isFieldValueUpdated) {
+					const previousErrorLookupResult = schemaErrorLookup(_formState.errors, _fields, name);
+					const errorLookupResult = schemaErrorLookup(errors, _fields, previousErrorLookupResult.name || name);
+					error = errorLookupResult.error;
+					name = errorLookupResult.name;
+					isValid = isEmptyObject(errors);
+				}
+			} else {
+				_updateIsValidating([name], true);
+				error = (await validateField(field, _names.disabled, _formValues, shouldDisplayAllAssociatedErrors, _options.shouldUseNativeValidation))[name];
+				_updateIsValidating([name]);
+				_updateIsFieldValueUpdated(fieldValue);
+				if (isFieldValueUpdated) {
+					if (error) isValid = false;
+					else if (_proxyFormState.isValid || _proxySubscribeFormState.isValid) isValid = await executeBuiltInValidation({
+						fields: _fields,
+						onlyCheckValid: true,
+						name,
+						eventType: event.type
+					});
+				}
+			}
+			if (isFieldValueUpdated) {
+				field._f.deps && (!Array.isArray(field._f.deps) || field._f.deps.length > 0) && trigger(field._f.deps);
+				shouldRenderByError(name, isValid, error, fieldState);
+			}
+		}
+	};
+	const _focusInput = (ref, key) => {
+		if (get(_formState.errors, key) && ref.focus) {
+			ref.focus();
+			return 1;
+		}
+	};
+	const trigger = async (name, options = {}) => {
+		let isValid;
+		let validationResult;
+		const fieldNames = convertToArrayPayload(name);
+		if (_options.resolver) {
+			const errors = await executeSchemaAndUpdateState(isUndefined(name) ? name : fieldNames);
+			isValid = isEmptyObject(errors);
+			validationResult = name ? !fieldNames.some((name) => get(errors, name)) : isValid;
+		} else if (name) {
+			validationResult = (await Promise.all(fieldNames.map(async (fieldName) => {
+				const field = get(_fields, fieldName);
+				return await executeBuiltInValidation({
+					fields: field && field._f ? { [fieldName]: field } : field,
+					eventType: EVENTS.TRIGGER
+				});
+			}))).every(Boolean);
+			!(!validationResult && !_formState.isValid) && _setValid();
+		} else validationResult = isValid = await executeBuiltInValidation({
+			fields: _fields,
+			name,
+			eventType: EVENTS.TRIGGER
+		});
+		_subjects.state.next({
+			...!isString(name) || (_proxyFormState.isValid || _proxySubscribeFormState.isValid) && isValid !== _formState.isValid ? {} : { name },
+			..._options.resolver || !name ? { isValid } : {},
+			errors: _formState.errors
+		});
+		options.shouldFocus && !validationResult && iterateFieldsByAction(_fields, _focusInput, name ? fieldNames : _names.mount);
+		return validationResult;
+	};
+	const getValues = (fieldNames, config) => {
+		let values = { ..._state.mount ? _formValues : _defaultValues };
+		if (config) values = extractFormValues(config.dirtyFields ? _formState.dirtyFields : _formState.touchedFields, values);
+		return isUndefined(fieldNames) ? values : isString(fieldNames) ? get(values, fieldNames) : fieldNames.map((name) => get(values, name));
+	};
+	const getFieldState = (name, formState) => ({
+		invalid: !!get((formState || _formState).errors, name),
+		isDirty: !!get((formState || _formState).dirtyFields, name),
+		error: get((formState || _formState).errors, name),
+		isValidating: !!get(_formState.validatingFields, name),
+		isTouched: !!get((formState || _formState).touchedFields, name)
+	});
+	const clearErrors = (name) => {
+		const names = name ? convertToArrayPayload(name) : void 0;
+		names === null || names === void 0 || names.forEach((inputName) => unset(_formState.errors, inputName));
+		if (names) names.forEach((inputName) => {
+			_subjects.state.next({
+				name: inputName,
+				errors: _formState.errors
+			});
+		});
+		else _subjects.state.next({ errors: {} });
+	};
+	const setError = (name, error, options) => {
+		const ref = (get(_fields, name, { _f: {} })._f || {}).ref;
+		const { ref: currentRef, message, type, ...restOfErrorTree } = get(_formState.errors, name) || {};
+		set(_formState.errors, name, {
+			...restOfErrorTree,
+			...error,
+			ref
+		});
+		_subjects.state.next({
+			name,
+			errors: _formState.errors,
+			isValid: false
+		});
+		options && options.shouldFocus && ref && ref.focus && ref.focus();
+	};
+	const watch = (name, defaultValue) => isFunction(name) ? _subjects.state.subscribe({ next: (payload) => "values" in payload && name(payload.values || _getWatch(void 0, defaultValue), payload) }) : _getWatch(name, defaultValue, true);
+	const _subscribe = (props) => _subjects.state.subscribe({ next: (formState) => {
+		if (shouldSubscribeByName(props.name, formState.name, props.exact) && shouldRenderFormState(formState, props.formState || _proxyFormState, _setFormState, props.reRenderRoot)) {
+			const snapshot = { ..._formValues };
+			props.callback({
+				values: snapshot,
+				..._formState,
+				...formState,
+				defaultValues: _defaultValues
+			});
+		}
+	} }).unsubscribe;
+	const subscribe = (props) => {
+		_state.mount = true;
+		_proxySubscribeFormState = {
+			..._proxySubscribeFormState,
+			...props.formState
+		};
+		return _subscribe({
+			...props,
+			formState: {
+				...defaultProxyFormState,
+				...props.formState
+			}
+		});
+	};
+	const unregister = (name, options = {}) => {
+		for (const fieldName of name ? convertToArrayPayload(name) : _names.mount) {
+			_names.mount.delete(fieldName);
+			_names.array.delete(fieldName);
+			if (!options.keepValue) {
+				unset(_fields, fieldName);
+				unset(_formValues, fieldName);
+			}
+			!options.keepError && unset(_formState.errors, fieldName);
+			!options.keepDirty && unset(_formState.dirtyFields, fieldName);
+			!options.keepTouched && unset(_formState.touchedFields, fieldName);
+			!options.keepIsValidating && unset(_formState.validatingFields, fieldName);
+			!_options.shouldUnregister && !options.keepDefaultValue && unset(_defaultValues, fieldName);
+		}
+		_subjects.state.next({ values: cloneObject(_formValues) });
+		_subjects.state.next({
+			..._formState,
+			...!options.keepDirty ? {} : { isDirty: _getDirty() }
+		});
+		!options.keepIsValid && _setValid();
+	};
+	const _setDisabledField = ({ disabled, name }) => {
+		if (isBoolean(disabled) && _state.mount || !!disabled || _names.disabled.has(name)) {
+			const disabledStateChanged = _names.disabled.has(name) !== !!disabled;
+			disabled ? _names.disabled.add(name) : _names.disabled.delete(name);
+			disabledStateChanged && _state.mount && !_state.action && _setValid();
+		}
+	};
+	const register = (name, options = {}) => {
+		let field = get(_fields, name);
+		const disabledIsDefined = isBoolean(options.disabled) || isBoolean(_options.disabled);
+		const shouldRevalidateRemount = !_names.registerName.has(name) && field && field._f && !field._f.mount;
+		set(_fields, name, {
+			...field || {},
+			_f: {
+				...field && field._f ? field._f : { ref: { name } },
+				name,
+				mount: true,
+				...options
+			}
+		});
+		_names.mount.add(name);
+		if (field && !shouldRevalidateRemount) _setDisabledField({
+			disabled: isBoolean(options.disabled) ? options.disabled : _options.disabled,
+			name
+		});
+		else updateValidAndValue(name, true, options.value);
+		return {
+			...disabledIsDefined ? { disabled: options.disabled || _options.disabled } : {},
+			..._options.progressive ? {
+				required: !!options.required,
+				min: getRuleValue(options.min),
+				max: getRuleValue(options.max),
+				minLength: getRuleValue(options.minLength),
+				maxLength: getRuleValue(options.maxLength),
+				pattern: getRuleValue(options.pattern)
+			} : {},
+			name,
+			onChange,
+			onBlur: onChange,
+			ref: (ref) => {
+				if (ref) {
+					_names.registerName.add(name);
+					register(name, options);
+					_names.registerName.delete(name);
+					field = get(_fields, name);
+					const fieldRef = isUndefined(ref.value) ? ref.querySelectorAll ? ref.querySelectorAll("input,select,textarea")[0] || ref : ref : ref;
+					const radioOrCheckbox = isRadioOrCheckbox(fieldRef);
+					const refs = field._f.refs || [];
+					if (radioOrCheckbox ? refs.find((option) => option === fieldRef) : fieldRef === field._f.ref) return;
+					set(_fields, name, { _f: {
+						...field._f,
+						...radioOrCheckbox ? {
+							refs: [
+								...refs.filter(live),
+								fieldRef,
+								...Array.isArray(get(_defaultValues, name)) ? [{}] : []
+							],
+							ref: {
+								type: fieldRef.type,
+								name
+							}
+						} : { ref: fieldRef }
+					} });
+					updateValidAndValue(name, false, void 0, fieldRef);
+				} else {
+					field = get(_fields, name, {});
+					if (field._f) field._f.mount = false;
+					(_options.shouldUnregister || options.shouldUnregister) && !(isNameInFieldArray(_names.array, name) && _state.action) && _names.unMount.add(name);
+				}
+			}
+		};
+	};
+	const _focusError = () => _options.shouldFocusError && iterateFieldsByAction(_fields, _focusInput, _names.mount);
+	const _disableForm = (disabled) => {
+		if (isBoolean(disabled)) {
+			_subjects.state.next({ disabled });
+			iterateFieldsByAction(_fields, (ref, name) => {
+				const currentField = get(_fields, name);
+				if (currentField) {
+					ref.disabled = currentField._f.disabled || disabled;
+					if (Array.isArray(currentField._f.refs)) currentField._f.refs.forEach((inputRef) => {
+						inputRef.disabled = currentField._f.disabled || disabled;
+					});
+				}
+			}, 0, false);
+		}
+	};
+	const handleSubmit = (onValid, onInvalid) => async (e) => {
+		let onValidError = void 0;
+		if (e) {
+			e.preventDefault && e.preventDefault();
+			e.persist && e.persist();
+		}
+		let fieldValues = cloneObject(_formValues);
+		_subjects.state.next({ isSubmitting: true });
+		if (_options.resolver) {
+			const { errors, values } = await _runSchema();
+			_updateIsValidating();
+			_formState.errors = errors;
+			fieldValues = cloneObject(values);
+		} else await executeBuiltInValidation({
+			fields: _fields,
+			eventType: EVENTS.SUBMIT
+		});
+		if (_names.disabled.size) for (const name of _names.disabled) unset(fieldValues, name);
+		unset(_formState.errors, ROOT_ERROR_TYPE);
+		if (isEmptyObject(_formState.errors)) {
+			_subjects.state.next({ errors: {} });
+			try {
+				await onValid(fieldValues, e);
+			} catch (error) {
+				onValidError = error;
+			}
+		} else {
+			if (onInvalid) await onInvalid({ ..._formState.errors }, e);
+			_focusError();
+			setTimeout(_focusError);
+		}
+		_subjects.state.next({
+			isSubmitted: true,
+			isSubmitting: false,
+			isSubmitSuccessful: isEmptyObject(_formState.errors) && !onValidError,
+			submitCount: _formState.submitCount + 1,
+			errors: _formState.errors
+		});
+		if (onValidError) throw onValidError;
+	};
+	const resetField = (name, options = {}) => {
+		if (get(_fields, name)) {
+			if (isUndefined(options.defaultValue)) setValue(name, cloneObject(get(_defaultValues, name)));
+			else {
+				setValue(name, options.defaultValue);
+				set(_defaultValues, name, cloneObject(options.defaultValue));
+			}
+			if (!options.keepTouched) unset(_formState.touchedFields, name);
+			if (!options.keepDirty) {
+				unset(_formState.dirtyFields, name);
+				_formState.isDirty = options.defaultValue ? _getDirty(name, cloneObject(get(_defaultValues, name))) : _getDirty();
+			}
+			if (!options.keepError) {
+				unset(_formState.errors, name);
+				_proxyFormState.isValid && _setValid();
+			}
+			_subjects.state.next({ ..._formState });
+		}
+	};
+	const _reset = (formValues, keepStateOptions = {}) => {
+		const updatedValues = formValues ? cloneObject(formValues) : _defaultValues;
+		const cloneUpdatedValues = cloneObject(updatedValues);
+		const isEmptyResetValues = isEmptyObject(formValues);
+		const values = isEmptyResetValues ? _defaultValues : cloneUpdatedValues;
+		if (!keepStateOptions.keepDefaultValues) _defaultValues = updatedValues;
+		if (!keepStateOptions.keepValues) {
+			if (keepStateOptions.keepDirtyValues) {
+				const fieldsToCheck = new Set([..._names.mount, ...Object.keys(getDirtyFields(_defaultValues, _formValues))]);
+				for (const fieldName of Array.from(fieldsToCheck)) {
+					const isDirty = get(_formState.dirtyFields, fieldName);
+					const existingValue = get(_formValues, fieldName);
+					const newValue = get(values, fieldName);
+					if (isDirty && !isUndefined(existingValue)) set(values, fieldName, existingValue);
+					else if (!isDirty && !isUndefined(newValue)) setValue(fieldName, newValue);
+				}
+			} else {
+				if (isWeb && isUndefined(formValues)) for (const name of _names.mount) {
+					const field = get(_fields, name);
+					if (field && field._f) {
+						const fieldReference = Array.isArray(field._f.refs) ? field._f.refs[0] : field._f.ref;
+						if (isHTMLElement(fieldReference)) {
+							const form = fieldReference.closest("form");
+							if (form) {
+								form.reset();
+								break;
+							}
+						}
+					}
+				}
+				if (keepStateOptions.keepFieldsRef) for (const fieldName of _names.mount) setValue(fieldName, get(values, fieldName));
+				else _fields = {};
+			}
+			_formValues = _options.shouldUnregister ? keepStateOptions.keepDefaultValues ? cloneObject(_defaultValues) : {} : cloneObject(values);
+			_subjects.array.next({ values: { ...values } });
+			_subjects.state.next({ values: { ...values } });
+		}
+		_names = {
+			mount: keepStateOptions.keepDirtyValues ? _names.mount : /* @__PURE__ */ new Set(),
+			unMount: /* @__PURE__ */ new Set(),
+			array: /* @__PURE__ */ new Set(),
+			registerName: /* @__PURE__ */ new Set(),
+			disabled: /* @__PURE__ */ new Set(),
+			watch: /* @__PURE__ */ new Set(),
+			watchAll: false,
+			focus: ""
+		};
+		_state.mount = !_proxyFormState.isValid || !!keepStateOptions.keepIsValid || !!keepStateOptions.keepDirtyValues || !_options.shouldUnregister && !isEmptyObject(values);
+		_state.watch = !!_options.shouldUnregister;
+		_state.keepIsValid = !!keepStateOptions.keepIsValid;
+		_state.action = false;
+		if (!keepStateOptions.keepErrors) _formState.errors = {};
+		_subjects.state.next({
+			submitCount: keepStateOptions.keepSubmitCount ? _formState.submitCount : 0,
+			isDirty: isEmptyResetValues ? false : keepStateOptions.keepDirty ? _formState.isDirty : !!(keepStateOptions.keepDefaultValues && !deepEqual(formValues, _defaultValues)),
+			isSubmitted: keepStateOptions.keepIsSubmitted ? _formState.isSubmitted : false,
+			dirtyFields: isEmptyResetValues ? {} : keepStateOptions.keepDirtyValues ? keepStateOptions.keepDefaultValues && _formValues ? getDirtyFields(_defaultValues, _formValues) : _formState.dirtyFields : keepStateOptions.keepDefaultValues && formValues ? getDirtyFields(_defaultValues, formValues) : keepStateOptions.keepDirty ? _formState.dirtyFields : {},
+			touchedFields: keepStateOptions.keepTouched ? _formState.touchedFields : {},
+			errors: keepStateOptions.keepErrors ? _formState.errors : {},
+			isSubmitSuccessful: keepStateOptions.keepIsSubmitSuccessful ? _formState.isSubmitSuccessful : false,
+			isSubmitting: false,
+			defaultValues: _defaultValues
+		});
+	};
+	const reset = (formValues, keepStateOptions) => _reset(isFunction(formValues) ? formValues(_formValues) : formValues, {
+		..._options.resetOptions,
+		...keepStateOptions
+	});
+	const setFocus = (name, options = {}) => {
+		const field = get(_fields, name);
+		const fieldReference = field && field._f;
+		if (fieldReference) {
+			const fieldRef = fieldReference.refs ? fieldReference.refs[0] : fieldReference.ref;
+			if (fieldRef.focus) setTimeout(() => {
+				fieldRef.focus();
+				options.shouldSelect && isFunction(fieldRef.select) && fieldRef.select();
+			});
+		}
+	};
+	const _setFormState = (updatedFormState) => {
+		_formState = {
+			..._formState,
+			...updatedFormState
+		};
+	};
+	const _resetDefaultValues = () => isFunction(_options.defaultValues) && _options.defaultValues().then((values) => {
+		reset(values, _options.resetOptions);
+		_subjects.state.next({ isLoading: false });
+	});
+	const methods = {
+		control: {
+			register,
+			unregister,
+			getFieldState,
+			handleSubmit,
+			setError,
+			_subscribe,
+			_runSchema,
+			_updateIsValidating,
+			_focusError,
+			_getWatch,
+			_getDirty,
+			_setValid,
+			_setFieldArray,
+			_setDisabledField,
+			_setErrors,
+			_getFieldArray,
+			_reset,
+			_resetDefaultValues,
+			_removeUnmounted,
+			_disableForm,
+			_subjects,
+			_proxyFormState,
+			get _fields() {
+				return _fields;
+			},
+			get _formValues() {
+				return _formValues;
+			},
+			get _state() {
+				return _state;
+			},
+			set _state(value) {
+				_state = value;
+			},
+			get _defaultValues() {
+				return _defaultValues;
+			},
+			get _names() {
+				return _names;
+			},
+			set _names(value) {
+				_names = value;
+			},
+			get _formState() {
+				return _formState;
+			},
+			get _options() {
+				return _options;
+			},
+			set _options(value) {
+				_options = {
+					..._options,
+					...value
+				};
+			}
+		},
+		subscribe,
+		trigger,
+		register,
+		handleSubmit,
+		watch,
+		setValue,
+		setValues,
+		getValues,
+		reset,
+		resetField,
+		clearErrors,
+		unregister,
+		setError,
+		setFocus,
+		getFieldState
+	};
+	return {
+		...methods,
+		formControl: methods
+	};
+}
+/**
+* Custom hook to manage the entire form.
+*
+* @remarks
+* [API](https://react-hook-form.com/docs/useform) • [Demo](https://codesandbox.io/s/react-hook-form-get-started-ts-5ksmm) • [Video](https://www.youtube.com/watch?v=RkXv4AXXC_4)
+*
+* @param props - form configuration and validation parameters.
+*
+* @returns methods - individual functions to manage the form state. {@link UseFormReturn}
+*
+* @example
+* ```tsx
+* function App() {
+*   const { register, handleSubmit, watch, formState: { errors } } = useForm();
+*   const onSubmit = data => console.log(data);
+*
+*   console.log(watch("example"));
+*
+*   return (
+*     <form onSubmit={handleSubmit(onSubmit)}>
+*       <input defaultValue="test" {...register("example")} />
+*       <input {...register("exampleRequired", { required: true })} />
+*       {errors.exampleRequired && <span>This field is required</span>}
+*       <button>Submit</button>
+*     </form>
+*   );
+* }
+* ```
+*/
+function useForm(props = {}) {
+	const _formControl = import_react.useRef(void 0);
+	const _values = import_react.useRef(void 0);
+	const [formState, updateFormState] = import_react.useState(() => ({
+		...cloneObject(DEFAULT_FORM_STATE),
+		isLoading: isFunction(props.defaultValues),
+		errors: props.errors || {},
+		disabled: props.disabled || false,
+		defaultValues: isFunction(props.defaultValues) ? void 0 : props.defaultValues
+	}));
+	if (!_formControl.current) if (props.formControl) {
+		_formControl.current = {
+			...props.formControl,
+			formState
+		};
+		if (props.defaultValues && !isFunction(props.defaultValues)) props.formControl.reset(props.defaultValues, props.resetOptions);
+	} else {
+		const { formControl, ...rest } = createFormControl(props);
+		_formControl.current = {
+			...rest,
+			formState
+		};
+	}
+	const control = _formControl.current.control;
+	control._options = props;
+	useIsomorphicLayoutEffect(() => {
+		const sub = control._subscribe({
+			formState: control._proxyFormState,
+			callback: () => updateFormState({ ...control._formState }),
+			reRenderRoot: true
+		});
+		updateFormState((data) => ({
+			...data,
+			isReady: true
+		}));
+		control._formState.isReady = true;
+		return sub;
+	}, [control]);
+	import_react.useEffect(() => control._disableForm(props.disabled), [control, props.disabled]);
+	import_react.useEffect(() => {
+		if (props.mode) control._options.mode = props.mode;
+		if (props.reValidateMode) control._options.reValidateMode = props.reValidateMode;
+	}, [
+		control,
+		props.mode,
+		props.reValidateMode
+	]);
+	import_react.useEffect(() => {
+		if (props.errors) {
+			control._setErrors(props.errors);
+			control._focusError();
+		}
+	}, [control, props.errors]);
+	import_react.useEffect(() => {
+		props.shouldUnregister && control._subjects.state.next({ values: control._getWatch() });
+	}, [control, props.shouldUnregister]);
+	import_react.useEffect(() => {
+		if (control._proxyFormState.isDirty) {
+			const isDirty = control._getDirty();
+			if (isDirty !== formState.isDirty) control._subjects.state.next({ isDirty });
+		}
+	}, [control, formState.isDirty]);
+	import_react.useEffect(() => {
+		var _a;
+		if (props.values && !deepEqual(props.values, _values.current)) {
+			control._reset(props.values, {
+				keepFieldsRef: true,
+				...control._options.resetOptions
+			});
+			if (!((_a = control._options.resetOptions) === null || _a === void 0 ? void 0 : _a.keepIsValid)) control._setValid();
+			_values.current = props.values;
+			updateFormState((state) => ({ ...state }));
+		} else control._resetDefaultValues();
+	}, [control, props.values]);
+	import_react.useEffect(() => {
+		if (!control._state.mount) {
+			control._setValid();
+			control._state.mount = true;
+		}
+		if (control._state.watch) {
+			control._state.watch = false;
+			control._subjects.state.next({ ...control._formState });
+		}
+		control._removeUnmounted();
+	});
+	_formControl.current.formState = import_react.useMemo(() => getProxyFormState(formState, control), [control, formState]);
+	return _formControl.current;
+}
+//#endregion
+//#region src/components/organisms/ConfirmationDialog.tsx
+function ConfirmationDialog({ cancelLabel, confirmLabel, isConfirming = false, message, onClose, onConfirm, open, title }) {
+	const { t } = useSettings();
+	const resolvedCancelLabel = cancelLabel ?? t("action.cancel");
+	const resolvedConfirmLabel = confirmLabel ?? t("action.confirm");
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Dialog, {
+		fullWidth: true,
+		maxWidth: "xs",
+		onClose: isConfirming ? void 0 : onClose,
+		open,
+		children: [
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(DialogTitle, { children: title }),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(DialogContent, { children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(BodyText, { children: message }) }),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(DialogActions, {
+				sx: layoutStyles.dialogActions,
+				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(ActionButton, {
+					disabled: isConfirming,
+					onClick: onClose,
+					variant: "text",
+					children: resolvedCancelLabel
+				}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ActionButton, {
+					color: "error",
+					disabled: isConfirming,
+					onClick: onConfirm,
+					startIcon: isConfirming ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(CircularProgress, {
+						color: "inherit",
+						size: 18
+					}) : void 0,
+					children: isConfirming ? t("action.working") : resolvedConfirmLabel
+				})]
+			})
+		]
+	});
+}
+//#endregion
+//#region src/components/organisms/DrawerPanel.tsx
+function DrawerPanel({ children, isOpen, onClose, subtitle, title, width = "narrow" }) {
+	const { t } = useSettings();
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Drawer, {
+		anchor: "right",
+		open: isOpen,
+		sx: width === "wide" ? layoutStyles.drawerPaperWide : layoutStyles.drawerPaperNarrow,
+		children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Stack, {
+			spacing: 3,
+			sx: layoutStyles.drawerContent,
+			children: [
+				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Stack, {
+					alignItems: "center",
+					direction: "row",
+					justifyContent: "space-between",
+					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Stack, {
+						spacing: .5,
+						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(PageTitleText, {
+							as: "h2",
+							variant: "h5",
+							children: title
+						}), subtitle ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(BodyText, { children: subtitle }) : null]
+					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(IconButton, {
+						"aria-label": t("action.cancel"),
+						onClick: onClose,
+						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(X, { size: 18 })
+					})]
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Divider, {}),
+				children
+			]
+		})
+	});
+}
+//#endregion
+//#region src/components/atoms/CheckBox.tsx
+function CheckBox({ control, disabled = false, label, name, rules }) {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Controller, {
+		control,
+		name,
+		render: ({ field }) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(FormControlLabel, {
+			control: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Checkbox, {
+				checked: Boolean(field.value),
+				disabled,
+				onChange: (event) => {
+					field.onChange(event.target.checked);
+				}
+			}),
+			label
+		}),
+		rules
+	});
+}
+//#endregion
+//#region src/components/atoms/Text.tsx
+function Text({ control, disabled = false, helperText, label, name, required = false, rules, shouldUnregister = false, type = "text" }) {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Controller, {
+		control,
+		name,
+		shouldUnregister,
+		render: ({ field, fieldState }) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextField, {
+			...field,
+			disabled,
+			error: fieldState.error != null,
+			fullWidth: true,
+			helperText: fieldState.error?.message ?? helperText,
+			label,
+			required,
+			type
+		}),
+		rules
+	});
+}
+//#endregion
+//#region src/components/atoms/TextArea.tsx
+function TextArea({ control, disabled = false, helperText, label, minRows = 4, name, required = false, rules }) {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Controller, {
+		control,
+		name,
+		render: ({ field, fieldState }) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextField, {
+			...field,
+			disabled,
+			error: fieldState.error != null,
+			fullWidth: true,
+			helperText: fieldState.error?.message ?? helperText,
+			label,
+			minRows,
+			multiline: true,
+			required
+		}),
+		rules
+	});
+}
+//#endregion
+//#region src/features/banks/components/BankForm.tsx
+function BankForm({ control, isSubmitting, submitLabel }) {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Stack, {
+		spacing: 2,
+		sx: layoutStyles.drawerBody,
+		children: [
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, {
+				control,
+				disabled: isSubmitting,
+				label: "Name",
+				name: "name",
+				required: true,
+				rules: {
+					required: "Name is required.",
+					validate: (value) => typeof value === "string" && value.trim().length > 0 ? true : "Name is required."
+				}
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, {
+				control,
+				disabled: isSubmitting,
+				helperText: "e.g. SCB, TCB",
+				label: "Short Bank Name",
+				name: "shortName",
+				required: true,
+				rules: {
+					required: "Short bank name is required.",
+					validate: (value) => typeof value === "string" && value.trim().length > 0 ? true : "Short bank name is required."
+				}
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextArea, {
+				control,
+				disabled: isSubmitting,
+				label: "Description",
+				minRows: 3,
+				name: "description"
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(CheckBox, {
+				control,
+				disabled: isSubmitting,
+				label: "Is Default",
+				name: "isDefault"
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Stack, {
+				direction: "row",
+				justifyContent: "flex-end",
+				spacing: 1,
+				sx: layoutStyles.formFooterRow,
+				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ActionButton, {
+					disabled: isSubmitting,
+					type: "submit",
+					children: isSubmitting ? "Working..." : submitLabel
+				})
+			})
+		]
+	});
+}
+//#endregion
+//#region src/features/banks/components/BankFormDrawer.tsx
+function BankFormDrawer({ form, isEditMode, isOpen, isSubmitting, onClose, onSubmit }) {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(DrawerPanel, {
+		isOpen,
+		onClose,
+		title: isEditMode ? "Edit bank" : "Create bank",
+		children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Stack, {
+			component: "form",
+			onSubmit: form.handleSubmit(async (values) => {
+				await onSubmit(values);
+			}),
+			children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(BankForm, {
+				control: form.control,
+				isSubmitting,
+				submitLabel: isEditMode ? "Save" : "Create"
+			})
+		})
+	});
+}
+//#endregion
+//#region src/features/banks/components/BanksFilterDrawer.tsx
+function BanksFilterDrawer({ initialValues, isOpen, onApply, onClose }) {
+	const form = useForm({ defaultValues: initialValues });
+	(0, import_react.useEffect)(() => {
+		if (!isOpen) return;
+		form.reset(initialValues);
+	}, [
+		form,
+		initialValues,
+		isOpen
+	]);
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(DrawerPanel, {
+		isOpen,
+		onClose,
+		title: "Filter banks",
+		children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Stack, {
+			component: "form",
+			onSubmit: form.handleSubmit((values) => {
+				onApply({
+					...values,
+					name: values.name.trim(),
+					shortName: values.shortName.trim()
+				});
+			}),
+			spacing: 2,
+			sx: layoutStyles.drawerBody,
+			children: [
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, {
+					control: form.control,
+					label: "Name",
+					name: "name"
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, {
+					control: form.control,
+					label: "Short Name",
+					name: "shortName"
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(CheckBox, {
+					control: form.control,
+					label: "Active only",
+					name: "isActive"
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Stack, {
+					direction: "row",
+					spacing: 1,
+					sx: layoutStyles.formFooterRow,
+					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(ActionButton, {
+						type: "submit",
+						children: "Apply"
+					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ActionButton, {
+						onClick: () => {
+							form.reset({
+								isActive: true,
+								name: "",
+								shortName: ""
+							});
+						},
+						variant: "outlined",
+						children: "Reset"
+					})]
+				})
+			]
+		})
+	});
+}
+//#endregion
+//#region src/components/atoms/LinkButton.tsx
+function LinkButton({ children, size = "small", sx, variant = "text", ...props }) {
+	const sxItems = Array.isArray(sx) ? sx : [sx];
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
+		...props,
+		size,
+		sx: [{ whiteSpace: "nowrap" }, ...sxItems],
+		variant,
+		children
+	});
+}
+//#endregion
+//#region src/features/banks/components/BanksList.tsx
+function BanksList({ banks, isLoading, isSubmitting, onDelete, onEdit }) {
+	if (isLoading) return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Paper, {
+		elevation: 0,
+		sx: layoutStyles.loadingPanel,
+		children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Stack, {
+			alignItems: "center",
+			spacing: 2,
+			children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(CircularProgress, { size: 28 }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(BodyText, { children: "Loading banks..." })]
+		})
+	});
+	if (banks.length === 0) return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Paper, {
+		elevation: 0,
+		sx: layoutStyles.emptyStatePanel,
+		children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Stack, {
+			spacing: 1.5,
+			children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(PageTitleText, {
+				variant: "h6",
+				children: "No banks found"
+			}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(BodyText, { children: "Create a bank to start managing your bank master data." })]
+		})
+	});
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Paper, {
+		elevation: 0,
+		sx: layoutStyles.borderedPanelScrollable,
+		children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Table, { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(TableHead, { children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(TableRow, { children: [
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(TableCell, { children: "Name" }),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(TableCell, { children: "Short Name" }),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(TableCell, { children: "Description" }),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(TableCell, { children: "Is Default" }),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(TableCell, {
+				align: "right",
+				children: "Actions"
+			})
+		] }) }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TableBody, { children: banks.map((bank) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(TableRow, {
+			hover: true,
+			children: [
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(TableCell, { children: bank.name }),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(TableCell, { children: bank.shortName }),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(TableCell, { children: bank.description ?? "(None)" }),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(TableCell, { children: bank.isDefault ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Chip, {
+					label: "Yes",
+					size: "small",
+					sx: {
+						bgcolor: "primary.main",
+						color: "white"
+					}
+				}) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Chip, {
+					label: "No",
+					size: "small",
+					variant: "outlined"
+				}) }),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(TableCell, {
+					align: "right",
+					children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Stack, {
+						direction: "row",
+						justifyContent: "flex-end",
+						spacing: 1,
+						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(LinkButton, {
+							disabled: isSubmitting,
+							onClick: () => {
+								onEdit(bank);
+							},
+							children: "Edit"
+						}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(LinkButton, {
+							color: "error",
+							disabled: isSubmitting,
+							onClick: () => {
+								onDelete(bank);
+							},
+							children: "Delete"
+						})]
+					})
+				})
+			]
+		}, bank.id)) })] })
+	});
+}
+//#endregion
+//#region src/features/banks/api/banksApi.ts
+async function getBanks(filters) {
+	return client.get("/api/banks", { params: {
+		isActive: filters.isActive,
+		name: filters.name.trim().length > 0 ? filters.name.trim() : void 0,
+		shortName: filters.shortName.trim().length > 0 ? filters.shortName.trim() : void 0
+	} });
+}
+async function createBank(request) {
+	return client.post("/api/banks", request);
+}
+async function updateBank(id, request) {
+	return client.put(`/api/banks/${id}`, request);
+}
+async function deleteBank(id) {
+	await client.delete(`/api/banks/${id}`);
+}
+//#endregion
+//#region src/features/banks/hooks/useBanksQuery.ts
+function useBanksQuery(filters) {
+	return useQuery({
+		queryFn: () => getBanks(filters),
+		queryKey: ["banks", filters]
+	});
+}
+//#endregion
+//#region src/features/banks/pages/BanksPage.tsx
+var emptyFormState = {
+	description: "",
+	isDefault: false,
+	name: "",
+	shortName: ""
+};
+function getErrorMessage(error, fallback) {
+	if (error instanceof AxiosError) {
+		const detail = error.response?.data;
+		if (typeof detail === "string" && detail.trim().length > 0) return detail;
+	}
+	if (error instanceof Error && error.message.trim().length > 0) return error.message;
+	return fallback;
+}
+function BanksPage() {
+	const [filters, setFilters] = (0, import_react.useState)({
+		isActive: true,
+		name: "",
+		shortName: ""
+	});
+	const [isFilterDrawerOpen, setIsFilterDrawerOpen] = (0, import_react.useState)(false);
+	const { data: banks = [], isLoading, refetch } = useBanksQuery(filters);
+	const [editingBank, setEditingBank] = (0, import_react.useState)(null);
+	const [deletingBank, setDeletingBank] = (0, import_react.useState)(null);
+	const [isFormOpen, setIsFormOpen] = (0, import_react.useState)(false);
+	const [isSubmitting, setIsSubmitting] = (0, import_react.useState)(false);
+	const [errorMessage, setErrorMessage] = (0, import_react.useState)(null);
+	const form = useForm({ defaultValues: emptyFormState });
+	const isEditMode = (0, import_react.useMemo)(() => editingBank != null, [editingBank]);
+	async function handleSubmit(values) {
+		setErrorMessage(null);
+		setIsSubmitting(true);
+		try {
+			const payload = {
+				description: values.description.trim().length === 0 ? null : values.description.trim(),
+				isDefault: values.isDefault,
+				name: values.name.trim(),
+				shortName: values.shortName.trim().toUpperCase()
+			};
+			if (editingBank == null) await createBank(payload);
+			else await updateBank(editingBank.id, payload);
+			form.reset(emptyFormState);
+			setEditingBank(null);
+			setIsFormOpen(false);
+			await refetch();
+		} catch (error) {
+			setErrorMessage(getErrorMessage(error, "Unable to save bank."));
+		} finally {
+			setIsSubmitting(false);
+		}
+	}
+	function openCreateForm() {
+		setEditingBank(null);
+		form.reset(emptyFormState);
+		setIsFormOpen(true);
+	}
+	function openEditForm(bank) {
+		setEditingBank(bank);
+		form.reset({
+			description: bank.description ?? "",
+			isDefault: bank.isDefault,
+			name: bank.name,
+			shortName: bank.shortName
+		});
+		setIsFormOpen(true);
+	}
+	async function handleDeleteConfirmed() {
+		if (deletingBank == null) return;
+		setErrorMessage(null);
+		setIsSubmitting(true);
+		try {
+			await deleteBank(deletingBank.id);
+			if (editingBank?.id === deletingBank.id) {
+				setEditingBank(null);
+				form.reset(emptyFormState);
+				setIsFormOpen(false);
+			}
+			await refetch();
+			setDeletingBank(null);
+		} catch (error) {
+			setErrorMessage(getErrorMessage(error, "Unable to delete bank."));
+		} finally {
+			setIsSubmitting(false);
+		}
+	}
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(DefaultLayout, {
+		subtitle: "Manage bank master data.",
+		title: "Banks",
+		children: [
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Stack, {
+				spacing: 3,
+				children: [
+					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Stack, {
+						direction: {
+							md: "row",
+							xs: "column"
+						},
+						justifyContent: "space-between",
+						spacing: 2,
+						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Stack, {
+							direction: "row",
+							spacing: 2,
+							sx: layoutStyles.responsiveActionGroup,
+							children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ActionButton, {
+								onClick: () => {
+									setIsFilterDrawerOpen(true);
+								},
+								sx: layoutStyles.responsiveActionButton,
+								variant: "outlined",
+								children: "Filter"
+							})
+						}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ActionButton, {
+							onClick: openCreateForm,
+							sx: layoutStyles.responsiveActionButton,
+							children: "Create"
+						})]
+					}),
+					errorMessage != null ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Alert, {
+						severity: "error",
+						children: errorMessage
+					}) : null,
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(BanksList, {
+						banks,
+						isLoading,
+						isSubmitting,
+						onDelete: (bank) => {
+							setDeletingBank(bank);
+						},
+						onEdit: openEditForm
+					})
+				]
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(BankFormDrawer, {
+				form,
+				isEditMode,
+				isOpen: isFormOpen,
+				isSubmitting,
+				onClose: () => {
+					if (isSubmitting) return;
+					setIsFormOpen(false);
+					setEditingBank(null);
+					form.reset(emptyFormState);
+				},
+				onSubmit: handleSubmit
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(ConfirmationDialog, {
+				confirmLabel: "Delete",
+				isConfirming: isSubmitting,
+				message: deletingBank == null ? "" : `Are you sure you want to delete ${deletingBank.name}?`,
+				onClose: () => {
+					if (isSubmitting) return;
+					setDeletingBank(null);
+				},
+				onConfirm: () => {
+					handleDeleteConfirmed();
+				},
+				open: deletingBank !== null,
+				title: "Delete bank"
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(BanksFilterDrawer, {
+				initialValues: filters,
+				isOpen: isFilterDrawerOpen,
+				onApply: (values) => {
+					setFilters(values);
+					setIsFilterDrawerOpen(false);
+				},
+				onClose: () => {
+					setIsFilterDrawerOpen(false);
+				}
+			})
+		]
+	});
+}
+//#endregion
 //#region src/App.tsx
 function App() {
 	const { authSession, isRestoring } = useAuthSession();
@@ -33938,13 +40743,20 @@ function App() {
 				replace: true,
 				to: "/prepare-session"
 			}) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Outlet, {}),
-			children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Route, {
-				element: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(DashboardPage, {}),
-				path: "/"
-			}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Route, {
-				element: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ForbiddenPage, {}),
-				path: "/forbidden"
-			})]
+			children: [
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Route, {
+					element: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(DashboardPage, {}),
+					path: "/"
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Route, {
+					element: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ForbiddenPage, {}),
+					path: "/forbidden"
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Route, {
+					element: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(BanksPage, {}),
+					path: "/banks"
+				})
+			]
 		}),
 		/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Route, {
 			element: authSession == null ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(PrepareSessionPage, { isRestoring }) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Navigate, {
@@ -33971,4 +40783,4 @@ import_client.createRoot(document.getElementById("root")).render(/* @__PURE__ */
 }) }));
 //#endregion
 
-//# sourceMappingURL=index-DwhWZn9z.js.map
+//# sourceMappingURL=index-UqMy6eSp.js.map

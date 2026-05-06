@@ -8,7 +8,7 @@ public static class ProfileEndpoints
     public static IEndpointRouteBuilder MapProfileEndpoints(this IEndpointRouteBuilder app)
     {
         var profile = app.MapGroup("/api/profile")
-            .RequireAuthorization(AppAuthorization.CashPilotCanManagePolicyName);
+            .RequireAuthorization(AppAuthorization.CanAccessPolicyName);
 
         profile.MapGet("/current", CurrentProfileHandler.HandleAsync);
 

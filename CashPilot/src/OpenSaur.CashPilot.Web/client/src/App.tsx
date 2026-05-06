@@ -4,6 +4,7 @@ import { ForbiddenPage } from "./features/auth/pages/ForbiddenPage";
 import { PrepareSessionPage } from "./features/auth/pages/PrepareSessionPage";
 import { useAuthSession } from "./features/auth/hooks/AuthContext";
 import { DashboardPage } from "./features/dashboard/pages/DashboardPage";
+import { BanksPage } from "./features/banks/pages/BanksPage";
 export function App() {
     const { authSession, isRestoring } = useAuthSession();
 
@@ -17,6 +18,10 @@ export function App() {
                 <Route
                     element={<ForbiddenPage />}
                     path="/forbidden"
+                />
+                <Route
+                    element={<BanksPage />}
+                    path="/banks"
                 />
             </Route>
             <Route
