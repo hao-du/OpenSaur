@@ -1,0 +1,82 @@
+import { Stack } from "@mui/material";
+import type { Control } from "react-hook-form";
+import { ActionButton } from "../../../components/atoms/ActionButton";
+import { CheckBox } from "../../../components/atoms/CheckBox";
+import { Text } from "../../../components/atoms/Text";
+import { TextArea } from "../../../components/atoms/TextArea";
+import { layoutStyles } from "../../../infrastructure/theme/theme";
+import { useSettings } from "../../settings/provider/SettingProvider";
+
+export type CurrencyFormValues = {
+  name: string;
+  shortName: string;
+  description: string;
+  isDefault: boolean;
+};
+
+type CurrencyFormProps = {
+  control: Control<CurrencyFormValues>;
+  isEditMode: boolean;
+  isSubmitting: boolean;
+};
+
+export function CurrencyForm({
+  control,
+  isEditMode,
+  isSubmitting
+}: CurrencyFormProps) {
+  const { t } = useSettings();
+
+  return (
+    <Stack spacing={2} sx={layoutStyles.drawerBody}>
+      <Text
+        control={control}
+        disabled={isSubmitting}
+        label={t("currencies.name")}
+        name="name"
+        required
+        rules={{
+          required: t("currencies.validation.nameRequired"),
+          validate: value => typeof value === "string" && value.trim().length > 0 ? true : t("currencies.validation.nameRequired")
+        }}
+      />
+      <Text
+        control={control}
+        disabled={isSubmitting}
+        helperText={t("currencies.shortCodeHint")}
+        label={t("currencies.shortCode")}
+        name="shortName"
+        required
+        rules={{
+          required: t("currencies.validation.shortCodeRequired"),
+          validate: value => {
+            if (typeof value !== "string" || value.trim().length === 0) {
+              return t("currencies.validation.shortCodeRequired");
+            }
+
+            const length = value.trim().length;
+            return length >= 3 && length <= 4 ? true : t("currencies.validation.shortCodeLength");
+          }
+        }}
+      />
+      <TextArea
+        control={control}
+        disabled={isSubmitting}
+        label={t("currencies.description")}
+        minRows={3}
+        name="description"
+      />
+      <CheckBox
+        control={control}
+        disabled={isSubmitting}
+        label={t("currencies.isDefault")}
+        name="isDefault"
+      />
+      <Stack direction="row" justifyContent="flex-end" spacing={1} sx={layoutStyles.formFooterRow}>
+        <ActionButton disabled={isSubmitting} type="submit">
+          {isSubmitting ? t("action.working") : isEditMode ? t("currencies.save") : t("currencies.create")}
+        </ActionButton>
+      </Stack>
+    </Stack>
+  );
+}

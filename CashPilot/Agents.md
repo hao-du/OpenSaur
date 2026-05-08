@@ -17,4 +17,5 @@ This document outlines the rules, guidelines, and behavioral expectations for AI
 
 ## Custom Rules
 - **No Testing**: Do not create unit tests or automation tests for either Backend (BE) or Frontend (FE).
+- **No Verification Required**: Do not run verification steps (build, test, lint, or similar checks) unless explicitly requested.
 - **No Auto-Commit**: Do not automatically commit code; always leave staging and committing to the user.

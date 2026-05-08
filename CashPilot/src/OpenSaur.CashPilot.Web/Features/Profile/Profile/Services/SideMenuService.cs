@@ -15,6 +15,8 @@ public sealed class SideMenuService
         if (canManage)
         {
             items.Add(new CurrentProfileNavigationItemResponse("building-2", "Banks", "/banks"));
+            items.Add(new CurrentProfileNavigationItemResponse("users", "Counterparties", "/counterparties"));
+            items.Add(new CurrentProfileNavigationItemResponse("coins", "Currencies", "/currencies"));
         }
 
         return items;

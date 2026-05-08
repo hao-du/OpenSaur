@@ -5,6 +5,8 @@ import { PrepareSessionPage } from "./features/auth/pages/PrepareSessionPage";
 import { useAuthSession } from "./features/auth/hooks/AuthContext";
 import { DashboardPage } from "./features/dashboard/pages/DashboardPage";
 import { BanksPage } from "./features/banks/pages/BanksPage";
+import { CounterpartiesPage } from "./features/counterparties/pages/CounterpartiesPage";
+import { CurrenciesPage } from "./features/currencies/pages/CurrenciesPage";
 export function App() {
     const { authSession, isRestoring } = useAuthSession();
 
@@ -22,6 +24,14 @@ export function App() {
                 <Route
                     element={<BanksPage />}
                     path="/banks"
+                />
+                <Route
+                    element={<CounterpartiesPage />}
+                    path="/counterparties"
+                />
+                <Route
+                    element={<CurrenciesPage />}
+                    path="/currencies"
                 />
             </Route>
             <Route

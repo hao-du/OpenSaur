@@ -10,6 +10,7 @@ import {
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   Building2,
+  Coins,
   KeyRound,
   LayoutDashboard,
   Shield,
@@ -26,6 +27,7 @@ import type { TranslationKey } from "../../features/settings/provider/translatio
 
 const navigationIcons: Record<string, LucideIcon> = {
   "building-2": Building2,
+  coins: Coins,
   dashboard: LayoutDashboard,
   "key-round": KeyRound,
   shield: Shield,
@@ -35,6 +37,8 @@ const navigationIcons: Record<string, LucideIcon> = {
 const navigationLabelKeys: Record<string, TranslationKey> = {
   "/": "nav.dashboard",
   "/banks": "nav.banks",
+  "/counterparties": "nav.counterparties",
+  "/currencies": "nav.currencies",
 };
 
 type SideMenuProps = {

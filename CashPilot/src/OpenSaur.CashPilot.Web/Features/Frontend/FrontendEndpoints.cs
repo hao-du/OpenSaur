@@ -10,7 +10,9 @@ public static class FrontendEndpoints
         "/",
         "/prepare-session",
         "/auth/callback",
-        "/banks"
+        "/banks",
+        "/counterparties",
+        "/currencies",
     ];
 
     public static IEndpointRouteBuilder MapFrontEndRoutes(this IEndpointRouteBuilder app)

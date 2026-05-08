@@ -1,0 +1,62 @@
+using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using OpenSaur.CashPilot.Web.Features.Currencies.Dtos;
+using OpenSaur.CashPilot.Web.Infrastructure.Database;
+using AppHttpResults = OpenSaur.CashPilot.Web.Infrastructure.Http.HttpResults;
+
+namespace OpenSaur.CashPilot.Web.Features.Currencies.Handlers;
+
+public static class UpdateCurrencyHandler
+{
+    public static async Task<Results<Ok<CurrencyResponse>, BadRequest<ProblemDetails>, NotFound<ProblemDetails>, Conflict<ProblemDetails>>> HandleAsync(
+        Guid id,
+        UpdateCurrencyRequest request,
+        CashPilotDbContext dbContext,
+        CancellationToken cancellationToken)
+    {
+        var validationError = CurrencyValidation.Validate(request.Name, request.ShortName);
+        if (validationError is not null)
+        {
+            return AppHttpResults.BadRequest("Invalid currency payload.", validationError);
+        }
+
+        var currency = await dbContext.Currencies.SingleOrDefaultAsync(candidate => candidate.Id == id, cancellationToken);
+        if (currency is null)
+        {
+            return AppHttpResults.NotFound("Currency not found.", "No currency matched the specified identifier.");
+        }
+
+        var normalizedShortName = request.ShortName.Trim().ToUpperInvariant();
+        var duplicateShortNameExists = await dbContext.Currencies
+            .AnyAsync(candidate => candidate.Id != id && candidate.ShortName == normalizedShortName, cancellationToken);
+        if (duplicateShortNameExists)
+        {
+            return AppHttpResults.Conflict("Short code already exists.", "A currency with the same short code already exists.");
+        }
+
+        await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
+
+        if (request.IsDefault && !currency.IsDefault)
+        {
+            await dbContext.Currencies
+                .Where(candidate => candidate.Id != id && candidate.IsDefault)
+                .ExecuteUpdateAsync(updates => updates.SetProperty(candidate => candidate.IsDefault, false), cancellationToken);
+        }
+
+        currency.Description = request.Description?.Trim();
+        currency.IsDefault = request.IsDefault;
+        currency.Name = request.Name.Trim();
+        currency.ShortName = normalizedShortName;
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
+
+        return TypedResults.Ok(new CurrencyResponse(
+            currency.Id,
+            currency.Name,
+            currency.ShortName,
+            currency.Description,
+            currency.IsDefault));
+    }
+}

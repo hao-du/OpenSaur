@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.FileProviders;
+using Microsoft.Extensions.FileProviders;
 using OpenSaur.CashPilot.Web.Infrastructure.Helpers;
 
 namespace OpenSaur.CashPilot.Web.Features.Frontend.Handlers;

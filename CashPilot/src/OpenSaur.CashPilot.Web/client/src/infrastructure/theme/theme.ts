@@ -35,11 +35,7 @@ export const theme = createTheme({
   typography: {
     fontSize: 14,
     fontFamily: [
-      "\"Noto Sans\"",
-      "\"Noto Sans SC\"",
-      "\"Noto Sans TC\"",
-      "\"Microsoft YaHei\"",
-      "\"PingFang SC\"",
+      "\"Be Vietnam Pro\"",
       "\"Segoe UI\"",
       "\"Helvetica Neue\"",
       "sans-serif"

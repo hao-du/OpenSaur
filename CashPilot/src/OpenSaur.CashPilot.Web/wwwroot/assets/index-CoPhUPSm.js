@@ -36953,6 +36953,64 @@ var translations = {
 		"common.none": "(None)",
 		"common.notVerifiable": "(Not verifiable)",
 		"common.yes": "Yes",
+		"counterparties.actions": "Actions",
+		"counterparties.active": "Active",
+		"counterparties.activeOnly": "Active only",
+		"counterparties.apply": "Apply",
+		"counterparties.create": "Create",
+		"counterparties.createTitle": "Create counterparty",
+		"counterparties.delete": "Delete",
+		"counterparties.deleteConfirm": "Are you sure you want to delete {name}?",
+		"counterparties.deleteTitle": "Delete counterparty",
+		"counterparties.description": "Description",
+		"counterparties.edit": "Edit",
+		"counterparties.editTitle": "Edit counterparty",
+		"counterparties.email": "Email",
+		"counterparties.emptySubtitle": "Create a counterparty to start managing your transfer contacts.",
+		"counterparties.emptyTitle": "No counterparties found",
+		"counterparties.errorDelete": "Unable to delete counterparty.",
+		"counterparties.errorSave": "Unable to save counterparty.",
+		"counterparties.filter": "Filter",
+		"counterparties.filterTitle": "Filter counterparties",
+		"counterparties.fullName": "Full Name",
+		"counterparties.loading": "Loading counterparties...",
+		"counterparties.phoneNumber": "Phone Number",
+		"counterparties.reset": "Reset",
+		"counterparties.save": "Save",
+		"counterparties.subtitle": "Manage counterparty master data.",
+		"counterparties.title": "Counterparties",
+		"counterparties.validation.fullNameRequired": "Full name is required.",
+		"counterparties.validation.invalidEmail": "Invalid email format.",
+		"counterparties.validation.invalidPhoneNumber": "Phone number format is invalid.",
+		"currencies.actions": "Actions",
+		"currencies.activeOnly": "Active only",
+		"currencies.apply": "Apply",
+		"currencies.create": "Create",
+		"currencies.createTitle": "Create currency",
+		"currencies.delete": "Delete",
+		"currencies.deleteConfirm": "Are you sure you want to delete {name}?",
+		"currencies.deleteTitle": "Delete currency",
+		"currencies.description": "Description",
+		"currencies.edit": "Edit",
+		"currencies.editTitle": "Edit currency",
+		"currencies.emptySubtitle": "Create a currency to start managing your currency master data.",
+		"currencies.emptyTitle": "No currencies found",
+		"currencies.errorDelete": "Unable to delete currency.",
+		"currencies.errorSave": "Unable to save currency.",
+		"currencies.filter": "Filter",
+		"currencies.filterTitle": "Filter currencies",
+		"currencies.isDefault": "Is Default",
+		"currencies.loading": "Loading currencies...",
+		"currencies.name": "Name",
+		"currencies.reset": "Reset",
+		"currencies.save": "Save",
+		"currencies.shortCodeHint": "e.g. USD, VND",
+		"currencies.shortCode": "Short Code",
+		"currencies.subtitle": "Manage currency master data.",
+		"currencies.title": "Currencies",
+		"currencies.validation.nameRequired": "Name is required.",
+		"currencies.validation.shortCodeLength": "Short currency code must be 3 or 4 characters.",
+		"currencies.validation.shortCodeRequired": "Short currency code is required.",
 		"dashboard.authenticated": "Authenticated",
 		"dashboard.configScope": "Config scope",
 		"dashboard.expiresAt": "Expires at",
@@ -36966,6 +37024,8 @@ var translations = {
 		"forbidden.subtitle": "Your account is signed in, but it does not have permission to use this area.",
 		"forbidden.title": "403 Forbidden",
 		"nav.banks": "Ngân hàng",
+		"nav.counterparties": "Counterparties",
+		"nav.currencies": "Currencies",
 		"nav.dashboard": "Dashboard",
 		"nav.impersonationMode": "Impersonation mode",
 		"nav.openAccountMenu": "Open account menu",
@@ -37011,6 +37071,64 @@ var translations = {
 		"common.none": "(Không có)",
 		"common.notVerifiable": "(Không thể xác minh)",
 		"common.yes": "Có",
+		"counterparties.actions": "Thao tác",
+		"counterparties.active": "Hoạt động",
+		"counterparties.activeOnly": "Chỉ hiển thị hoạt động",
+		"counterparties.apply": "Áp dụng",
+		"counterparties.create": "Tạo",
+		"counterparties.createTitle": "Tạo đối tác",
+		"counterparties.delete": "Xóa",
+		"counterparties.deleteConfirm": "Bạn có chắc muốn xóa {name}?",
+		"counterparties.deleteTitle": "Xóa đối tác",
+		"counterparties.description": "Mô tả",
+		"counterparties.edit": "Sửa",
+		"counterparties.editTitle": "Sửa đối tác",
+		"counterparties.email": "Email",
+		"counterparties.emptySubtitle": "Tạo đối tác để bắt đầu quản lý danh bạ chuyển khoản.",
+		"counterparties.emptyTitle": "Không tìm thấy đối tác",
+		"counterparties.errorDelete": "Không thể xóa đối tác.",
+		"counterparties.errorSave": "Không thể lưu đối tác.",
+		"counterparties.filter": "Lọc",
+		"counterparties.filterTitle": "Lọc đối tác",
+		"counterparties.fullName": "Họ tên",
+		"counterparties.loading": "Đang tải đối tác...",
+		"counterparties.phoneNumber": "Số điện thoại",
+		"counterparties.reset": "Đặt lại",
+		"counterparties.save": "Lưu",
+		"counterparties.subtitle": "Quản lý dữ liệu đối tác.",
+		"counterparties.title": "Đối tác",
+		"counterparties.validation.fullNameRequired": "Họ tên là bắt buộc.",
+		"counterparties.validation.invalidEmail": "Email không hợp lệ.",
+		"counterparties.validation.invalidPhoneNumber": "Số điện thoại không hợp lệ.",
+		"currencies.actions": "Thao tác",
+		"currencies.activeOnly": "Chỉ hiển thị hoạt động",
+		"currencies.apply": "Áp dụng",
+		"currencies.create": "Tạo",
+		"currencies.createTitle": "Tạo tiền tệ",
+		"currencies.delete": "Xóa",
+		"currencies.deleteConfirm": "Bạn có chắc muốn xóa {name}?",
+		"currencies.deleteTitle": "Xóa tiền tệ",
+		"currencies.description": "Mô tả",
+		"currencies.edit": "Sửa",
+		"currencies.editTitle": "Sửa tiền tệ",
+		"currencies.emptySubtitle": "Tạo tiền tệ để bắt đầu quản lý dữ liệu tiền tệ.",
+		"currencies.emptyTitle": "Không tìm thấy tiền tệ",
+		"currencies.errorDelete": "Không thể xóa tiền tệ.",
+		"currencies.errorSave": "Không thể lưu tiền tệ.",
+		"currencies.filter": "Lọc",
+		"currencies.filterTitle": "Lọc tiền tệ",
+		"currencies.isDefault": "Mặc định",
+		"currencies.loading": "Đang tải tiền tệ...",
+		"currencies.name": "Tên",
+		"currencies.reset": "Đặt lại",
+		"currencies.save": "Lưu",
+		"currencies.shortCodeHint": "vd: USD, VND",
+		"currencies.shortCode": "Mã ngắn",
+		"currencies.subtitle": "Quản lý dữ liệu tiền tệ.",
+		"currencies.title": "Tiền tệ",
+		"currencies.validation.nameRequired": "Tên là bắt buộc.",
+		"currencies.validation.shortCodeLength": "Mã tiền tệ phải có 3 hoặc 4 ký tự.",
+		"currencies.validation.shortCodeRequired": "Mã tiền tệ là bắt buộc.",
 		"dashboard.authenticated": "Đã xác thực",
 		"dashboard.configScope": "Scope cấu hình",
 		"dashboard.expiresAt": "Hết hạn lúc",
@@ -37024,6 +37142,8 @@ var translations = {
 		"forbidden.subtitle": "Tài khoản của bạn đã đăng nhập nhưng không có quyền dùng khu vực này.",
 		"forbidden.title": "403 Bị từ chối",
 		"nav.banks": "Ngân hàng",
+		"nav.counterparties": "Đối tác",
+		"nav.currencies": "Tiền tệ",
 		"nav.dashboard": "Bảng điều khiển",
 		"nav.impersonationMode": "Chế độ đăng nhập thay",
 		"nav.openAccountMenu": "Mở menu tài khoản",
@@ -37460,6 +37580,26 @@ var Building2 = createLucideIcon("building-2", [
 		key: "16ra0t"
 	}]
 ]);
+var Coins = createLucideIcon("coins", [
+	["path", {
+		d: "M13.744 17.736a6 6 0 1 1-7.48-7.48",
+		key: "bq4yh3"
+	}],
+	["path", {
+		d: "M15 6h1v4",
+		key: "11y1tn"
+	}],
+	["path", {
+		d: "m6.134 14.768.866-.5 2 3.464",
+		key: "17snzx"
+	}],
+	["circle", {
+		cx: "16",
+		cy: "8",
+		r: "6",
+		key: "14bfc9"
+	}]
+]);
 var Eye = createLucideIcon("eye", [["path", {
 	d: "M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0",
 	key: "1nclc0"
@@ -37609,11 +37749,7 @@ var theme = createTheme({
 	typography: {
 		fontSize: 14,
 		fontFamily: [
-			"\"Noto Sans\"",
-			"\"Noto Sans SC\"",
-			"\"Noto Sans TC\"",
-			"\"Microsoft YaHei\"",
-			"\"PingFang SC\"",
+			"\"Be Vietnam Pro\"",
 			"\"Segoe UI\"",
 			"\"Helvetica Neue\"",
 			"sans-serif"
@@ -37967,6 +38103,7 @@ function Header({ isDesktop, onOpenNavigation }) {
 //#region src/components/organisms/SideMenu.tsx
 var navigationIcons = {
 	"building-2": Building2,
+	coins: Coins,
 	dashboard: LayoutDashboard,
 	"key-round": KeyRound,
 	shield: Shield,
@@ -37974,7 +38111,9 @@ var navigationIcons = {
 };
 var navigationLabelKeys = {
 	"/": "nav.dashboard",
-	"/banks": "nav.banks"
+	"/banks": "nav.banks",
+	"/counterparties": "nav.counterparties",
+	"/currencies": "nav.currencies"
 };
 function SideMenu({ currentYear }) {
 	const location = useLocation();
@@ -40560,13 +40699,13 @@ function useBanksQuery(filters) {
 }
 //#endregion
 //#region src/features/banks/pages/BanksPage.tsx
-var emptyFormState = {
+var emptyFormState$2 = {
 	description: "",
 	isDefault: false,
 	name: "",
 	shortName: ""
 };
-function getErrorMessage(error, fallback) {
+function getErrorMessage$2(error, fallback) {
 	if (error instanceof AxiosError) {
 		const detail = error.response?.data;
 		if (typeof detail === "string" && detail.trim().length > 0) return detail;
@@ -40587,7 +40726,7 @@ function BanksPage() {
 	const [isFormOpen, setIsFormOpen] = (0, import_react.useState)(false);
 	const [isSubmitting, setIsSubmitting] = (0, import_react.useState)(false);
 	const [errorMessage, setErrorMessage] = (0, import_react.useState)(null);
-	const form = useForm({ defaultValues: emptyFormState });
+	const form = useForm({ defaultValues: emptyFormState$2 });
 	const isEditMode = (0, import_react.useMemo)(() => editingBank != null, [editingBank]);
 	async function handleSubmit(values) {
 		setErrorMessage(null);
@@ -40601,19 +40740,19 @@ function BanksPage() {
 			};
 			if (editingBank == null) await createBank(payload);
 			else await updateBank(editingBank.id, payload);
-			form.reset(emptyFormState);
+			form.reset(emptyFormState$2);
 			setEditingBank(null);
 			setIsFormOpen(false);
 			await refetch();
 		} catch (error) {
-			setErrorMessage(getErrorMessage(error, "Unable to save bank."));
+			setErrorMessage(getErrorMessage$2(error, "Unable to save bank."));
 		} finally {
 			setIsSubmitting(false);
 		}
 	}
 	function openCreateForm() {
 		setEditingBank(null);
-		form.reset(emptyFormState);
+		form.reset(emptyFormState$2);
 		setIsFormOpen(true);
 	}
 	function openEditForm(bank) {
@@ -40634,13 +40773,13 @@ function BanksPage() {
 			await deleteBank(deletingBank.id);
 			if (editingBank?.id === deletingBank.id) {
 				setEditingBank(null);
-				form.reset(emptyFormState);
+				form.reset(emptyFormState$2);
 				setIsFormOpen(false);
 			}
 			await refetch();
 			setDeletingBank(null);
 		} catch (error) {
-			setErrorMessage(getErrorMessage(error, "Unable to delete bank."));
+			setErrorMessage(getErrorMessage$2(error, "Unable to delete bank."));
 		} finally {
 			setIsSubmitting(false);
 		}
@@ -40701,7 +40840,7 @@ function BanksPage() {
 					if (isSubmitting) return;
 					setIsFormOpen(false);
 					setEditingBank(null);
-					form.reset(emptyFormState);
+					form.reset(emptyFormState$2);
 				},
 				onSubmit: handleSubmit
 			}),
@@ -40720,6 +40859,882 @@ function BanksPage() {
 				title: "Delete bank"
 			}),
 			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(BanksFilterDrawer, {
+				initialValues: filters,
+				isOpen: isFilterDrawerOpen,
+				onApply: (values) => {
+					setFilters(values);
+					setIsFilterDrawerOpen(false);
+				},
+				onClose: () => {
+					setIsFilterDrawerOpen(false);
+				}
+			})
+		]
+	});
+}
+//#endregion
+//#region src/features/counterparties/api/counterpartiesApi.ts
+async function getCounterparties(filters) {
+	return client.get("/api/counterparties", { params: {
+		isActive: filters.isActive,
+		fullName: filters.fullName.trim().length > 0 ? filters.fullName.trim() : void 0,
+		email: filters.email.trim().length > 0 ? filters.email.trim() : void 0,
+		phoneNumber: filters.phoneNumber.trim().length > 0 ? filters.phoneNumber.trim() : void 0
+	} });
+}
+async function createCounterparty(request) {
+	return client.post("/api/counterparties", request);
+}
+async function updateCounterparty(id, request) {
+	return client.put(`/api/counterparties/${id}`, request);
+}
+async function deleteCounterparty(id) {
+	await client.delete(`/api/counterparties/${id}`);
+}
+//#endregion
+//#region src/features/counterparties/components/CounterpartiesFilterDrawer.tsx
+function CounterpartiesFilterDrawer({ initialValues, isOpen, onApply, onClose }) {
+	const { t } = useSettings();
+	const form = useForm({ defaultValues: initialValues });
+	(0, import_react.useEffect)(() => {
+		if (!isOpen) return;
+		form.reset(initialValues);
+	}, [
+		form,
+		initialValues,
+		isOpen
+	]);
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(DrawerPanel, {
+		isOpen,
+		onClose,
+		title: t("counterparties.filterTitle"),
+		children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Stack, {
+			component: "form",
+			onSubmit: form.handleSubmit((values) => {
+				onApply({
+					...values,
+					email: values.email.trim(),
+					fullName: values.fullName.trim(),
+					phoneNumber: values.phoneNumber.trim()
+				});
+			}),
+			spacing: 2,
+			sx: layoutStyles.drawerBody,
+			children: [
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, {
+					control: form.control,
+					label: t("counterparties.fullName"),
+					name: "fullName"
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, {
+					control: form.control,
+					label: t("counterparties.email"),
+					name: "email"
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, {
+					control: form.control,
+					label: t("counterparties.phoneNumber"),
+					name: "phoneNumber"
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(CheckBox, {
+					control: form.control,
+					label: t("counterparties.activeOnly"),
+					name: "isActive"
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Stack, {
+					direction: "row",
+					spacing: 1,
+					sx: layoutStyles.formFooterRow,
+					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(ActionButton, {
+						type: "submit",
+						children: t("counterparties.apply")
+					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ActionButton, {
+						onClick: () => {
+							form.reset({
+								email: "",
+								fullName: "",
+								isActive: true,
+								phoneNumber: ""
+							});
+						},
+						variant: "outlined",
+						children: t("counterparties.reset")
+					})]
+				})
+			]
+		})
+	});
+}
+//#endregion
+//#region src/features/counterparties/components/CounterpartiesList.tsx
+function CounterpartiesList({ counterparties, isLoading, isSubmitting, onDelete, onEdit }) {
+	const { t } = useSettings();
+	if (isLoading) return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Paper, {
+		elevation: 0,
+		sx: layoutStyles.loadingPanel,
+		children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Stack, {
+			alignItems: "center",
+			spacing: 2,
+			children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(CircularProgress, { size: 28 }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(BodyText, { children: t("counterparties.loading") })]
+		})
+	});
+	if (counterparties.length === 0) return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Paper, {
+		elevation: 0,
+		sx: layoutStyles.emptyStatePanel,
+		children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Stack, {
+			spacing: 1.5,
+			children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(PageTitleText, {
+				variant: "h6",
+				children: t("counterparties.emptyTitle")
+			}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(BodyText, { children: t("counterparties.emptySubtitle") })]
+		})
+	});
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Paper, {
+		elevation: 0,
+		sx: layoutStyles.borderedPanelScrollable,
+		children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Table, { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(TableHead, { children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(TableRow, { children: [
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(TableCell, { children: t("counterparties.fullName") }),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(TableCell, { children: t("counterparties.email") }),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(TableCell, { children: t("counterparties.phoneNumber") }),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(TableCell, { children: t("counterparties.description") }),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(TableCell, {
+				align: "right",
+				children: t("counterparties.actions")
+			})
+		] }) }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TableBody, { children: counterparties.map((counterparty) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(TableRow, {
+			hover: true,
+			children: [
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(TableCell, { children: counterparty.fullName }),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(TableCell, { children: counterparty.email ?? t("common.none") }),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(TableCell, { children: counterparty.phoneNumber ?? t("common.none") }),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(TableCell, { children: counterparty.description ?? t("common.none") }),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(TableCell, {
+					align: "right",
+					children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Stack, {
+						direction: "row",
+						justifyContent: "flex-end",
+						spacing: 1,
+						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(LinkButton, {
+							disabled: isSubmitting,
+							onClick: () => {
+								onEdit(counterparty);
+							},
+							children: t("counterparties.edit")
+						}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(LinkButton, {
+							color: "error",
+							disabled: isSubmitting,
+							onClick: () => {
+								onDelete(counterparty);
+							},
+							children: t("counterparties.delete")
+						})]
+					})
+				})
+			]
+		}, counterparty.id)) })] })
+	});
+}
+//#endregion
+//#region src/features/counterparties/components/CounterpartyForm.tsx
+function CounterpartyForm({ control, isEditMode, isSubmitting }) {
+	const { t } = useSettings();
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Stack, {
+		spacing: 2,
+		sx: layoutStyles.drawerBody,
+		children: [
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, {
+				control,
+				disabled: isSubmitting,
+				label: t("counterparties.fullName"),
+				name: "fullName",
+				required: true,
+				rules: {
+					required: t("counterparties.validation.fullNameRequired"),
+					validate: (value) => typeof value === "string" && value.trim().length > 0 ? true : t("counterparties.validation.fullNameRequired")
+				}
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, {
+				control,
+				disabled: isSubmitting,
+				label: t("counterparties.email"),
+				name: "email",
+				rules: { pattern: {
+					message: t("counterparties.validation.invalidEmail"),
+					value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+				} }
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, {
+				control,
+				disabled: isSubmitting,
+				label: t("counterparties.phoneNumber"),
+				name: "phoneNumber",
+				rules: { pattern: {
+					message: t("counterparties.validation.invalidPhoneNumber"),
+					value: /^[0-9+\-() ]+$/
+				} }
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextArea, {
+				control,
+				disabled: isSubmitting,
+				label: t("counterparties.description"),
+				minRows: 3,
+				name: "description"
+			}),
+			isEditMode ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(CheckBox, {
+				control,
+				disabled: isSubmitting,
+				label: t("counterparties.active"),
+				name: "isActive"
+			}) : null,
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Stack, {
+				direction: "row",
+				justifyContent: "flex-end",
+				spacing: 1,
+				sx: layoutStyles.formFooterRow,
+				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ActionButton, {
+					disabled: isSubmitting,
+					type: "submit",
+					children: isSubmitting ? t("action.working") : isEditMode ? t("counterparties.save") : t("counterparties.create")
+				})
+			})
+		]
+	});
+}
+//#endregion
+//#region src/features/counterparties/components/CounterpartyFormDrawer.tsx
+function CounterpartyFormDrawer({ form, isEditMode, isOpen, isSubmitting, onClose, onSubmit }) {
+	const { t } = useSettings();
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(DrawerPanel, {
+		isOpen,
+		onClose,
+		title: isEditMode ? t("counterparties.editTitle") : t("counterparties.createTitle"),
+		children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Stack, {
+			component: "form",
+			onSubmit: form.handleSubmit(async (values) => {
+				await onSubmit(values);
+			}),
+			children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(CounterpartyForm, {
+				control: form.control,
+				isEditMode,
+				isSubmitting
+			})
+		})
+	});
+}
+//#endregion
+//#region src/features/counterparties/hooks/useCounterpartiesQuery.ts
+function useCounterpartiesQuery(filters) {
+	return useQuery({
+		queryFn: () => getCounterparties(filters),
+		queryKey: ["counterparties", filters]
+	});
+}
+//#endregion
+//#region src/features/counterparties/pages/CounterpartiesPage.tsx
+var emptyFormState$1 = {
+	description: "",
+	email: "",
+	fullName: "",
+	isActive: true,
+	phoneNumber: ""
+};
+function getErrorMessage$1(error, fallback) {
+	if (error instanceof AxiosError) {
+		const detail = error.response?.data;
+		if (typeof detail === "string" && detail.trim().length > 0) return detail;
+	}
+	if (error instanceof Error && error.message.trim().length > 0) return error.message;
+	return fallback;
+}
+function CounterpartiesPage() {
+	const { t } = useSettings();
+	const [filters, setFilters] = (0, import_react.useState)({
+		email: "",
+		fullName: "",
+		isActive: true,
+		phoneNumber: ""
+	});
+	const [isFilterDrawerOpen, setIsFilterDrawerOpen] = (0, import_react.useState)(false);
+	const { data: counterparties = [], isLoading, refetch } = useCounterpartiesQuery(filters);
+	const [editingCounterparty, setEditingCounterparty] = (0, import_react.useState)(null);
+	const [deletingCounterparty, setDeletingCounterparty] = (0, import_react.useState)(null);
+	const [isFormOpen, setIsFormOpen] = (0, import_react.useState)(false);
+	const [isSubmitting, setIsSubmitting] = (0, import_react.useState)(false);
+	const [errorMessage, setErrorMessage] = (0, import_react.useState)(null);
+	const form = useForm({ defaultValues: emptyFormState$1 });
+	const isEditMode = (0, import_react.useMemo)(() => editingCounterparty != null, [editingCounterparty]);
+	async function handleSubmit(values) {
+		setErrorMessage(null);
+		setIsSubmitting(true);
+		try {
+			if (editingCounterparty == null) await createCounterparty({
+				description: values.description.trim().length === 0 ? null : values.description.trim(),
+				email: values.email.trim().length === 0 ? null : values.email.trim(),
+				fullName: values.fullName.trim(),
+				phoneNumber: values.phoneNumber.trim().length === 0 ? null : values.phoneNumber.trim()
+			});
+			else {
+				const payload = {
+					description: values.description.trim().length === 0 ? null : values.description.trim(),
+					email: values.email.trim().length === 0 ? null : values.email.trim(),
+					fullName: values.fullName.trim(),
+					isActive: values.isActive,
+					phoneNumber: values.phoneNumber.trim().length === 0 ? null : values.phoneNumber.trim()
+				};
+				await updateCounterparty(editingCounterparty.id, payload);
+			}
+			form.reset(emptyFormState$1);
+			setEditingCounterparty(null);
+			setIsFormOpen(false);
+			await refetch();
+		} catch (error) {
+			setErrorMessage(getErrorMessage$1(error, t("counterparties.errorSave")));
+		} finally {
+			setIsSubmitting(false);
+		}
+	}
+	function openCreateForm() {
+		setEditingCounterparty(null);
+		form.reset(emptyFormState$1);
+		setIsFormOpen(true);
+	}
+	function openEditForm(counterparty) {
+		setEditingCounterparty(counterparty);
+		form.reset({
+			description: counterparty.description ?? "",
+			email: counterparty.email ?? "",
+			fullName: counterparty.fullName,
+			isActive: counterparty.isActive,
+			phoneNumber: counterparty.phoneNumber ?? ""
+		});
+		setIsFormOpen(true);
+	}
+	async function handleDeleteConfirmed() {
+		if (deletingCounterparty == null) return;
+		setErrorMessage(null);
+		setIsSubmitting(true);
+		try {
+			await deleteCounterparty(deletingCounterparty.id);
+			if (editingCounterparty?.id === deletingCounterparty.id) {
+				setEditingCounterparty(null);
+				form.reset(emptyFormState$1);
+				setIsFormOpen(false);
+			}
+			await refetch();
+			setDeletingCounterparty(null);
+		} catch (error) {
+			setErrorMessage(getErrorMessage$1(error, t("counterparties.errorDelete")));
+		} finally {
+			setIsSubmitting(false);
+		}
+	}
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(DefaultLayout, {
+		subtitle: t("counterparties.subtitle"),
+		title: t("counterparties.title"),
+		children: [
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Stack, {
+				spacing: 3,
+				children: [
+					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Stack, {
+						direction: {
+							md: "row",
+							xs: "column"
+						},
+						justifyContent: "space-between",
+						spacing: 2,
+						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Stack, {
+							direction: "row",
+							spacing: 2,
+							sx: layoutStyles.responsiveActionGroup,
+							children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ActionButton, {
+								onClick: () => {
+									setIsFilterDrawerOpen(true);
+								},
+								sx: layoutStyles.responsiveActionButton,
+								variant: "outlined",
+								children: t("counterparties.filter")
+							})
+						}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ActionButton, {
+							onClick: openCreateForm,
+							sx: layoutStyles.responsiveActionButton,
+							children: t("counterparties.create")
+						})]
+					}),
+					errorMessage != null ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Alert, {
+						severity: "error",
+						children: errorMessage
+					}) : null,
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(CounterpartiesList, {
+						counterparties,
+						isLoading,
+						isSubmitting,
+						onDelete: (counterparty) => {
+							setDeletingCounterparty(counterparty);
+						},
+						onEdit: openEditForm
+					})
+				]
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(CounterpartyFormDrawer, {
+				form,
+				isEditMode,
+				isOpen: isFormOpen,
+				isSubmitting,
+				onClose: () => {
+					if (isSubmitting) return;
+					setIsFormOpen(false);
+					setEditingCounterparty(null);
+					form.reset(emptyFormState$1);
+				},
+				onSubmit: handleSubmit
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(ConfirmationDialog, {
+				confirmLabel: t("counterparties.delete"),
+				isConfirming: isSubmitting,
+				message: deletingCounterparty == null ? "" : t("counterparties.deleteConfirm").replace("{name}", deletingCounterparty.fullName),
+				onClose: () => {
+					if (isSubmitting) return;
+					setDeletingCounterparty(null);
+				},
+				onConfirm: () => {
+					handleDeleteConfirmed();
+				},
+				open: deletingCounterparty !== null,
+				title: t("counterparties.deleteTitle")
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(CounterpartiesFilterDrawer, {
+				initialValues: filters,
+				isOpen: isFilterDrawerOpen,
+				onApply: (values) => {
+					setFilters(values);
+					setIsFilterDrawerOpen(false);
+				},
+				onClose: () => {
+					setIsFilterDrawerOpen(false);
+				}
+			})
+		]
+	});
+}
+//#endregion
+//#region src/features/currencies/api/currenciesApi.ts
+async function getCurrencies(filters) {
+	return client.get("/api/currencies", { params: {
+		isActive: filters.isActive,
+		name: filters.name.trim().length > 0 ? filters.name.trim() : void 0,
+		shortName: filters.shortName.trim().length > 0 ? filters.shortName.trim() : void 0
+	} });
+}
+async function createCurrency(request) {
+	return client.post("/api/currencies", request);
+}
+async function updateCurrency(id, request) {
+	return client.put(`/api/currencies/${id}`, request);
+}
+async function deleteCurrency(id) {
+	await client.delete(`/api/currencies/${id}`);
+}
+//#endregion
+//#region src/features/currencies/components/CurrenciesFilterDrawer.tsx
+function CurrenciesFilterDrawer({ initialValues, isOpen, onApply, onClose }) {
+	const { t } = useSettings();
+	const form = useForm({ defaultValues: initialValues });
+	(0, import_react.useEffect)(() => {
+		if (!isOpen) return;
+		form.reset(initialValues);
+	}, [
+		form,
+		initialValues,
+		isOpen
+	]);
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(DrawerPanel, {
+		isOpen,
+		onClose,
+		title: t("currencies.filterTitle"),
+		children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Stack, {
+			component: "form",
+			onSubmit: form.handleSubmit((values) => {
+				onApply({
+					...values,
+					name: values.name.trim(),
+					shortName: values.shortName.trim()
+				});
+			}),
+			spacing: 2,
+			sx: layoutStyles.drawerBody,
+			children: [
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, {
+					control: form.control,
+					label: t("currencies.name"),
+					name: "name"
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, {
+					control: form.control,
+					label: t("currencies.shortCode"),
+					name: "shortName"
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(CheckBox, {
+					control: form.control,
+					label: t("currencies.activeOnly"),
+					name: "isActive"
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Stack, {
+					direction: "row",
+					spacing: 1,
+					sx: layoutStyles.formFooterRow,
+					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(ActionButton, {
+						type: "submit",
+						children: t("currencies.apply")
+					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ActionButton, {
+						onClick: () => {
+							form.reset({
+								isActive: true,
+								name: "",
+								shortName: ""
+							});
+						},
+						variant: "outlined",
+						children: t("currencies.reset")
+					})]
+				})
+			]
+		})
+	});
+}
+//#endregion
+//#region src/features/currencies/components/CurrenciesList.tsx
+function CurrenciesList({ currencies, isLoading, isSubmitting, onDelete, onEdit }) {
+	const { t } = useSettings();
+	if (isLoading) return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Paper, {
+		elevation: 0,
+		sx: layoutStyles.loadingPanel,
+		children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Stack, {
+			alignItems: "center",
+			spacing: 2,
+			children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(CircularProgress, { size: 28 }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(BodyText, { children: t("currencies.loading") })]
+		})
+	});
+	if (currencies.length === 0) return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Paper, {
+		elevation: 0,
+		sx: layoutStyles.emptyStatePanel,
+		children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Stack, {
+			spacing: 1.5,
+			children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(PageTitleText, {
+				variant: "h6",
+				children: t("currencies.emptyTitle")
+			}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(BodyText, { children: t("currencies.emptySubtitle") })]
+		})
+	});
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Paper, {
+		elevation: 0,
+		sx: layoutStyles.borderedPanelScrollable,
+		children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Table, { children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(TableHead, { children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(TableRow, { children: [
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(TableCell, { children: t("currencies.name") }),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(TableCell, { children: t("currencies.shortCode") }),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(TableCell, { children: t("currencies.description") }),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(TableCell, { children: t("currencies.isDefault") }),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(TableCell, {
+				align: "right",
+				children: t("currencies.actions")
+			})
+		] }) }), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TableBody, { children: currencies.map((currency) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(TableRow, {
+			hover: true,
+			children: [
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(TableCell, { children: currency.name }),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(TableCell, { children: currency.shortName }),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(TableCell, { children: currency.description ?? t("common.none") }),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(TableCell, { children: currency.isDefault ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Chip, {
+					label: "Yes",
+					size: "small",
+					sx: {
+						bgcolor: "primary.main",
+						color: "white"
+					}
+				}) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Chip, {
+					label: "No",
+					size: "small",
+					variant: "outlined"
+				}) }),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(TableCell, {
+					align: "right",
+					children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Stack, {
+						direction: "row",
+						justifyContent: "flex-end",
+						spacing: 1,
+						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(LinkButton, {
+							disabled: isSubmitting,
+							onClick: () => {
+								onEdit(currency);
+							},
+							children: t("currencies.edit")
+						}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(LinkButton, {
+							color: "error",
+							disabled: isSubmitting,
+							onClick: () => {
+								onDelete(currency);
+							},
+							children: t("currencies.delete")
+						})]
+					})
+				})
+			]
+		}, currency.id)) })] })
+	});
+}
+//#endregion
+//#region src/features/currencies/components/CurrencyForm.tsx
+function CurrencyForm({ control, isEditMode, isSubmitting }) {
+	const { t } = useSettings();
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Stack, {
+		spacing: 2,
+		sx: layoutStyles.drawerBody,
+		children: [
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, {
+				control,
+				disabled: isSubmitting,
+				label: t("currencies.name"),
+				name: "name",
+				required: true,
+				rules: {
+					required: t("currencies.validation.nameRequired"),
+					validate: (value) => typeof value === "string" && value.trim().length > 0 ? true : t("currencies.validation.nameRequired")
+				}
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, {
+				control,
+				disabled: isSubmitting,
+				helperText: t("currencies.shortCodeHint"),
+				label: t("currencies.shortCode"),
+				name: "shortName",
+				required: true,
+				rules: {
+					required: t("currencies.validation.shortCodeRequired"),
+					validate: (value) => {
+						if (typeof value !== "string" || value.trim().length === 0) return t("currencies.validation.shortCodeRequired");
+						const length = value.trim().length;
+						return length >= 3 && length <= 4 ? true : t("currencies.validation.shortCodeLength");
+					}
+				}
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextArea, {
+				control,
+				disabled: isSubmitting,
+				label: t("currencies.description"),
+				minRows: 3,
+				name: "description"
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(CheckBox, {
+				control,
+				disabled: isSubmitting,
+				label: t("currencies.isDefault"),
+				name: "isDefault"
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Stack, {
+				direction: "row",
+				justifyContent: "flex-end",
+				spacing: 1,
+				sx: layoutStyles.formFooterRow,
+				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ActionButton, {
+					disabled: isSubmitting,
+					type: "submit",
+					children: isSubmitting ? t("action.working") : isEditMode ? t("currencies.save") : t("currencies.create")
+				})
+			})
+		]
+	});
+}
+//#endregion
+//#region src/features/currencies/components/CurrencyFormDrawer.tsx
+function CurrencyFormDrawer({ form, isEditMode, isOpen, isSubmitting, onClose, onSubmit }) {
+	const { t } = useSettings();
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(DrawerPanel, {
+		isOpen,
+		onClose,
+		title: isEditMode ? t("currencies.editTitle") : t("currencies.createTitle"),
+		children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Stack, {
+			component: "form",
+			onSubmit: form.handleSubmit(async (values) => {
+				await onSubmit(values);
+			}),
+			children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(CurrencyForm, {
+				control: form.control,
+				isEditMode,
+				isSubmitting
+			})
+		})
+	});
+}
+//#endregion
+//#region src/features/currencies/hooks/useCurrenciesQuery.ts
+function useCurrenciesQuery(filters) {
+	return useQuery({
+		queryFn: () => getCurrencies(filters),
+		queryKey: ["currencies", filters]
+	});
+}
+//#endregion
+//#region src/features/currencies/pages/CurrenciesPage.tsx
+var emptyFormState = {
+	description: "",
+	isDefault: false,
+	name: "",
+	shortName: ""
+};
+function getErrorMessage(error, fallback) {
+	if (error instanceof AxiosError) {
+		const detail = error.response?.data;
+		if (typeof detail === "string" && detail.trim().length > 0) return detail;
+	}
+	if (error instanceof Error && error.message.trim().length > 0) return error.message;
+	return fallback;
+}
+function CurrenciesPage() {
+	const { t } = useSettings();
+	const [filters, setFilters] = (0, import_react.useState)({
+		isActive: true,
+		name: "",
+		shortName: ""
+	});
+	const [isFilterDrawerOpen, setIsFilterDrawerOpen] = (0, import_react.useState)(false);
+	const { data: currencies = [], isLoading, refetch } = useCurrenciesQuery(filters);
+	const [editingCurrency, setEditingCurrency] = (0, import_react.useState)(null);
+	const [deletingCurrency, setDeletingCurrency] = (0, import_react.useState)(null);
+	const [isFormOpen, setIsFormOpen] = (0, import_react.useState)(false);
+	const [isSubmitting, setIsSubmitting] = (0, import_react.useState)(false);
+	const [errorMessage, setErrorMessage] = (0, import_react.useState)(null);
+	const form = useForm({ defaultValues: emptyFormState });
+	const isEditMode = (0, import_react.useMemo)(() => editingCurrency != null, [editingCurrency]);
+	async function handleSubmit(values) {
+		setErrorMessage(null);
+		setIsSubmitting(true);
+		try {
+			const payload = {
+				description: values.description.trim().length === 0 ? null : values.description.trim(),
+				isDefault: values.isDefault,
+				name: values.name.trim(),
+				shortName: values.shortName.trim().toUpperCase()
+			};
+			if (editingCurrency == null) await createCurrency(payload);
+			else await updateCurrency(editingCurrency.id, payload);
+			form.reset(emptyFormState);
+			setEditingCurrency(null);
+			setIsFormOpen(false);
+			await refetch();
+		} catch (error) {
+			setErrorMessage(getErrorMessage(error, t("currencies.errorSave")));
+		} finally {
+			setIsSubmitting(false);
+		}
+	}
+	function openCreateForm() {
+		setEditingCurrency(null);
+		form.reset(emptyFormState);
+		setIsFormOpen(true);
+	}
+	function openEditForm(currency) {
+		setEditingCurrency(currency);
+		form.reset({
+			description: currency.description ?? "",
+			isDefault: currency.isDefault,
+			name: currency.name,
+			shortName: currency.shortName
+		});
+		setIsFormOpen(true);
+	}
+	async function handleDeleteConfirmed() {
+		if (deletingCurrency == null) return;
+		setErrorMessage(null);
+		setIsSubmitting(true);
+		try {
+			await deleteCurrency(deletingCurrency.id);
+			if (editingCurrency?.id === deletingCurrency.id) {
+				setEditingCurrency(null);
+				form.reset(emptyFormState);
+				setIsFormOpen(false);
+			}
+			await refetch();
+			setDeletingCurrency(null);
+		} catch (error) {
+			setErrorMessage(getErrorMessage(error, t("currencies.errorDelete")));
+		} finally {
+			setIsSubmitting(false);
+		}
+	}
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(DefaultLayout, {
+		subtitle: t("currencies.subtitle"),
+		title: t("currencies.title"),
+		children: [
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Stack, {
+				spacing: 3,
+				children: [
+					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Stack, {
+						direction: {
+							md: "row",
+							xs: "column"
+						},
+						justifyContent: "space-between",
+						spacing: 2,
+						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Stack, {
+							direction: "row",
+							spacing: 2,
+							sx: layoutStyles.responsiveActionGroup,
+							children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ActionButton, {
+								onClick: () => {
+									setIsFilterDrawerOpen(true);
+								},
+								sx: layoutStyles.responsiveActionButton,
+								variant: "outlined",
+								children: t("currencies.filter")
+							})
+						}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ActionButton, {
+							onClick: openCreateForm,
+							sx: layoutStyles.responsiveActionButton,
+							children: t("currencies.create")
+						})]
+					}),
+					errorMessage != null ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Alert, {
+						severity: "error",
+						children: errorMessage
+					}) : null,
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(CurrenciesList, {
+						currencies,
+						isLoading,
+						isSubmitting,
+						onDelete: (currency) => {
+							setDeletingCurrency(currency);
+						},
+						onEdit: openEditForm
+					})
+				]
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(CurrencyFormDrawer, {
+				form,
+				isEditMode,
+				isOpen: isFormOpen,
+				isSubmitting,
+				onClose: () => {
+					if (isSubmitting) return;
+					setIsFormOpen(false);
+					setEditingCurrency(null);
+					form.reset(emptyFormState);
+				},
+				onSubmit: handleSubmit
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(ConfirmationDialog, {
+				confirmLabel: t("currencies.delete"),
+				isConfirming: isSubmitting,
+				message: deletingCurrency == null ? "" : t("currencies.deleteConfirm").replace("{name}", deletingCurrency.name),
+				onClose: () => {
+					if (isSubmitting) return;
+					setDeletingCurrency(null);
+				},
+				onConfirm: () => {
+					handleDeleteConfirmed();
+				},
+				open: deletingCurrency !== null,
+				title: t("currencies.deleteTitle")
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(CurrenciesFilterDrawer, {
 				initialValues: filters,
 				isOpen: isFilterDrawerOpen,
 				onApply: (values) => {
@@ -40755,6 +41770,14 @@ function App() {
 				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Route, {
 					element: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(BanksPage, {}),
 					path: "/banks"
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Route, {
+					element: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(CounterpartiesPage, {}),
+					path: "/counterparties"
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Route, {
+					element: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(CurrenciesPage, {}),
+					path: "/currencies"
 				})
 			]
 		}),
@@ -40783,4 +41806,4 @@ import_client.createRoot(document.getElementById("root")).render(/* @__PURE__ */
 }) }));
 //#endregion
 
-//# sourceMappingURL=index-UqMy6eSp.js.map
+//# sourceMappingURL=index-CoPhUPSm.js.map

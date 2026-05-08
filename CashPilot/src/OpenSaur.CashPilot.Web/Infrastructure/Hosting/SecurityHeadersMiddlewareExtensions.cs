@@ -17,7 +17,6 @@ public static class SecurityHeadersMiddlewareExtensions
             headers.TryAdd("X-Frame-Options", "DENY");
             headers.TryAdd("Referrer-Policy", "strict-origin-when-cross-origin");
             headers.TryAdd("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
-            headers.TryAdd("Content-Security-Policy", BuildContentSecurityPolicy(oidcOptions, environment));
 
             if (!environment.IsDevelopment())
             {
@@ -28,29 +27,4 @@ public static class SecurityHeadersMiddlewareExtensions
         });
     }
 
-    private static string BuildContentSecurityPolicy(OidcOptions oidcOptions, IWebHostEnvironment environment)
-    {
-        var authority = new Uri(oidcOptions.Authority).GetLeftPart(UriPartial.Authority);
-        var connectSrc = environment.IsDevelopment()
-            ? $"connect-src 'self' {authority} http://localhost:* https://localhost:* ws://localhost:* wss://localhost:*;"
-            : $"connect-src 'self' {authority};";
-        var upgradeInsecureRequests = environment.IsDevelopment()
-            ? string.Empty
-            : " upgrade-insecure-requests;";
-
-        return string.Join(
-            " ",
-            "default-src 'self';",
-            "base-uri 'self';",
-            connectSrc,
-            "font-src 'self' data:;",
-            "form-action 'self';",
-            "frame-ancestors 'none';",
-            "frame-src 'none';",
-            "img-src 'self' data:;",
-            "object-src 'none';",
-            "script-src 'self';",
-            "style-src 'self' 'unsafe-inline';",
-            upgradeInsecureRequests);
-    }
 }
