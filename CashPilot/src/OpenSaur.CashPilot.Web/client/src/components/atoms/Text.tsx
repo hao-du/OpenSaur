@@ -24,6 +24,8 @@ export function Text<TFieldValues extends FieldValues>({
   shouldUnregister = false,
   type = "text"
 }: TextProps<TFieldValues>) {
+  const shouldShrinkLabel = type === "date" || type === "datetime-local" || type === "time";
+
   return (
     <Controller
       control={control}
@@ -36,6 +38,7 @@ export function Text<TFieldValues extends FieldValues>({
           error={fieldState.error != null}
           fullWidth
           helperText={fieldState.error?.message ?? helperText}
+          InputLabelProps={shouldShrinkLabel ? { shrink: true } : undefined}
           label={label}
           required={required}
           type={type}

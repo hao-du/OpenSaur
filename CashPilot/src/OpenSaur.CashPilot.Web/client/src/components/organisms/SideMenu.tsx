@@ -13,8 +13,10 @@ import {
   Coins,
   KeyRound,
   LayoutDashboard,
+  ReceiptText,
   Shield,
   UserRound,
+  Users,
   type LucideIcon
 } from "lucide-react";
 import { EyebrowText } from "../atoms/EyebrowText";
@@ -30,8 +32,10 @@ const navigationIcons: Record<string, LucideIcon> = {
   coins: Coins,
   dashboard: LayoutDashboard,
   "key-round": KeyRound,
+  "receipt-text": ReceiptText,
   shield: Shield,
-  "user-round": UserRound
+  "user-round": UserRound,
+  users: Users
 };
 
 const navigationLabelKeys: Record<string, TranslationKey> = {
@@ -39,6 +43,7 @@ const navigationLabelKeys: Record<string, TranslationKey> = {
   "/banks": "nav.banks",
   "/counterparties": "nav.counterparties",
   "/currencies": "nav.currencies",
+  "/transactions": "nav.transactions",
 };
 
 type SideMenuProps = {

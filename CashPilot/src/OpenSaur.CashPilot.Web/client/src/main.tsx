@@ -4,6 +4,8 @@ import { BrowserRouter } from "react-router-dom";
 import { App } from "./App";
 import { theme } from "./infrastructure/theme/theme";
 import { CssBaseline, ThemeProvider } from "@mui/material";
+import { LocalizationProvider } from "@mui/x-date-pickers";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { AuthSessionProvider } from "./features/auth/hooks/AuthContext";
 import { SettingProvider } from "./features/settings/provider/SettingProvider";
 
@@ -14,11 +16,13 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
         <QueryClientProvider client={queryClient}>
             <ThemeProvider theme={theme}>
                 <CssBaseline />
-                <AuthSessionProvider>
-                    <SettingProvider>
-                        <App />
-                    </SettingProvider>
-                </AuthSessionProvider>
+                <LocalizationProvider dateAdapter={AdapterDayjs}>
+                    <AuthSessionProvider>
+                        <SettingProvider>
+                            <App />
+                        </SettingProvider>
+                    </AuthSessionProvider>
+                </LocalizationProvider>
             </ThemeProvider>
         </QueryClientProvider>
     </BrowserRouter>

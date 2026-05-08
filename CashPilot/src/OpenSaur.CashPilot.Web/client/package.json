@@ -19,9 +19,11 @@
     "axios": "^1.16.0",
     "@tanstack/react-query": "^5.100.8",
     "@mui/material": "^7.3.10",
+    "@mui/x-date-pickers": "^8.12.0",
     "@mui/icons-material": "^7.3.10",
     "@emotion/react": "^11.14.0",
-    "@emotion/styled": "^11.14.1"
+    "@emotion/styled": "^11.14.1",
+    "dayjs": "^1.11.19"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

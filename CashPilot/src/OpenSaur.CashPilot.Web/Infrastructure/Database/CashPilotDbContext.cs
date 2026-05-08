@@ -15,6 +15,8 @@ public sealed class CashPilotDbContext: DbContext
     public DbSet<Bank> Banks => Set<Bank>();
     public DbSet<Counterparty> Counterparties => Set<Counterparty>();
     public DbSet<Currency> Currencies => Set<Currency>();
+    public DbSet<Transaction> Transactions => Set<Transaction>();
+    public DbSet<CashFlow> CashFlows => Set<CashFlow>();
 
     public override int SaveChanges(bool acceptAllChangesOnSuccess)
     {
