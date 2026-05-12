@@ -2,19 +2,23 @@ using OpenSaur.CashPilot.Web.Domain.Common;
 
 namespace OpenSaur.CashPilot.Web.Domain;
 
-public sealed class Transaction : IEntityBase
+public sealed class Transaction : EntityBase
 {
-    public Guid Id { get; set; }
-    public decimal Amount { get; set; }
     public Guid CurrencyId { get; set; }
-    public Currency Currency { get; set; } = null!;
-    public string? Description { get; set; }
-    public DateTime TransactedOn { get; set; }
-    public ICollection<CashFlow> CashFlows { get; set; } = new List<CashFlow>();
 
-    public Guid CreatedBy { get; set; }
-    public DateTime CreatedOn { get; set; }
-    public Guid? UpdatedBy { get; set; }
-    public DateTime? UpdatedOn { get; set; }
-    public bool IsActive { get; set; } = true;
+    public Currency Currency { get; set; } = null!;
+
+    public decimal Amount { get; set; }
+
+    public TransactionDirection Direction { get; set; }
+
+    public DateOnly TransactionDate { get; set; }
+
+    public ICollection<CashFlow> CashFlows { get; set; } = [];
+
+    public ICollection<BankAccountTransaction> BankAccountTransactions { get; set; } = [];
+
+    public ICollection<TransferTransaction> TransferTransactions { get; set; } = [];
+
+    public ICollection<CurrencyExchangeTransaction> CurrencyExchangeTransactions { get; set; } = [];
 }

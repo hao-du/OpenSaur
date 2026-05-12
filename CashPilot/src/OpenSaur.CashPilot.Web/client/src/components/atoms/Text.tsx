@@ -11,6 +11,7 @@ type TextProps<TFieldValues extends FieldValues> = {
   rules?: Omit<RegisterOptions<TFieldValues, FieldPath<TFieldValues>>, "disabled" | "valueAsDate" | "valueAsNumber" | "setValueAs">;
   shouldUnregister?: boolean;
   type?: string;
+  variant?: "outlined" | "standard" | "filled";
 };
 
 export function Text<TFieldValues extends FieldValues>({
@@ -22,7 +23,8 @@ export function Text<TFieldValues extends FieldValues>({
   required = false,
   rules,
   shouldUnregister = false,
-  type = "text"
+  type = "text",
+  variant = "outlined"
 }: TextProps<TFieldValues>) {
   const shouldShrinkLabel = type === "date" || type === "datetime-local" || type === "time";
 
@@ -42,6 +44,7 @@ export function Text<TFieldValues extends FieldValues>({
           label={label}
           required={required}
           type={type}
+          variant={variant}
         />
       )}
       rules={rules}

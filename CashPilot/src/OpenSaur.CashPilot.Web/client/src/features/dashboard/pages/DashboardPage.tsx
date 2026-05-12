@@ -6,11 +6,13 @@ import { BodyText } from "../../../components/atoms/BodyText";
 import { LabelText } from "../../../components/atoms/LabelText";
 import { PageTitleText } from "../../../components/atoms/PageTitleText";
 import { Grid, Paper, Stack } from "@mui/material";
+import { useTransactionDashboardQuery } from "../../transactions/hooks/useTransactionDashboardQuery";
 
 export function DashboardPage() {
   const config = getConfig();
   const { authSession } = useAuthSession();
   const { formatDateTime, t } = useSettings();
+  const transactionDashboard = useTransactionDashboardQuery();
 
   return (
     <DefaultLayout
@@ -46,6 +48,31 @@ export function DashboardPage() {
                   </Stack>
                 </Grid>
               ))}
+            </Grid>
+          </Stack>
+        </Paper>
+        <Paper elevation={0} sx={{ border: "1px solid rgba(11,110,79,0.12)", p: 3 }}>
+          <Stack spacing={2}>
+            <PageTitleText variant="h6">{t("transactions.dashboardSummary")}</PageTitleText>
+            <Grid container spacing={2}>
+              <Grid size={{ md: 4, xs: 12 }}>
+                <LabelText>{t("transactions.totalByCurrency")}</LabelText>
+                {(transactionDashboard.data?.currencyBalances ?? []).map(item => (
+                  <BodyText key={item.currencyCode}>{`${item.currencyCode}: ${item.total}`}</BodyText>
+                ))}
+              </Grid>
+              <Grid size={{ md: 4, xs: 12 }}>
+                <LabelText>{t("transactions.totalByBank")}</LabelText>
+                {(transactionDashboard.data?.activeBankBalances ?? []).map(item => (
+                  <BodyText key={`${item.bankName}-${item.currencyCode}`}>{`${item.bankName} (${item.currencyCode}): ${item.totalDeposited}`}</BodyText>
+                ))}
+              </Grid>
+              <Grid size={{ md: 4, xs: 12 }}>
+                <LabelText>{t("transactions.incomeOutcome")}</LabelText>
+                {(transactionDashboard.data?.incomeOutcomes ?? []).slice(0, 8).map(item => (
+                  <BodyText key={`${item.year}-${item.month}-${item.currencyCode}`}>{`${item.year}-${String(item.month).padStart(2, "0")} ${item.currencyCode}: +${item.income} / -${item.outcome}`}</BodyText>
+                ))}
+              </Grid>
             </Grid>
           </Stack>
         </Paper>

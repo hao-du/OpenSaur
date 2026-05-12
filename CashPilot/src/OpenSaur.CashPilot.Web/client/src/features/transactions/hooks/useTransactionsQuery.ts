@@ -3,7 +3,7 @@ import { getTransactions } from "../api/transactionsApi";
 
 export function useTransactionsQuery() {
   return useQuery({
-    queryFn: () => getTransactions(),
+    queryFn: getTransactions,
     queryKey: ["transactions"]
   });
 }

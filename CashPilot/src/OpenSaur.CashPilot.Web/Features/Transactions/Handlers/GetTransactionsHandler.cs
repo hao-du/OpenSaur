@@ -7,26 +7,70 @@ namespace OpenSaur.CashPilot.Web.Features.Transactions.Handlers;
 
 public static class GetTransactionsHandler
 {
-    public static async Task<Ok<IReadOnlyList<TransactionResponse>>> HandleAsync(
+    public static async Task<Ok<IReadOnlyList<TransactionListItemResponse>>> HandleAsync(
         CashPilotDbContext dbContext,
         CancellationToken cancellationToken)
     {
-        var result = await dbContext.CashFlows
+        var cashFlow = dbContext.CashFlows
             .AsNoTracking()
-            .Where(cashFlow => cashFlow.IsActive && cashFlow.Transaction.IsActive)
-            .OrderByDescending(cashFlow => cashFlow.Transaction.TransactedOn)
-            .Select(cashFlow => new TransactionResponse(
-                cashFlow.Id,
-                cashFlow.Transaction.Amount,
-                cashFlow.Transaction.CurrencyId,
-                cashFlow.Transaction.Currency.Name,
-                cashFlow.Transaction.Description,
-                cashFlow.IsIncome,
-                cashFlow.Transaction.TransactedOn,
-                "CashFlow"
-            ))
+            .Where(x => x.IsActive && x.Transaction.IsActive)
+            .Select(x => new TransactionListItemResponse(
+                x.Id,
+                "CashFlow",
+                x.Description,
+                x.Transaction.Currency.ShortName,
+                x.Transaction.Amount,
+                (byte)x.Transaction.Direction,
+                x.Transaction.TransactionDate,
+                x.IsActive));
+
+        var bank = dbContext.BankAccountTransactions
+            .AsNoTracking()
+            .Where(x => x.IsActive && x.Transaction.IsActive)
+            .Select(x => new TransactionListItemResponse(
+                x.Id,
+                "BankAccount",
+                x.Description,
+                x.Transaction.Currency.ShortName,
+                x.Transaction.Amount,
+                (byte)x.Transaction.Direction,
+                x.Transaction.TransactionDate,
+                x.IsActive));
+
+        var transfer = dbContext.TransferTransactions
+            .AsNoTracking()
+            .Where(x => x.IsActive && x.Transaction.IsActive)
+            .Select(x => new TransactionListItemResponse(
+                x.Id,
+                "Transfer",
+                x.Description,
+                x.Transaction.Currency.ShortName,
+                x.Transaction.Amount,
+                (byte)x.Transaction.Direction,
+                x.Transaction.TransactionDate,
+                x.IsActive));
+
+        var exchange = dbContext.CurrencyExchangeTransactions
+            .AsNoTracking()
+            .Where(x => x.IsActive && x.Transaction.IsActive)
+            .Select(x => new TransactionListItemResponse(
+                x.Id,
+                "Exchange",
+                x.Description,
+                x.Transaction.Currency.ShortName,
+                x.Transaction.Amount,
+                (byte)x.Transaction.Direction,
+                x.Transaction.TransactionDate,
+                x.IsActive));
+
+        var result = await cashFlow
+            .Concat(bank)
+            .Concat(transfer)
+            .Concat(exchange)
+            .OrderByDescending(x => x.TransactionDate)
+            .ThenByDescending(x => x.Id)
             .ToListAsync(cancellationToken);
 
-        return TypedResults.Ok<IReadOnlyList<TransactionResponse>>(result);
+        return TypedResults.Ok<IReadOnlyList<TransactionListItemResponse>>(result);
     }
 }

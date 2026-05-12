@@ -11,10 +11,13 @@ public static class TransactionsEndpoints
             .RequireAuthorization(AppAuthorization.CanAccessPolicyName);
 
         transactions.MapGet("", GetTransactionsHandler.HandleAsync);
-        transactions.MapGet("/cashflows/{id:guid}", GetCashFlowByIdHandler.HandleAsync);
+        transactions.MapGet("/dashboard", GetTransactionDashboardHandler.HandleAsync);
         transactions.MapPost("/cashflows", CreateCashFlowHandler.HandleAsync);
-        transactions.MapPut("/cashflows/{id:guid}", UpdateCashFlowHandler.HandleAsync);
-        transactions.MapDelete("/cashflows/{id:guid}", DeleteCashFlowHandler.HandleAsync);
+        transactions.MapPost("/bankaccounts", CreateBankAccountHandler.HandleAsync);
+        transactions.MapPost("/bankaccounts/transactions", AddBankAccountTransactionHandler.HandleAsync);
+        transactions.MapPost("/transfers", CreateTransferHandler.HandleAsync);
+        transactions.MapPost("/transfers/transactions", AddTransferTransactionHandler.HandleAsync);
+        transactions.MapPost("/exchanges", CreateCurrencyExchangeHandler.HandleAsync);
 
         return app;
     }
