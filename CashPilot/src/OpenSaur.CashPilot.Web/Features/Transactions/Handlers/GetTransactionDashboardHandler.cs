@@ -28,14 +28,23 @@ public static class GetTransactionDashboardHandler
             .OrderBy(x => x.CurrencyCode)
             .ToList();
 
-        var activeBankBalances = await dbContext.BankAccounts
+        var activeBankRows = await dbContext.BankAccounts
             .AsNoTracking()
             .Where(x => x.IsActive && x.Status == BankAccountStatus.Active)
-            .GroupBy(x => new { BankName = x.Bank.Name, CurrencyCode = x.Currency.ShortName })
+            .Select(x => new
+            {
+                BankName = x.Bank.Name,
+                CurrencyCode = x.Currency.ShortName,
+                x.Amount
+            })
+            .ToListAsync(cancellationToken);
+
+        var activeBankBalances = activeBankRows
+            .GroupBy(x => new { x.BankName, x.CurrencyCode })
             .Select(g => new BankBalanceItemResponse(g.Key.BankName, g.Key.CurrencyCode, g.Sum(x => x.Amount)))
             .OrderBy(x => x.BankName)
             .ThenBy(x => x.CurrencyCode)
-            .ToListAsync(cancellationToken);
+            .ToList();
 
         var cashFlowRows = await dbContext.CashFlows
             .AsNoTracking()

@@ -11,7 +11,7 @@ public static class GetTransactionsHandler
         CashPilotDbContext dbContext,
         CancellationToken cancellationToken)
     {
-        var cashFlow = dbContext.CashFlows
+        var cashFlow = await dbContext.CashFlows
             .AsNoTracking()
             .Where(x => x.IsActive && x.Transaction.IsActive)
             .Select(x => new TransactionListItemResponse(
@@ -22,9 +22,10 @@ public static class GetTransactionsHandler
                 x.Transaction.Amount,
                 (byte)x.Transaction.Direction,
                 x.Transaction.TransactionDate,
-                x.IsActive));
+                x.IsActive))
+            .ToListAsync(cancellationToken);
 
-        var bank = dbContext.BankAccountTransactions
+        var bank = await dbContext.BankAccountTransactions
             .AsNoTracking()
             .Where(x => x.IsActive && x.Transaction.IsActive)
             .Select(x => new TransactionListItemResponse(
@@ -35,9 +36,10 @@ public static class GetTransactionsHandler
                 x.Transaction.Amount,
                 (byte)x.Transaction.Direction,
                 x.Transaction.TransactionDate,
-                x.IsActive));
+                x.IsActive))
+            .ToListAsync(cancellationToken);
 
-        var transfer = dbContext.TransferTransactions
+        var transfer = await dbContext.TransferTransactions
             .AsNoTracking()
             .Where(x => x.IsActive && x.Transaction.IsActive)
             .Select(x => new TransactionListItemResponse(
@@ -48,28 +50,30 @@ public static class GetTransactionsHandler
                 x.Transaction.Amount,
                 (byte)x.Transaction.Direction,
                 x.Transaction.TransactionDate,
-                x.IsActive));
+                x.IsActive))
+            .ToListAsync(cancellationToken);
 
-        var exchange = dbContext.CurrencyExchangeTransactions
+        var exchange = await dbContext.CurrencyExchangeTransactions
             .AsNoTracking()
             .Where(x => x.IsActive && x.Transaction.IsActive)
             .Select(x => new TransactionListItemResponse(
-                x.Id,
+                x.CurrencyExchangeId,
                 "Exchange",
                 x.Description,
                 x.Transaction.Currency.ShortName,
                 x.Transaction.Amount,
                 (byte)x.Transaction.Direction,
                 x.Transaction.TransactionDate,
-                x.IsActive));
+                x.IsActive))
+            .ToListAsync(cancellationToken);
 
-        var result = await cashFlow
+        var result = cashFlow
             .Concat(bank)
             .Concat(transfer)
             .Concat(exchange)
             .OrderByDescending(x => x.TransactionDate)
             .ThenByDescending(x => x.Id)
-            .ToListAsync(cancellationToken);
+            .ToList();
 
         return TypedResults.Ok<IReadOnlyList<TransactionListItemResponse>>(result);
     }

@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using OpenSaur.CashPilot.Web.Domain;
 using OpenSaur.CashPilot.Web.Features.Transactions.Dtos;
 using OpenSaur.CashPilot.Web.Infrastructure.Database;
@@ -37,6 +38,21 @@ public static class AddTransferTransactionHandler
 
         dbContext.TransferTransactions.Add(transferTransaction);
         await dbContext.SaveChangesAsync(cancellationToken);
+
+        var transfer = await dbContext.Transfers
+            .Include(x => x.TransferTransactions)
+                .ThenInclude(x => x.Transaction)
+            .SingleAsync(x => x.Id == request.TransferId, cancellationToken);
+
+        if (transfer.TransferType is TransferType.Lend or TransferType.Borrow)
+        {
+            var settled = transfer.TransferType == TransferType.Lend
+                ? transfer.TransferTransactions.Where(x => x.IsActive && x.Transaction.IsActive && x.Transaction.Direction == TransactionDirection.In).Sum(x => x.Transaction.Amount)
+                : transfer.TransferTransactions.Where(x => x.IsActive && x.Transaction.IsActive && x.Transaction.Direction == TransactionDirection.Out).Sum(x => x.Transaction.Amount);
+
+            transfer.Status = settled >= transfer.Amount ? TransferStatus.Completed : TransferStatus.Active;
+            await dbContext.SaveChangesAsync(cancellationToken);
+        }
 
         return TypedResults.Created($"/api/transactions/transfers/{request.TransferId}/transactions/{transferTransaction.Id}", transferTransaction.Id);
     }
