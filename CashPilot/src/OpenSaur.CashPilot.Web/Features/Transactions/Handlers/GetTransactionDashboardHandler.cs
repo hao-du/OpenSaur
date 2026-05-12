@@ -15,6 +15,9 @@ public static class GetTransactionDashboardHandler
         var currencyRows = await dbContext.Transactions
             .AsNoTracking()
             .Where(x => x.IsActive)
+            .Where(x => !x.BankAccountTransactions.Any(bat => 
+                bat.TransactionType == BankAccountMovementType.InitialDeposit || 
+                bat.TransactionType == BankAccountMovementType.PrincipalReturn))
             .Select(x => new
             {
                 Code = x.Currency.ShortName,

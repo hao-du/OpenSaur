@@ -42232,6 +42232,153 @@ function CashFlowFormDrawer({ editingCashFlow, isOpen, onClose, currencies, onSu
 	});
 }
 //#endregion
+//#region src/features/transactions/components/BankAccountTransactionForm.tsx
+var formatDisplayValue = (value) => {
+	if (value === "" || value === void 0 || value === null) return "";
+	const stringValue = value.toString();
+	const rawValue = stringValue.replace(/,/g, "");
+	if (isNaN(parseFloat(rawValue))) return stringValue;
+	const parts = rawValue.split(".");
+	const formattedInt = new Intl.NumberFormat("en-US", {
+		minimumFractionDigits: 0,
+		maximumFractionDigits: 2
+	}).format(parseInt(parts[0] || "0"));
+	if (parts.length > 1) return `${formattedInt}.${parts[1]}`;
+	return formattedInt;
+};
+var handleNumberChange = (val, onChange) => {
+	const rawValue = val.replace(/,/g, "");
+	if (/^\d*\.?\d*$/.test(rawValue)) onChange(rawValue);
+};
+function BankAccountTransactionForm({ detail, onAccept, onDelete, onCancelNew }) {
+	const [isEditing, setIsEditing] = (0, import_react.useState)(detail.isNew || false);
+	const [draft, setDraft] = (0, import_react.useState)(detail);
+	const handleAccept = () => {
+		onAccept({
+			...draft,
+			isNew: false
+		});
+		setIsEditing(false);
+	};
+	const handleCancel = () => {
+		if (detail.isNew) onCancelNew();
+		else {
+			setDraft(detail);
+			setIsEditing(false);
+		}
+	};
+	const typeText = draft.transactionType === "1" ? "InitialDeposit" : draft.transactionType === "2" ? "InterestPayment" : "PrincipalReturn";
+	if (!isEditing) return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Stack, {
+		spacing: 2,
+		sx: {
+			p: 2,
+			border: "1px solid #eee",
+			borderRadius: 1
+		},
+		children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Stack, {
+			spacing: 1,
+			children: [
+				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: [
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", { children: "Date:" }),
+					" ",
+					draft.transactionDate
+				] }),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: [
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", { children: "Amount:" }),
+					" ",
+					formatDisplayValue(draft.amount)
+				] }),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: [
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", { children: "Type:" }),
+					" ",
+					typeText
+				] }),
+				draft.description && /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: [
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", { children: "Description:" }),
+					" ",
+					draft.description
+				] })
+			]
+		}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Stack, {
+			direction: "row",
+			justifyContent: "flex-end",
+			spacing: 1,
+			children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
+				onClick: () => setIsEditing(true),
+				size: "small",
+				variant: "outlined",
+				children: "Edit"
+			}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
+				color: "error",
+				onClick: onDelete,
+				size: "small",
+				variant: "outlined",
+				children: "Delete"
+			})]
+		})]
+	});
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Stack, {
+		spacing: 2,
+		sx: {
+			p: 2,
+			border: "1px solid #e0e0e0",
+			borderRadius: 1,
+			bgcolor: "#fafafa"
+		},
+		children: [
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextField, {
+				label: "Amount",
+				value: formatDisplayValue(draft.amount),
+				onChange: (e) => handleNumberChange(e.target.value, (val) => setDraft({
+					...draft,
+					amount: val
+				})),
+				fullWidth: true,
+				autoComplete: "off",
+				inputMode: "decimal"
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextField, {
+				label: "Date",
+				type: "date",
+				value: draft.transactionDate,
+				onChange: (e) => setDraft({
+					...draft,
+					transactionDate: e.target.value
+				}),
+				fullWidth: true,
+				slotProps: { inputLabel: { shrink: true } }
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextField, {
+				label: "Description",
+				value: draft.description,
+				onChange: (e) => setDraft({
+					...draft,
+					description: e.target.value
+				}),
+				multiline: true,
+				minRows: 3,
+				fullWidth: true
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Stack, {
+				direction: "row",
+				justifyContent: "flex-end",
+				spacing: 1,
+				sx: { mt: 1 },
+				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
+					onClick: handleCancel,
+					variant: "outlined",
+					children: "Cancel"
+				}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
+					onClick: handleAccept,
+					variant: "contained",
+					color: "primary",
+					children: "Accept"
+				})]
+			})
+		]
+	});
+}
+//#endregion
 //#region src/features/transactions/components/BankAccountForm.tsx
 function toDetailRequest(detail) {
 	return {
@@ -42260,16 +42407,6 @@ function BankAccountForm({ banks, currencies, initialValue, onSubmit, submitLabe
 		description: initialValue?.description ?? "",
 		isActive: initialValue?.isActive ?? true
 	});
-	const [detailEditor, setDetailEditor] = (0, import_react.useState)({
-		clientKey: crypto.randomUUID(),
-		currencyId: currencies[0]?.id ?? "",
-		amount: "",
-		direction: "1",
-		transactionType: "1",
-		transactionDate: today,
-		description: "",
-		isActive: true
-	});
 	const [details, setDetails] = (0, import_react.useState)((initialValue?.details ?? []).map((x) => ({
 		clientKey: crypto.randomUUID(),
 		id: x.id,
@@ -42279,48 +42416,78 @@ function BankAccountForm({ banks, currencies, initialValue, onSubmit, submitLabe
 		transactionType: x.transactionType.toString(),
 		transactionDate: x.transactionDate,
 		description: x.description ?? "",
-		isActive: x.isActive
+		isActive: x.isActive,
+		isNew: false
 	})));
-	const [editingDetailId, setEditingDetailId] = (0, import_react.useState)(null);
-	const resetDetailEditor = () => {
-		setDetailEditor({
+	const addNewDetail = () => {
+		setDetails((prev) => [...prev, {
 			clientKey: crypto.randomUUID(),
 			currencyId: currencies[0]?.id ?? "",
 			amount: "",
 			direction: "1",
-			transactionType: "1",
+			transactionType: "2",
 			transactionDate: today,
 			description: "",
-			isActive: true
-		});
-		setEditingDetailId(null);
+			isActive: true,
+			isNew: true
+		}]);
 	};
-	const upsertDetail = () => {
-		if (detailEditor.amount.trim().length === 0) return;
-		if (editingDetailId == null) {
-			setDetails((prev) => [...prev, {
-				...detailEditor,
-				id: void 0
-			}]);
-			resetDetailEditor();
-			return;
-		}
-		setDetails((prev) => prev.map((x) => x.clientKey === editingDetailId ? {
-			...detailEditor,
-			id: x.id,
-			clientKey: x.clientKey
-		} : x));
-		resetDetailEditor();
+	const updateDetail = (clientKey, updated) => {
+		setDetails((prev) => prev.map((x) => x.clientKey === clientKey ? updated : x));
 	};
-	const editDetail = (clientKey) => {
-		const found = details.find((x) => x.clientKey === clientKey);
-		if (found == null) return;
-		setDetailEditor({ ...found });
-		setEditingDetailId(clientKey);
-	};
-	const deleteDetail = (clientKey) => {
+	const removeDetail = (clientKey) => {
 		setDetails((prev) => prev.filter((x) => x.clientKey !== clientKey));
-		if (editingDetailId === clientKey) resetDetailEditor();
+	};
+	const submitHandler = () => {
+		const finalDetails = details.map(toDetailRequest);
+		const initialDeposit = finalDetails.find((x) => x.transactionType === 1);
+		if (initialDeposit) {
+			initialDeposit.amount = Number(header.amount);
+			initialDeposit.transactionDate = header.startDate;
+			initialDeposit.description = header.description.trim().length === 0 ? void 0 : header.description.trim();
+			initialDeposit.currencyId = header.currencyId;
+			initialDeposit.direction = 2;
+		} else finalDetails.push({
+			currencyId: header.currencyId,
+			amount: Number(header.amount),
+			direction: 2,
+			transactionDate: header.startDate,
+			transactionType: 1,
+			description: header.description.trim().length === 0 ? void 0 : header.description.trim(),
+			isActive: header.isActive
+		});
+		const matured = finalDetails.find((x) => x.transactionType === 3);
+		if (header.status === "2" || header.status === "3") if (matured) {
+			matured.amount = Number(header.amount);
+			matured.transactionDate = header.maturityDate;
+			matured.description = header.description.trim().length === 0 ? void 0 : header.description.trim();
+			matured.currencyId = header.currencyId;
+			matured.direction = 1;
+			matured.isActive = true;
+		} else finalDetails.push({
+			currencyId: header.currencyId,
+			amount: Number(header.amount),
+			direction: 1,
+			transactionDate: header.maturityDate,
+			transactionType: 3,
+			description: header.description.trim().length === 0 ? void 0 : header.description.trim(),
+			isActive: header.isActive
+		});
+		else if (matured) matured.isActive = false;
+		onSubmit({
+			id: header.id,
+			bankId: header.bankId,
+			currencyId: header.currencyId,
+			amount: Number(header.amount),
+			interestRate: Number(header.interestRate),
+			startDate: header.startDate,
+			maturityDate: header.maturityDate,
+			status: Number(header.status),
+			accountNumber: header.accountNumber.trim().length === 0 ? void 0 : header.accountNumber.trim(),
+			description: header.description.trim().length === 0 ? void 0 : header.description.trim(),
+			isActive: header.isActive,
+			details: finalDetails
+		});
 	};
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Stack, {
 		spacing: 3,
@@ -42330,9 +42497,21 @@ function BankAccountForm({ banks, currencies, initialValue, onSubmit, submitLabe
 				spacing: 2,
 				children: [
 					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Grid, {
+						size: { xs: 12 },
+						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextField, {
+							label: "Account Number",
+							value: header.accountNumber,
+							onChange: (e) => setHeader({
+								...header,
+								accountNumber: e.target.value
+							}),
+							fullWidth: true
+						})
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Grid, {
 						size: {
 							xs: 12,
-							md: 3
+							md: 6
 						},
 						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextField, {
 							select: true,
@@ -42352,7 +42531,41 @@ function BankAccountForm({ banks, currencies, initialValue, onSubmit, submitLabe
 					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Grid, {
 						size: {
 							xs: 12,
-							md: 2
+							md: 6
+						},
+						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextField, {
+							label: "Interest %",
+							value: formatDisplayValue(header.interestRate),
+							onChange: (e) => handleNumberChange(e.target.value, (val) => setHeader({
+								...header,
+								interestRate: val
+							})),
+							fullWidth: true,
+							autoComplete: "off",
+							inputMode: "decimal"
+						})
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Grid, {
+						size: {
+							xs: 12,
+							md: 6
+						},
+						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextField, {
+							label: "Amount",
+							value: formatDisplayValue(header.amount),
+							onChange: (e) => handleNumberChange(e.target.value, (val) => setHeader({
+								...header,
+								amount: val
+							})),
+							fullWidth: true,
+							autoComplete: "off",
+							inputMode: "decimal"
+						})
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Grid, {
+						size: {
+							xs: 12,
+							md: 6
 						},
 						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextField, {
 							select: true,
@@ -42372,138 +42585,63 @@ function BankAccountForm({ banks, currencies, initialValue, onSubmit, submitLabe
 					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Grid, {
 						size: {
 							xs: 12,
-							md: 2
+							md: 6
 						},
 						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextField, {
-							label: "Amount",
-							value: header.amount,
+							label: "Start Date",
+							type: "date",
+							value: header.startDate,
 							onChange: (e) => setHeader({
 								...header,
-								amount: e.target.value
-							}),
-							fullWidth: true
-						})
-					}),
-					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Grid, {
-						size: {
-							xs: 12,
-							md: 2
-						},
-						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextField, {
-							label: "Interest %",
-							value: header.interestRate,
-							onChange: (e) => setHeader({
-								...header,
-								interestRate: e.target.value
-							}),
-							fullWidth: true
-						})
-					}),
-					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Grid, {
-						size: {
-							xs: 12,
-							md: 3
-						},
-						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextField, {
-							label: "Description",
-							value: header.description,
-							onChange: (e) => setHeader({
-								...header,
-								description: e.target.value
-							}),
-							fullWidth: true
-						})
-					})
-				]
-			}),
-			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Grid, {
-				container: true,
-				spacing: 2,
-				children: [
-					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Grid, {
-						size: {
-							xs: 12,
-							md: 3
-						},
-						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextField, {
-							select: true,
-							label: "Detail Currency",
-							value: detailEditor.currencyId,
-							onChange: (e) => setDetailEditor({
-								...detailEditor,
-								currencyId: e.target.value
+								startDate: e.target.value
 							}),
 							fullWidth: true,
-							children: currencies.map((x) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(MenuItem, {
-								value: x.id,
-								children: x.shortName
-							}, x.id))
+							slotProps: { inputLabel: { shrink: true } }
 						})
 					}),
 					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Grid, {
 						size: {
 							xs: 12,
-							md: 2
+							md: 6
 						},
 						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextField, {
-							label: "Detail Amount",
-							value: detailEditor.amount,
-							onChange: (e) => setDetailEditor({
-								...detailEditor,
-								amount: e.target.value
+							label: "Maturity Date",
+							type: "date",
+							value: header.maturityDate,
+							onChange: (e) => setHeader({
+								...header,
+								maturityDate: e.target.value
 							}),
-							fullWidth: true
+							fullWidth: true,
+							slotProps: { inputLabel: { shrink: true } }
 						})
 					}),
 					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Grid, {
 						size: {
 							xs: 12,
-							md: 2
+							md: 6
 						},
 						children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(TextField, {
 							select: true,
-							label: "Direction",
-							value: detailEditor.direction,
-							onChange: (e) => setDetailEditor({
-								...detailEditor,
-								direction: e.target.value
-							}),
-							fullWidth: true,
-							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(MenuItem, {
-								value: "1",
-								children: "In"
-							}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(MenuItem, {
-								value: "2",
-								children: "Out"
-							})]
-						})
-					}),
-					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Grid, {
-						size: {
-							xs: 12,
-							md: 2
-						},
-						children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(TextField, {
-							select: true,
-							label: "Type",
-							value: detailEditor.transactionType,
-							onChange: (e) => setDetailEditor({
-								...detailEditor,
-								transactionType: e.target.value
+							label: "Status",
+							value: header.status,
+							onChange: (e) => setHeader({
+								...header,
+								status: e.target.value
 							}),
 							fullWidth: true,
 							children: [
 								/* @__PURE__ */ (0, import_jsx_runtime.jsx)(MenuItem, {
 									value: "1",
-									children: "InitialDeposit"
+									children: "Active"
 								}),
 								/* @__PURE__ */ (0, import_jsx_runtime.jsx)(MenuItem, {
 									value: "2",
-									children: "InterestPayment"
+									children: "Matured"
 								}),
 								/* @__PURE__ */ (0, import_jsx_runtime.jsx)(MenuItem, {
 									value: "3",
-									children: "PrincipalReturn"
+									children: "Closed Early"
 								})
 							]
 						})
@@ -42511,15 +42649,34 @@ function BankAccountForm({ banks, currencies, initialValue, onSubmit, submitLabe
 					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Grid, {
 						size: {
 							xs: 12,
-							md: 3
+							md: 6
 						},
+						sx: {
+							display: "flex",
+							alignItems: "center"
+						},
+						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(FormControlLabel, {
+							control: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Checkbox, {
+								checked: header.isActive,
+								onChange: (e) => setHeader({
+									...header,
+									isActive: e.target.checked
+								})
+							}),
+							label: "Is Active"
+						})
+					}),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Grid, {
+						size: { xs: 12 },
 						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextField, {
 							label: "Description",
-							value: detailEditor.description,
-							onChange: (e) => setDetailEditor({
-								...detailEditor,
+							value: header.description,
+							onChange: (e) => setHeader({
+								...header,
 								description: e.target.value
 							}),
+							multiline: true,
+							minRows: 3,
 							fullWidth: true
 						})
 					})
@@ -42527,58 +42684,34 @@ function BankAccountForm({ banks, currencies, initialValue, onSubmit, submitLabe
 			}),
 			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Stack, {
 				direction: "row",
-				justifyContent: "flex-end",
-				spacing: 1,
-				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
-					onClick: resetDetailEditor,
-					variant: "outlined",
-					children: "Clear"
+				justifyContent: "space-between",
+				alignItems: "center",
+				sx: { mt: 2 },
+				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h3", {
+					style: { margin: 0 },
+					children: "Transaction Details"
 				}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
-					onClick: upsertDetail,
+					onClick: addNewDetail,
 					variant: "contained",
-					children: editingDetailId == null ? "Add Detail" : "Update Detail"
+					color: "secondary",
+					size: "small",
+					children: "Add Transaction"
 				})]
 			}),
 			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Stack, {
-				spacing: 1,
-				children: details.map((detail, index) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Stack, {
-					direction: "row",
-					justifyContent: "space-between",
-					alignItems: "center",
-					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { children: `${detail.transactionDate} | ${detail.currencyId} | ${detail.amount} | ${detail.direction === "1" ? "In" : "Out"} | ${detail.transactionType}` }), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Stack, {
-						direction: "row",
-						spacing: 1,
-						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
-							onClick: () => editDetail(detail.clientKey),
-							size: "small",
-							children: "Edit"
-						}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
-							color: "error",
-							onClick: () => deleteDetail(detail.clientKey),
-							size: "small",
-							children: "Delete"
-						})]
-					})]
-				}, detail.clientKey ?? detail.id ?? `${index}`))
+				spacing: 2,
+				children: details.filter((d) => d.transactionType === "2").map((detail) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(BankAccountTransactionForm, {
+					detail,
+					onAccept: (updated) => updateDetail(detail.clientKey, updated),
+					onDelete: () => removeDetail(detail.clientKey),
+					onCancelNew: () => removeDetail(detail.clientKey)
+				}, detail.clientKey))
 			}),
 			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Stack, {
 				direction: "row",
 				justifyContent: "flex-end",
 				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
-					onClick: () => onSubmit({
-						id: header.id,
-						bankId: header.bankId,
-						currencyId: header.currencyId,
-						amount: Number(header.amount),
-						interestRate: Number(header.interestRate),
-						startDate: header.startDate,
-						maturityDate: header.maturityDate,
-						status: Number(header.status),
-						accountNumber: header.accountNumber.trim().length === 0 ? void 0 : header.accountNumber.trim(),
-						description: header.description.trim().length === 0 ? void 0 : header.description.trim(),
-						isActive: header.isActive,
-						details: details.map(toDetailRequest)
-					}),
+					onClick: submitHandler,
 					variant: "contained",
 					children: submitLabel
 				})
@@ -44468,4 +44601,4 @@ import_client.createRoot(document.getElementById("root")).render(/* @__PURE__ */
 }) }));
 //#endregion
 
-//# sourceMappingURL=index-BvPPMcOa.js.map
+//# sourceMappingURL=index-Q9JLJTiA.js.map
