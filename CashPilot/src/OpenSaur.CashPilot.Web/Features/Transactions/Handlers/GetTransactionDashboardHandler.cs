@@ -3,18 +3,24 @@ using Microsoft.EntityFrameworkCore;
 using OpenSaur.CashPilot.Web.Domain;
 using OpenSaur.CashPilot.Web.Features.Transactions.Dtos;
 using OpenSaur.CashPilot.Web.Infrastructure.Database;
+using OpenSaur.CashPilot.Web.Infrastructure.Helpers;
+using System.Security.Claims;
 
 namespace OpenSaur.CashPilot.Web.Features.Transactions.Handlers;
 
 public static class GetTransactionDashboardHandler
 {
     public static async Task<Ok<TransactionDashboardResponse>> HandleAsync(
+        ClaimsPrincipal user,
         CashPilotDbContext dbContext,
         CancellationToken cancellationToken)
     {
+        var currentUserId = ClaimHelper.GetCurrentUserId(user);
+
         var currencyRows = await dbContext.Transactions
             .AsNoTracking()
             .Where(x => x.IsActive)
+            .Where(x => x.OwnerId == currentUserId)
             .Where(x => !x.BankAccountTransactions.Any(bat => 
                 bat.TransactionType == BankAccountMovementType.InitialDeposit || 
                 bat.TransactionType == BankAccountMovementType.PrincipalReturn))
@@ -51,7 +57,7 @@ public static class GetTransactionDashboardHandler
 
         var cashFlowRows = await dbContext.CashFlows
             .AsNoTracking()
-            .Where(x => x.IsActive && x.Transaction.IsActive)
+            .Where(x => x.IsActive && x.Transaction.IsActive && x.Transaction.OwnerId == currentUserId)
             .Select(x => new
             {
                 x.Transaction.TransactionDate,
@@ -63,7 +69,7 @@ public static class GetTransactionDashboardHandler
 
         var interestRows = await dbContext.BankAccountTransactions
             .AsNoTracking()
-            .Where(x => x.IsActive && x.Transaction.IsActive && x.TransactionType == BankAccountMovementType.InterestPayment)
+            .Where(x => x.IsActive && x.Transaction.IsActive && x.Transaction.OwnerId == currentUserId && x.TransactionType == BankAccountMovementType.InterestPayment)
             .Select(x => new
             {
                 x.Transaction.TransactionDate,
@@ -75,7 +81,7 @@ public static class GetTransactionDashboardHandler
 
         var transferRows = await dbContext.TransferTransactions
             .AsNoTracking()
-            .Where(x => x.IsActive && x.Transaction.IsActive && (x.Transfer.TransferType == TransferType.Give || x.Transfer.TransferType == TransferType.Receive))
+            .Where(x => x.IsActive && x.Transaction.IsActive && x.Transaction.OwnerId == currentUserId && (x.Transfer.TransferType == TransferType.Give || x.Transfer.TransferType == TransferType.Receive))
             .Select(x => new
             {
                 x.Transaction.TransactionDate,

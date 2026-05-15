@@ -20,5 +20,11 @@ public sealed class TransactionConfiguration : IEntityTypeConfiguration<Transact
             .WithMany()
             .HasForeignKey(x => x.CurrencyId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne(x => x.Owner)
+            .WithMany()
+            .HasForeignKey(x => x.OwnerId)
+            .IsRequired()
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

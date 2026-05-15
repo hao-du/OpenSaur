@@ -4,6 +4,10 @@ namespace OpenSaur.CashPilot.Web.Domain;
 
 public sealed class Transaction : EntityBase
 {
+    public Guid OwnerId { get; set; }
+
+    public User Owner { get; set; } = null!;
+
     public Guid CurrencyId { get; set; }
 
     public Currency Currency { get; set; } = null!;

@@ -4,6 +4,8 @@ using Microsoft.EntityFrameworkCore;
 using OpenSaur.CashPilot.Web.Domain;
 using OpenSaur.CashPilot.Web.Features.Transactions.Dtos;
 using OpenSaur.CashPilot.Web.Infrastructure.Database;
+using OpenSaur.CashPilot.Web.Infrastructure.Helpers;
+using System.Security.Claims;
 using AppHttpResults = OpenSaur.CashPilot.Web.Infrastructure.Http.HttpResults;
 
 namespace OpenSaur.CashPilot.Web.Features.Transactions.Handlers;
@@ -13,9 +15,12 @@ public static class UpdateCurrencyExchangeHandler
     public static async Task<Results<Ok<Guid>, BadRequest<ProblemDetails>, NotFound<ProblemDetails>>> HandleAsync(
         Guid id,
         UpdateCurrencyExchangeRequest request,
+        ClaimsPrincipal user,
         CashPilotDbContext dbContext,
         CancellationToken cancellationToken)
     {
+        var currentUserId = ClaimHelper.GetCurrentUserId(user);
+
         if (request.ExchangeRate <= 0 || request.OutLeg.Amount <= 0 || request.InLeg.Amount <= 0)
         {
             return AppHttpResults.BadRequest("Invalid exchange payload.", "Exchange rate and leg amounts must be positive.");
@@ -24,7 +29,7 @@ public static class UpdateCurrencyExchangeHandler
         var entity = await dbContext.CurrencyExchanges
             .Include(x => x.CurrencyExchangeTransactions)
                 .ThenInclude(x => x.Transaction)
-            .SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
+            .SingleOrDefaultAsync(x => x.Id == id && x.CurrencyExchangeTransactions.Any(y => y.Transaction.OwnerId == currentUserId), cancellationToken);
 
         if (entity is null)
         {

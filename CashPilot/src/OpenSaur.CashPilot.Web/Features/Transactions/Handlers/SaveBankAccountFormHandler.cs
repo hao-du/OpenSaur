@@ -4,6 +4,8 @@ using Microsoft.EntityFrameworkCore;
 using OpenSaur.CashPilot.Web.Domain;
 using OpenSaur.CashPilot.Web.Features.Transactions.Dtos;
 using OpenSaur.CashPilot.Web.Infrastructure.Database;
+using OpenSaur.CashPilot.Web.Infrastructure.Helpers;
+using System.Security.Claims;
 using AppHttpResults = OpenSaur.CashPilot.Web.Infrastructure.Http.HttpResults;
 
 namespace OpenSaur.CashPilot.Web.Features.Transactions.Handlers;
@@ -12,9 +14,16 @@ public static class SaveBankAccountFormHandler
 {
     public static async Task<Results<Ok<Guid>, BadRequest<ProblemDetails>, NotFound<ProblemDetails>>> HandleAsync(
         SaveBankAccountFormRequest request,
+        ClaimsPrincipal user,
         CashPilotDbContext dbContext,
         CancellationToken cancellationToken)
     {
+        var currentUserId = ClaimHelper.GetCurrentUserId(user);
+        if (currentUserId == Guid.Empty)
+        {
+            return AppHttpResults.BadRequest("User is required.", "Transactions require an authenticated user identifier.");
+        }
+
         if (request.Amount <= 0 || request.InterestRate < 0 || request.MaturityDate < request.StartDate || request.Status is < 1 or > 3)
         {
             return AppHttpResults.BadRequest("Invalid bank account payload.", "Invalid amount, interest rate, date range, or status.");
@@ -37,6 +46,7 @@ public static class SaveBankAccountFormHandler
             bankAccount = await dbContext.BankAccounts
                 .Include(x => x.BankAccountTransactions)
                     .ThenInclude(x => x.Transaction)
+                .Where(x => !x.BankAccountTransactions.Any() || x.BankAccountTransactions.All(y => y.Transaction.OwnerId == currentUserId))
                 .SingleOrDefaultAsync(x => x.Id == request.Id.Value, cancellationToken);
             if (bankAccount is null)
             {
@@ -75,7 +85,10 @@ public static class SaveBankAccountFormHandler
                 movement = new BankAccountTransaction
                 {
                     BankAccount = bankAccount,
-                    Transaction = new Transaction()
+                    Transaction = new Transaction
+                    {
+                        OwnerId = currentUserId
+                    }
                 };
                 dbContext.BankAccountTransactions.Add(movement);
             }

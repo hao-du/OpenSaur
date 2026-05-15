@@ -4,6 +4,8 @@ using Microsoft.EntityFrameworkCore;
 using OpenSaur.CashPilot.Web.Domain;
 using OpenSaur.CashPilot.Web.Features.Transactions.Dtos;
 using OpenSaur.CashPilot.Web.Infrastructure.Database;
+using OpenSaur.CashPilot.Web.Infrastructure.Helpers;
+using System.Security.Claims;
 using AppHttpResults = OpenSaur.CashPilot.Web.Infrastructure.Http.HttpResults;
 
 namespace OpenSaur.CashPilot.Web.Features.Transactions.Handlers;
@@ -12,9 +14,16 @@ public static class AddTransferTransactionHandler
 {
     public static async Task<Results<Created<Guid>, BadRequest<ProblemDetails>>> HandleAsync(
         AddTransferTransactionRequest request,
+        ClaimsPrincipal user,
         CashPilotDbContext dbContext,
         CancellationToken cancellationToken)
     {
+        var currentUserId = ClaimHelper.GetCurrentUserId(user);
+        if (currentUserId == Guid.Empty)
+        {
+            return AppHttpResults.BadRequest("User is required.", "Transactions require an authenticated user identifier.");
+        }
+
         if (request.Amount <= 0 || (request.Direction != 1 && request.Direction != 2))
         {
             return AppHttpResults.BadRequest("Invalid transfer transaction payload.", "Amount must be positive and direction must be 1 or 2.");
@@ -26,6 +35,7 @@ public static class AddTransferTransactionHandler
             CurrencyId = request.CurrencyId,
             Description = request.Description?.Trim() ?? string.Empty,
             Direction = (TransactionDirection)request.Direction,
+            OwnerId = currentUserId,
             TransactionDate = request.TransactionDate
         };
 
