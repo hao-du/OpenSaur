@@ -78,6 +78,7 @@ public static class OpenIddictServiceCollectionExtensions
                 options.SetAccessTokenLifetime(TimeSpan.FromMinutes(15));
                 options.AllowAuthorizationCodeFlow()
                     .AllowRefreshTokenFlow();
+                options.UseReferenceRefreshTokens();
                 options.RequireProofKeyForCodeExchange();
                 options.RegisterScopes(
                     OpenIddictConstants.Scopes.OpenId,
