@@ -2,6 +2,8 @@ namespace OpenSaur.CashPilot.Web.Features.Transactions.Dtos;
 
 public sealed record TransactionListItemResponse(
     Guid Id,
+    Guid? BankAccountId,
+    Guid? TransferId,
     string Type,
     string? Description,
     string CurrencyCode,
@@ -33,6 +35,7 @@ public sealed record CreateCashFlowRequest(
     DateOnly TransactionDate,
     string? Description);
 public sealed record UpdateCashFlowRequest(
+    Guid Id,
     Guid CurrencyId,
     decimal Amount,
     byte Direction,
@@ -40,15 +43,6 @@ public sealed record UpdateCashFlowRequest(
     string? Description,
     bool IsActive);
 
-public sealed record CreateBankAccountRequest(
-    Guid BankId,
-    Guid CurrencyId,
-    decimal Amount,
-    decimal InterestRate,
-    DateOnly StartDate,
-    DateOnly MaturityDate,
-    string? AccountNumber,
-    string? Description);
 public sealed record SaveBankAccountFormRequest(
     Guid? Id,
     Guid BankId,
@@ -72,62 +66,20 @@ public sealed record SaveBankAccountDetailRequest(
     DateOnly TransactionDate,
     string? Description,
     bool IsActive);
-public sealed record UpdateBankAccountRequest(
-    Guid BankId,
-    Guid CurrencyId,
-    decimal Amount,
-    decimal InterestRate,
-    DateOnly StartDate,
-    DateOnly MaturityDate,
-    byte Status,
-    string? AccountNumber,
-    string? Description,
-    bool IsActive);
-
-public sealed record AddBankAccountTransactionRequest(
-    Guid CurrencyId,
-    Guid BankAccountId,
-    decimal Amount,
-    byte Direction,
-    byte TransactionType,
-    DateOnly TransactionDate,
-    string? Description);
-public sealed record UpdateBankAccountTransactionRequest(
-    Guid CurrencyId,
-    decimal Amount,
-    byte Direction,
-    byte TransactionType,
-    DateOnly TransactionDate,
-    string? Description,
-    bool IsActive);
-
-public sealed record CreateTransferRequest(
+public sealed record SaveTransferFormRequest(
+    Guid? Id,
     Guid CounterpartyId,
     byte TransferType,
     Guid CurrencyId,
     decimal Amount,
     DateOnly TransactionDate,
     DateOnly? DueDate,
-    string? Description);
-public sealed record UpdateTransferRequest(
-    Guid CounterpartyId,
-    byte TransferType,
-    Guid CurrencyId,
-    decimal Amount,
-    DateOnly TransactionDate,
-    DateOnly? DueDate,
-    byte Status,
     string? Description,
-    bool IsActive);
+    bool IsActive,
+    IReadOnlyList<SaveTransferDetailRequest> Details);
 
-public sealed record AddTransferTransactionRequest(
-    Guid TransferId,
-    Guid CurrencyId,
-    decimal Amount,
-    byte Direction,
-    DateOnly TransactionDate,
-    string? Description);
-public sealed record UpdateTransferTransactionRequest(
+public sealed record SaveTransferDetailRequest(
+    Guid? Id,
     Guid CurrencyId,
     decimal Amount,
     byte Direction,
@@ -142,6 +94,7 @@ public sealed record CreateCurrencyExchangeRequest(
     ExchangeLegRequest InLeg,
     string? Description);
 public sealed record UpdateCurrencyExchangeRequest(
+    Guid Id,
     decimal ExchangeRate,
     DateOnly ExchangeDate,
     ExchangeLegRequest OutLeg,
@@ -182,6 +135,27 @@ public sealed record TransferTransactionDetailResponse(
     DateOnly TransactionDate,
     string? Description,
     bool IsActive);
+
+public sealed record TransferFormDetailResponse(
+    Guid Id,
+    Guid CurrencyId,
+    decimal Amount,
+    byte Direction,
+    DateOnly TransactionDate,
+    string? Description,
+    bool IsActive);
+
+public sealed record TransferFormResponse(
+    Guid Id,
+    Guid CounterpartyId,
+    byte TransferType,
+    Guid CurrencyId,
+    decimal Amount,
+    DateOnly TransactionDate,
+    DateOnly? DueDate,
+    string? Description,
+    bool IsActive,
+    IReadOnlyList<TransferFormDetailResponse> Details);
 
 public sealed record CurrencyExchangeDetailResponse(
     Guid Id,

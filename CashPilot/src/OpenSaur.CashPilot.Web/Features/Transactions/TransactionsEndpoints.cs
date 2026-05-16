@@ -10,34 +10,33 @@ public static class TransactionsEndpoints
         var transactions = app.MapGroup("/api/transactions")
             .RequireAuthorization(AppAuthorization.CanAccessPolicyName);
 
-        transactions.MapGet("", GetTransactionsHandler.HandleAsync);
+        // Summary / list
+        transactions.MapGet("/get", GetTransactionsHandler.HandleAsync);
         transactions.MapGet("/dashboard", GetTransactionDashboardHandler.HandleAsync);
-        transactions.MapGet("/bankaccounts", GetBankAccountsHandler.HandleAsync);
-        transactions.MapGet("/bankaccounts/{id:guid}/form", GetBankAccountFormByIdHandler.HandleAsync);
-        transactions.MapGet("/transfers", GetTransfersHandler.HandleAsync);
-        transactions.MapGet("/cashflows/{id:guid}", GetCashFlowByIdHandler.HandleAsync);
-        transactions.MapGet("/bankaccounts/transactions/{id:guid}", GetBankAccountTransactionByIdHandler.HandleAsync);
-        transactions.MapGet("/transfers/transactions/{id:guid}", GetTransferTransactionByIdHandler.HandleAsync);
-        transactions.MapGet("/exchanges/{id:guid}", GetCurrencyExchangeByIdHandler.HandleAsync);
-        transactions.MapPost("/cashflows", CreateCashFlowHandler.HandleAsync);
-        transactions.MapPost("/bankaccounts", CreateBankAccountHandler.HandleAsync);
-        transactions.MapPost("/bankaccounts/save", SaveBankAccountFormHandler.HandleAsync);
-        transactions.MapPost("/bankaccounts/transactions", AddBankAccountTransactionHandler.HandleAsync);
-        transactions.MapPost("/transfers", CreateTransferHandler.HandleAsync);
-        transactions.MapPost("/transfers/transactions", AddTransferTransactionHandler.HandleAsync);
-        transactions.MapPost("/exchanges", CreateCurrencyExchangeHandler.HandleAsync);
-        transactions.MapPut("/cashflows/{id:guid}", UpdateCashFlowHandler.HandleAsync);
-        transactions.MapPut("/bankaccounts/{id:guid}", UpdateBankAccountHandler.HandleAsync);
-        transactions.MapPut("/bankaccounts/transactions/{id:guid}", UpdateBankAccountTransactionHandler.HandleAsync);
-        transactions.MapPut("/transfers/{id:guid}", UpdateTransferHandler.HandleAsync);
-        transactions.MapPut("/transfers/transactions/{id:guid}", UpdateTransferTransactionHandler.HandleAsync);
-        transactions.MapPut("/exchanges/{id:guid}", UpdateCurrencyExchangeHandler.HandleAsync);
-        transactions.MapDelete("/cashflows/{id:guid}", DeleteCashFlowHandler.HandleAsync);
-        transactions.MapDelete("/bankaccounts/{id:guid}", DeleteBankAccountHandler.HandleAsync);
-        transactions.MapDelete("/bankaccounts/transactions/{id:guid}", DeleteBankAccountTransactionHandler.HandleAsync);
-        transactions.MapDelete("/transfers/{id:guid}", DeleteTransferHandler.HandleAsync);
-        transactions.MapDelete("/transfers/transactions/{id:guid}", DeleteTransferTransactionHandler.HandleAsync);
-        transactions.MapDelete("/exchanges/{id:guid}", DeleteCurrencyExchangeHandler.HandleAsync);
+
+        // CashFlow
+        transactions.MapGet("/cashflows/getById/{id:guid}", GetCashFlowByIdHandler.HandleAsync);
+        transactions.MapPost("/cashflows/create", CreateCashFlowHandler.HandleAsync);
+        transactions.MapPut("/cashflows/update", UpdateCashFlowHandler.HandleAsync);
+        transactions.MapDelete("/cashflows/delete", DeleteCashFlowHandler.HandleAsync);
+
+        // BankAccount
+        transactions.MapGet("/bankaccounts/getById/{id:guid}", GetBankAccountFormByIdHandler.HandleAsync);
+        transactions.MapPost("/bankaccounts/create", CreateBankAccountFormHandler.HandleAsync);
+        transactions.MapPut("/bankaccounts/update", UpdateBankAccountFormHandler.HandleAsync);
+        transactions.MapDelete("/bankaccounts/delete", DeleteBankAccountTransactionHandler.HandleAsync);
+
+        // Transfer
+        transactions.MapGet("/transfers/getById/{id:guid}", GetTransferFormByIdHandler.HandleAsync);
+        transactions.MapPost("/transfers/create", CreateTransferFormHandler.HandleAsync);
+        transactions.MapPut("/transfers/update", UpdateTransferFormHandler.HandleAsync);
+        transactions.MapDelete("/transfers/delete", DeleteTransferTransactionHandler.HandleAsync);
+
+        // Exchange
+        transactions.MapGet("/exchanges/getById/{id:guid}", GetCurrencyExchangeByIdHandler.HandleAsync);
+        transactions.MapPost("/exchanges/create", CreateCurrencyExchangeHandler.HandleAsync);
+        transactions.MapPut("/exchanges/update", UpdateCurrencyExchangeHandler.HandleAsync);
+        transactions.MapDelete("/exchanges/delete", DeleteCurrencyExchangeHandler.HandleAsync);
 
         return app;
     }

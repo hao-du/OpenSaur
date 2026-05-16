@@ -1,7 +1,9 @@
+using FluentValidation;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using OpenSaur.CashPilot.Web.Features.Banks.Dtos;
+using OpenSaur.CashPilot.Web.Features.Banks.Validations;
 using OpenSaur.CashPilot.Web.Infrastructure.Database;
 using AppHttpResults = OpenSaur.CashPilot.Web.Infrastructure.Http.HttpResults;
 
@@ -9,16 +11,18 @@ namespace OpenSaur.CashPilot.Web.Features.Banks.Handlers;
 
 public static class UpdateBankHandler
 {
-    public static async Task<Results<Ok<BankResponse>, BadRequest<ProblemDetails>, NotFound<ProblemDetails>, Conflict<ProblemDetails>>> HandleAsync(
+    private static readonly UpdateBankRequestValidator Validator = new();
+
+    public static async Task<Results<Ok<BankResponse>, ValidationProblem, NotFound<ProblemDetails>, Conflict<ProblemDetails>>> HandleAsync(
         Guid id,
         UpdateBankRequest request,
         CashPilotDbContext dbContext,
         CancellationToken cancellationToken)
     {
-        var validationError = BankValidation.Validate(request.Name, request.ShortName);
-        if (validationError is not null)
+        var validationResult = await Validator.ValidateAsync(request, cancellationToken);
+        if (!validationResult.IsValid)
         {
-            return AppHttpResults.BadRequest("Invalid bank payload.", validationError);
+            return AppHttpResults.ValidationProblem(validationResult);
         }
 
         var bank = await dbContext.Banks.SingleOrDefaultAsync(candidate => candidate.Id == id, cancellationToken);

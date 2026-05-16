@@ -38489,67 +38489,63 @@ function PrepareSessionPage({ isRestoring }) {
 //#endregion
 //#region src/features/transactions/api/transactionsApi.ts
 async function getTransactions() {
-	return client.get("/api/transactions");
+	return client.get("/api/transactions/get");
 }
 async function getTransactionDashboard() {
 	return client.get("/api/transactions/dashboard");
 }
 async function getBankAccountFormById(id) {
-	return client.get(`/api/transactions/bankaccounts/${id}/form`);
+	return client.get(`/api/transactions/bankaccounts/getById/${id}`);
 }
-async function getTransfers() {
-	return client.get("/api/transactions/transfers");
+async function getTransferFormById(id) {
+	return client.get(`/api/transactions/transfers/getById/${id}`);
 }
 async function createCashFlow(request) {
-	return client.post("/api/transactions/cashflows", request);
+	return client.post("/api/transactions/cashflows/create", request);
 }
 async function getCashFlowById(id) {
-	return client.get(`/api/transactions/cashflows/${id}`);
+	return client.get(`/api/transactions/cashflows/getById/${id}`);
 }
 async function updateCashFlow(id, request) {
-	return client.put(`/api/transactions/cashflows/${id}`, request);
+	return client.put("/api/transactions/cashflows/update", {
+		...request,
+		id
+	});
 }
 async function saveBankAccountForm(request) {
-	return client.post("/api/transactions/bankaccounts/save", request);
+	if (request.id == null || request.id.trim().length === 0) return client.post("/api/transactions/bankaccounts/create", request);
+	return client.put("/api/transactions/bankaccounts/update", request);
 }
-async function getBankAccountTransactionById(id) {
-	return client.get(`/api/transactions/bankaccounts/transactions/${id}`);
-}
-async function createTransfer(request) {
-	return client.post("/api/transactions/transfers", request);
-}
-async function addTransferTransaction(request) {
-	return client.post("/api/transactions/transfers/transactions", request);
-}
-async function getTransferTransactionById(id) {
-	return client.get(`/api/transactions/transfers/transactions/${id}`);
-}
-async function updateTransferTransaction(id, request) {
-	return client.put(`/api/transactions/transfers/transactions/${id}`, request);
+async function saveTransferForm(request) {
+	if (request.id == null || request.id.trim().length === 0) return client.post("/api/transactions/transfers/create", request);
+	return client.put("/api/transactions/transfers/update", request);
 }
 async function createCurrencyExchange(request) {
-	return client.post("/api/transactions/exchanges", request);
+	return client.post("/api/transactions/exchanges/create", request);
 }
 async function getCurrencyExchangeById(id) {
-	return client.get(`/api/transactions/exchanges/${id}`);
+	return client.get(`/api/transactions/exchanges/getById/${id}`);
 }
 async function updateCurrencyExchange(id, request) {
-	return client.put(`/api/transactions/exchanges/${id}`, request);
+	return client.put("/api/transactions/exchanges/update", {
+		...request,
+		id
+	});
 }
 async function deleteTransactionByType(type, id) {
 	if (type === "CashFlow") {
-		await client.delete(`/api/transactions/cashflows/${id}`);
+		await client.delete(`/api/transactions/cashflows/delete?id=${id}`);
 		return;
 	}
 	if (type === "BankAccount") {
-		await client.delete(`/api/transactions/bankaccounts/transactions/${id}`);
+		await client.delete(`/api/transactions/bankaccounts/delete?id=${id}`);
 		return;
 	}
 	if (type === "Transfer") {
-		await client.delete(`/api/transactions/transfers/transactions/${id}`);
+		await client.delete(`/api/transactions/transfers/delete?id=${id}`);
 		return;
 	}
-	await client.delete(`/api/transactions/exchanges/${id}`);
+	await client.delete(`/api/transactions/exchanges/delete?id=${id}`);
 }
 //#endregion
 //#region src/features/transactions/hooks/useTransactionDashboardQuery.ts
@@ -42026,14 +42022,6 @@ function useTransactionsQuery() {
 	});
 }
 //#endregion
-//#region src/features/transactions/hooks/useTransfersQuery.ts
-function useTransfersQuery() {
-	return useQuery({
-		queryFn: getTransfers,
-		queryKey: ["transfers"]
-	});
-}
-//#endregion
 //#region src/components/atoms/DateTimePicker.tsx
 function DateTimePicker(props) {
 	const pickerType = props.type ?? "date";
@@ -42832,7 +42820,7 @@ function BankAccountFormDrawer({ editingBankAccount, isOpen, onClose, banks, cur
 }
 //#endregion
 //#region src/features/transactions/components/TransferHeaderForm.tsx
-function TransferHeaderForm({ counterparties, currencies, onSubmit }) {
+function TransferHeaderForm({ counterparties, currencies, calculatedAmount, initialValues, isSubmitting = false, submitLabel = "Create Transfer", showSubmit = true, onChange, onSubmit }) {
 	const today = (/* @__PURE__ */ new Date()).toISOString().slice(0, 10);
 	const form = useForm({ defaultValues: {
 		amount: "",
@@ -42843,334 +42831,526 @@ function TransferHeaderForm({ counterparties, currencies, onSubmit }) {
 		transactionDate: today,
 		transferType: "1"
 	} });
-	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Grid, {
-		container: true,
-		spacing: 2,
-		component: "form",
-		noValidate: true,
-		onSubmit: form.handleSubmit(async (values) => {
-			await onSubmit({
-				amount: Number(values.amount),
-				counterpartyId: values.counterpartyId,
-				currencyId: values.currencyId,
-				description: values.description.trim().length === 0 ? void 0 : values.description.trim(),
-				dueDate: values.dueDate.trim().length === 0 ? void 0 : values.dueDate,
-				transactionDate: values.transactionDate,
-				transferType: Number(values.transferType)
-			});
-		}),
-		children: [
-			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Grid, {
-				size: {
-					xs: 12,
-					md: 3
-				},
-				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(DropDown, {
-					control: form.control,
-					label: "Counterparty",
-					name: "counterpartyId",
-					options: counterparties.map((x) => ({
-						label: x.fullName,
-						value: x.id
-					})),
-					required: true,
-					rules: { required: "Counterparty is required." }
-				})
+	(0, import_react.useEffect)(() => {
+		form.setValue("amount", calculatedAmount.toString(), {
+			shouldValidate: false,
+			shouldDirty: false
+		});
+	}, [calculatedAmount, form]);
+	(0, import_react.useEffect)(() => {
+		if (initialValues == null) return;
+		form.reset({
+			amount: initialValues.amount ?? calculatedAmount.toString(),
+			counterpartyId: initialValues.counterpartyId,
+			currencyId: initialValues.currencyId,
+			description: initialValues.description ?? "",
+			dueDate: initialValues.dueDate ?? "",
+			transactionDate: initialValues.transactionDate,
+			transferType: initialValues.transferType
+		});
+	}, [
+		calculatedAmount,
+		form,
+		initialValues
+	]);
+	const watched = useWatch({ control: form.control });
+	(0, import_react.useEffect)(() => {
+		if (onChange == null) return;
+		onChange({
+			amount: Number(watched.amount ?? "0"),
+			counterpartyId: watched.counterpartyId ?? "",
+			currencyId: watched.currencyId ?? "",
+			description: watched.description?.trim().length ? watched.description.trim() : void 0,
+			dueDate: watched.dueDate?.trim().length ? watched.dueDate : void 0,
+			transactionDate: watched.transactionDate ?? today,
+			transferType: Number(watched.transferType ?? "1")
+		});
+	}, [
+		onChange,
+		today,
+		watched
+	]);
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Stack, {
+		spacing: 3,
+		children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Grid, {
+			container: true,
+			spacing: 2,
+			component: "form",
+			noValidate: true,
+			onSubmit: form.handleSubmit(async (values) => {
+				await onSubmit({
+					amount: Number(values.amount),
+					counterpartyId: values.counterpartyId,
+					currencyId: values.currencyId,
+					description: values.description.trim().length === 0 ? void 0 : values.description.trim(),
+					dueDate: values.dueDate.trim().length === 0 ? void 0 : values.dueDate,
+					transactionDate: values.transactionDate,
+					transferType: Number(values.transferType)
+				});
 			}),
-			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Grid, {
-				size: {
-					xs: 12,
-					md: 2
-				},
-				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(DropDown, {
-					control: form.control,
-					label: "Type",
-					name: "transferType",
-					options: [
-						{
-							label: "Lend",
-							value: "1"
-						},
-						{
-							label: "Borrow",
-							value: "2"
-						},
-						{
-							label: "Give",
-							value: "3"
-						},
-						{
-							label: "Receive",
-							value: "4"
-						}
-					],
-					required: true,
-					rules: { required: "Type is required." }
-				})
-			}),
-			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Grid, {
-				size: {
-					xs: 12,
-					md: 2
-				},
-				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(DropDown, {
-					control: form.control,
-					label: "Currency",
-					name: "currencyId",
-					options: currencies.map((x) => ({
-						label: x.shortName,
-						value: x.id
-					})),
-					required: true,
-					rules: { required: "Currency is required." }
-				})
-			}),
-			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Grid, {
-				size: {
-					xs: 12,
-					md: 2
-				},
-				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Number$1, {
-					control: form.control,
-					label: "Amount",
-					name: "amount",
-					required: true,
-					rules: { required: "Amount is required." }
-				})
-			}),
-			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Grid, {
-				size: {
-					xs: 12,
-					md: 3
-				},
-				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ActionButton, {
-					sx: { height: "100%" },
-					fullWidth: true,
-					type: "submit",
-					children: "Create Transfer"
-				})
-			}),
-			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Grid, {
-				size: {
-					xs: 12,
-					md: 4
-				},
-				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(DateTimePicker, {
-					control: form.control,
-					label: "Transaction Date",
-					name: "transactionDate",
-					required: true,
-					rules: { required: "Transaction Date is required." }
-				})
-			}),
-			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Grid, {
-				size: {
-					xs: 12,
-					md: 4
-				},
-				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(DateTimePicker, {
-					control: form.control,
-					label: "Due Date",
-					name: "dueDate"
-				})
-			}),
-			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Grid, {
-				size: {
-					xs: 12,
-					md: 4
-				},
-				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, {
-					control: form.control,
-					label: "Description",
-					name: "description"
-				})
-			})
-		]
+			children: [
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Grid, {
+					size: {
+						xs: 12,
+						md: 6
+					},
+					children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(DropDown, {
+						control: form.control,
+						disabled: isSubmitting,
+						label: "Counterparty",
+						name: "counterpartyId",
+						options: counterparties.map((x) => ({
+							label: x.fullName,
+							value: x.id
+						})),
+						required: true,
+						rules: { required: "Counterparty is required." }
+					})
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Grid, {
+					size: {
+						xs: 12,
+						md: 6
+					},
+					children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(DropDown, {
+						control: form.control,
+						disabled: isSubmitting,
+						label: "Type",
+						name: "transferType",
+						options: [
+							{
+								label: "Lend",
+								value: "1"
+							},
+							{
+								label: "Borrow",
+								value: "2"
+							},
+							{
+								label: "Give",
+								value: "3"
+							},
+							{
+								label: "Receive",
+								value: "4"
+							}
+						],
+						required: true,
+						rules: { required: "Type is required." }
+					})
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Grid, {
+					size: {
+						xs: 12,
+						md: 6
+					},
+					children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Number$1, {
+						control: form.control,
+						disabled: true,
+						label: "Amount",
+						name: "amount",
+						required: true,
+						rules: { required: "Amount is required." }
+					})
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Grid, {
+					size: {
+						xs: 12,
+						md: 6
+					},
+					children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(DropDown, {
+						control: form.control,
+						disabled: isSubmitting,
+						label: "Currency",
+						name: "currencyId",
+						options: currencies.map((x) => ({
+							label: x.shortName,
+							value: x.id
+						})),
+						required: true,
+						rules: { required: "Currency is required." }
+					})
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Grid, {
+					size: {
+						xs: 12,
+						md: 6
+					},
+					children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(DateTimePicker, {
+						control: form.control,
+						disabled: isSubmitting,
+						label: "Transaction Date",
+						name: "transactionDate",
+						required: true,
+						rules: { required: "Transaction Date is required." }
+					})
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Grid, {
+					size: {
+						xs: 12,
+						md: 6
+					},
+					children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(DateTimePicker, {
+						control: form.control,
+						disabled: isSubmitting,
+						label: "Due Date",
+						name: "dueDate"
+					})
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Grid, {
+					size: { xs: 12 },
+					children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextArea, {
+						control: form.control,
+						disabled: isSubmitting,
+						label: "Description",
+						name: "description",
+						minRows: 3
+					})
+				}),
+				showSubmit ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Grid, {
+					size: { xs: 12 },
+					children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Stack, {
+						direction: "row",
+						justifyContent: "flex-end",
+						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ActionButton, {
+							disabled: isSubmitting,
+							type: "submit",
+							children: isSubmitting ? "Working..." : submitLabel
+						})
+					})
+				}) : null
+			]
+		})
 	});
 }
 //#endregion
-//#region src/features/transactions/components/TransferMovementForm.tsx
-function TransferMovementForm({ transfers, currencies, initialValue, submitLabel = "Add Transaction", onSubmit }) {
-	const today = (/* @__PURE__ */ new Date()).toISOString().slice(0, 10);
+//#region src/features/transactions/components/TransferFormTransaction.tsx
+function TransferFormTransaction({ detail, isSubmitting = false, onAccept, onDelete, onCancelNew }) {
+	const [isEditing, setIsEditing] = (0, import_react.useState)(detail.isNew || false);
 	const form = useForm({ defaultValues: {
-		amount: "",
-		currencyId: currencies[0]?.id ?? "",
-		description: "",
-		direction: "1",
-		transactionDate: today,
-		transferId: transfers[0]?.id ?? ""
+		amount: detail.amount,
+		description: detail.description,
+		direction: detail.direction,
+		transactionDate: detail.transactionDate
 	} });
-	(0, import_react.useEffect)(() => {
-		if (initialValue == null) {
-			form.reset({
-				amount: "",
-				currencyId: currencies[0]?.id ?? "",
-				description: "",
-				direction: "1",
-				transactionDate: today,
-				transferId: transfers[0]?.id ?? ""
-			});
+	function startEdit() {
+		form.reset({
+			amount: detail.amount,
+			description: detail.description,
+			direction: detail.direction,
+			transactionDate: detail.transactionDate
+		});
+		setIsEditing(true);
+	}
+	function cancelEdit() {
+		if (detail.isNew) {
+			onCancelNew();
 			return;
 		}
-		form.reset({
-			amount: initialValue.amount.toString(),
-			currencyId: initialValue.currencyId,
-			description: initialValue.description ?? "",
-			direction: initialValue.direction.toString(),
-			transactionDate: initialValue.transactionDate,
-			transferId: initialValue.transferId
-		});
-	}, [
-		currencies,
-		form,
-		initialValue,
-		today,
-		transfers
-	]);
-	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Grid, {
-		container: true,
-		spacing: 2,
-		component: "form",
-		noValidate: true,
-		onSubmit: form.handleSubmit(async (values) => {
-			await onSubmit({
-				amount: Number(values.amount),
-				currencyId: values.currencyId,
-				description: values.description.trim().length === 0 ? void 0 : values.description.trim(),
-				direction: Number(values.direction),
-				transactionDate: values.transactionDate,
-				transferId: values.transferId
-			});
-		}),
+		setIsEditing(false);
+	}
+	const directionText = detail.direction === "1" ? "In" : "Out";
+	if (!isEditing) return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Stack, {
+		spacing: 1.25,
+		sx: {
+			p: 2,
+			border: "1px solid #eee",
+			borderRadius: 1
+		},
 		children: [
-			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Grid, {
-				size: {
-					xs: 12,
-					md: 4
-				},
-				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(DropDown, {
-					control: form.control,
-					label: "Transfer",
-					name: "transferId",
-					options: transfers.map((x) => ({
-						label: `${x.counterpartyName} - ${x.transferType} - ${x.amount} - ${x.status} (remaining ${x.remainingAmount})`,
-						value: x.id
-					})),
-					required: true,
-					rules: { required: "Transfer is required." }
-				})
-			}),
-			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Grid, {
-				size: {
-					xs: 12,
-					md: 2
-				},
-				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(DropDown, {
-					control: form.control,
-					label: "Currency",
-					name: "currencyId",
-					options: currencies.map((x) => ({
-						label: x.shortName,
-						value: x.id
-					})),
-					required: true,
-					rules: { required: "Currency is required." }
-				})
-			}),
-			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Grid, {
-				size: {
-					xs: 12,
-					md: 2
-				},
-				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Number$1, {
-					control: form.control,
-					label: "Amount",
-					name: "amount",
-					required: true,
-					rules: { required: "Amount is required." }
-				})
-			}),
-			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Grid, {
-				size: {
-					xs: 12,
-					md: 2
-				},
-				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(DropDown, {
-					control: form.control,
-					label: "Direction",
-					name: "direction",
-					options: [{
-						label: "In",
-						value: "1"
-					}, {
-						label: "Out",
-						value: "2"
-					}],
-					required: true,
-					rules: { required: "Direction is required." }
-				})
-			}),
-			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Grid, {
-				size: {
-					xs: 12,
-					md: 2
-				},
-				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ActionButton, {
-					sx: { height: "100%" },
-					fullWidth: true,
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: [
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", { children: "Date:" }),
+				" ",
+				detail.transactionDate
+			] }),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: [
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", { children: "Amount:" }),
+				" ",
+				detail.amount
+			] }),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: [
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", { children: "Direction:" }),
+				" ",
+				directionText
+			] }),
+			detail.description.length > 0 ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("span", { children: [
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("strong", { children: "Description:" }),
+				" ",
+				detail.description
+			] }) : null,
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Stack, {
+				direction: "row",
+				justifyContent: "flex-end",
+				spacing: 1,
+				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
+					size: "small",
 					variant: "outlined",
-					type: "submit",
-					children: submitLabel
-				})
-			}),
-			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Grid, {
-				size: {
-					xs: 12,
-					md: 3
+					onClick: startEdit,
+					children: "Edit"
+				}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
+					size: "small",
+					variant: "outlined",
+					color: "error",
+					onClick: onDelete,
+					children: "Delete"
+				})]
+			})
+		]
+	});
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Stack, {
+		spacing: 2,
+		sx: {
+			p: 2,
+			border: "1px solid #e0e0e0",
+			borderRadius: 1,
+			bgcolor: "#fafafa"
+		},
+		children: [
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Stack, {
+				direction: {
+					xs: "column",
+					md: "row"
 				},
-				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(DateTimePicker, {
-					control: form.control,
-					label: "Date",
-					name: "transactionDate",
-					required: true,
-					rules: { required: "Date is required." }
-				})
+				spacing: 2,
+				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Stack, {
+					sx: { flex: 2 },
+					children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Number$1, {
+						control: form.control,
+						disabled: isSubmitting,
+						label: "Amount",
+						name: "amount",
+						required: true,
+						rules: { required: "Amount is required." }
+					})
+				}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Stack, {
+					sx: { flex: 1 },
+					children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(DropDown, {
+						control: form.control,
+						disabled: isSubmitting,
+						label: "Direction",
+						name: "direction",
+						options: [{
+							label: "In",
+							value: "1"
+						}, {
+							label: "Out",
+							value: "2"
+						}],
+						required: true,
+						rules: { required: "Direction is required." }
+					})
+				})]
 			}),
-			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Grid, {
-				size: {
-					xs: 12,
-					md: 9
-				},
-				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, {
-					control: form.control,
-					label: "Description",
-					name: "description"
-				})
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(DateTimePicker, {
+				control: form.control,
+				disabled: isSubmitting,
+				label: "Date",
+				name: "transactionDate",
+				required: true,
+				rules: { required: "Date is required." }
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextArea, {
+				control: form.control,
+				disabled: isSubmitting,
+				label: "Description",
+				name: "description",
+				minRows: 3
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Stack, {
+				direction: "row",
+				justifyContent: "flex-end",
+				spacing: 1,
+				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
+					variant: "outlined",
+					onClick: cancelEdit,
+					disabled: isSubmitting,
+					children: "Cancel"
+				}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
+					variant: "contained",
+					disabled: isSubmitting,
+					onClick: () => {
+						form.handleSubmit((values) => {
+							onAccept({
+								...detail,
+								amount: values.amount,
+								description: values.description,
+								direction: values.direction,
+								transactionDate: values.transactionDate,
+								isNew: false
+							});
+							setIsEditing(false);
+						})();
+					},
+					children: "Accept"
+				})]
 			})
 		]
 	});
 }
 //#endregion
 //#region src/features/transactions/components/TransferForm.tsx
-function TransferForm({ counterparties, currencies, transfers, onCreateTransfer, onAddTransferTransaction, movementInitialValue, movementSubmitLabel }) {
+function TransferForm({ counterparties, currencies, onSave, movementInitialValue, movementInitialDetails = [], movementSubmitLabel = "Create", isSubmitting = false, submitLabel = "Create", headerSubmitLabel = "Apply Header", onCompleted }) {
+	const defaultHeaderValues = (0, import_react.useMemo)(() => ({
+		amount: "0",
+		counterpartyId: counterparties[0]?.id ?? "",
+		currencyId: currencies[0]?.id ?? "",
+		description: "",
+		dueDate: "",
+		transactionDate: (/* @__PURE__ */ new Date()).toISOString().slice(0, 10),
+		transferType: "1"
+	}), [counterparties, currencies]);
+	const initialHeaderValues = (0, import_react.useMemo)(() => {
+		if (movementInitialValue == null) return defaultHeaderValues;
+		return {
+			amount: movementInitialValue.amount.toString(),
+			counterpartyId: movementInitialValue.counterpartyId,
+			currencyId: movementInitialValue.currencyId,
+			description: movementInitialValue.description ?? "",
+			dueDate: movementInitialValue.dueDate ?? "",
+			transactionDate: movementInitialValue.transactionDate,
+			transferType: movementInitialValue.transferType.toString()
+		};
+	}, [defaultHeaderValues, movementInitialValue]);
+	const [headerDraft, setHeaderDraft] = (0, import_react.useState)(defaultHeaderValues);
+	const [details, setDetails] = (0, import_react.useState)([]);
+	const today = (/* @__PURE__ */ new Date()).toISOString().slice(0, 10);
+	const calculatedAmount = (0, import_react.useMemo)(() => details.reduce((sum, x) => sum + (Number.isFinite(Number(x.amount)) ? Number(x.amount) : 0), 0), [details]);
+	(0, import_react.useEffect)(() => {
+		if (movementInitialValue == null) {
+			setHeaderDraft(defaultHeaderValues);
+			return;
+		}
+		setHeaderDraft(initialHeaderValues);
+		setDetails(movementInitialDetails.map((x) => ({
+			amount: x.amount.toString(),
+			clientKey: crypto.randomUUID(),
+			description: x.description ?? "",
+			direction: x.direction.toString(),
+			id: x.id,
+			isActive: x.isActive,
+			transactionDate: x.transactionDate
+		})));
+	}, [
+		defaultHeaderValues,
+		initialHeaderValues,
+		movementInitialDetails,
+		movementInitialValue
+	]);
+	const visibleDetails = details;
+	const addNewDetail = () => {
+		setDetails((prev) => [...prev, {
+			amount: "",
+			clientKey: crypto.randomUUID(),
+			description: "",
+			direction: "1",
+			isNew: true,
+			transactionDate: headerDraft?.transactionDate ?? today
+		}]);
+	};
+	const updateDetail = (clientKey, updated) => {
+		setDetails((prev) => prev.map((x) => x.clientKey === clientKey ? updated : x));
+	};
+	const removeDetail = (clientKey) => {
+		setDetails((prev) => prev.filter((x) => x.clientKey !== clientKey));
+	};
+	const handleHeaderSubmit = (values) => {
+		setHeaderDraft(values);
+	};
+	const handleSave = async () => {
+		if (headerDraft.counterpartyId.trim().length === 0 || headerDraft.currencyId.trim().length === 0 || headerDraft.transactionDate.trim().length === 0) return;
+		await onSave({
+			amount: calculatedAmount,
+			counterpartyId: headerDraft.counterpartyId,
+			currencyId: headerDraft.currencyId,
+			description: headerDraft.description.trim().length === 0 ? void 0 : headerDraft.description.trim(),
+			details: visibleDetails.map((detail) => ({
+				amount: Number(detail.amount),
+				currencyId: headerDraft.currencyId,
+				description: detail.description.trim().length === 0 ? void 0 : detail.description.trim(),
+				direction: Number(detail.direction),
+				id: detail.id,
+				isActive: detail.isActive ?? true,
+				transactionDate: detail.transactionDate
+			})),
+			dueDate: headerDraft.dueDate.trim().length === 0 ? void 0 : headerDraft.dueDate,
+			id: movementInitialValue?.id,
+			isActive: true,
+			transactionDate: headerDraft.transactionDate,
+			transferType: Number(headerDraft.transferType)
+		});
+		onCompleted?.();
+	};
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Stack, {
-		spacing: 2,
-		children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(TransferHeaderForm, {
-			counterparties,
-			currencies,
-			onSubmit: onCreateTransfer
-		}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TransferMovementForm, {
-			currencies,
-			initialValue: movementInitialValue,
-			onSubmit: onAddTransferTransaction,
-			submitLabel: movementSubmitLabel,
-			transfers
-		})]
+		spacing: 3,
+		children: [
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h3", {
+				style: { margin: 0 },
+				children: "Transfer Header"
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(TransferHeaderForm, {
+				calculatedAmount,
+				counterparties,
+				currencies,
+				initialValues: initialHeaderValues,
+				isSubmitting,
+				onChange: (payload) => {
+					handleHeaderSubmit({
+						amount: payload.amount.toString(),
+						counterpartyId: payload.counterpartyId,
+						currencyId: payload.currencyId,
+						description: payload.description ?? "",
+						dueDate: payload.dueDate ?? "",
+						transactionDate: payload.transactionDate,
+						transferType: payload.transferType.toString()
+					});
+				},
+				onSubmit: async () => {},
+				showSubmit: false,
+				submitLabel: headerSubmitLabel
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Stack, {
+				direction: "row",
+				justifyContent: "space-between",
+				alignItems: "center",
+				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h3", {
+					style: { margin: 0 },
+					children: "Transaction Details"
+				}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ActionButton, {
+					onClick: addNewDetail,
+					color: "secondary",
+					size: "small",
+					disabled: isSubmitting,
+					children: "Add Transaction"
+				})]
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Stack, {
+				spacing: 2,
+				children: visibleDetails.map((detail) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TransferFormTransaction, {
+					detail,
+					isSubmitting,
+					onAccept: (updated) => updateDetail(detail.clientKey, updated),
+					onDelete: () => removeDetail(detail.clientKey),
+					onCancelNew: () => removeDetail(detail.clientKey)
+				}, detail.clientKey))
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Stack, {
+				direction: "row",
+				justifyContent: "flex-end",
+				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ActionButton, {
+					disabled: isSubmitting || calculatedAmount <= 0,
+					onClick: () => {
+						handleSave();
+					},
+					children: isSubmitting ? "Working..." : movementSubmitLabel ?? submitLabel
+				})
+			})
+		]
 	});
 }
 //#endregion
 //#region src/features/transactions/components/TransferFormDrawer.tsx
-function TransferFormDrawer({ editingMovement, isOpen, onClose, counterparties, currencies, transfers, onCreateTransfer, onAddTransferTransaction, onUpdateTransferTransaction }) {
+function TransferFormDrawer({ editingMovement, isOpen, onClose, counterparties, currencies, onSave }) {
+	const [isSubmitting, setIsSubmitting] = (0, import_react.useState)(false);
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(DrawerPanel, {
 		isOpen,
 		onClose,
@@ -43179,20 +43359,35 @@ function TransferFormDrawer({ editingMovement, isOpen, onClose, counterparties, 
 		children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TransferForm, {
 			counterparties,
 			currencies,
-			movementInitialValue: editingMovement == null ? null : editingMovement,
-			movementSubmitLabel: editingMovement == null ? "Add Transaction" : "Save Transaction",
-			onAddTransferTransaction: (payload) => editingMovement != null && onUpdateTransferTransaction != null ? onUpdateTransferTransaction(editingMovement.id, {
-				...payload,
-				isActive: editingMovement.isActive
-			}) : onAddTransferTransaction(payload),
-			onCreateTransfer,
-			transfers
+			headerSubmitLabel: "Apply Header",
+			isSubmitting,
+			onCompleted: onClose,
+			movementInitialValue: editingMovement == null ? null : {
+				amount: editingMovement.amount,
+				counterpartyId: editingMovement.counterpartyId,
+				currencyId: editingMovement.currencyId,
+				description: editingMovement.description,
+				dueDate: editingMovement.dueDate,
+				id: editingMovement.id,
+				transactionDate: editingMovement.transactionDate,
+				transferType: editingMovement.transferType
+			},
+			movementInitialDetails: editingMovement?.details ?? [],
+			movementSubmitLabel: editingMovement == null ? "Save" : "Save",
+			onSave: async (payload) => {
+				setIsSubmitting(true);
+				try {
+					await onSave(payload);
+				} finally {
+					setIsSubmitting(false);
+				}
+			}
 		})
 	});
 }
 //#endregion
 //#region src/features/transactions/components/ExchangeForm.tsx
-function ExchangeForm({ currencies, initialValue, submitLabel = "Create Exchange", onSubmit }) {
+function ExchangeForm({ currencies, initialValue, submitLabel = "Create Exchange", isSubmitting = false, onSubmit }) {
 	const today = (/* @__PURE__ */ new Date()).toISOString().slice(0, 10);
 	const form = useForm({ defaultValues: {
 		description: "",
@@ -43235,136 +43430,152 @@ function ExchangeForm({ currencies, initialValue, submitLabel = "Create Exchange
 		label: x.shortName,
 		value: x.id
 	}));
-	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Grid, {
-		container: true,
-		spacing: 2,
-		component: "form",
-		noValidate: true,
-		onSubmit: form.handleSubmit(async (values) => {
-			await onSubmit({
-				description: values.description.trim().length === 0 ? void 0 : values.description.trim(),
-				exchangeDate: values.exchangeDate,
-				exchangeRate: Number(values.exchangeRate),
-				inLeg: {
-					amount: Number(values.inAmount),
-					currencyId: values.inCurrencyId
-				},
-				outLeg: {
-					amount: Number(values.outAmount),
-					currencyId: values.outCurrencyId
-				}
-			});
-		}),
-		children: [
-			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Grid, {
-				size: {
-					xs: 12,
-					md: 2
-				},
-				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Number$1, {
-					control: form.control,
-					label: "Exchange Rate",
-					name: "exchangeRate",
-					required: true,
-					rules: { required: "Exchange Rate is required." }
-				})
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Stack, {
+		spacing: 3,
+		children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Grid, {
+			container: true,
+			spacing: 2,
+			component: "form",
+			noValidate: true,
+			onSubmit: form.handleSubmit(async (values) => {
+				await onSubmit({
+					description: values.description.trim().length === 0 ? void 0 : values.description.trim(),
+					exchangeDate: values.exchangeDate,
+					exchangeRate: Number(values.exchangeRate),
+					inLeg: {
+						amount: Number(values.inAmount),
+						currencyId: values.inCurrencyId
+					},
+					outLeg: {
+						amount: Number(values.outAmount),
+						currencyId: values.outCurrencyId
+					}
+				});
 			}),
-			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Grid, {
-				size: {
-					xs: 12,
-					md: 2
-				},
-				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(DropDown, {
-					control: form.control,
-					label: "Out Currency",
-					name: "outCurrencyId",
-					options: currencyOptions,
-					required: true,
-					rules: { required: "Out Currency is required." }
+			children: [
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Grid, {
+					size: {
+						xs: 12,
+						md: 6
+					},
+					children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(DateTimePicker, {
+						control: form.control,
+						disabled: isSubmitting,
+						label: "Exchange Date",
+						name: "exchangeDate",
+						required: true,
+						rules: { required: "Exchange Date is required." }
+					})
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Grid, {
+					size: {
+						xs: 12,
+						md: 6
+					},
+					children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Number$1, {
+						control: form.control,
+						disabled: isSubmitting,
+						label: "Exchange Rate",
+						name: "exchangeRate",
+						required: true,
+						rules: { required: "Exchange Rate is required." }
+					})
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Grid, {
+					size: { xs: 12 },
+					children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextArea, {
+						control: form.control,
+						disabled: isSubmitting,
+						label: "Description",
+						name: "description",
+						minRows: 3
+					})
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Grid, {
+					size: { xs: 12 },
+					children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)("h3", {
+						style: { margin: 0 },
+						children: "Exchange Legs"
+					})
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Grid, {
+					size: {
+						xs: 12,
+						md: 6
+					},
+					children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Number$1, {
+						control: form.control,
+						disabled: isSubmitting,
+						label: "Out Amount",
+						name: "outAmount",
+						required: true,
+						rules: { required: "Out Amount is required." }
+					})
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Grid, {
+					size: {
+						xs: 12,
+						md: 6
+					},
+					children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(DropDown, {
+						control: form.control,
+						disabled: isSubmitting,
+						label: "Out Currency",
+						name: "outCurrencyId",
+						options: currencyOptions,
+						required: true,
+						rules: { required: "Out Currency is required." }
+					})
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Grid, {
+					size: {
+						xs: 12,
+						md: 6
+					},
+					children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Number$1, {
+						control: form.control,
+						disabled: isSubmitting,
+						label: "In Amount",
+						name: "inAmount",
+						required: true,
+						rules: { required: "In Amount is required." }
+					})
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Grid, {
+					size: {
+						xs: 12,
+						md: 6
+					},
+					children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(DropDown, {
+						control: form.control,
+						disabled: isSubmitting,
+						label: "In Currency",
+						name: "inCurrencyId",
+						options: currencyOptions,
+						required: true,
+						rules: { required: "In Currency is required." }
+					})
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Grid, {
+					size: { xs: 12 },
+					children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Stack, {
+						direction: "row",
+						justifyContent: "flex-end",
+						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ActionButton, {
+							disabled: isSubmitting,
+							type: "submit",
+							children: isSubmitting ? "Working..." : submitLabel
+						})
+					})
 				})
-			}),
-			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Grid, {
-				size: {
-					xs: 12,
-					md: 2
-				},
-				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Number$1, {
-					control: form.control,
-					label: "Out Amount",
-					name: "outAmount",
-					required: true,
-					rules: { required: "Out Amount is required." }
-				})
-			}),
-			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Grid, {
-				size: {
-					xs: 12,
-					md: 2
-				},
-				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(DropDown, {
-					control: form.control,
-					label: "In Currency",
-					name: "inCurrencyId",
-					options: currencyOptions,
-					required: true,
-					rules: { required: "In Currency is required." }
-				})
-			}),
-			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Grid, {
-				size: {
-					xs: 12,
-					md: 2
-				},
-				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Number$1, {
-					control: form.control,
-					label: "In Amount",
-					name: "inAmount",
-					required: true,
-					rules: { required: "In Amount is required." }
-				})
-			}),
-			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Grid, {
-				size: {
-					xs: 12,
-					md: 2
-				},
-				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ActionButton, {
-					sx: { height: "100%" },
-					fullWidth: true,
-					type: "submit",
-					children: submitLabel
-				})
-			}),
-			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Grid, {
-				size: {
-					xs: 12,
-					md: 3
-				},
-				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(DateTimePicker, {
-					control: form.control,
-					label: "Exchange Date",
-					name: "exchangeDate",
-					required: true,
-					rules: { required: "Exchange Date is required." }
-				})
-			}),
-			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Grid, {
-				size: {
-					xs: 12,
-					md: 9
-				},
-				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, {
-					control: form.control,
-					label: "Description",
-					name: "description"
-				})
-			})
-		]
+			]
+		})
 	});
 }
 //#endregion
 //#region src/features/transactions/components/ExchangeFormDrawer.tsx
 function ExchangeFormDrawer({ editingExchange, isOpen, onClose, currencies, onSubmit, onUpdate }) {
+	const [isSubmitting, setIsSubmitting] = (0, import_react.useState)(false);
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(DrawerPanel, {
 		isOpen,
 		onClose,
@@ -43373,10 +43584,20 @@ function ExchangeFormDrawer({ editingExchange, isOpen, onClose, currencies, onSu
 		children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ExchangeForm, {
 			currencies,
 			initialValue: editingExchange == null ? null : editingExchange,
-			onSubmit: (payload) => editingExchange != null && onUpdate != null ? onUpdate(editingExchange.id, {
-				...payload,
-				isActive: editingExchange.isActive
-			}) : onSubmit(payload),
+			isSubmitting,
+			onSubmit: async (payload) => {
+				setIsSubmitting(true);
+				try {
+					if (editingExchange != null && onUpdate != null) await onUpdate(editingExchange.id, {
+						...payload,
+						isActive: editingExchange.isActive
+					});
+					else await onSubmit(payload);
+					onClose();
+				} finally {
+					setIsSubmitting(false);
+				}
+			},
 			submitLabel: editingExchange == null ? "Create Exchange" : "Save Exchange"
 		})
 	});
@@ -43412,13 +43633,11 @@ function TransactionsPage() {
 		email: "",
 		phoneNumber: ""
 	}).data ?? [];
-	const transfers = useTransfersQuery().data ?? [];
 	const transactionsQuery = useTransactionsQuery();
 	const dashboardQuery = useTransactionDashboardQuery();
 	const refresh = async () => {
 		await queryClient.invalidateQueries({ queryKey: ["transactions"] });
 		await queryClient.invalidateQueries({ queryKey: ["transaction-dashboard"] });
-		await queryClient.invalidateQueries({ queryKey: ["transfers"] });
 	};
 	const submit = async (action) => {
 		try {
@@ -43429,7 +43648,7 @@ function TransactionsPage() {
 			setError(e instanceof Error ? e.message : t("transactions.errorSave"));
 		}
 	};
-	const handleEdit = async (type, id) => {
+	const handleEdit = async (type, id, transferId, bankAccountId) => {
 		try {
 			setError(null);
 			if (type === "CashFlow") {
@@ -43438,12 +43657,32 @@ function TransactionsPage() {
 				return;
 			}
 			if (type === "BankAccount") {
-				setEditingBankAccount(await getBankAccountFormById((await getBankAccountTransactionById(id)).bankAccountId));
+				setEditingBankAccount(await getBankAccountFormById(bankAccountId ?? id));
 				setIsBankAccountDrawerOpen(true);
 				return;
 			}
 			if (type === "Transfer") {
-				setEditingTransferMovement(await getTransferTransactionById(id));
+				const transferForm = await getTransferFormById(transferId ?? id);
+				setEditingTransferMovement({
+					amount: transferForm.amount,
+					counterpartyId: transferForm.counterpartyId,
+					currencyId: transferForm.currencyId,
+					description: transferForm.description,
+					details: transferForm.details.map((x) => ({
+						amount: x.amount,
+						currencyId: x.currencyId,
+						description: x.description,
+						direction: x.direction,
+						id: x.id,
+						isActive: x.isActive,
+						transactionDate: x.transactionDate
+					})),
+					dueDate: transferForm.dueDate,
+					id: transferForm.id,
+					isActive: transferForm.isActive,
+					transactionDate: transferForm.transactionDate,
+					transferType: transferForm.transferType
+				});
 				setIsTransferDrawerOpen(true);
 				return;
 			}
@@ -43559,14 +43798,11 @@ function TransactionsPage() {
 					currencies,
 					editingMovement: editingTransferMovement,
 					isOpen: isTransferDrawerOpen,
-					onAddTransferTransaction: (payload) => submit(() => addTransferTransaction(payload)),
 					onClose: () => {
 						setIsTransferDrawerOpen(false);
 						setEditingTransferMovement(null);
 					},
-					onCreateTransfer: (payload) => submit(() => createTransfer(payload)),
-					onUpdateTransferTransaction: (id, payload) => submit(() => updateTransferTransaction(id, payload)),
-					transfers
+					onSave: (payload) => submit(() => saveTransferForm(payload))
 				}),
 				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(ExchangeFormDrawer, {
 					currencies,
@@ -43641,7 +43877,7 @@ function TransactionsPage() {
 								children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
 									size: "small",
 									onClick: () => {
-										handleEdit(item.type, item.id);
+										handleEdit(item.type, item.id, item.transferId, item.bankAccountId);
 									},
 									children: t("transactions.edit")
 								}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
@@ -44823,4 +45059,4 @@ import_client.createRoot(document.getElementById("root")).render(/* @__PURE__ */
 }) }));
 //#endregion
 
-//# sourceMappingURL=index-DVDqYsa_.js.map
+//# sourceMappingURL=index-V2SY2k0I.js.map

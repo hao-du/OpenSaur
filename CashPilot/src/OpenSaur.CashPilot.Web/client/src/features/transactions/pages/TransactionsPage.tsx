@@ -12,25 +12,21 @@ import { useBanksQuery } from "../../banks/hooks/useBanksQuery";
 import { useCurrenciesQuery } from "../../currencies/hooks/useCurrenciesQuery";
 import { useCounterpartiesQuery } from "../../counterparties/hooks/useCounterpartiesQuery";
 import {
-  addTransferTransaction,
   saveBankAccountForm,
+  saveTransferForm,
   createCashFlow,
   createCurrencyExchange,
-  createTransfer,
   deleteTransactionByType,
   getBankAccountFormById,
-  getBankAccountTransactionById,
   getCashFlowById,
   getCurrencyExchangeById,
-  getTransferTransactionById,
+  getTransferFormById,
   updateCashFlow,
-  updateCurrencyExchange,
-  updateTransferTransaction
+  updateCurrencyExchange
 } from "../api/transactionsApi";
 import type { SaveBankAccountFormRequestDto } from "../dtos/TransactionDto";
 import { useTransactionsQuery } from "../hooks/useTransactionsQuery";
 import { useTransactionDashboardQuery } from "../hooks/useTransactionDashboardQuery";
-import { useTransfersQuery } from "../hooks/useTransfersQuery";
 import { CashFlowFormDrawer } from "../components/CashFlowFormDrawer";
 import { BankAccountFormDrawer } from "../components/BankAccountFormDrawer";
 import { TransferFormDrawer } from "../components/TransferFormDrawer";
@@ -54,13 +50,23 @@ export function TransactionsPage() {
   const [editingBankAccount, setEditingBankAccount] = useState<SaveBankAccountFormRequestDto | null>(null);
   const [editingTransferMovement, setEditingTransferMovement] = useState<{
     id: string;
-    transferId: string;
+    counterpartyId: string;
+    transferType: number;
     currencyId: string;
     amount: number;
-    direction: number;
     transactionDate: string;
+    dueDate?: string | null;
     description?: string | null;
     isActive: boolean;
+    details: Array<{
+      id: string;
+      currencyId: string;
+      amount: number;
+      direction: number;
+      transactionDate: string;
+      description?: string | null;
+      isActive: boolean;
+    }>;
   } | null>(null);
   const [editingExchange, setEditingExchange] = useState<{
     id: string;
@@ -80,14 +86,12 @@ export function TransactionsPage() {
   const banks = useBanksQuery({ isActive: true, name: "", shortName: "" }).data ?? [];
   const currencies = useCurrenciesQuery({ isActive: true, name: "", shortName: "" }).data ?? [];
   const counterparties = useCounterpartiesQuery({ isActive: true, fullName: "", email: "", phoneNumber: "" }).data ?? [];
-  const transfers = useTransfersQuery().data ?? [];
   const transactionsQuery = useTransactionsQuery();
   const dashboardQuery = useTransactionDashboardQuery();
 
   const refresh = async () => {
     await queryClient.invalidateQueries({ queryKey: ["transactions"] });
     await queryClient.invalidateQueries({ queryKey: ["transaction-dashboard"] });
-    await queryClient.invalidateQueries({ queryKey: ["transfers"] });
   };
 
   const submit = async (action: () => Promise<unknown>) => {
@@ -100,7 +104,7 @@ export function TransactionsPage() {
     }
   };
 
-  const handleEdit = async (type: "CashFlow" | "BankAccount" | "Transfer" | "Exchange", id: string) => {
+  const handleEdit = async (type: "CashFlow" | "BankAccount" | "Transfer" | "Exchange", id: string, transferId?: string | null, bankAccountId?: string | null) => {
     try {
       setError(null);
       if (type === "CashFlow") {
@@ -111,16 +115,34 @@ export function TransactionsPage() {
       }
 
       if (type === "BankAccount") {
-        const detail = await getBankAccountTransactionById(id);
-        const bankAccount = await getBankAccountFormById(detail.bankAccountId);
+        const bankAccount = await getBankAccountFormById(bankAccountId ?? id);
         setEditingBankAccount(bankAccount);
         setIsBankAccountDrawerOpen(true);
         return;
       }
 
       if (type === "Transfer") {
-        const detail = await getTransferTransactionById(id);
-        setEditingTransferMovement(detail);
+        const transferForm = await getTransferFormById(transferId ?? id);
+        setEditingTransferMovement({
+          amount: transferForm.amount,
+          counterpartyId: transferForm.counterpartyId,
+          currencyId: transferForm.currencyId,
+          description: transferForm.description,
+          details: transferForm.details.map(x => ({
+            amount: x.amount,
+            currencyId: x.currencyId,
+            description: x.description,
+            direction: x.direction,
+            id: x.id,
+            isActive: x.isActive,
+            transactionDate: x.transactionDate
+          })),
+          dueDate: transferForm.dueDate,
+          id: transferForm.id,
+          isActive: transferForm.isActive,
+          transactionDate: transferForm.transactionDate,
+          transferType: transferForm.transferType
+        });
         setIsTransferDrawerOpen(true);
         return;
       }
@@ -193,11 +215,8 @@ export function TransactionsPage() {
           currencies={currencies}
           editingMovement={editingTransferMovement}
           isOpen={isTransferDrawerOpen}
-          onAddTransferTransaction={payload => submit(() => addTransferTransaction(payload))}
           onClose={() => { setIsTransferDrawerOpen(false); setEditingTransferMovement(null); }}
-          onCreateTransfer={payload => submit(() => createTransfer(payload))}
-          onUpdateTransferTransaction={(id, payload) => submit(() => updateTransferTransaction(id, payload))}
-          transfers={transfers}
+          onSave={payload => submit(() => saveTransferForm(payload))}
         />
 
         <ExchangeFormDrawer
@@ -234,7 +253,7 @@ export function TransactionsPage() {
               <Stack key={item.id} direction="row" spacing={1} alignItems="center" justifyContent="space-between">
                 <BodyText>{`${item.transactionDate} | ${item.type} | ${item.currencyCode} ${item.amount} | ${item.direction === 1 ? "In" : "Out"} | ${item.description ?? ""}`}</BodyText>
                 <Stack direction="row" spacing={1}>
-                  <Button size="small" onClick={() => { void handleEdit(item.type, item.id); }}>{t("transactions.edit")}</Button>
+                  <Button size="small" onClick={() => { void handleEdit(item.type, item.id, item.transferId, item.bankAccountId); }}>{t("transactions.edit")}</Button>
                   <Button size="small" color="error" onClick={() => submit(() => deleteTransactionByType(item.type, item.id))}>{t("transactions.delete")}</Button>
                 </Stack>
               </Stack>

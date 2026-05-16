@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using OpenSaur.CashPilot.Web.Domain;
 using OpenSaur.CashPilot.Web.Features.Transactions.Dtos;
+using OpenSaur.CashPilot.Web.Features.Transactions.Validations;
 using OpenSaur.CashPilot.Web.Infrastructure.Database;
 using OpenSaur.CashPilot.Web.Infrastructure.Helpers;
 using System.Security.Claims;
@@ -12,8 +13,9 @@ namespace OpenSaur.CashPilot.Web.Features.Transactions.Handlers;
 
 public static class UpdateCurrencyExchangeHandler
 {
-    public static async Task<Results<Ok<Guid>, BadRequest<ProblemDetails>, NotFound<ProblemDetails>>> HandleAsync(
-        Guid id,
+    private static readonly UpdateCurrencyExchangeRequestValidator Validator = new();
+
+    public static async Task<Results<Ok<Guid>, BadRequest<ProblemDetails>, ValidationProblem, NotFound<ProblemDetails>>> HandleAsync(
         UpdateCurrencyExchangeRequest request,
         ClaimsPrincipal user,
         CashPilotDbContext dbContext,
@@ -21,15 +23,16 @@ public static class UpdateCurrencyExchangeHandler
     {
         var currentUserId = ClaimHelper.GetCurrentUserId(user);
 
-        if (request.ExchangeRate <= 0 || request.OutLeg.Amount <= 0 || request.InLeg.Amount <= 0)
+        var validationResult = await Validator.ValidateAsync(request, cancellationToken);
+        if (!validationResult.IsValid)
         {
-            return AppHttpResults.BadRequest("Invalid exchange payload.", "Exchange rate and leg amounts must be positive.");
+            return AppHttpResults.ValidationProblem(validationResult);
         }
 
         var entity = await dbContext.CurrencyExchanges
             .Include(x => x.CurrencyExchangeTransactions)
                 .ThenInclude(x => x.Transaction)
-            .SingleOrDefaultAsync(x => x.Id == id && x.CurrencyExchangeTransactions.Any(y => y.Transaction.OwnerId == currentUserId), cancellationToken);
+            .SingleOrDefaultAsync(x => x.Id == request.Id && x.CurrencyExchangeTransactions.Any(y => y.Transaction.OwnerId == currentUserId), cancellationToken);
 
         if (entity is null)
         {
@@ -65,6 +68,6 @@ public static class UpdateCurrencyExchangeHandler
 
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        return TypedResults.Ok(id);
+        return TypedResults.Ok(request.Id);
     }
 }

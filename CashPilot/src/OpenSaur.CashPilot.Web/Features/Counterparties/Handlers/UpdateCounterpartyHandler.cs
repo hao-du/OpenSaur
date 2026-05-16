@@ -1,7 +1,9 @@
+using FluentValidation;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using OpenSaur.CashPilot.Web.Features.Counterparties.Dtos;
+using OpenSaur.CashPilot.Web.Features.Counterparties.Validations;
 using OpenSaur.CashPilot.Web.Infrastructure.Database;
 using AppHttpResults = OpenSaur.CashPilot.Web.Infrastructure.Http.HttpResults;
 
@@ -9,16 +11,18 @@ namespace OpenSaur.CashPilot.Web.Features.Counterparties.Handlers;
 
 public static class UpdateCounterpartyHandler
 {
-    public static async Task<Results<Ok<CounterpartyResponse>, BadRequest<ProblemDetails>, NotFound<ProblemDetails>>> HandleAsync(
+    private static readonly UpdateCounterpartyRequestValidator Validator = new();
+
+    public static async Task<Results<Ok<CounterpartyResponse>, ValidationProblem, NotFound<ProblemDetails>>> HandleAsync(
         Guid id,
         UpdateCounterpartyRequest request,
         CashPilotDbContext dbContext,
         CancellationToken cancellationToken)
     {
-        var validationError = CounterpartyValidation.ValidateUpdate(request);
-        if (validationError is not null)
+        var validationResult = await Validator.ValidateAsync(request, cancellationToken);
+        if (!validationResult.IsValid)
         {
-            return AppHttpResults.BadRequest("Invalid counterparty payload.", validationError);
+            return AppHttpResults.ValidationProblem(validationResult);
         }
 
         var counterparty = await dbContext.Counterparties.SingleOrDefaultAsync(candidate => candidate.Id == id, cancellationToken);

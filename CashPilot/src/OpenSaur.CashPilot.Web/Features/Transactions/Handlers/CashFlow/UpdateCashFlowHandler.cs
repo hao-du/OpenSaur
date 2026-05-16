@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using OpenSaur.CashPilot.Web.Domain;
 using OpenSaur.CashPilot.Web.Features.Transactions.Dtos;
+using OpenSaur.CashPilot.Web.Features.Transactions.Validations;
 using OpenSaur.CashPilot.Web.Infrastructure.Database;
 using OpenSaur.CashPilot.Web.Infrastructure.Helpers;
 using System.Security.Claims;
@@ -12,8 +13,9 @@ namespace OpenSaur.CashPilot.Web.Features.Transactions.Handlers;
 
 public static class UpdateCashFlowHandler
 {
-    public static async Task<Results<Ok<Guid>, BadRequest<ProblemDetails>, NotFound<ProblemDetails>>> HandleAsync(
-        Guid id,
+    private static readonly UpdateCashFlowRequestValidator Validator = new();
+
+    public static async Task<Results<Ok<Guid>, BadRequest<ProblemDetails>, ValidationProblem, NotFound<ProblemDetails>>> HandleAsync(
         UpdateCashFlowRequest request,
         ClaimsPrincipal user,
         CashPilotDbContext dbContext,
@@ -21,14 +23,15 @@ public static class UpdateCashFlowHandler
     {
         var currentUserId = ClaimHelper.GetCurrentUserId(user);
 
-        if (request.Amount <= 0 || (request.Direction != 1 && request.Direction != 2))
+        var validationResult = await Validator.ValidateAsync(request, cancellationToken);
+        if (!validationResult.IsValid)
         {
-            return AppHttpResults.BadRequest("Invalid cashflow payload.", "Amount must be positive and direction must be 1 or 2.");
+            return AppHttpResults.ValidationProblem(validationResult);
         }
 
         var entity = await dbContext.CashFlows
             .Include(x => x.Transaction)
-            .SingleOrDefaultAsync(x => x.Id == id && x.Transaction.OwnerId == currentUserId, cancellationToken);
+            .SingleOrDefaultAsync(x => x.Id == request.Id && x.Transaction.OwnerId == currentUserId, cancellationToken);
 
         if (entity is null)
         {
@@ -45,6 +48,6 @@ public static class UpdateCashFlowHandler
 
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        return TypedResults.Ok(id);
+        return TypedResults.Ok(request.Id);
     }
 }

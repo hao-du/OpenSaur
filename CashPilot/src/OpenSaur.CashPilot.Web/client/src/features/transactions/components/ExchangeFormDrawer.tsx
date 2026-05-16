@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { DrawerPanel } from "../../../components/organisms/DrawerPanel";
 import type { CurrencyDto } from "../../currencies/dtos/CurrencyDto";
 import { ExchangeForm } from "./ExchangeForm";
@@ -35,14 +36,27 @@ type Props = {
 };
 
 export function ExchangeFormDrawer({ editingExchange, isOpen, onClose, currencies, onSubmit, onUpdate }: Props) {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   return (
     <DrawerPanel isOpen={isOpen} onClose={onClose} title={editingExchange == null ? "Create Exchange" : "Edit Exchange"} width="wide">
       <ExchangeForm
         currencies={currencies}
         initialValue={editingExchange == null ? null : editingExchange}
-        onSubmit={payload => editingExchange != null && onUpdate != null
-          ? onUpdate(editingExchange.id, { ...payload, isActive: editingExchange.isActive })
-          : onSubmit(payload)}
+        isSubmitting={isSubmitting}
+        onSubmit={async payload => {
+          setIsSubmitting(true);
+          try {
+            if (editingExchange != null && onUpdate != null) {
+              await onUpdate(editingExchange.id, { ...payload, isActive: editingExchange.isActive });
+            } else {
+              await onSubmit(payload);
+            }
+            onClose();
+          } finally {
+            setIsSubmitting(false);
+          }
+        }}
         submitLabel={editingExchange == null ? "Create Exchange" : "Save Exchange"}
       />
     </DrawerPanel>

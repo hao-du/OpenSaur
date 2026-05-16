@@ -1,11 +1,11 @@
-import { Grid } from "@mui/material";
+import { Grid, Stack } from "@mui/material";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { ActionButton } from "../../../components/atoms/ActionButton";
 import { DateTimePicker } from "../../../components/atoms/DateTimePicker";
 import { DropDown } from "../../../components/atoms/DropDown";
 import { Number as NumberField } from "../../../components/atoms/Number";
-import { Text } from "../../../components/atoms/Text";
+import { TextArea } from "../../../components/atoms/TextArea";
 import type { CurrencyDto } from "../../currencies/dtos/CurrencyDto";
 
 type Props = {
@@ -20,6 +20,7 @@ type Props = {
     description?: string | null;
   } | null;
   submitLabel?: string;
+  isSubmitting?: boolean;
   onSubmit: (payload: {
     exchangeRate: number;
     exchangeDate: string;
@@ -39,7 +40,7 @@ type FormValues = {
   description: string;
 };
 
-export function ExchangeForm({ currencies, initialValue, submitLabel = "Create Exchange", onSubmit }: Props) {
+export function ExchangeForm({ currencies, initialValue, submitLabel = "Create Exchange", isSubmitting = false, onSubmit }: Props) {
   const today = new Date().toISOString().slice(0, 10);
   const form = useForm<FormValues>({
     defaultValues: {
@@ -81,84 +82,102 @@ export function ExchangeForm({ currencies, initialValue, submitLabel = "Create E
   const currencyOptions = currencies.map(x => ({ label: x.shortName, value: x.id }));
 
   return (
-    <Grid container spacing={2} component="form" noValidate onSubmit={form.handleSubmit(async values => {
-      await onSubmit({
-        description: values.description.trim().length === 0 ? undefined : values.description.trim(),
-        exchangeDate: values.exchangeDate,
-        exchangeRate: Number(values.exchangeRate),
-        inLeg: { amount: Number(values.inAmount), currencyId: values.inCurrencyId },
-        outLeg: { amount: Number(values.outAmount), currencyId: values.outCurrencyId }
-      });
-    })}>
-      <Grid size={{ xs: 12, md: 2 }}>
-        <NumberField
-          control={form.control}
-          label="Exchange Rate"
-          name="exchangeRate"
-          required
-          rules={{ required: "Exchange Rate is required." }}
-        />
+    <Stack spacing={3}>
+      <Grid container spacing={2} component="form" noValidate onSubmit={form.handleSubmit(async values => {
+        await onSubmit({
+          description: values.description.trim().length === 0 ? undefined : values.description.trim(),
+          exchangeDate: values.exchangeDate,
+          exchangeRate: Number(values.exchangeRate),
+          inLeg: { amount: Number(values.inAmount), currencyId: values.inCurrencyId },
+          outLeg: { amount: Number(values.outAmount), currencyId: values.outCurrencyId }
+        });
+      })}>
+        <Grid size={{ xs: 12, md: 6 }}>
+          <DateTimePicker
+            control={form.control}
+            disabled={isSubmitting}
+            label="Exchange Date"
+            name="exchangeDate"
+            required
+            rules={{ required: "Exchange Date is required." }}
+          />
+        </Grid>
+        <Grid size={{ xs: 12, md: 6 }}>
+          <NumberField
+            control={form.control}
+            disabled={isSubmitting}
+            label="Exchange Rate"
+            name="exchangeRate"
+            required
+            rules={{ required: "Exchange Rate is required." }}
+          />
+        </Grid>
+        <Grid size={{ xs: 12 }}>
+          <TextArea
+            control={form.control}
+            disabled={isSubmitting}
+            label="Description"
+            name="description"
+            minRows={3}
+          />
+        </Grid>
+
+        <Grid size={{ xs: 12 }}>
+          <h3 style={{ margin: 0 }}>Exchange Legs</h3>
+        </Grid>
+
+        <Grid size={{ xs: 12, md: 6 }}>
+          <NumberField
+            control={form.control}
+            disabled={isSubmitting}
+            label="Out Amount"
+            name="outAmount"
+            required
+            rules={{ required: "Out Amount is required." }}
+          />
+        </Grid>
+        <Grid size={{ xs: 12, md: 6 }}>
+          <DropDown
+            control={form.control}
+            disabled={isSubmitting}
+            label="Out Currency"
+            name="outCurrencyId"
+            options={currencyOptions}
+            required
+            rules={{ required: "Out Currency is required." }}
+          />
+        </Grid>
+        <Grid size={{ xs: 12, md: 6 }}>
+          <NumberField
+            control={form.control}
+            disabled={isSubmitting}
+            label="In Amount"
+            name="inAmount"
+            required
+            rules={{ required: "In Amount is required." }}
+          />
+        </Grid>
+        <Grid size={{ xs: 12, md: 6 }}>
+          <DropDown
+            control={form.control}
+            disabled={isSubmitting}
+            label="In Currency"
+            name="inCurrencyId"
+            options={currencyOptions}
+            required
+            rules={{ required: "In Currency is required." }}
+          />
+        </Grid>
+
+        <Grid size={{ xs: 12 }}>
+          <Stack direction="row" justifyContent="flex-end">
+            <ActionButton disabled={isSubmitting} type="submit">
+              {isSubmitting ? "Working..." : submitLabel}
+            </ActionButton>
+          </Stack>
+        </Grid>
       </Grid>
-      <Grid size={{ xs: 12, md: 2 }}>
-        <DropDown
-          control={form.control}
-          label="Out Currency"
-          name="outCurrencyId"
-          options={currencyOptions}
-          required
-          rules={{ required: "Out Currency is required." }}
-        />
-      </Grid>
-      <Grid size={{ xs: 12, md: 2 }}>
-        <NumberField
-          control={form.control}
-          label="Out Amount"
-          name="outAmount"
-          required
-          rules={{ required: "Out Amount is required." }}
-        />
-      </Grid>
-      <Grid size={{ xs: 12, md: 2 }}>
-        <DropDown
-          control={form.control}
-          label="In Currency"
-          name="inCurrencyId"
-          options={currencyOptions}
-          required
-          rules={{ required: "In Currency is required." }}
-        />
-      </Grid>
-      <Grid size={{ xs: 12, md: 2 }}>
-        <NumberField
-          control={form.control}
-          label="In Amount"
-          name="inAmount"
-          required
-          rules={{ required: "In Amount is required." }}
-        />
-      </Grid>
-      <Grid size={{ xs: 12, md: 2 }}>
-        <ActionButton sx={{ height: "100%" }} fullWidth type="submit">
-          {submitLabel}
-        </ActionButton>
-      </Grid>
-      <Grid size={{ xs: 12, md: 3 }}>
-        <DateTimePicker
-          control={form.control}
-          label="Exchange Date"
-          name="exchangeDate"
-          required
-          rules={{ required: "Exchange Date is required." }}
-        />
-      </Grid>
-      <Grid size={{ xs: 12, md: 9 }}>
-        <Text
-          control={form.control}
-          label="Description"
-          name="description"
-        />
-      </Grid>
-    </Grid>
+    </Stack>
   );
 }
 

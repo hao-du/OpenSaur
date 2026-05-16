@@ -21,6 +21,8 @@ public static class GetTransactionsHandler
             .Where(x => x.IsActive && x.Transaction.IsActive && x.Transaction.OwnerId == currentUserId)
             .Select(x => new TransactionListItemResponse(
                 x.Id,
+                null,
+                null,
                 "CashFlow",
                 x.Description,
                 x.Transaction.Currency.ShortName,
@@ -35,6 +37,8 @@ public static class GetTransactionsHandler
             .Where(x => x.IsActive && x.Transaction.IsActive && x.Transaction.OwnerId == currentUserId)
             .Select(x => new TransactionListItemResponse(
                 x.Id,
+                x.BankAccountId,
+                null,
                 "BankAccount",
                 x.Description,
                 x.Transaction.Currency.ShortName,
@@ -49,6 +53,8 @@ public static class GetTransactionsHandler
             .Where(x => x.IsActive && x.Transaction.IsActive && x.Transaction.OwnerId == currentUserId)
             .Select(x => new TransactionListItemResponse(
                 x.Id,
+                null,
+                x.TransferId,
                 "Transfer",
                 x.Description,
                 x.Transaction.Currency.ShortName,
@@ -63,6 +69,8 @@ public static class GetTransactionsHandler
             .Where(x => x.IsActive && x.Transaction.IsActive && x.Transaction.OwnerId == currentUserId)
             .Select(x => new TransactionListItemResponse(
                 x.CurrencyExchangeId,
+                null,
+                null,
                 "Exchange",
                 x.Description,
                 x.Transaction.Currency.ShortName,

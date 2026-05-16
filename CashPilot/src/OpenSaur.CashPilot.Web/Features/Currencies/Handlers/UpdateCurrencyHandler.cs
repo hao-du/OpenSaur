@@ -1,7 +1,9 @@
+using FluentValidation;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using OpenSaur.CashPilot.Web.Features.Currencies.Dtos;
+using OpenSaur.CashPilot.Web.Features.Currencies.Validations;
 using OpenSaur.CashPilot.Web.Infrastructure.Database;
 using AppHttpResults = OpenSaur.CashPilot.Web.Infrastructure.Http.HttpResults;
 
@@ -9,16 +11,18 @@ namespace OpenSaur.CashPilot.Web.Features.Currencies.Handlers;
 
 public static class UpdateCurrencyHandler
 {
-    public static async Task<Results<Ok<CurrencyResponse>, BadRequest<ProblemDetails>, NotFound<ProblemDetails>, Conflict<ProblemDetails>>> HandleAsync(
+    private static readonly UpdateCurrencyRequestValidator Validator = new();
+
+    public static async Task<Results<Ok<CurrencyResponse>, ValidationProblem, NotFound<ProblemDetails>, Conflict<ProblemDetails>>> HandleAsync(
         Guid id,
         UpdateCurrencyRequest request,
         CashPilotDbContext dbContext,
         CancellationToken cancellationToken)
     {
-        var validationError = CurrencyValidation.Validate(request.Name, request.ShortName);
-        if (validationError is not null)
+        var validationResult = await Validator.ValidateAsync(request, cancellationToken);
+        if (!validationResult.IsValid)
         {
-            return AppHttpResults.BadRequest("Invalid currency payload.", validationError);
+            return AppHttpResults.ValidationProblem(validationResult);
         }
 
         var currency = await dbContext.Currencies.SingleOrDefaultAsync(candidate => candidate.Id == id, cancellationToken);

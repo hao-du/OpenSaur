@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using OpenSaur.CashPilot.Web.Domain;
 using OpenSaur.CashPilot.Web.Features.Transactions.Dtos;
+using OpenSaur.CashPilot.Web.Features.Transactions.Validations;
 using OpenSaur.CashPilot.Web.Infrastructure.Database;
 using OpenSaur.CashPilot.Web.Infrastructure.Helpers;
 using System.Security.Claims;
@@ -10,9 +11,11 @@ using AppHttpResults = OpenSaur.CashPilot.Web.Infrastructure.Http.HttpResults;
 
 namespace OpenSaur.CashPilot.Web.Features.Transactions.Handlers;
 
-public static class SaveBankAccountFormHandler
+public static class UpdateBankAccountFormHandler
 {
-    public static async Task<Results<Ok<Guid>, BadRequest<ProblemDetails>, NotFound<ProblemDetails>>> HandleAsync(
+    private static readonly UpdateBankAccountFormRequestValidator Validator = new();
+
+    public static async Task<Results<Ok<Guid>, BadRequest<ProblemDetails>, ValidationProblem, NotFound<ProblemDetails>>> HandleAsync(
         SaveBankAccountFormRequest request,
         ClaimsPrincipal user,
         CashPilotDbContext dbContext,
@@ -24,36 +27,23 @@ public static class SaveBankAccountFormHandler
             return AppHttpResults.BadRequest("User is required.", "Transactions require an authenticated user identifier.");
         }
 
-        if (request.Amount <= 0 || request.InterestRate < 0 || request.MaturityDate < request.StartDate || request.Status is < 1 or > 3)
+        var validationResult = await Validator.ValidateAsync(request, cancellationToken);
+        if (!validationResult.IsValid)
         {
-            return AppHttpResults.BadRequest("Invalid bank account payload.", "Invalid amount, interest rate, date range, or status.");
+            return AppHttpResults.ValidationProblem(validationResult);
         }
 
-        if (request.Details.Any(x => x.Amount <= 0 || (x.Direction != 1 && x.Direction != 2) || x.TransactionType is < 1 or > 3))
+        var existingBankAccount = await dbContext.BankAccounts
+            .Include(x => x.BankAccountTransactions)
+                .ThenInclude(x => x.Transaction)
+            .Where(x => !x.BankAccountTransactions.Any() || x.BankAccountTransactions.All(y => y.Transaction.OwnerId == currentUserId))
+            .SingleOrDefaultAsync(x => x.Id == request.Id.Value, cancellationToken);
+        if (existingBankAccount is null)
         {
-            return AppHttpResults.BadRequest("Invalid bank account detail payload.", "Invalid detail row values.");
+            return AppHttpResults.NotFound("BankAccount not found.", "No BankAccount matched the specified identifier.");
         }
 
-        BankAccount bankAccount;
-
-        if (request.Id is null)
-        {
-            bankAccount = new BankAccount();
-            dbContext.BankAccounts.Add(bankAccount);
-        }
-        else
-        {
-            bankAccount = await dbContext.BankAccounts
-                .Include(x => x.BankAccountTransactions)
-                    .ThenInclude(x => x.Transaction)
-                .Where(x => !x.BankAccountTransactions.Any() || x.BankAccountTransactions.All(y => y.Transaction.OwnerId == currentUserId))
-                .SingleOrDefaultAsync(x => x.Id == request.Id.Value, cancellationToken);
-            if (bankAccount is null)
-            {
-                return AppHttpResults.NotFound("BankAccount not found.", "No BankAccount matched the specified identifier.");
-            }
-        }
-
+        var bankAccount = existingBankAccount;
         bankAccount.AccountNumber = request.AccountNumber?.Trim();
         bankAccount.Amount = request.Amount;
         bankAccount.BankId = request.BankId;
@@ -65,16 +55,12 @@ public static class SaveBankAccountFormHandler
         bankAccount.Status = (BankAccountStatus)request.Status;
         bankAccount.IsActive = request.IsActive;
 
-        if (request.Id is not null)
+        var requestedIds = request.Details.Where(x => x.Id.HasValue).Select(x => x.Id!.Value).ToHashSet();
+        var removedRows = bankAccount.BankAccountTransactions.Where(x => !requestedIds.Contains(x.Id)).ToList();
+        if (removedRows.Count > 0)
         {
-            var requestedIds = request.Details.Where(x => x.Id.HasValue).Select(x => x.Id!.Value).ToHashSet();
-            var removedRows = bankAccount.BankAccountTransactions.Where(x => !requestedIds.Contains(x.Id)).ToList();
-
-            if (removedRows.Count > 0)
-            {
-                dbContext.BankAccountTransactions.RemoveRange(removedRows);
-                dbContext.Transactions.RemoveRange(removedRows.Select(x => x.Transaction));
-            }
+            dbContext.BankAccountTransactions.RemoveRange(removedRows);
+            dbContext.Transactions.RemoveRange(removedRows.Select(x => x.Transaction));
         }
 
         foreach (var detail in request.Details)
@@ -94,11 +80,12 @@ public static class SaveBankAccountFormHandler
             }
             else
             {
-                movement = bankAccount.BankAccountTransactions.SingleOrDefault(x => x.Id == detail.Id.Value);
-                if (movement is null)
+                var existingMovement = bankAccount.BankAccountTransactions.SingleOrDefault(x => x.Id == detail.Id.Value);
+                if (existingMovement is null)
                 {
                     return AppHttpResults.NotFound("BankAccountTransaction not found.", "A detail row did not match the specified identifier.");
                 }
+                movement = existingMovement;
             }
 
             movement.Description = detail.Description?.Trim() ?? string.Empty;
@@ -114,7 +101,6 @@ public static class SaveBankAccountFormHandler
         }
 
         await dbContext.SaveChangesAsync(cancellationToken);
-
         return TypedResults.Ok(bankAccount.Id);
     }
 }

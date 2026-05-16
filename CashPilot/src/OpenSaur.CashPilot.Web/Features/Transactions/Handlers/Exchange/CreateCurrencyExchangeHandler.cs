@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using OpenSaur.CashPilot.Web.Domain;
 using OpenSaur.CashPilot.Web.Features.Transactions.Dtos;
+using OpenSaur.CashPilot.Web.Features.Transactions.Validations;
 using OpenSaur.CashPilot.Web.Infrastructure.Database;
 using OpenSaur.CashPilot.Web.Infrastructure.Helpers;
 using System.Security.Claims;
@@ -11,7 +12,9 @@ namespace OpenSaur.CashPilot.Web.Features.Transactions.Handlers;
 
 public static class CreateCurrencyExchangeHandler
 {
-    public static async Task<Results<Created<Guid>, BadRequest<ProblemDetails>>> HandleAsync(
+    private static readonly CreateCurrencyExchangeRequestValidator Validator = new();
+
+    public static async Task<Results<Created<Guid>, BadRequest<ProblemDetails>, ValidationProblem>> HandleAsync(
         CreateCurrencyExchangeRequest request,
         ClaimsPrincipal user,
         CashPilotDbContext dbContext,
@@ -23,9 +26,10 @@ public static class CreateCurrencyExchangeHandler
             return AppHttpResults.BadRequest("User is required.", "Transactions require an authenticated user identifier.");
         }
 
-        if (request.ExchangeRate <= 0 || request.OutLeg.Amount <= 0 || request.InLeg.Amount <= 0)
+        var validationResult = await Validator.ValidateAsync(request, cancellationToken);
+        if (!validationResult.IsValid)
         {
-            return AppHttpResults.BadRequest("Invalid exchange payload.", "Exchange rate and all amounts must be positive.");
+            return AppHttpResults.ValidationProblem(validationResult);
         }
 
         var exchange = new CurrencyExchange
