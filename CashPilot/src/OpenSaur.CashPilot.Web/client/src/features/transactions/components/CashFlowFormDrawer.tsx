@@ -88,6 +88,7 @@ export function CashFlowFormDrawer({ editingCashFlow, isOpen, onClose, currencie
     >
       <Stack
         component="form"
+        noValidate
         onSubmit={form.handleSubmit(async values => {
           setIsSubmitting(true);
           try {

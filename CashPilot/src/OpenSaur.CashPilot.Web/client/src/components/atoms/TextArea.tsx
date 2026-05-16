@@ -33,13 +33,19 @@ export function TextArea<TFieldValues extends FieldValues>({
           error={fieldState.error != null}
           fullWidth
           helperText={fieldState.error?.message ?? helperText}
-          label={label}
+          InputLabelProps={{
+            sx: { "& .MuiFormLabel-asterisk": { color: "error.main" } }
+          }}
+          label={required ? `${label} *` : label}
           minRows={minRows}
           multiline
-          required={required}
+          slotProps={{
+            formHelperText: { sx: { ml: 0 } }
+          }}
         />
       )}
       rules={rules}
     />
   );
 }
+

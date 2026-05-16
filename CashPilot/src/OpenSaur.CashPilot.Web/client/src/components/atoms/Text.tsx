@@ -40,9 +40,14 @@ export function Text<TFieldValues extends FieldValues>({
           error={fieldState.error != null}
           fullWidth
           helperText={fieldState.error?.message ?? helperText}
-          InputLabelProps={shouldShrinkLabel ? { shrink: true } : undefined}
-          label={label}
-          required={required}
+          InputLabelProps={{
+            ...(shouldShrinkLabel ? { shrink: true } : {}),
+            sx: { "& .MuiFormLabel-asterisk": { color: "error.main" } }
+          }}
+          label={required ? `${label} *` : label}
+          slotProps={{
+            formHelperText: { sx: { ml: 0 } }
+          }}
           type={type}
           variant={variant}
         />
@@ -51,3 +56,4 @@ export function Text<TFieldValues extends FieldValues>({
     />
   );
 }
+

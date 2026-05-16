@@ -4,6 +4,7 @@ import { Controller, type Control, type FieldPath, type FieldValues, type Regist
 type NumberProps<TFieldValues extends FieldValues> = {
   control: Control<TFieldValues>;
   disabled?: boolean;
+  helperText?: string;
   label: string;
   name: FieldPath<TFieldValues>;
   required?: boolean;
@@ -13,6 +14,7 @@ type NumberProps<TFieldValues extends FieldValues> = {
 export function Number<TFieldValues extends FieldValues>({
   control,
   disabled = false,
+  helperText,
   label,
   name,
   required = false,
@@ -54,9 +56,12 @@ export function Number<TFieldValues extends FieldValues>({
           disabled={disabled}
           error={fieldState.error != null}
           fullWidth
-          helperText={fieldState.error?.message}
+          helperText={fieldState.error?.message ?? helperText}
+          InputLabelProps={{
+            sx: { "& .MuiFormLabel-asterisk": { color: "error.main" } }
+          }}
           inputMode="decimal"
-          label={label}
+          label={required ? `${label} *` : label}
           onChange={e => {
             const val = e.target.value;
             // Allow only numbers, one dot, and commas (which we remove)
@@ -65,7 +70,9 @@ export function Number<TFieldValues extends FieldValues>({
               field.onChange(rawValue);
             }
           }}
-          required={required}
+          slotProps={{
+            formHelperText: { sx: { ml: 0 } }
+          }}
           value={formatDisplayValue(field.value)}
         />
       )}
@@ -73,3 +80,4 @@ export function Number<TFieldValues extends FieldValues>({
     />
   );
 }
+

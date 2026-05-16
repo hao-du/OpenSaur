@@ -1,9 +1,9 @@
 import { Stack } from "@mui/material";
 import type { Control } from "react-hook-form";
 import { ActionButton } from "../../../components/atoms/ActionButton";
+import { DateTimePicker } from "../../../components/atoms/DateTimePicker";
 import { DropDown } from "../../../components/atoms/DropDown";
 import { Number } from "../../../components/atoms/Number";
-import { Text } from "../../../components/atoms/Text";
 import { TextArea } from "../../../components/atoms/TextArea";
 import { layoutStyles } from "../../../infrastructure/theme/theme";
 import { useSettings } from "../../settings/provider/SettingProvider";
@@ -62,13 +62,12 @@ export function CashFlowForm({ control, currencyOptions, isEditMode, isSubmittin
           required: t("transactions.validation.directionRequired")
         }}
       />
-      <Text
+      <DateTimePicker
         control={control}
         disabled={isSubmitting}
         label={t("transactions.date")}
         name="transactionDate"
         required
-        type="date"
         rules={{
           required: t("transactions.validation.dateRequired")
         }}
@@ -88,3 +87,4 @@ export function CashFlowForm({ control, currencyOptions, isEditMode, isSubmittin
     </Stack>
   );
 }
+

@@ -43,6 +43,7 @@ export function CounterpartiesFilterDrawer({
     >
       <Stack
         component="form"
+        noValidate
         onSubmit={form.handleSubmit(values => {
           onApply({
             ...values,
@@ -78,3 +79,4 @@ export function CounterpartiesFilterDrawer({
     </DrawerPanel>
   );
 }
+

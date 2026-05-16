@@ -38,8 +38,13 @@ export function DropDown<TFieldValues extends FieldValues>({
           error={fieldState.error != null}
           fullWidth
           helperText={fieldState.error?.message ?? helperText}
-          label={label}
-          required={required}
+          InputLabelProps={{
+            sx: { "& .MuiFormLabel-asterisk": { color: "error.main" } }
+          }}
+          label={required ? `${label} *` : label}
+          slotProps={{
+            formHelperText: { sx: { ml: 0 } }
+          }}
           select
         >
           {options.map(option => (
@@ -53,3 +58,4 @@ export function DropDown<TFieldValues extends FieldValues>({
     />
   );
 }
+

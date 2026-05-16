@@ -41,6 +41,7 @@ export function BanksFilterDrawer({
     >
       <Stack
         component="form"
+        noValidate
         onSubmit={form.handleSubmit(values => {
           onApply({
             ...values,
@@ -87,3 +88,4 @@ export function BanksFilterDrawer({
     </DrawerPanel>
   );
 }
+

@@ -31,6 +31,7 @@ export function CurrencyFormDrawer({
     >
       <Stack
         component="form"
+        noValidate
         onSubmit={form.handleSubmit(async values => {
           await onSubmit(values);
         })}
@@ -44,3 +45,4 @@ export function CurrencyFormDrawer({
     </DrawerPanel>
   );
 }
+

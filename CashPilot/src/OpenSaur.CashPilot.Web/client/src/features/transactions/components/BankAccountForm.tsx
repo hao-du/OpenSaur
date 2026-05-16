@@ -1,9 +1,17 @@
-import { Button, Checkbox, FormControlLabel, Grid, MenuItem, Stack, TextField } from "@mui/material";
-import { useState } from "react";
+import { Grid, Stack } from "@mui/material";
+import { useEffect, useState } from "react";
+import { useForm, useWatch } from "react-hook-form";
+import { ActionButton } from "../../../components/atoms/ActionButton";
+import { CheckBox } from "../../../components/atoms/CheckBox";
+import { DateTimePicker } from "../../../components/atoms/DateTimePicker";
+import { DropDown } from "../../../components/atoms/DropDown";
+import { Number as NumberField } from "../../../components/atoms/Number";
+import { Text } from "../../../components/atoms/Text";
+import { TextArea } from "../../../components/atoms/TextArea";
 import type { BankDto } from "../../banks/dtos/BankDto";
 import type { CurrencyDto } from "../../currencies/dtos/CurrencyDto";
 import type { SaveBankAccountDetailRequestDto, SaveBankAccountFormRequestDto } from "../dtos/TransactionDto";
-import { BankAccountTransactionForm, formatDisplayValue, handleNumberChange, type DetailEditor } from "./BankAccountTransactionForm";
+import { BankAccountTransactionForm, type DetailEditor } from "./BankAccountTransactionForm";
 
 type Props = {
   banks: BankDto[];
@@ -11,6 +19,20 @@ type Props = {
   initialValue?: SaveBankAccountFormRequestDto | null;
   onSubmit: (payload: SaveBankAccountFormRequestDto) => Promise<void>;
   submitLabel?: string;
+  isSubmitting?: boolean;
+};
+
+type HeaderValues = {
+  bankId: string;
+  currencyId: string;
+  amount: string;
+  interestRate: string;
+  startDate: string;
+  maturityDate: string;
+  status: string;
+  accountNumber: string;
+  description: string;
+  isActive: boolean;
 };
 
 function toDetailRequest(detail: DetailEditor): SaveBankAccountDetailRequestDto {
@@ -26,21 +48,21 @@ function toDetailRequest(detail: DetailEditor): SaveBankAccountDetailRequestDto 
   };
 }
 
-export function BankAccountForm({ banks, currencies, initialValue, onSubmit, submitLabel = "Create" }: Props) {
+export function BankAccountForm({ banks, currencies, initialValue, onSubmit, submitLabel = "Create", isSubmitting = false }: Props) {
   const today = new Date().toISOString().slice(0, 10);
-
-  const [header, setHeader] = useState({
-    id: initialValue?.id,
-    bankId: initialValue?.bankId ?? banks[0]?.id ?? "",
-    currencyId: initialValue?.currencyId ?? currencies[0]?.id ?? "",
-    amount: initialValue?.amount?.toString() ?? "",
-    interestRate: initialValue?.interestRate?.toString() ?? "",
-    startDate: initialValue?.startDate ?? today,
-    maturityDate: initialValue?.maturityDate ?? today,
-    status: (initialValue?.status ?? 1).toString(),
-    accountNumber: initialValue?.accountNumber ?? "",
-    description: initialValue?.description ?? "",
-    isActive: initialValue?.isActive ?? true
+  const form = useForm<HeaderValues>({
+    defaultValues: {
+      accountNumber: initialValue?.accountNumber ?? "",
+      amount: initialValue?.amount?.toString() ?? "",
+      bankId: initialValue?.bankId ?? banks[0]?.id ?? "",
+      currencyId: initialValue?.currencyId ?? currencies[0]?.id ?? "",
+      description: initialValue?.description ?? "",
+      interestRate: initialValue?.interestRate?.toString() ?? "",
+      isActive: initialValue?.isActive ?? true,
+      maturityDate: initialValue?.maturityDate ?? today,
+      startDate: initialValue?.startDate ?? today,
+      status: (initialValue?.status ?? 1).toString()
+    }
   });
 
   const [details, setDetails] = useState<DetailEditor[]>(
@@ -57,6 +79,42 @@ export function BankAccountForm({ banks, currencies, initialValue, onSubmit, sub
       isNew: false
     }))
   );
+  const startDate = useWatch({ control: form.control, name: "startDate" });
+  const maturityDate = useWatch({ control: form.control, name: "maturityDate" });
+
+  useEffect(() => {
+    form.reset({
+      accountNumber: initialValue?.accountNumber ?? "",
+      amount: initialValue?.amount?.toString() ?? "",
+      bankId: initialValue?.bankId ?? banks[0]?.id ?? "",
+      currencyId: initialValue?.currencyId ?? currencies[0]?.id ?? "",
+      description: initialValue?.description ?? "",
+      interestRate: initialValue?.interestRate?.toString() ?? "",
+      isActive: initialValue?.isActive ?? true,
+      maturityDate: initialValue?.maturityDate ?? today,
+      startDate: initialValue?.startDate ?? today,
+      status: (initialValue?.status ?? 1).toString()
+    });
+
+    setDetails(
+      (initialValue?.details ?? []).map(x => ({
+        clientKey: crypto.randomUUID(),
+        id: x.id,
+        currencyId: x.currencyId,
+        amount: x.amount.toString(),
+        direction: x.direction.toString(),
+        transactionType: x.transactionType.toString(),
+        transactionDate: x.transactionDate,
+        description: x.description ?? "",
+        isActive: x.isActive,
+        isNew: false
+      }))
+    );
+  }, [banks, currencies, form, initialValue, today]);
+
+  useEffect(() => {
+    void form.trigger(["startDate", "maturityDate"]);
+  }, [form, maturityDate, startDate]);
 
   const addNewDetail = () => {
     setDetails(prev => [...prev, {
@@ -80,64 +138,64 @@ export function BankAccountForm({ banks, currencies, initialValue, onSubmit, sub
     setDetails(prev => prev.filter(x => x.clientKey !== clientKey));
   };
 
-  const submitHandler = () => {
+  const submitHandler = async (values: HeaderValues) => {
     const finalDetails = details.map(toDetailRequest);
 
     const initialDeposit = finalDetails.find(x => x.transactionType === 1);
     if (initialDeposit) {
-      initialDeposit.amount = Number(header.amount);
-      initialDeposit.transactionDate = header.startDate;
-      initialDeposit.description = header.description.trim().length === 0 ? undefined : header.description.trim();
-      initialDeposit.currencyId = header.currencyId;
+      initialDeposit.amount = Number(values.amount);
+      initialDeposit.transactionDate = values.startDate;
+      initialDeposit.description = values.description.trim().length === 0 ? undefined : values.description.trim();
+      initialDeposit.currencyId = values.currencyId;
       initialDeposit.direction = 2;
     } else {
       finalDetails.push({
-        currencyId: header.currencyId,
-        amount: Number(header.amount),
+        currencyId: values.currencyId,
+        amount: Number(values.amount),
         direction: 2,
-        transactionDate: header.startDate,
+        transactionDate: values.startDate,
         transactionType: 1,
-        description: header.description.trim().length === 0 ? undefined : header.description.trim(),
-        isActive: header.isActive
+        description: values.description.trim().length === 0 ? undefined : values.description.trim(),
+        isActive: values.isActive
       });
     }
 
     const matured = finalDetails.find(x => x.transactionType === 3);
-    if (header.status === "2" || header.status === "3") {
+    if (values.status === "2" || values.status === "3") {
       if (matured) {
-        matured.amount = Number(header.amount);
-        matured.transactionDate = header.maturityDate;
-        matured.description = header.description.trim().length === 0 ? undefined : header.description.trim();
-        matured.currencyId = header.currencyId;
+        matured.amount = Number(values.amount);
+        matured.transactionDate = values.maturityDate;
+        matured.description = values.description.trim().length === 0 ? undefined : values.description.trim();
+        matured.currencyId = values.currencyId;
         matured.direction = 1;
         matured.isActive = true;
       } else {
         finalDetails.push({
-          currencyId: header.currencyId,
-          amount: Number(header.amount),
+          currencyId: values.currencyId,
+          amount: Number(values.amount),
           direction: 1,
-          transactionDate: header.maturityDate,
+          transactionDate: values.maturityDate,
           transactionType: 3,
-          description: header.description.trim().length === 0 ? undefined : header.description.trim(),
-          isActive: header.isActive
+          description: values.description.trim().length === 0 ? undefined : values.description.trim(),
+          isActive: values.isActive
         });
       }
     } else if (matured) {
       matured.isActive = false;
     }
 
-    onSubmit({
-      id: header.id,
-      bankId: header.bankId,
-      currencyId: header.currencyId,
-      amount: Number(header.amount),
-      interestRate: Number(header.interestRate),
-      startDate: header.startDate,
-      maturityDate: header.maturityDate,
-      status: Number(header.status),
-      accountNumber: header.accountNumber.trim().length === 0 ? undefined : header.accountNumber.trim(),
-      description: header.description.trim().length === 0 ? undefined : header.description.trim(),
-      isActive: header.isActive,
+    await onSubmit({
+      id: initialValue?.id,
+      bankId: values.bankId,
+      currencyId: values.currencyId,
+      amount: Number(values.amount),
+      interestRate: Number(values.interestRate),
+      startDate: values.startDate,
+      maturityDate: values.maturityDate,
+      status: Number(values.status),
+      accountNumber: values.accountNumber.trim().length === 0 ? undefined : values.accountNumber.trim(),
+      description: values.description.trim().length === 0 ? undefined : values.description.trim(),
+      isActive: values.isActive,
       details: finalDetails
     });
   };
@@ -146,77 +204,125 @@ export function BankAccountForm({ banks, currencies, initialValue, onSubmit, sub
     <Stack spacing={3}>
       <Grid container spacing={2}>
         <Grid size={{ xs: 12 }}>
-          <TextField label="Account Number" value={header.accountNumber} onChange={e => setHeader({ ...header, accountNumber: e.target.value })} fullWidth />
-        </Grid>
-
-        <Grid size={{ xs: 12, md: 6 }}>
-          <TextField select label="Bank" value={header.bankId} onChange={e => setHeader({ ...header, bankId: e.target.value })} fullWidth>
-            {banks.map(x => <MenuItem key={x.id} value={x.id}>{x.shortName}</MenuItem>)}
-          </TextField>
-        </Grid>
-        <Grid size={{ xs: 12, md: 6 }}>
-          <TextField 
-            label="Interest %" 
-            value={formatDisplayValue(header.interestRate)} 
-            onChange={e => handleNumberChange(e.target.value, val => setHeader({ ...header, interestRate: val }))} 
-            fullWidth 
-            autoComplete="off"
-            inputMode="decimal"
+          <Text
+            control={form.control}
+            label="Account Number"
+            name="accountNumber"
+            required
+            rules={{
+              required: "Account Number is required.",
+              validate: value => typeof value === "string" && value.trim().length > 0 ? true : "Account Number is required."
+            }}
           />
         </Grid>
 
         <Grid size={{ xs: 12, md: 6 }}>
-          <TextField 
-            label="Amount" 
-            value={formatDisplayValue(header.amount)} 
-            onChange={e => handleNumberChange(e.target.value, val => setHeader({ ...header, amount: val }))} 
-            fullWidth 
-            autoComplete="off"
-            inputMode="decimal"
+          <DropDown
+            control={form.control}
+            label="Bank"
+            name="bankId"
+            options={banks.map(x => ({ label: x.shortName, value: x.id }))}
+            required
+            rules={{ required: "Bank is required." }}
           />
         </Grid>
         <Grid size={{ xs: 12, md: 6 }}>
-          <TextField select label="Currency" value={header.currencyId} onChange={e => setHeader({ ...header, currencyId: e.target.value })} fullWidth>
-            {currencies.map(x => <MenuItem key={x.id} value={x.id}>{x.shortName}</MenuItem>)}
-          </TextField>
+          <NumberField
+            control={form.control}
+            label="Interest %"
+            name="interestRate"
+            required
+            rules={{
+              required: "Interest % is required.",
+              validate: value => {
+                if (!Number.isFinite(Number(value))) return "Interest % is invalid.";
+                return Number(value) <= 100 ? true : "Interest rate must be 100 or less.";
+              }
+            }}
+          />
         </Grid>
 
         <Grid size={{ xs: 12, md: 6 }}>
-          <TextField label="Start Date" type="date" value={header.startDate} onChange={e => setHeader({ ...header, startDate: e.target.value })} fullWidth slotProps={{ inputLabel: { shrink: true } }} />
+          <NumberField
+            control={form.control}
+            label="Amount"
+            name="amount"
+            required
+            rules={{
+              required: "Amount is required.",
+              validate: value => Number.isFinite(Number(value)) ? true : "Amount is invalid."
+            }}
+          />
         </Grid>
         <Grid size={{ xs: 12, md: 6 }}>
-          <TextField label="Maturity Date" type="date" value={header.maturityDate} onChange={e => setHeader({ ...header, maturityDate: e.target.value })} fullWidth slotProps={{ inputLabel: { shrink: true } }} />
+          <DropDown
+            control={form.control}
+            label="Currency"
+            name="currencyId"
+            options={currencies.map(x => ({ label: x.shortName, value: x.id }))}
+            required
+            rules={{ required: "Currency is required." }}
+          />
         </Grid>
 
         <Grid size={{ xs: 12, md: 6 }}>
-          <TextField select label="Status" value={header.status} onChange={e => setHeader({ ...header, status: e.target.value })} fullWidth>
-            <MenuItem value="1">Active</MenuItem>
-            <MenuItem value="2">Matured</MenuItem>
-            <MenuItem value="3">Closed Early</MenuItem>
-          </TextField>
+          <DateTimePicker
+            control={form.control}
+            label="Start Date"
+            name="startDate"
+            required
+            rules={{ required: "Start Date is required." }}
+          />
         </Grid>
-        <Grid size={{ xs: 12, md: 6 }} sx={{ display: 'flex', alignItems: 'center' }}>
-          <FormControlLabel control={<Checkbox checked={header.isActive} onChange={e => setHeader({ ...header, isActive: e.target.checked })} />} label="Is Active" />
+        <Grid size={{ xs: 12, md: 6 }}>
+          <DateTimePicker
+            control={form.control}
+            label="Maturity Date"
+            name="maturityDate"
+            required
+            rules={{
+              required: "Maturity Date is required.",
+              validate: value => value >= form.getValues("startDate") ? true : "Maturity Date must be on or after Start Date."
+            }}
+          />
+        </Grid>
+
+        <Grid size={{ xs: 12, md: 6 }}>
+          <DropDown
+            control={form.control}
+            label="Status"
+            name="status"
+            options={[
+              { label: "Active", value: "1" },
+              { label: "Matured", value: "2" },
+              { label: "Closed Early", value: "3" }
+            ]}
+            required
+            rules={{ required: "Status is required." }}
+          />
+        </Grid>
+        <Grid size={{ xs: 12, md: 6 }} sx={{ display: "flex", alignItems: "center" }}>
+          <CheckBox control={form.control} label="Is Active" name="isActive" />
         </Grid>
 
         <Grid size={{ xs: 12 }}>
-          <TextField label="Description" value={header.description} onChange={e => setHeader({ ...header, description: e.target.value })} multiline minRows={3} fullWidth />
+          <TextArea control={form.control} label="Description" name="description" minRows={3} />
         </Grid>
       </Grid>
 
       <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mt: 2 }}>
         <h3 style={{ margin: 0 }}>Transaction Details</h3>
-        <Button onClick={addNewDetail} variant="contained" color="secondary" size="small">
+        <ActionButton onClick={addNewDetail} color="secondary" size="small">
           Add Transaction
-        </Button>
+        </ActionButton>
       </Stack>
 
       <Stack spacing={2}>
-        {details.filter(d => d.transactionType === "2").map((detail) => (
+        {details.filter(d => d.transactionType === "2").map(detail => (
           <BankAccountTransactionForm
             key={detail.clientKey}
             detail={detail}
-            onAccept={(updated) => updateDetail(detail.clientKey, updated)}
+            onAccept={updated => updateDetail(detail.clientKey, updated)}
             onDelete={() => removeDetail(detail.clientKey)}
             onCancelNew={() => removeDetail(detail.clientKey)}
           />
@@ -224,13 +330,14 @@ export function BankAccountForm({ banks, currencies, initialValue, onSubmit, sub
       </Stack>
 
       <Stack direction="row" justifyContent="flex-end">
-        <Button
-          onClick={submitHandler}
-          variant="contained"
+        <ActionButton
+          onClick={() => { void form.handleSubmit(submitHandler)(); }}
+          disabled={isSubmitting}
         >
-          {submitLabel}
-        </Button>
+          {isSubmitting ? "Working..." : submitLabel}
+        </ActionButton>
       </Stack>
     </Stack>
   );
 }
+

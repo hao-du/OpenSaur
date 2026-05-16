@@ -43,6 +43,7 @@ export function CurrenciesFilterDrawer({
     >
       <Stack
         component="form"
+        noValidate
         onSubmit={form.handleSubmit(values => {
           onApply({
             ...values,
@@ -75,3 +76,4 @@ export function CurrenciesFilterDrawer({
     </DrawerPanel>
   );
 }
+

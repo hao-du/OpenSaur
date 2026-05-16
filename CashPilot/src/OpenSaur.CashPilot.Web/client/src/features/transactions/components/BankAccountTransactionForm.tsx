@@ -1,4 +1,5 @@
 import { Button, Stack, TextField } from "@mui/material";
+import { DateTimePicker } from "../../../components/atoms/DateTimePicker";
 import { useState } from "react";
 
 export type DetailEditor = {
@@ -52,8 +53,17 @@ export function BankAccountTransactionForm({
 }: Props) {
   const [isEditing, setIsEditing] = useState(detail.isNew || false);
   const [draft, setDraft] = useState<DetailEditor>(detail);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const handleAccept = () => {
+    const nextErrors: Record<string, string> = {};
+    if (draft.amount.trim().length === 0) nextErrors.amount = "Amount is required.";
+    else if (!Number.isFinite(Number(draft.amount))) nextErrors.amount = "Amount is invalid.";
+    if (draft.transactionDate.trim().length === 0) nextErrors.transactionDate = "Date is required.";
+    setErrors(nextErrors);
+    if (Object.keys(nextErrors).length > 0) {
+      return;
+    }
     onAccept({ ...draft, isNew: false });
     setIsEditing(false);
   };
@@ -89,14 +99,17 @@ export function BankAccountTransactionForm({
   return (
     <Stack spacing={2} sx={{ p: 2, border: '1px solid #e0e0e0', borderRadius: 1, bgcolor: '#fafafa' }}>
       <TextField 
+        required
         label="Amount" 
         value={formatDisplayValue(draft.amount)} 
         onChange={e => handleNumberChange(e.target.value, val => setDraft({ ...draft, amount: val }))} 
+        error={errors.amount != null}
+        helperText={errors.amount}
         fullWidth 
         autoComplete="off"
         inputMode="decimal"
       />
-      <TextField label="Date" type="date" value={draft.transactionDate} onChange={e => setDraft({ ...draft, transactionDate: e.target.value })} fullWidth slotProps={{ inputLabel: { shrink: true } }} />
+      <DateTimePicker required label="Date" value={draft.transactionDate} onChange={value => setDraft({ ...draft, transactionDate: value })} error={errors.transactionDate != null} helperText={errors.transactionDate} />
       <TextField label="Description" value={draft.description} onChange={e => setDraft({ ...draft, description: e.target.value })} multiline minRows={3} fullWidth />
       
       <Stack direction="row" justifyContent="flex-end" spacing={1} sx={{ mt: 1 }}>
@@ -106,3 +119,4 @@ export function BankAccountTransactionForm({
     </Stack>
   );
 }
+

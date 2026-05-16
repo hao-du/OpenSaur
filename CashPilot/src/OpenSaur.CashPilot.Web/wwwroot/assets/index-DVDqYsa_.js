@@ -40667,9 +40667,12 @@ function Text({ control, disabled = false, helperText, label, name, required = f
 			error: fieldState.error != null,
 			fullWidth: true,
 			helperText: fieldState.error?.message ?? helperText,
-			InputLabelProps: shouldShrinkLabel ? { shrink: true } : void 0,
-			label,
-			required,
+			InputLabelProps: {
+				...shouldShrinkLabel ? { shrink: true } : {},
+				sx: { "& .MuiFormLabel-asterisk": { color: "error.main" } }
+			},
+			label: required ? `${label} *` : label,
+			slotProps: { formHelperText: { sx: { ml: 0 } } },
 			type,
 			variant
 		}),
@@ -40688,10 +40691,11 @@ function TextArea({ control, disabled = false, helperText, label, minRows = 4, n
 			error: fieldState.error != null,
 			fullWidth: true,
 			helperText: fieldState.error?.message ?? helperText,
-			label,
+			InputLabelProps: { sx: { "& .MuiFormLabel-asterisk": { color: "error.main" } } },
+			label: required ? `${label} *` : label,
 			minRows,
 			multiline: true,
-			required
+			slotProps: { formHelperText: { sx: { ml: 0 } } }
 		}),
 		rules
 	});
@@ -40762,6 +40766,7 @@ function BankFormDrawer({ form, isEditMode, isOpen, isSubmitting, onClose, onSub
 		title: isEditMode ? "Edit bank" : "Create bank",
 		children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Stack, {
 			component: "form",
+			noValidate: true,
 			onSubmit: form.handleSubmit(async (values) => {
 				await onSubmit(values);
 			}),
@@ -40791,6 +40796,7 @@ function BanksFilterDrawer({ initialValues, isOpen, onApply, onClose }) {
 		title: "Filter banks",
 		children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Stack, {
 			component: "form",
+			noValidate: true,
 			onSubmit: form.handleSubmit((values) => {
 				onApply({
 					...values,
@@ -41169,6 +41175,7 @@ function CounterpartiesFilterDrawer({ initialValues, isOpen, onApply, onClose })
 		title: t("counterparties.filterTitle"),
 		children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Stack, {
 			component: "form",
+			noValidate: true,
 			onSubmit: form.handleSubmit((values) => {
 				onApply({
 					...values,
@@ -41369,6 +41376,7 @@ function CounterpartyFormDrawer({ form, isEditMode, isOpen, isSubmitting, onClos
 		title: isEditMode ? t("counterparties.editTitle") : t("counterparties.createTitle"),
 		children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Stack, {
 			component: "form",
+			noValidate: true,
 			onSubmit: form.handleSubmit(async (values) => {
 				await onSubmit(values);
 			}),
@@ -41612,6 +41620,7 @@ function CurrenciesFilterDrawer({ initialValues, isOpen, onApply, onClose }) {
 		title: t("currencies.filterTitle"),
 		children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Stack, {
 			component: "form",
+			noValidate: true,
 			onSubmit: form.handleSubmit((values) => {
 				onApply({
 					...values,
@@ -41812,6 +41821,7 @@ function CurrencyFormDrawer({ form, isEditMode, isOpen, isSubmitting, onClose, o
 		title: isEditMode ? t("currencies.editTitle") : t("currencies.createTitle"),
 		children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Stack, {
 			component: "form",
+			noValidate: true,
 			onSubmit: form.handleSubmit(async (values) => {
 				await onSubmit(values);
 			}),
@@ -42024,6 +42034,43 @@ function useTransfersQuery() {
 	});
 }
 //#endregion
+//#region src/components/atoms/DateTimePicker.tsx
+function DateTimePicker(props) {
+	const pickerType = props.type ?? "date";
+	if ("control" in props) {
+		const { control, disabled = false, helperText, label, name, required = false, rules } = props;
+		return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Controller, {
+			control,
+			name,
+			render: ({ field, fieldState }) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextField, {
+				...field,
+				disabled,
+				error: fieldState.error != null,
+				fullWidth: true,
+				helperText: fieldState.error?.message ?? helperText,
+				InputLabelProps: { shrink: true },
+				label: required ? `${label} *` : label,
+				slotProps: { formHelperText: { sx: { ml: 0 } } },
+				type: pickerType
+			}),
+			rules
+		});
+	}
+	const { disabled = false, error = false, helperText, label, onChange, required = false, value } = props;
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextField, {
+		disabled,
+		error,
+		fullWidth: true,
+		helperText,
+		InputLabelProps: { shrink: true },
+		label: required ? `${label} *` : label,
+		onChange: (event) => onChange(event.target.value),
+		slotProps: { formHelperText: { sx: { ml: 0 } } },
+		type: pickerType,
+		value
+	});
+}
+//#endregion
 //#region src/components/atoms/DropDown.tsx
 function DropDown({ control, disabled = false, helperText, label, name, options, required = false, rules }) {
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Controller, {
@@ -42035,8 +42082,9 @@ function DropDown({ control, disabled = false, helperText, label, name, options,
 			error: fieldState.error != null,
 			fullWidth: true,
 			helperText: fieldState.error?.message ?? helperText,
-			label,
-			required,
+			InputLabelProps: { sx: { "& .MuiFormLabel-asterisk": { color: "error.main" } } },
+			label: required ? `${label} *` : label,
+			slotProps: { formHelperText: { sx: { ml: 0 } } },
 			select: true,
 			children: options.map((option) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(MenuItem, {
 				value: option.value,
@@ -42048,7 +42096,7 @@ function DropDown({ control, disabled = false, helperText, label, name, options,
 }
 //#endregion
 //#region src/components/atoms/Number.tsx
-function Number$1({ control, disabled = false, label, name, required = false, rules }) {
+function Number$1({ control, disabled = false, helperText, label, name, required = false, rules }) {
 	const formatter = new Intl.NumberFormat("en-US", {
 		minimumFractionDigits: 0,
 		maximumFractionDigits: 2
@@ -42071,14 +42119,15 @@ function Number$1({ control, disabled = false, label, name, required = false, ru
 			disabled,
 			error: fieldState.error != null,
 			fullWidth: true,
-			helperText: fieldState.error?.message,
+			helperText: fieldState.error?.message ?? helperText,
+			InputLabelProps: { sx: { "& .MuiFormLabel-asterisk": { color: "error.main" } } },
 			inputMode: "decimal",
-			label,
+			label: required ? `${label} *` : label,
 			onChange: (e) => {
 				const rawValue = e.target.value.replace(/,/g, "");
 				if (/^\d*\.?\d*$/.test(rawValue)) field.onChange(rawValue);
 			},
-			required,
+			slotProps: { formHelperText: { sx: { ml: 0 } } },
 			value: formatDisplayValue(field.value)
 		}),
 		rules
@@ -42124,13 +42173,12 @@ function CashFlowForm({ control, currencyOptions, isEditMode, isSubmitting }) {
 				required: true,
 				rules: { required: t("transactions.validation.directionRequired") }
 			}),
-			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, {
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(DateTimePicker, {
 				control,
 				disabled: isSubmitting,
 				label: t("transactions.date"),
 				name: "transactionDate",
 				required: true,
-				type: "date",
 				rules: { required: t("transactions.validation.dateRequired") }
 			}),
 			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextArea, {
@@ -42202,6 +42250,7 @@ function CashFlowFormDrawer({ editingCashFlow, isOpen, onClose, currencies, onSu
 		width: "wide",
 		children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Stack, {
 			component: "form",
+			noValidate: true,
 			onSubmit: form.handleSubmit(async (values) => {
 				setIsSubmitting(true);
 				try {
@@ -42253,7 +42302,14 @@ var handleNumberChange = (val, onChange) => {
 function BankAccountTransactionForm({ detail, onAccept, onDelete, onCancelNew }) {
 	const [isEditing, setIsEditing] = (0, import_react.useState)(detail.isNew || false);
 	const [draft, setDraft] = (0, import_react.useState)(detail);
+	const [errors, setErrors] = (0, import_react.useState)({});
 	const handleAccept = () => {
+		const nextErrors = {};
+		if (draft.amount.trim().length === 0) nextErrors.amount = "Amount is required.";
+		else if (!Number.isFinite(Number(draft.amount))) nextErrors.amount = "Amount is invalid.";
+		if (draft.transactionDate.trim().length === 0) nextErrors.transactionDate = "Date is required.";
+		setErrors(nextErrors);
+		if (Object.keys(nextErrors).length > 0) return;
 		onAccept({
 			...draft,
 			isNew: false
@@ -42327,26 +42383,29 @@ function BankAccountTransactionForm({ detail, onAccept, onDelete, onCancelNew })
 		},
 		children: [
 			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextField, {
+				required: true,
 				label: "Amount",
 				value: formatDisplayValue(draft.amount),
 				onChange: (e) => handleNumberChange(e.target.value, (val) => setDraft({
 					...draft,
 					amount: val
 				})),
+				error: errors.amount != null,
+				helperText: errors.amount,
 				fullWidth: true,
 				autoComplete: "off",
 				inputMode: "decimal"
 			}),
-			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextField, {
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(DateTimePicker, {
+				required: true,
 				label: "Date",
-				type: "date",
 				value: draft.transactionDate,
-				onChange: (e) => setDraft({
+				onChange: (value) => setDraft({
 					...draft,
-					transactionDate: e.target.value
+					transactionDate: value
 				}),
-				fullWidth: true,
-				slotProps: { inputLabel: { shrink: true } }
+				error: errors.transactionDate != null,
+				helperText: errors.transactionDate
 			}),
 			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextField, {
 				label: "Description",
@@ -42392,21 +42451,20 @@ function toDetailRequest(detail) {
 		isActive: detail.isActive
 	};
 }
-function BankAccountForm({ banks, currencies, initialValue, onSubmit, submitLabel = "Create" }) {
+function BankAccountForm({ banks, currencies, initialValue, onSubmit, submitLabel = "Create", isSubmitting = false }) {
 	const today = (/* @__PURE__ */ new Date()).toISOString().slice(0, 10);
-	const [header, setHeader] = (0, import_react.useState)({
-		id: initialValue?.id,
+	const form = useForm({ defaultValues: {
+		accountNumber: initialValue?.accountNumber ?? "",
+		amount: initialValue?.amount?.toString() ?? "",
 		bankId: initialValue?.bankId ?? banks[0]?.id ?? "",
 		currencyId: initialValue?.currencyId ?? currencies[0]?.id ?? "",
-		amount: initialValue?.amount?.toString() ?? "",
-		interestRate: initialValue?.interestRate?.toString() ?? "",
-		startDate: initialValue?.startDate ?? today,
-		maturityDate: initialValue?.maturityDate ?? today,
-		status: (initialValue?.status ?? 1).toString(),
-		accountNumber: initialValue?.accountNumber ?? "",
 		description: initialValue?.description ?? "",
-		isActive: initialValue?.isActive ?? true
-	});
+		interestRate: initialValue?.interestRate?.toString() ?? "",
+		isActive: initialValue?.isActive ?? true,
+		maturityDate: initialValue?.maturityDate ?? today,
+		startDate: initialValue?.startDate ?? today,
+		status: (initialValue?.status ?? 1).toString()
+	} });
 	const [details, setDetails] = (0, import_react.useState)((initialValue?.details ?? []).map((x) => ({
 		clientKey: crypto.randomUUID(),
 		id: x.id,
@@ -42419,6 +42477,53 @@ function BankAccountForm({ banks, currencies, initialValue, onSubmit, submitLabe
 		isActive: x.isActive,
 		isNew: false
 	})));
+	const startDate = useWatch({
+		control: form.control,
+		name: "startDate"
+	});
+	const maturityDate = useWatch({
+		control: form.control,
+		name: "maturityDate"
+	});
+	(0, import_react.useEffect)(() => {
+		form.reset({
+			accountNumber: initialValue?.accountNumber ?? "",
+			amount: initialValue?.amount?.toString() ?? "",
+			bankId: initialValue?.bankId ?? banks[0]?.id ?? "",
+			currencyId: initialValue?.currencyId ?? currencies[0]?.id ?? "",
+			description: initialValue?.description ?? "",
+			interestRate: initialValue?.interestRate?.toString() ?? "",
+			isActive: initialValue?.isActive ?? true,
+			maturityDate: initialValue?.maturityDate ?? today,
+			startDate: initialValue?.startDate ?? today,
+			status: (initialValue?.status ?? 1).toString()
+		});
+		setDetails((initialValue?.details ?? []).map((x) => ({
+			clientKey: crypto.randomUUID(),
+			id: x.id,
+			currencyId: x.currencyId,
+			amount: x.amount.toString(),
+			direction: x.direction.toString(),
+			transactionType: x.transactionType.toString(),
+			transactionDate: x.transactionDate,
+			description: x.description ?? "",
+			isActive: x.isActive,
+			isNew: false
+		})));
+	}, [
+		banks,
+		currencies,
+		form,
+		initialValue,
+		today
+	]);
+	(0, import_react.useEffect)(() => {
+		form.trigger(["startDate", "maturityDate"]);
+	}, [
+		form,
+		maturityDate,
+		startDate
+	]);
 	const addNewDetail = () => {
 		setDetails((prev) => [...prev, {
 			clientKey: crypto.randomUUID(),
@@ -42438,54 +42543,54 @@ function BankAccountForm({ banks, currencies, initialValue, onSubmit, submitLabe
 	const removeDetail = (clientKey) => {
 		setDetails((prev) => prev.filter((x) => x.clientKey !== clientKey));
 	};
-	const submitHandler = () => {
+	const submitHandler = async (values) => {
 		const finalDetails = details.map(toDetailRequest);
 		const initialDeposit = finalDetails.find((x) => x.transactionType === 1);
 		if (initialDeposit) {
-			initialDeposit.amount = Number(header.amount);
-			initialDeposit.transactionDate = header.startDate;
-			initialDeposit.description = header.description.trim().length === 0 ? void 0 : header.description.trim();
-			initialDeposit.currencyId = header.currencyId;
+			initialDeposit.amount = Number(values.amount);
+			initialDeposit.transactionDate = values.startDate;
+			initialDeposit.description = values.description.trim().length === 0 ? void 0 : values.description.trim();
+			initialDeposit.currencyId = values.currencyId;
 			initialDeposit.direction = 2;
 		} else finalDetails.push({
-			currencyId: header.currencyId,
-			amount: Number(header.amount),
+			currencyId: values.currencyId,
+			amount: Number(values.amount),
 			direction: 2,
-			transactionDate: header.startDate,
+			transactionDate: values.startDate,
 			transactionType: 1,
-			description: header.description.trim().length === 0 ? void 0 : header.description.trim(),
-			isActive: header.isActive
+			description: values.description.trim().length === 0 ? void 0 : values.description.trim(),
+			isActive: values.isActive
 		});
 		const matured = finalDetails.find((x) => x.transactionType === 3);
-		if (header.status === "2" || header.status === "3") if (matured) {
-			matured.amount = Number(header.amount);
-			matured.transactionDate = header.maturityDate;
-			matured.description = header.description.trim().length === 0 ? void 0 : header.description.trim();
-			matured.currencyId = header.currencyId;
+		if (values.status === "2" || values.status === "3") if (matured) {
+			matured.amount = Number(values.amount);
+			matured.transactionDate = values.maturityDate;
+			matured.description = values.description.trim().length === 0 ? void 0 : values.description.trim();
+			matured.currencyId = values.currencyId;
 			matured.direction = 1;
 			matured.isActive = true;
 		} else finalDetails.push({
-			currencyId: header.currencyId,
-			amount: Number(header.amount),
+			currencyId: values.currencyId,
+			amount: Number(values.amount),
 			direction: 1,
-			transactionDate: header.maturityDate,
+			transactionDate: values.maturityDate,
 			transactionType: 3,
-			description: header.description.trim().length === 0 ? void 0 : header.description.trim(),
-			isActive: header.isActive
+			description: values.description.trim().length === 0 ? void 0 : values.description.trim(),
+			isActive: values.isActive
 		});
 		else if (matured) matured.isActive = false;
-		onSubmit({
-			id: header.id,
-			bankId: header.bankId,
-			currencyId: header.currencyId,
-			amount: Number(header.amount),
-			interestRate: Number(header.interestRate),
-			startDate: header.startDate,
-			maturityDate: header.maturityDate,
-			status: Number(header.status),
-			accountNumber: header.accountNumber.trim().length === 0 ? void 0 : header.accountNumber.trim(),
-			description: header.description.trim().length === 0 ? void 0 : header.description.trim(),
-			isActive: header.isActive,
+		await onSubmit({
+			id: initialValue?.id,
+			bankId: values.bankId,
+			currencyId: values.currencyId,
+			amount: Number(values.amount),
+			interestRate: Number(values.interestRate),
+			startDate: values.startDate,
+			maturityDate: values.maturityDate,
+			status: Number(values.status),
+			accountNumber: values.accountNumber.trim().length === 0 ? void 0 : values.accountNumber.trim(),
+			description: values.description.trim().length === 0 ? void 0 : values.description.trim(),
+			isActive: values.isActive,
 			details: finalDetails
 		});
 	};
@@ -42498,14 +42603,15 @@ function BankAccountForm({ banks, currencies, initialValue, onSubmit, submitLabe
 				children: [
 					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Grid, {
 						size: { xs: 12 },
-						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextField, {
+						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, {
+							control: form.control,
 							label: "Account Number",
-							value: header.accountNumber,
-							onChange: (e) => setHeader({
-								...header,
-								accountNumber: e.target.value
-							}),
-							fullWidth: true
+							name: "accountNumber",
+							required: true,
+							rules: {
+								required: "Account Number is required.",
+								validate: (value) => typeof value === "string" && value.trim().length > 0 ? true : "Account Number is required."
+							}
 						})
 					}),
 					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Grid, {
@@ -42513,19 +42619,16 @@ function BankAccountForm({ banks, currencies, initialValue, onSubmit, submitLabe
 							xs: 12,
 							md: 6
 						},
-						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextField, {
-							select: true,
+						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(DropDown, {
+							control: form.control,
 							label: "Bank",
-							value: header.bankId,
-							onChange: (e) => setHeader({
-								...header,
-								bankId: e.target.value
-							}),
-							fullWidth: true,
-							children: banks.map((x) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(MenuItem, {
-								value: x.id,
-								children: x.shortName
-							}, x.id))
+							name: "bankId",
+							options: banks.map((x) => ({
+								label: x.shortName,
+								value: x.id
+							})),
+							required: true,
+							rules: { required: "Bank is required." }
 						})
 					}),
 					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Grid, {
@@ -42533,16 +42636,18 @@ function BankAccountForm({ banks, currencies, initialValue, onSubmit, submitLabe
 							xs: 12,
 							md: 6
 						},
-						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextField, {
+						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Number$1, {
+							control: form.control,
 							label: "Interest %",
-							value: formatDisplayValue(header.interestRate),
-							onChange: (e) => handleNumberChange(e.target.value, (val) => setHeader({
-								...header,
-								interestRate: val
-							})),
-							fullWidth: true,
-							autoComplete: "off",
-							inputMode: "decimal"
+							name: "interestRate",
+							required: true,
+							rules: {
+								required: "Interest % is required.",
+								validate: (value) => {
+									if (!Number.isFinite(Number(value))) return "Interest % is invalid.";
+									return Number(value) <= 100 ? true : "Interest rate must be 100 or less.";
+								}
+							}
 						})
 					}),
 					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Grid, {
@@ -42550,16 +42655,15 @@ function BankAccountForm({ banks, currencies, initialValue, onSubmit, submitLabe
 							xs: 12,
 							md: 6
 						},
-						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextField, {
+						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Number$1, {
+							control: form.control,
 							label: "Amount",
-							value: formatDisplayValue(header.amount),
-							onChange: (e) => handleNumberChange(e.target.value, (val) => setHeader({
-								...header,
-								amount: val
-							})),
-							fullWidth: true,
-							autoComplete: "off",
-							inputMode: "decimal"
+							name: "amount",
+							required: true,
+							rules: {
+								required: "Amount is required.",
+								validate: (value) => Number.isFinite(Number(value)) ? true : "Amount is invalid."
+							}
 						})
 					}),
 					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Grid, {
@@ -42567,19 +42671,16 @@ function BankAccountForm({ banks, currencies, initialValue, onSubmit, submitLabe
 							xs: 12,
 							md: 6
 						},
-						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextField, {
-							select: true,
+						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(DropDown, {
+							control: form.control,
 							label: "Currency",
-							value: header.currencyId,
-							onChange: (e) => setHeader({
-								...header,
-								currencyId: e.target.value
-							}),
-							fullWidth: true,
-							children: currencies.map((x) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(MenuItem, {
-								value: x.id,
-								children: x.shortName
-							}, x.id))
+							name: "currencyId",
+							options: currencies.map((x) => ({
+								label: x.shortName,
+								value: x.id
+							})),
+							required: true,
+							rules: { required: "Currency is required." }
 						})
 					}),
 					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Grid, {
@@ -42587,16 +42688,12 @@ function BankAccountForm({ banks, currencies, initialValue, onSubmit, submitLabe
 							xs: 12,
 							md: 6
 						},
-						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextField, {
+						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(DateTimePicker, {
+							control: form.control,
 							label: "Start Date",
-							type: "date",
-							value: header.startDate,
-							onChange: (e) => setHeader({
-								...header,
-								startDate: e.target.value
-							}),
-							fullWidth: true,
-							slotProps: { inputLabel: { shrink: true } }
+							name: "startDate",
+							required: true,
+							rules: { required: "Start Date is required." }
 						})
 					}),
 					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Grid, {
@@ -42604,16 +42701,15 @@ function BankAccountForm({ banks, currencies, initialValue, onSubmit, submitLabe
 							xs: 12,
 							md: 6
 						},
-						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextField, {
+						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(DateTimePicker, {
+							control: form.control,
 							label: "Maturity Date",
-							type: "date",
-							value: header.maturityDate,
-							onChange: (e) => setHeader({
-								...header,
-								maturityDate: e.target.value
-							}),
-							fullWidth: true,
-							slotProps: { inputLabel: { shrink: true } }
+							name: "maturityDate",
+							required: true,
+							rules: {
+								required: "Maturity Date is required.",
+								validate: (value) => value >= form.getValues("startDate") ? true : "Maturity Date must be on or after Start Date."
+							}
 						})
 					}),
 					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Grid, {
@@ -42621,29 +42717,26 @@ function BankAccountForm({ banks, currencies, initialValue, onSubmit, submitLabe
 							xs: 12,
 							md: 6
 						},
-						children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(TextField, {
-							select: true,
+						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(DropDown, {
+							control: form.control,
 							label: "Status",
-							value: header.status,
-							onChange: (e) => setHeader({
-								...header,
-								status: e.target.value
-							}),
-							fullWidth: true,
-							children: [
-								/* @__PURE__ */ (0, import_jsx_runtime.jsx)(MenuItem, {
-									value: "1",
-									children: "Active"
-								}),
-								/* @__PURE__ */ (0, import_jsx_runtime.jsx)(MenuItem, {
-									value: "2",
-									children: "Matured"
-								}),
-								/* @__PURE__ */ (0, import_jsx_runtime.jsx)(MenuItem, {
-									value: "3",
-									children: "Closed Early"
-								})
-							]
+							name: "status",
+							options: [
+								{
+									label: "Active",
+									value: "1"
+								},
+								{
+									label: "Matured",
+									value: "2"
+								},
+								{
+									label: "Closed Early",
+									value: "3"
+								}
+							],
+							required: true,
+							rules: { required: "Status is required." }
 						})
 					}),
 					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Grid, {
@@ -42655,29 +42748,19 @@ function BankAccountForm({ banks, currencies, initialValue, onSubmit, submitLabe
 							display: "flex",
 							alignItems: "center"
 						},
-						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(FormControlLabel, {
-							control: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Checkbox, {
-								checked: header.isActive,
-								onChange: (e) => setHeader({
-									...header,
-									isActive: e.target.checked
-								})
-							}),
-							label: "Is Active"
+						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(CheckBox, {
+							control: form.control,
+							label: "Is Active",
+							name: "isActive"
 						})
 					}),
 					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Grid, {
 						size: { xs: 12 },
-						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextField, {
+						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextArea, {
+							control: form.control,
 							label: "Description",
-							value: header.description,
-							onChange: (e) => setHeader({
-								...header,
-								description: e.target.value
-							}),
-							multiline: true,
-							minRows: 3,
-							fullWidth: true
+							name: "description",
+							minRows: 3
 						})
 					})
 				]
@@ -42690,9 +42773,8 @@ function BankAccountForm({ banks, currencies, initialValue, onSubmit, submitLabe
 				children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h3", {
 					style: { margin: 0 },
 					children: "Transaction Details"
-				}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
+				}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ActionButton, {
 					onClick: addNewDetail,
-					variant: "contained",
 					color: "secondary",
 					size: "small",
 					children: "Add Transaction"
@@ -42710,10 +42792,12 @@ function BankAccountForm({ banks, currencies, initialValue, onSubmit, submitLabe
 			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Stack, {
 				direction: "row",
 				justifyContent: "flex-end",
-				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
-					onClick: submitHandler,
-					variant: "contained",
-					children: submitLabel
+				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ActionButton, {
+					onClick: () => {
+						form.handleSubmit(submitHandler)();
+					},
+					disabled: isSubmitting,
+					children: isSubmitting ? "Working..." : submitLabel
 				})
 			})
 		]
@@ -42722,6 +42806,7 @@ function BankAccountForm({ banks, currencies, initialValue, onSubmit, submitLabe
 //#endregion
 //#region src/features/transactions/components/BankAccountFormDrawer.tsx
 function BankAccountFormDrawer({ editingBankAccount, isOpen, onClose, banks, currencies, onSave }) {
+	const [isSubmitting, setIsSubmitting] = (0, import_react.useState)(false);
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(DrawerPanel, {
 		isOpen,
 		onClose,
@@ -42731,7 +42816,16 @@ function BankAccountFormDrawer({ editingBankAccount, isOpen, onClose, banks, cur
 			banks,
 			currencies,
 			initialValue: editingBankAccount,
-			onSubmit: onSave,
+			onSubmit: async (payload) => {
+				setIsSubmitting(true);
+				try {
+					await onSave(payload);
+					onClose();
+				} finally {
+					setIsSubmitting(false);
+				}
+			},
+			isSubmitting,
 			submitLabel: editingBankAccount == null ? "Create" : "Save"
 		})
 	});
@@ -42740,37 +42834,47 @@ function BankAccountFormDrawer({ editingBankAccount, isOpen, onClose, banks, cur
 //#region src/features/transactions/components/TransferHeaderForm.tsx
 function TransferHeaderForm({ counterparties, currencies, onSubmit }) {
 	const today = (/* @__PURE__ */ new Date()).toISOString().slice(0, 10);
-	const [model, setModel] = (0, import_react.useState)({
-		counterpartyId: counterparties[0]?.id ?? "",
-		transferType: "1",
-		currencyId: currencies[0]?.id ?? "",
+	const form = useForm({ defaultValues: {
 		amount: "",
-		transactionDate: today,
+		counterpartyId: counterparties[0]?.id ?? "",
+		currencyId: currencies[0]?.id ?? "",
+		description: "",
 		dueDate: "",
-		description: ""
-	});
+		transactionDate: today,
+		transferType: "1"
+	} });
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Grid, {
 		container: true,
 		spacing: 2,
+		component: "form",
+		noValidate: true,
+		onSubmit: form.handleSubmit(async (values) => {
+			await onSubmit({
+				amount: Number(values.amount),
+				counterpartyId: values.counterpartyId,
+				currencyId: values.currencyId,
+				description: values.description.trim().length === 0 ? void 0 : values.description.trim(),
+				dueDate: values.dueDate.trim().length === 0 ? void 0 : values.dueDate,
+				transactionDate: values.transactionDate,
+				transferType: Number(values.transferType)
+			});
+		}),
 		children: [
 			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Grid, {
 				size: {
 					xs: 12,
 					md: 3
 				},
-				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextField, {
-					select: true,
+				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(DropDown, {
+					control: form.control,
 					label: "Counterparty",
-					value: model.counterpartyId,
-					onChange: (e) => setModel({
-						...model,
-						counterpartyId: e.target.value
-					}),
-					fullWidth: true,
-					children: counterparties.map((x) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(MenuItem, {
-						value: x.id,
-						children: x.fullName
-					}, x.id))
+					name: "counterpartyId",
+					options: counterparties.map((x) => ({
+						label: x.fullName,
+						value: x.id
+					})),
+					required: true,
+					rules: { required: "Counterparty is required." }
 				})
 			}),
 			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Grid, {
@@ -42778,33 +42882,30 @@ function TransferHeaderForm({ counterparties, currencies, onSubmit }) {
 					xs: 12,
 					md: 2
 				},
-				children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(TextField, {
-					select: true,
+				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(DropDown, {
+					control: form.control,
 					label: "Type",
-					value: model.transferType,
-					onChange: (e) => setModel({
-						...model,
-						transferType: e.target.value
-					}),
-					fullWidth: true,
-					children: [
-						/* @__PURE__ */ (0, import_jsx_runtime.jsx)(MenuItem, {
-							value: "1",
-							children: "Lend"
-						}),
-						/* @__PURE__ */ (0, import_jsx_runtime.jsx)(MenuItem, {
-							value: "2",
-							children: "Borrow"
-						}),
-						/* @__PURE__ */ (0, import_jsx_runtime.jsx)(MenuItem, {
-							value: "3",
-							children: "Give"
-						}),
-						/* @__PURE__ */ (0, import_jsx_runtime.jsx)(MenuItem, {
-							value: "4",
-							children: "Receive"
-						})
-					]
+					name: "transferType",
+					options: [
+						{
+							label: "Lend",
+							value: "1"
+						},
+						{
+							label: "Borrow",
+							value: "2"
+						},
+						{
+							label: "Give",
+							value: "3"
+						},
+						{
+							label: "Receive",
+							value: "4"
+						}
+					],
+					required: true,
+					rules: { required: "Type is required." }
 				})
 			}),
 			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Grid, {
@@ -42812,19 +42913,16 @@ function TransferHeaderForm({ counterparties, currencies, onSubmit }) {
 					xs: 12,
 					md: 2
 				},
-				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextField, {
-					select: true,
+				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(DropDown, {
+					control: form.control,
 					label: "Currency",
-					value: model.currencyId,
-					onChange: (e) => setModel({
-						...model,
-						currencyId: e.target.value
-					}),
-					fullWidth: true,
-					children: currencies.map((x) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(MenuItem, {
-						value: x.id,
-						children: x.shortName
-					}, x.id))
+					name: "currencyId",
+					options: currencies.map((x) => ({
+						label: x.shortName,
+						value: x.id
+					})),
+					required: true,
+					rules: { required: "Currency is required." }
 				})
 			}),
 			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Grid, {
@@ -42832,14 +42930,12 @@ function TransferHeaderForm({ counterparties, currencies, onSubmit }) {
 					xs: 12,
 					md: 2
 				},
-				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextField, {
+				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Number$1, {
+					control: form.control,
 					label: "Amount",
-					value: model.amount,
-					onChange: (e) => setModel({
-						...model,
-						amount: e.target.value
-					}),
-					fullWidth: true
+					name: "amount",
+					required: true,
+					rules: { required: "Amount is required." }
 				})
 			}),
 			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Grid, {
@@ -42847,20 +42943,46 @@ function TransferHeaderForm({ counterparties, currencies, onSubmit }) {
 					xs: 12,
 					md: 3
 				},
-				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
+				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ActionButton, {
 					sx: { height: "100%" },
 					fullWidth: true,
-					variant: "contained",
-					onClick: () => onSubmit({
-						counterpartyId: model.counterpartyId,
-						transferType: Number(model.transferType),
-						currencyId: model.currencyId,
-						amount: Number(model.amount),
-						transactionDate: model.transactionDate,
-						dueDate: model.dueDate || void 0,
-						description: model.description
-					}),
+					type: "submit",
 					children: "Create Transfer"
+				})
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Grid, {
+				size: {
+					xs: 12,
+					md: 4
+				},
+				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(DateTimePicker, {
+					control: form.control,
+					label: "Transaction Date",
+					name: "transactionDate",
+					required: true,
+					rules: { required: "Transaction Date is required." }
+				})
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Grid, {
+				size: {
+					xs: 12,
+					md: 4
+				},
+				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(DateTimePicker, {
+					control: form.control,
+					label: "Due Date",
+					name: "dueDate"
+				})
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Grid, {
+				size: {
+					xs: 12,
+					md: 4
+				},
+				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, {
+					control: form.control,
+					label: "Description",
+					name: "description"
 				})
 			})
 		]
@@ -42870,17 +42992,27 @@ function TransferHeaderForm({ counterparties, currencies, onSubmit }) {
 //#region src/features/transactions/components/TransferMovementForm.tsx
 function TransferMovementForm({ transfers, currencies, initialValue, submitLabel = "Add Transaction", onSubmit }) {
 	const today = (/* @__PURE__ */ new Date()).toISOString().slice(0, 10);
-	const [model, setModel] = (0, import_react.useState)({
-		transferId: transfers[0]?.id ?? "",
-		currencyId: currencies[0]?.id ?? "",
+	const form = useForm({ defaultValues: {
 		amount: "",
+		currencyId: currencies[0]?.id ?? "",
+		description: "",
 		direction: "1",
 		transactionDate: today,
-		description: ""
-	});
+		transferId: transfers[0]?.id ?? ""
+	} });
 	(0, import_react.useEffect)(() => {
-		if (initialValue == null) return;
-		setModel({
+		if (initialValue == null) {
+			form.reset({
+				amount: "",
+				currencyId: currencies[0]?.id ?? "",
+				description: "",
+				direction: "1",
+				transactionDate: today,
+				transferId: transfers[0]?.id ?? ""
+			});
+			return;
+		}
+		form.reset({
 			amount: initialValue.amount.toString(),
 			currencyId: initialValue.currencyId,
 			description: initialValue.description ?? "",
@@ -42888,29 +43020,44 @@ function TransferMovementForm({ transfers, currencies, initialValue, submitLabel
 			transactionDate: initialValue.transactionDate,
 			transferId: initialValue.transferId
 		});
-	}, [initialValue]);
+	}, [
+		currencies,
+		form,
+		initialValue,
+		today,
+		transfers
+	]);
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Grid, {
 		container: true,
 		spacing: 2,
+		component: "form",
+		noValidate: true,
+		onSubmit: form.handleSubmit(async (values) => {
+			await onSubmit({
+				amount: Number(values.amount),
+				currencyId: values.currencyId,
+				description: values.description.trim().length === 0 ? void 0 : values.description.trim(),
+				direction: Number(values.direction),
+				transactionDate: values.transactionDate,
+				transferId: values.transferId
+			});
+		}),
 		children: [
 			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Grid, {
 				size: {
 					xs: 12,
 					md: 4
 				},
-				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextField, {
-					select: true,
+				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(DropDown, {
+					control: form.control,
 					label: "Transfer",
-					value: model.transferId,
-					onChange: (e) => setModel({
-						...model,
-						transferId: e.target.value
-					}),
-					fullWidth: true,
-					children: transfers.map((x) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(MenuItem, {
-						value: x.id,
-						children: `${x.counterpartyName} - ${x.transferType} - ${x.amount} - ${x.status} (remaining ${x.remainingAmount})`
-					}, x.id))
+					name: "transferId",
+					options: transfers.map((x) => ({
+						label: `${x.counterpartyName} - ${x.transferType} - ${x.amount} - ${x.status} (remaining ${x.remainingAmount})`,
+						value: x.id
+					})),
+					required: true,
+					rules: { required: "Transfer is required." }
 				})
 			}),
 			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Grid, {
@@ -42918,19 +43065,16 @@ function TransferMovementForm({ transfers, currencies, initialValue, submitLabel
 					xs: 12,
 					md: 2
 				},
-				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextField, {
-					select: true,
+				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(DropDown, {
+					control: form.control,
 					label: "Currency",
-					value: model.currencyId,
-					onChange: (e) => setModel({
-						...model,
-						currencyId: e.target.value
-					}),
-					fullWidth: true,
-					children: currencies.map((x) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(MenuItem, {
-						value: x.id,
-						children: x.shortName
-					}, x.id))
+					name: "currencyId",
+					options: currencies.map((x) => ({
+						label: x.shortName,
+						value: x.id
+					})),
+					required: true,
+					rules: { required: "Currency is required." }
 				})
 			}),
 			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Grid, {
@@ -42938,14 +43082,12 @@ function TransferMovementForm({ transfers, currencies, initialValue, submitLabel
 					xs: 12,
 					md: 2
 				},
-				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextField, {
+				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Number$1, {
+					control: form.control,
 					label: "Amount",
-					value: model.amount,
-					onChange: (e) => setModel({
-						...model,
-						amount: e.target.value
-					}),
-					fullWidth: true
+					name: "amount",
+					required: true,
+					rules: { required: "Amount is required." }
 				})
 			}),
 			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Grid, {
@@ -42953,22 +43095,19 @@ function TransferMovementForm({ transfers, currencies, initialValue, submitLabel
 					xs: 12,
 					md: 2
 				},
-				children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(TextField, {
-					select: true,
+				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(DropDown, {
+					control: form.control,
 					label: "Direction",
-					value: model.direction,
-					onChange: (e) => setModel({
-						...model,
-						direction: e.target.value
-					}),
-					fullWidth: true,
-					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(MenuItem, {
-						value: "1",
-						children: "In"
-					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(MenuItem, {
-						value: "2",
-						children: "Out"
-					})]
+					name: "direction",
+					options: [{
+						label: "In",
+						value: "1"
+					}, {
+						label: "Out",
+						value: "2"
+					}],
+					required: true,
+					rules: { required: "Direction is required." }
 				})
 			}),
 			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Grid, {
@@ -42976,19 +43115,36 @@ function TransferMovementForm({ transfers, currencies, initialValue, submitLabel
 					xs: 12,
 					md: 2
 				},
-				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
+				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ActionButton, {
 					sx: { height: "100%" },
 					fullWidth: true,
 					variant: "outlined",
-					onClick: () => onSubmit({
-						transferId: model.transferId,
-						currencyId: model.currencyId,
-						amount: Number(model.amount),
-						direction: Number(model.direction),
-						transactionDate: model.transactionDate,
-						description: model.description
-					}),
+					type: "submit",
 					children: submitLabel
+				})
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Grid, {
+				size: {
+					xs: 12,
+					md: 3
+				},
+				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(DateTimePicker, {
+					control: form.control,
+					label: "Date",
+					name: "transactionDate",
+					required: true,
+					rules: { required: "Date is required." }
+				})
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Grid, {
+				size: {
+					xs: 12,
+					md: 9
+				},
+				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, {
+					control: form.control,
+					label: "Description",
+					name: "description"
 				})
 			})
 		]
@@ -43037,18 +43193,30 @@ function TransferFormDrawer({ editingMovement, isOpen, onClose, counterparties, 
 //#endregion
 //#region src/features/transactions/components/ExchangeForm.tsx
 function ExchangeForm({ currencies, initialValue, submitLabel = "Create Exchange", onSubmit }) {
-	const [model, setModel] = (0, import_react.useState)({
+	const today = (/* @__PURE__ */ new Date()).toISOString().slice(0, 10);
+	const form = useForm({ defaultValues: {
+		description: "",
+		exchangeDate: today,
 		exchangeRate: "",
-		exchangeDate: (/* @__PURE__ */ new Date()).toISOString().slice(0, 10),
-		outCurrencyId: currencies[0]?.id ?? "",
-		outAmount: "",
-		inCurrencyId: currencies[0]?.id ?? "",
 		inAmount: "",
-		description: ""
-	});
+		inCurrencyId: currencies[0]?.id ?? "",
+		outAmount: "",
+		outCurrencyId: currencies[0]?.id ?? ""
+	} });
 	(0, import_react.useEffect)(() => {
-		if (initialValue == null) return;
-		setModel({
+		if (initialValue == null) {
+			form.reset({
+				description: "",
+				exchangeDate: today,
+				exchangeRate: "",
+				inAmount: "",
+				inCurrencyId: currencies[0]?.id ?? "",
+				outAmount: "",
+				outCurrencyId: currencies[0]?.id ?? ""
+			});
+			return;
+		}
+		form.reset({
 			description: initialValue.description ?? "",
 			exchangeDate: initialValue.exchangeDate,
 			exchangeRate: initialValue.exchangeRate.toString(),
@@ -43057,85 +43225,139 @@ function ExchangeForm({ currencies, initialValue, submitLabel = "Create Exchange
 			outAmount: initialValue.outAmount.toString(),
 			outCurrencyId: initialValue.outCurrencyId
 		});
-	}, [initialValue]);
-	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Stack, {
-		direction: {
-			xs: "column",
-			md: "row"
-		},
+	}, [
+		currencies,
+		form,
+		initialValue,
+		today
+	]);
+	const currencyOptions = currencies.map((x) => ({
+		label: x.shortName,
+		value: x.id
+	}));
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Grid, {
+		container: true,
 		spacing: 2,
+		component: "form",
+		noValidate: true,
+		onSubmit: form.handleSubmit(async (values) => {
+			await onSubmit({
+				description: values.description.trim().length === 0 ? void 0 : values.description.trim(),
+				exchangeDate: values.exchangeDate,
+				exchangeRate: Number(values.exchangeRate),
+				inLeg: {
+					amount: Number(values.inAmount),
+					currencyId: values.inCurrencyId
+				},
+				outLeg: {
+					amount: Number(values.outAmount),
+					currencyId: values.outCurrencyId
+				}
+			});
+		}),
 		children: [
-			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextField, {
-				label: "Exchange Rate",
-				value: model.exchangeRate,
-				onChange: (e) => setModel({
-					...model,
-					exchangeRate: e.target.value
-				}),
-				fullWidth: true
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Grid, {
+				size: {
+					xs: 12,
+					md: 2
+				},
+				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Number$1, {
+					control: form.control,
+					label: "Exchange Rate",
+					name: "exchangeRate",
+					required: true,
+					rules: { required: "Exchange Rate is required." }
+				})
 			}),
-			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextField, {
-				select: true,
-				label: "Out Currency",
-				value: model.outCurrencyId,
-				onChange: (e) => setModel({
-					...model,
-					outCurrencyId: e.target.value
-				}),
-				fullWidth: true,
-				children: currencies.map((x) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(MenuItem, {
-					value: x.id,
-					children: x.shortName
-				}, x.id))
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Grid, {
+				size: {
+					xs: 12,
+					md: 2
+				},
+				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(DropDown, {
+					control: form.control,
+					label: "Out Currency",
+					name: "outCurrencyId",
+					options: currencyOptions,
+					required: true,
+					rules: { required: "Out Currency is required." }
+				})
 			}),
-			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextField, {
-				label: "Out Amount",
-				value: model.outAmount,
-				onChange: (e) => setModel({
-					...model,
-					outAmount: e.target.value
-				}),
-				fullWidth: true
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Grid, {
+				size: {
+					xs: 12,
+					md: 2
+				},
+				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Number$1, {
+					control: form.control,
+					label: "Out Amount",
+					name: "outAmount",
+					required: true,
+					rules: { required: "Out Amount is required." }
+				})
 			}),
-			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextField, {
-				select: true,
-				label: "In Currency",
-				value: model.inCurrencyId,
-				onChange: (e) => setModel({
-					...model,
-					inCurrencyId: e.target.value
-				}),
-				fullWidth: true,
-				children: currencies.map((x) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(MenuItem, {
-					value: x.id,
-					children: x.shortName
-				}, x.id))
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Grid, {
+				size: {
+					xs: 12,
+					md: 2
+				},
+				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(DropDown, {
+					control: form.control,
+					label: "In Currency",
+					name: "inCurrencyId",
+					options: currencyOptions,
+					required: true,
+					rules: { required: "In Currency is required." }
+				})
 			}),
-			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextField, {
-				label: "In Amount",
-				value: model.inAmount,
-				onChange: (e) => setModel({
-					...model,
-					inAmount: e.target.value
-				}),
-				fullWidth: true
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Grid, {
+				size: {
+					xs: 12,
+					md: 2
+				},
+				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Number$1, {
+					control: form.control,
+					label: "In Amount",
+					name: "inAmount",
+					required: true,
+					rules: { required: "In Amount is required." }
+				})
 			}),
-			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
-				variant: "contained",
-				onClick: () => onSubmit({
-					exchangeRate: Number(model.exchangeRate),
-					exchangeDate: model.exchangeDate,
-					description: model.description,
-					outLeg: {
-						currencyId: model.outCurrencyId,
-						amount: Number(model.outAmount)
-					},
-					inLeg: {
-						currencyId: model.inCurrencyId,
-						amount: Number(model.inAmount)
-					}
-				}),
-				children: submitLabel
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Grid, {
+				size: {
+					xs: 12,
+					md: 2
+				},
+				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ActionButton, {
+					sx: { height: "100%" },
+					fullWidth: true,
+					type: "submit",
+					children: submitLabel
+				})
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Grid, {
+				size: {
+					xs: 12,
+					md: 3
+				},
+				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(DateTimePicker, {
+					control: form.control,
+					label: "Exchange Date",
+					name: "exchangeDate",
+					required: true,
+					rules: { required: "Exchange Date is required." }
+				})
+			}),
+			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Grid, {
+				size: {
+					xs: 12,
+					md: 9
+				},
+				children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Text, {
+					control: form.control,
+					label: "Description",
+					name: "description"
+				})
 			})
 		]
 	});
@@ -44601,4 +44823,4 @@ import_client.createRoot(document.getElementById("root")).render(/* @__PURE__ */
 }) }));
 //#endregion
 
-//# sourceMappingURL=index-Q9JLJTiA.js.map
+//# sourceMappingURL=index-DVDqYsa_.js.map
