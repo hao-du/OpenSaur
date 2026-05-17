@@ -8,6 +8,7 @@ import { LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { AuthSessionProvider } from "./features/auth/hooks/AuthContext";
 import { SettingProvider } from "./features/settings/provider/SettingProvider";
+import "./infrastructure/styles/transactionType.css";
 
 const queryClient = new QueryClient();
 

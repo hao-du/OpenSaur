@@ -46,7 +46,7 @@ public static class CreateBankAccountFormHandler
         bankAccount.Status = (BankAccountStatus)request.Status;
         bankAccount.IsActive = request.IsActive;
 
-        foreach (var detail in request.Details)
+        foreach (var detail in request.Details.Where(x => x.TransactionType == (byte)BankAccountMovementType.InterestPayment))
         {
             var movement = new BankAccountTransaction
             {
@@ -66,6 +66,47 @@ public static class CreateBankAccountFormHandler
                 }
             };
             dbContext.BankAccountTransactions.Add(movement);
+        }
+
+        // System-managed movement: InitialDeposit always exists and mirrors header amount/start date.
+        dbContext.BankAccountTransactions.Add(new BankAccountTransaction
+        {
+            BankAccount = bankAccount,
+            Description = request.Description?.Trim() ?? string.Empty,
+            IsActive = request.IsActive,
+            TransactionType = BankAccountMovementType.InitialDeposit,
+            Transaction = new Transaction
+            {
+                OwnerId = currentUserId,
+                Amount = request.Amount,
+                CurrencyId = request.CurrencyId,
+                Direction = TransactionDirection.Out,
+                TransactionDate = request.StartDate,
+                Description = request.Description?.Trim() ?? string.Empty,
+                IsActive = request.IsActive
+            }
+        });
+
+        // System-managed movement: PrincipalReturn exists only when status is Matured/ClosedEarly.
+        if (request.Status is (byte)BankAccountStatus.Matured or (byte)BankAccountStatus.ClosedEarly)
+        {
+            dbContext.BankAccountTransactions.Add(new BankAccountTransaction
+            {
+                BankAccount = bankAccount,
+                Description = request.Description?.Trim() ?? string.Empty,
+                IsActive = request.IsActive,
+                TransactionType = BankAccountMovementType.PrincipalReturn,
+                Transaction = new Transaction
+                {
+                    OwnerId = currentUserId,
+                    Amount = request.Amount,
+                    CurrencyId = request.CurrencyId,
+                    Direction = TransactionDirection.In,
+                    TransactionDate = request.MaturityDate,
+                    Description = request.Description?.Trim() ?? string.Empty,
+                    IsActive = request.IsActive
+                }
+            });
         }
 
         await dbContext.SaveChangesAsync(cancellationToken);

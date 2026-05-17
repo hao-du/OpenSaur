@@ -2,7 +2,6 @@ import { Grid, Stack } from "@mui/material";
 import { useEffect, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { ActionButton } from "../../../components/atoms/ActionButton";
-import { CheckBox } from "../../../components/atoms/CheckBox";
 import { DateTimePicker } from "../../../components/atoms/DateTimePicker";
 import { DropDown } from "../../../components/atoms/DropDown";
 import { Number as NumberField } from "../../../components/atoms/Number";
@@ -32,7 +31,6 @@ type HeaderValues = {
   status: string;
   accountNumber: string;
   description: string;
-  isActive: boolean;
 };
 
 function toDetailRequest(detail: DetailEditor): SaveBankAccountDetailRequestDto {
@@ -58,7 +56,6 @@ export function BankAccountForm({ banks, currencies, initialValue, onSubmit, sub
       currencyId: initialValue?.currencyId ?? currencies[0]?.id ?? "",
       description: initialValue?.description ?? "",
       interestRate: initialValue?.interestRate?.toString() ?? "",
-      isActive: initialValue?.isActive ?? true,
       maturityDate: initialValue?.maturityDate ?? today,
       startDate: initialValue?.startDate ?? today,
       status: (initialValue?.status ?? 1).toString()
@@ -90,7 +87,6 @@ export function BankAccountForm({ banks, currencies, initialValue, onSubmit, sub
       currencyId: initialValue?.currencyId ?? currencies[0]?.id ?? "",
       description: initialValue?.description ?? "",
       interestRate: initialValue?.interestRate?.toString() ?? "",
-      isActive: initialValue?.isActive ?? true,
       maturityDate: initialValue?.maturityDate ?? today,
       startDate: initialValue?.startDate ?? today,
       status: (initialValue?.status ?? 1).toString()
@@ -139,6 +135,7 @@ export function BankAccountForm({ banks, currencies, initialValue, onSubmit, sub
   };
 
   const submitHandler = async (values: HeaderValues) => {
+    const headerIsActive = initialValue?.isActive ?? true;
     const finalDetails = details.map(toDetailRequest);
 
     const initialDeposit = finalDetails.find(x => x.transactionType === 1);
@@ -149,15 +146,15 @@ export function BankAccountForm({ banks, currencies, initialValue, onSubmit, sub
       initialDeposit.currencyId = values.currencyId;
       initialDeposit.direction = 2;
     } else {
-      finalDetails.push({
-        currencyId: values.currencyId,
-        amount: Number(values.amount),
-        direction: 2,
-        transactionDate: values.startDate,
-        transactionType: 1,
-        description: values.description.trim().length === 0 ? undefined : values.description.trim(),
-        isActive: values.isActive
-      });
+        finalDetails.push({
+          currencyId: values.currencyId,
+          amount: Number(values.amount),
+          direction: 2,
+          transactionDate: values.startDate,
+          transactionType: 1,
+          description: values.description.trim().length === 0 ? undefined : values.description.trim(),
+          isActive: headerIsActive
+        });
     }
 
     const matured = finalDetails.find(x => x.transactionType === 3);
@@ -177,7 +174,7 @@ export function BankAccountForm({ banks, currencies, initialValue, onSubmit, sub
           transactionDate: values.maturityDate,
           transactionType: 3,
           description: values.description.trim().length === 0 ? undefined : values.description.trim(),
-          isActive: values.isActive
+          isActive: headerIsActive
         });
       }
     } else if (matured) {
@@ -195,7 +192,7 @@ export function BankAccountForm({ banks, currencies, initialValue, onSubmit, sub
       status: Number(values.status),
       accountNumber: values.accountNumber.trim().length === 0 ? undefined : values.accountNumber.trim(),
       description: values.description.trim().length === 0 ? undefined : values.description.trim(),
-      isActive: values.isActive,
+      isActive: headerIsActive,
       details: finalDetails
     });
   };
@@ -301,10 +298,6 @@ export function BankAccountForm({ banks, currencies, initialValue, onSubmit, sub
             rules={{ required: "Status is required." }}
           />
         </Grid>
-        <Grid size={{ xs: 12, md: 6 }} sx={{ display: "flex", alignItems: "center" }}>
-          <CheckBox control={form.control} label="Is Active" name="isActive" />
-        </Grid>
-
         <Grid size={{ xs: 12 }}>
           <TextArea control={form.control} label="Description" name="description" minRows={3} />
         </Grid>

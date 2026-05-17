@@ -16,6 +16,7 @@ type Props = {
   initialValues?: {
     counterpartyId: string;
     transferType: string;
+    status: string;
     currencyId: string;
     amount?: string;
     transactionDate: string;
@@ -28,6 +29,7 @@ type Props = {
   onChange?: (values: {
     counterpartyId: string;
     transferType: number;
+    status: number;
     currencyId: string;
     amount: number;
     transactionDate: string;
@@ -37,6 +39,7 @@ type Props = {
   onSubmit: (payload: {
     counterpartyId: string;
     transferType: number;
+    status: number;
     currencyId: string;
     amount: number;
     transactionDate: string;
@@ -48,6 +51,7 @@ type Props = {
 type FormValues = {
   counterpartyId: string;
   transferType: string;
+  status: string;
   currencyId: string;
   amount: string;
   transactionDate: string;
@@ -65,7 +69,8 @@ export function TransferHeaderForm({ counterparties, currencies, calculatedAmoun
       description: "",
       dueDate: "",
       transactionDate: today,
-      transferType: "1"
+      transferType: "1",
+      status: "1"
     }
   });
 
@@ -84,7 +89,8 @@ export function TransferHeaderForm({ counterparties, currencies, calculatedAmoun
       description: initialValues.description ?? "",
       dueDate: initialValues.dueDate ?? "",
       transactionDate: initialValues.transactionDate,
-      transferType: initialValues.transferType
+      transferType: initialValues.transferType,
+      status: initialValues.status
     });
   }, [calculatedAmount, form, initialValues]);
 
@@ -100,7 +106,8 @@ export function TransferHeaderForm({ counterparties, currencies, calculatedAmoun
       description: watched.description?.trim().length ? watched.description.trim() : undefined,
       dueDate: watched.dueDate?.trim().length ? watched.dueDate : undefined,
       transactionDate: watched.transactionDate ?? today,
-      transferType: Number(watched.transferType ?? "1")
+      transferType: Number(watched.transferType ?? "1"),
+      status: Number(watched.status ?? "1")
     });
   }, [onChange, today, watched]);
 
@@ -114,7 +121,8 @@ export function TransferHeaderForm({ counterparties, currencies, calculatedAmoun
           description: values.description.trim().length === 0 ? undefined : values.description.trim(),
           dueDate: values.dueDate.trim().length === 0 ? undefined : values.dueDate,
           transactionDate: values.transactionDate,
-          transferType: Number(values.transferType)
+          transferType: Number(values.transferType),
+          status: Number(values.status)
         });
       })}>
         <Grid size={{ xs: 12, md: 6 }}>
@@ -142,6 +150,21 @@ export function TransferHeaderForm({ counterparties, currencies, calculatedAmoun
             ]}
             required
             rules={{ required: "Type is required." }}
+          />
+        </Grid>
+        <Grid size={{ xs: 12, md: 6 }}>
+          <DropDown
+            control={form.control}
+            disabled={isSubmitting}
+            label="Status"
+            name="status"
+            options={[
+              { label: "Active", value: "1" },
+              { label: "Completed", value: "2" },
+              { label: "Cancelled", value: "3" }
+            ]}
+            required
+            rules={{ required: "Status is required." }}
           />
         </Grid>
         <Grid size={{ xs: 12, md: 6 }}>

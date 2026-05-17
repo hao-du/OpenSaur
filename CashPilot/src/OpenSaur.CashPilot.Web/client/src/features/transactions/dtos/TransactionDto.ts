@@ -2,6 +2,8 @@ export type TransactionListItemDto = {
   id: string;
   bankAccountId: string | null;
   transferId: string | null;
+  exchangeId: string | null;
+  bankAccountTransactionType: number | null;
   type: "CashFlow" | "BankAccount" | "Transfer" | "Exchange";
   description: string | null;
   currencyCode: string;
@@ -59,6 +61,7 @@ export type SaveTransferFormRequestDto = {
   id?: string;
   counterpartyId: string;
   transferType: number;
+  status: number;
   currencyId: string;
   amount: number;
   transactionDate: string;
@@ -158,6 +161,7 @@ export type TransferFormDto = {
   id: string;
   counterpartyId: string;
   transferType: number;
+  status: number;
   currencyId: string;
   amount: number;
   transactionDate: string;

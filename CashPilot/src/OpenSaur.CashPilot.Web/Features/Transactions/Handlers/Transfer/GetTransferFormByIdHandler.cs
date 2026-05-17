@@ -49,6 +49,7 @@ public static class GetTransferFormByIdHandler
             entity.Id,
             entity.CounterpartyId,
             (byte)entity.TransferType,
+            (byte)entity.Status,
             entity.CurrencyId,
             entity.Amount,
             entity.TransactionDate,

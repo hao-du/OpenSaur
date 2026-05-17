@@ -15,6 +15,7 @@ type Props = {
     id: string;
     counterpartyId: string;
     transferType: number;
+    status: number;
     currencyId: string;
     amount: number;
     transactionDate: string;
@@ -40,6 +41,7 @@ type Props = {
 type TransferHeaderValues = {
   counterpartyId: string;
   transferType: string;
+  status: string;
   currencyId: string;
   amount: string;
   transactionDate: string;
@@ -55,7 +57,8 @@ export function TransferForm({ counterparties, currencies, onSave, movementIniti
     description: "",
     dueDate: "",
     transactionDate: new Date().toISOString().slice(0, 10),
-    transferType: "1"
+    transferType: "1",
+    status: "1"
   }), [counterparties, currencies]);
 
   const initialHeaderValues = useMemo<TransferHeaderValues>(() => {
@@ -69,7 +72,8 @@ export function TransferForm({ counterparties, currencies, onSave, movementIniti
       description: movementInitialValue.description ?? "",
       dueDate: movementInitialValue.dueDate ?? "",
       transactionDate: movementInitialValue.transactionDate,
-      transferType: movementInitialValue.transferType.toString()
+      transferType: movementInitialValue.transferType.toString(),
+      status: movementInitialValue.status.toString()
     };
   }, [defaultHeaderValues, movementInitialValue]);
 
@@ -148,6 +152,8 @@ export function TransferForm({ counterparties, currencies, onSave, movementIniti
       isActive: true,
       transactionDate: headerDraft.transactionDate,
       transferType: Number(headerDraft.transferType)
+      ,
+      status: Number(headerDraft.status)
     });
     onCompleted?.();
   };
@@ -169,7 +175,8 @@ export function TransferForm({ counterparties, currencies, onSave, movementIniti
             description: payload.description ?? "",
             dueDate: payload.dueDate ?? "",
             transactionDate: payload.transactionDate,
-            transferType: payload.transferType.toString()
+            transferType: payload.transferType.toString(),
+            status: payload.status.toString()
           });
         }}
         onSubmit={async () => {}}

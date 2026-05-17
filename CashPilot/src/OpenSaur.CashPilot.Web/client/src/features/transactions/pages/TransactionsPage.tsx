@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { Alert, Button, Grid, Menu, MenuItem, Paper, Stack } from "@mui/material";
+import { Alert, Grid, Menu, MenuItem, Paper, Stack } from "@mui/material";
 import { useQueryClient } from "@tanstack/react-query";
-import { ChevronDown } from "lucide-react";
+import { ArrowDownToLine, ArrowUpFromLine, Banknote, ChevronDown, Landmark, Pencil, Repeat, Trash2, Users } from "lucide-react";
 import { ActionButton } from "../../../components/atoms/ActionButton";
 import { DefaultLayout } from "../../../components/layouts/DefaultLayout";
 import { BodyText } from "../../../components/atoms/BodyText";
@@ -32,6 +32,34 @@ import { BankAccountFormDrawer } from "../components/BankAccountFormDrawer";
 import { TransferFormDrawer } from "../components/TransferFormDrawer";
 import { ExchangeFormDrawer } from "../components/ExchangeFormDrawer";
 
+const amountFormatter = new Intl.NumberFormat("en-US", {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2
+});
+
+function getTransactionTypeUi(type: "CashFlow" | "BankAccount" | "Transfer" | "Exchange") {
+  if (type === "CashFlow") {
+    return { className: "tx-type-cashflow", icon: Banknote };
+  }
+  if (type === "BankAccount") {
+    return { className: "tx-type-bankaccount", icon: Landmark };
+  }
+  if (type === "Transfer") {
+    return { className: "tx-type-transfer", icon: Users };
+  }
+  return { className: "tx-type-exchange", icon: Repeat };
+}
+
+function getBankMovementIcon(transactionType: number | null) {
+  if (transactionType === 1) {
+    return ArrowDownToLine;
+  }
+  if (transactionType === 3) {
+    return ArrowUpFromLine;
+  }
+  return null;
+}
+
 export function TransactionsPage() {
   const [isCashFlowDrawerOpen, setIsCashFlowDrawerOpen] = useState(false);
   const [isBankAccountDrawerOpen, setIsBankAccountDrawerOpen] = useState(false);
@@ -52,6 +80,7 @@ export function TransactionsPage() {
     id: string;
     counterpartyId: string;
     transferType: number;
+    status: number;
     currencyId: string;
     amount: number;
     transactionDate: string;
@@ -104,7 +133,13 @@ export function TransactionsPage() {
     }
   };
 
-  const handleEdit = async (type: "CashFlow" | "BankAccount" | "Transfer" | "Exchange", id: string, transferId?: string | null, bankAccountId?: string | null) => {
+  const handleEdit = async (
+    type: "CashFlow" | "BankAccount" | "Transfer" | "Exchange",
+    id: string,
+    transferId?: string | null,
+    bankAccountId?: string | null,
+    exchangeId?: string | null
+  ) => {
     try {
       setError(null);
       if (type === "CashFlow") {
@@ -140,6 +175,7 @@ export function TransactionsPage() {
           dueDate: transferForm.dueDate,
           id: transferForm.id,
           isActive: transferForm.isActive,
+          status: transferForm.status,
           transactionDate: transferForm.transactionDate,
           transferType: transferForm.transferType
         });
@@ -147,7 +183,7 @@ export function TransactionsPage() {
         return;
       }
 
-      const detail = await getCurrencyExchangeById(id);
+      const detail = await getCurrencyExchangeById(exchangeId ?? id);
       setEditingExchange({
         description: detail.description,
         exchangeDate: detail.exchangeDate,
@@ -228,38 +264,100 @@ export function TransactionsPage() {
           onUpdate={(id, payload) => submit(() => updateCurrencyExchange(id, payload))}
         />
 
-        <Paper sx={{ p: 2 }}>
-          <PageTitleText variant="h6">{t("transactions.dashboardSummary")}</PageTitleText>
-          <Grid container spacing={2} sx={{ mt: 0.5 }}>
-            <Grid size={{ xs: 12, md: 4 }}>
-              <BodyText sx={{ fontWeight: 600 }}>{t("transactions.totalByCurrency")}</BodyText>
-              {(dashboardQuery.data?.currencyBalances ?? []).map(item => <BodyText key={item.currencyCode}>{`${item.currencyCode}: ${item.total}`}</BodyText>)}
-            </Grid>
-            <Grid size={{ xs: 12, md: 4 }}>
-              <BodyText sx={{ fontWeight: 600 }}>{t("transactions.totalByBank")}</BodyText>
-              {(dashboardQuery.data?.activeBankBalances ?? []).map(item => <BodyText key={`${item.bankName}-${item.currencyCode}`}>{`${item.bankName} (${item.currencyCode}): ${item.totalDeposited}`}</BodyText>)}
-            </Grid>
-            <Grid size={{ xs: 12, md: 4 }}>
-              <BodyText sx={{ fontWeight: 600 }}>{t("transactions.incomeOutcome")}</BodyText>
-              {(dashboardQuery.data?.incomeOutcomes ?? []).slice(0, 8).map(item => <BodyText key={`${item.year}-${item.month}-${item.currencyCode}`}>{`${item.year}-${String(item.month).padStart(2, "0")} ${item.currencyCode}: +${item.income} / -${item.outcome}`}</BodyText>)}
-            </Grid>
-          </Grid>
-        </Paper>
+        <Grid container spacing={2} alignItems="stretch">
+          <Grid size={{ xs: 12, md: 6 }}>
+            <Paper sx={{ p: 2, height: "100%" }}>
+              <PageTitleText variant="h6">{t("transactions.recentTransactions")}</PageTitleText>
+              <Stack spacing={1.25} sx={{ mt: 1 }}>
+                {(transactionsQuery.data ?? []).slice(0, 20).map(item => (
+                  <Paper
+                    key={item.id}
+                    variant="outlined"
+                    sx={{
+                      p: 1.5,
+                      borderColor: item.type === "BankAccount" && (item.bankAccountTransactionType === 1 || item.bankAccountTransactionType === 3)
+                        ? "success.main"
+                        : undefined
+                    }}
+                  >
+                    <Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={2}>
+                      <Stack spacing={0.25}>
+                        <Stack direction="row" spacing={1} alignItems="center">
+                          <BodyText sx={{ fontWeight: 700 }}>{item.transactionDate}</BodyText>
+                          {(() => {
+                            const { className, icon: Icon } = getTransactionTypeUi(item.type);
+                            return (
+                              <span className={`tx-type-icon ${className}`} title={item.type}>
+                                <Icon size={16} />
+                              </span>
+                            );
+                          })()}
+                          {item.type === "BankAccount" && getBankMovementIcon(item.bankAccountTransactionType) != null ? (() => {
+                            const MovementIcon = getBankMovementIcon(item.bankAccountTransactionType)!;
+                            return (
+                              <span className="tx-type-icon tx-type-bankaccount" title={item.bankAccountTransactionType === 1 ? "InitialDeposit" : "PrincipalReturn"}>
+                                <MovementIcon size={16} />
+                              </span>
+                            );
+                          })() : null}
+                        </Stack>
+                        <BodyText sx={{ color: "text.secondary", fontSize: "0.9rem", fontWeight: 400, opacity: 0.8 }}>{item.description ?? "-"}</BodyText>
+                      </Stack>
 
-        <Paper sx={{ p: 2 }}>
-          <PageTitleText variant="h6">{t("transactions.recentTransactions")}</PageTitleText>
-          <Stack spacing={0.75} sx={{ mt: 1 }}>
-            {(transactionsQuery.data ?? []).slice(0, 20).map(item => (
-              <Stack key={item.id} direction="row" spacing={1} alignItems="center" justifyContent="space-between">
-                <BodyText>{`${item.transactionDate} | ${item.type} | ${item.currencyCode} ${item.amount} | ${item.direction === 1 ? "In" : "Out"} | ${item.description ?? ""}`}</BodyText>
-                <Stack direction="row" spacing={1}>
-                  <Button size="small" onClick={() => { void handleEdit(item.type, item.id, item.transferId, item.bankAccountId); }}>{t("transactions.edit")}</Button>
-                  <Button size="small" color="error" onClick={() => submit(() => deleteTransactionByType(item.type, item.id))}>{t("transactions.delete")}</Button>
+                      <Stack spacing={0.5} alignItems="flex-end">
+                        <BodyText sx={{ color: item.type === "BankAccount" && (item.bankAccountTransactionType === 1 || item.bankAccountTransactionType === 3) ? "success.main" : item.direction === 1 ? "primary.main" : "error.main", fontSize: 22, fontWeight: 800, lineHeight: 1.1 }}>{amountFormatter.format(item.amount)}</BodyText>
+                        <BodyText sx={{ fontWeight: 700 }}>{item.currencyCode}</BodyText>
+                        <Stack direction="row" spacing={1}>
+                          <ActionButton
+                            aria-label={t("transactions.edit")}
+                            noWrap={false}
+                            onClick={() => { void handleEdit(item.type, item.id, item.transferId, item.bankAccountId, item.exchangeId); }}
+                            size="small"
+                            sx={{ borderRadius: "999px", minWidth: 34, p: 0.5 }}
+                            variant="outlined"
+                          >
+                            <Pencil size={16} />
+                          </ActionButton>
+                          <ActionButton
+                            aria-label={t("transactions.delete")}
+                            color="error"
+                            noWrap={false}
+                            onClick={() => submit(() => deleteTransactionByType(item.type, item.id, item.exchangeId))}
+                            size="small"
+                            sx={{ borderRadius: "999px", minWidth: 34, p: 0.5 }}
+                            variant="outlined"
+                          >
+                            <Trash2 size={16} />
+                          </ActionButton>
+                        </Stack>
+                      </Stack>
+                    </Stack>
+                  </Paper>
+                ))}
+              </Stack>
+            </Paper>
+          </Grid>
+
+          <Grid size={{ xs: 12, md: 6 }}>
+            <Paper sx={{ p: 2, height: "100%" }}>
+              <PageTitleText variant="h6">{t("transactions.dashboardSummary")}</PageTitleText>
+              <Stack spacing={2} sx={{ mt: 0.5 }}>
+                <Stack spacing={0.5}>
+                  <BodyText sx={{ fontWeight: 700 }}>{t("transactions.totalByCurrency")}</BodyText>
+                  {(dashboardQuery.data?.currencyBalances ?? []).map(item => <BodyText key={item.currencyCode}>{`${item.currencyCode}: ${item.total}`}</BodyText>)}
+                </Stack>
+                <Stack spacing={0.5}>
+                  <BodyText sx={{ fontWeight: 700 }}>{t("transactions.totalByBank")}</BodyText>
+                  {(dashboardQuery.data?.activeBankBalances ?? []).map(item => <BodyText key={`${item.bankName}-${item.currencyCode}`}>{`${item.bankName} (${item.currencyCode}): ${item.totalDeposited}`}</BodyText>)}
+                </Stack>
+                <Stack spacing={0.5}>
+                  <BodyText sx={{ fontWeight: 700 }}>{t("transactions.incomeOutcome")}</BodyText>
+                  {(dashboardQuery.data?.incomeOutcomes ?? []).slice(0, 8).map(item => <BodyText key={`${item.year}-${item.month}-${item.currencyCode}`}>{`${item.year}-${String(item.month).padStart(2, "0")} ${item.currencyCode}: +${item.income} / -${item.outcome}`}</BodyText>)}
                 </Stack>
               </Stack>
-            ))}
-          </Stack>
-        </Paper>
+            </Paper>
+          </Grid>
+        </Grid>
       </Stack>
     </DefaultLayout>
   );

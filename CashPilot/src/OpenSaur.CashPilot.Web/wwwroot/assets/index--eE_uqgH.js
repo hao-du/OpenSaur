@@ -37656,6 +37656,54 @@ var createLucideIcon = (iconName, iconNode) => {
 	Component.displayName = toPascalCase(iconName);
 	return Component;
 };
+var ArrowDownToLine = createLucideIcon("arrow-down-to-line", [
+	["path", {
+		d: "M12 17V3",
+		key: "1cwfxf"
+	}],
+	["path", {
+		d: "m6 11 6 6 6-6",
+		key: "12ii2o"
+	}],
+	["path", {
+		d: "M19 21H5",
+		key: "150jfl"
+	}]
+]);
+var ArrowUpFromLine = createLucideIcon("arrow-up-from-line", [
+	["path", {
+		d: "m18 9-6-6-6 6",
+		key: "kcunyi"
+	}],
+	["path", {
+		d: "M12 3v14",
+		key: "7cf3v8"
+	}],
+	["path", {
+		d: "M5 21h14",
+		key: "11awu3"
+	}]
+]);
+var Banknote = createLucideIcon("banknote", [
+	["rect", {
+		width: "20",
+		height: "12",
+		x: "2",
+		y: "6",
+		rx: "2",
+		key: "9lu3g6"
+	}],
+	["circle", {
+		cx: "12",
+		cy: "12",
+		r: "2",
+		key: "1c9p78"
+	}],
+	["path", {
+		d: "M6 12h.01M18 12h.01",
+		key: "113zkx"
+	}]
+]);
 var Building2 = createLucideIcon("building-2", [
 	["path", {
 		d: "M10 12h4",
@@ -37721,6 +37769,32 @@ var KeyRound = createLucideIcon("key-round", [["path", {
 	fill: "currentColor",
 	key: "w0ekpg"
 }]]);
+var Landmark = createLucideIcon("landmark", [
+	["path", {
+		d: "M10 18v-7",
+		key: "wt116b"
+	}],
+	["path", {
+		d: "M11.12 2.198a2 2 0 0 1 1.76.006l7.866 3.847c.476.233.31.949-.22.949H3.474c-.53 0-.695-.716-.22-.949z",
+		key: "1m329m"
+	}],
+	["path", {
+		d: "M14 18v-7",
+		key: "vav6t3"
+	}],
+	["path", {
+		d: "M18 18v-7",
+		key: "aexdmj"
+	}],
+	["path", {
+		d: "M3 22h18",
+		key: "8prr45"
+	}],
+	["path", {
+		d: "M6 18v-7",
+		key: "1ivflk"
+	}]
+]);
 var LayoutDashboard = createLucideIcon("layout-dashboard", [
 	["rect", {
 		width: "7",
@@ -37783,6 +37857,13 @@ var Menu = createLucideIcon("menu", [
 		key: "1djgab"
 	}]
 ]);
+var Pencil = createLucideIcon("pencil", [["path", {
+	d: "M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z",
+	key: "1a8usu"
+}], ["path", {
+	d: "m15 5 4 4",
+	key: "1mk7zo"
+}]]);
 var ReceiptText = createLucideIcon("receipt-text", [
 	["path", {
 		d: "M13 16H8",
@@ -37801,6 +37882,24 @@ var ReceiptText = createLucideIcon("receipt-text", [
 		key: "ycz6yz"
 	}]
 ]);
+var Repeat = createLucideIcon("repeat", [
+	["path", {
+		d: "m17 2 4 4-4 4",
+		key: "nntrym"
+	}],
+	["path", {
+		d: "M3 11v-1a4 4 0 0 1 4-4h14",
+		key: "84bu3i"
+	}],
+	["path", {
+		d: "m7 22-4-4 4-4",
+		key: "1wqhfi"
+	}],
+	["path", {
+		d: "M21 13v1a4 4 0 0 1-4 4H3",
+		key: "1rx37r"
+	}]
+]);
 var Settings = createLucideIcon("settings", [["path", {
 	d: "M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915",
 	key: "1i5ecw"
@@ -37814,6 +37913,28 @@ var Shield = createLucideIcon("shield", [["path", {
 	d: "M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z",
 	key: "oel41y"
 }]]);
+var Trash2 = createLucideIcon("trash-2", [
+	["path", {
+		d: "M10 11v6",
+		key: "nco0om"
+	}],
+	["path", {
+		d: "M14 11v6",
+		key: "outv1u"
+	}],
+	["path", {
+		d: "M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6",
+		key: "miytrc"
+	}],
+	["path", {
+		d: "M3 6h18",
+		key: "d0wm0j"
+	}],
+	["path", {
+		d: "M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2",
+		key: "e791ji"
+	}]
+]);
 var UserRound = createLucideIcon("user-round", [["circle", {
 	cx: "12",
 	cy: "8",
@@ -38532,7 +38653,7 @@ async function updateCurrencyExchange(id, request) {
 		id
 	});
 }
-async function deleteTransactionByType(type, id) {
+async function deleteTransactionByType(type, id, exchangeId) {
 	if (type === "CashFlow") {
 		await client.delete(`/api/transactions/cashflows/delete?id=${id}`);
 		return;
@@ -38545,7 +38666,7 @@ async function deleteTransactionByType(type, id) {
 		await client.delete(`/api/transactions/transfers/delete?id=${id}`);
 		return;
 	}
-	await client.delete(`/api/transactions/exchanges/delete?id=${id}`);
+	await client.delete(`/api/transactions/exchanges/delete?id=${exchangeId ?? id}`);
 }
 //#endregion
 //#region src/features/transactions/hooks/useTransactionDashboardQuery.ts
@@ -42448,7 +42569,6 @@ function BankAccountForm({ banks, currencies, initialValue, onSubmit, submitLabe
 		currencyId: initialValue?.currencyId ?? currencies[0]?.id ?? "",
 		description: initialValue?.description ?? "",
 		interestRate: initialValue?.interestRate?.toString() ?? "",
-		isActive: initialValue?.isActive ?? true,
 		maturityDate: initialValue?.maturityDate ?? today,
 		startDate: initialValue?.startDate ?? today,
 		status: (initialValue?.status ?? 1).toString()
@@ -42481,7 +42601,6 @@ function BankAccountForm({ banks, currencies, initialValue, onSubmit, submitLabe
 			currencyId: initialValue?.currencyId ?? currencies[0]?.id ?? "",
 			description: initialValue?.description ?? "",
 			interestRate: initialValue?.interestRate?.toString() ?? "",
-			isActive: initialValue?.isActive ?? true,
 			maturityDate: initialValue?.maturityDate ?? today,
 			startDate: initialValue?.startDate ?? today,
 			status: (initialValue?.status ?? 1).toString()
@@ -42532,6 +42651,7 @@ function BankAccountForm({ banks, currencies, initialValue, onSubmit, submitLabe
 		setDetails((prev) => prev.filter((x) => x.clientKey !== clientKey));
 	};
 	const submitHandler = async (values) => {
+		const headerIsActive = initialValue?.isActive ?? true;
 		const finalDetails = details.map(toDetailRequest);
 		const initialDeposit = finalDetails.find((x) => x.transactionType === 1);
 		if (initialDeposit) {
@@ -42547,7 +42667,7 @@ function BankAccountForm({ banks, currencies, initialValue, onSubmit, submitLabe
 			transactionDate: values.startDate,
 			transactionType: 1,
 			description: values.description.trim().length === 0 ? void 0 : values.description.trim(),
-			isActive: values.isActive
+			isActive: headerIsActive
 		});
 		const matured = finalDetails.find((x) => x.transactionType === 3);
 		if (values.status === "2" || values.status === "3") if (matured) {
@@ -42564,7 +42684,7 @@ function BankAccountForm({ banks, currencies, initialValue, onSubmit, submitLabe
 			transactionDate: values.maturityDate,
 			transactionType: 3,
 			description: values.description.trim().length === 0 ? void 0 : values.description.trim(),
-			isActive: values.isActive
+			isActive: headerIsActive
 		});
 		else if (matured) matured.isActive = false;
 		await onSubmit({
@@ -42578,7 +42698,7 @@ function BankAccountForm({ banks, currencies, initialValue, onSubmit, submitLabe
 			status: Number(values.status),
 			accountNumber: values.accountNumber.trim().length === 0 ? void 0 : values.accountNumber.trim(),
 			description: values.description.trim().length === 0 ? void 0 : values.description.trim(),
-			isActive: values.isActive,
+			isActive: headerIsActive,
 			details: finalDetails
 		});
 	};
@@ -42728,21 +42848,6 @@ function BankAccountForm({ banks, currencies, initialValue, onSubmit, submitLabe
 						})
 					}),
 					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Grid, {
-						size: {
-							xs: 12,
-							md: 6
-						},
-						sx: {
-							display: "flex",
-							alignItems: "center"
-						},
-						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(CheckBox, {
-							control: form.control,
-							label: "Is Active",
-							name: "isActive"
-						})
-					}),
-					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Grid, {
 						size: { xs: 12 },
 						children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(TextArea, {
 							control: form.control,
@@ -42829,7 +42934,8 @@ function TransferHeaderForm({ counterparties, currencies, calculatedAmount, init
 		description: "",
 		dueDate: "",
 		transactionDate: today,
-		transferType: "1"
+		transferType: "1",
+		status: "1"
 	} });
 	(0, import_react.useEffect)(() => {
 		form.setValue("amount", calculatedAmount.toString(), {
@@ -42846,7 +42952,8 @@ function TransferHeaderForm({ counterparties, currencies, calculatedAmount, init
 			description: initialValues.description ?? "",
 			dueDate: initialValues.dueDate ?? "",
 			transactionDate: initialValues.transactionDate,
-			transferType: initialValues.transferType
+			transferType: initialValues.transferType,
+			status: initialValues.status
 		});
 	}, [
 		calculatedAmount,
@@ -42863,7 +42970,8 @@ function TransferHeaderForm({ counterparties, currencies, calculatedAmount, init
 			description: watched.description?.trim().length ? watched.description.trim() : void 0,
 			dueDate: watched.dueDate?.trim().length ? watched.dueDate : void 0,
 			transactionDate: watched.transactionDate ?? today,
-			transferType: Number(watched.transferType ?? "1")
+			transferType: Number(watched.transferType ?? "1"),
+			status: Number(watched.status ?? "1")
 		});
 	}, [
 		onChange,
@@ -42885,7 +42993,8 @@ function TransferHeaderForm({ counterparties, currencies, calculatedAmount, init
 					description: values.description.trim().length === 0 ? void 0 : values.description.trim(),
 					dueDate: values.dueDate.trim().length === 0 ? void 0 : values.dueDate,
 					transactionDate: values.transactionDate,
-					transferType: Number(values.transferType)
+					transferType: Number(values.transferType),
+					status: Number(values.status)
 				});
 			}),
 			children: [
@@ -42937,6 +43046,34 @@ function TransferHeaderForm({ counterparties, currencies, calculatedAmount, init
 						],
 						required: true,
 						rules: { required: "Type is required." }
+					})
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Grid, {
+					size: {
+						xs: 12,
+						md: 6
+					},
+					children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(DropDown, {
+						control: form.control,
+						disabled: isSubmitting,
+						label: "Status",
+						name: "status",
+						options: [
+							{
+								label: "Active",
+								value: "1"
+							},
+							{
+								label: "Completed",
+								value: "2"
+							},
+							{
+								label: "Cancelled",
+								value: "3"
+							}
+						],
+						required: true,
+						rules: { required: "Status is required." }
 					})
 				}),
 				/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Grid, {
@@ -43197,7 +43334,8 @@ function TransferForm({ counterparties, currencies, onSave, movementInitialValue
 		description: "",
 		dueDate: "",
 		transactionDate: (/* @__PURE__ */ new Date()).toISOString().slice(0, 10),
-		transferType: "1"
+		transferType: "1",
+		status: "1"
 	}), [counterparties, currencies]);
 	const initialHeaderValues = (0, import_react.useMemo)(() => {
 		if (movementInitialValue == null) return defaultHeaderValues;
@@ -43208,7 +43346,8 @@ function TransferForm({ counterparties, currencies, onSave, movementInitialValue
 			description: movementInitialValue.description ?? "",
 			dueDate: movementInitialValue.dueDate ?? "",
 			transactionDate: movementInitialValue.transactionDate,
-			transferType: movementInitialValue.transferType.toString()
+			transferType: movementInitialValue.transferType.toString(),
+			status: movementInitialValue.status.toString()
 		};
 	}, [defaultHeaderValues, movementInitialValue]);
 	const [headerDraft, setHeaderDraft] = (0, import_react.useState)(defaultHeaderValues);
@@ -43276,7 +43415,8 @@ function TransferForm({ counterparties, currencies, onSave, movementInitialValue
 			id: movementInitialValue?.id,
 			isActive: true,
 			transactionDate: headerDraft.transactionDate,
-			transferType: Number(headerDraft.transferType)
+			transferType: Number(headerDraft.transferType),
+			status: Number(headerDraft.status)
 		});
 		onCompleted?.();
 	};
@@ -43301,7 +43441,8 @@ function TransferForm({ counterparties, currencies, onSave, movementInitialValue
 						description: payload.description ?? "",
 						dueDate: payload.dueDate ?? "",
 						transactionDate: payload.transactionDate,
-						transferType: payload.transferType.toString()
+						transferType: payload.transferType.toString(),
+						status: payload.status.toString()
 					});
 				},
 				onSubmit: async () => {},
@@ -43369,6 +43510,7 @@ function TransferFormDrawer({ editingMovement, isOpen, onClose, counterparties, 
 				description: editingMovement.description,
 				dueDate: editingMovement.dueDate,
 				id: editingMovement.id,
+				status: editingMovement.status,
 				transactionDate: editingMovement.transactionDate,
 				transferType: editingMovement.transferType
 			},
@@ -43604,6 +43746,33 @@ function ExchangeFormDrawer({ editingExchange, isOpen, onClose, currencies, onSu
 }
 //#endregion
 //#region src/features/transactions/pages/TransactionsPage.tsx
+var amountFormatter = new Intl.NumberFormat("en-US", {
+	minimumFractionDigits: 2,
+	maximumFractionDigits: 2
+});
+function getTransactionTypeUi(type) {
+	if (type === "CashFlow") return {
+		className: "tx-type-cashflow",
+		icon: Banknote
+	};
+	if (type === "BankAccount") return {
+		className: "tx-type-bankaccount",
+		icon: Landmark
+	};
+	if (type === "Transfer") return {
+		className: "tx-type-transfer",
+		icon: Users
+	};
+	return {
+		className: "tx-type-exchange",
+		icon: Repeat
+	};
+}
+function getBankMovementIcon(transactionType) {
+	if (transactionType === 1) return ArrowDownToLine;
+	if (transactionType === 3) return ArrowUpFromLine;
+	return null;
+}
 function TransactionsPage() {
 	const [isCashFlowDrawerOpen, setIsCashFlowDrawerOpen] = (0, import_react.useState)(false);
 	const [isBankAccountDrawerOpen, setIsBankAccountDrawerOpen] = (0, import_react.useState)(false);
@@ -43648,7 +43817,7 @@ function TransactionsPage() {
 			setError(e instanceof Error ? e.message : t("transactions.errorSave"));
 		}
 	};
-	const handleEdit = async (type, id, transferId, bankAccountId) => {
+	const handleEdit = async (type, id, transferId, bankAccountId, exchangeId) => {
 		try {
 			setError(null);
 			if (type === "CashFlow") {
@@ -43680,13 +43849,14 @@ function TransactionsPage() {
 					dueDate: transferForm.dueDate,
 					id: transferForm.id,
 					isActive: transferForm.isActive,
+					status: transferForm.status,
 					transactionDate: transferForm.transactionDate,
 					transferType: transferForm.transferType
 				});
 				setIsTransferDrawerOpen(true);
 				return;
 			}
-			const detail = await getCurrencyExchangeById(id);
+			const detail = await getCurrencyExchangeById(exchangeId ?? id);
 			setEditingExchange({
 				description: detail.description,
 				exchangeDate: detail.exchangeDate,
@@ -43815,79 +43985,170 @@ function TransactionsPage() {
 					onSubmit: (payload) => submit(() => createCurrencyExchange(payload)),
 					onUpdate: (id, payload) => submit(() => updateCurrencyExchange(id, payload))
 				}),
-				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Paper, {
-					sx: { p: 2 },
-					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(PageTitleText, {
-						variant: "h6",
-						children: t("transactions.dashboardSummary")
-					}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Grid, {
-						container: true,
-						spacing: 2,
-						sx: { mt: .5 },
-						children: [
-							/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Grid, {
-								size: {
-									xs: 12,
-									md: 4
-								},
-								children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(BodyText, {
-									sx: { fontWeight: 600 },
-									children: t("transactions.totalByCurrency")
-								}), (dashboardQuery.data?.currencyBalances ?? []).map((item) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(BodyText, { children: `${item.currencyCode}: ${item.total}` }, item.currencyCode))]
-							}),
-							/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Grid, {
-								size: {
-									xs: 12,
-									md: 4
-								},
-								children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(BodyText, {
-									sx: { fontWeight: 600 },
-									children: t("transactions.totalByBank")
-								}), (dashboardQuery.data?.activeBankBalances ?? []).map((item) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(BodyText, { children: `${item.bankName} (${item.currencyCode}): ${item.totalDeposited}` }, `${item.bankName}-${item.currencyCode}`))]
-							}),
-							/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Grid, {
-								size: {
-									xs: 12,
-									md: 4
-								},
-								children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(BodyText, {
-									sx: { fontWeight: 600 },
-									children: t("transactions.incomeOutcome")
-								}), (dashboardQuery.data?.incomeOutcomes ?? []).slice(0, 8).map((item) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(BodyText, { children: `${item.year}-${String(item.month).padStart(2, "0")} ${item.currencyCode}: +${item.income} / -${item.outcome}` }, `${item.year}-${item.month}-${item.currencyCode}`))]
-							})
-						]
-					})]
-				}),
-				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Paper, {
-					sx: { p: 2 },
-					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(PageTitleText, {
-						variant: "h6",
-						children: t("transactions.recentTransactions")
-					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Stack, {
-						spacing: .75,
-						sx: { mt: 1 },
-						children: (transactionsQuery.data ?? []).slice(0, 20).map((item) => /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Stack, {
-							direction: "row",
-							spacing: 1,
-							alignItems: "center",
-							justifyContent: "space-between",
-							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(BodyText, { children: `${item.transactionDate} | ${item.type} | ${item.currencyCode} ${item.amount} | ${item.direction === 1 ? "In" : "Out"} | ${item.description ?? ""}` }), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Stack, {
-								direction: "row",
-								spacing: 1,
-								children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
-									size: "small",
-									onClick: () => {
-										handleEdit(item.type, item.id, item.transferId, item.bankAccountId);
+				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Grid, {
+					container: true,
+					spacing: 2,
+					alignItems: "stretch",
+					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Grid, {
+						size: {
+							xs: 12,
+							md: 6
+						},
+						children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Paper, {
+							sx: {
+								p: 2,
+								height: "100%"
+							},
+							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(PageTitleText, {
+								variant: "h6",
+								children: t("transactions.recentTransactions")
+							}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Stack, {
+								spacing: 1.25,
+								sx: { mt: 1 },
+								children: (transactionsQuery.data ?? []).slice(0, 20).map((item) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Paper, {
+									variant: "outlined",
+									sx: {
+										p: 1.5,
+										borderColor: item.type === "BankAccount" && (item.bankAccountTransactionType === 1 || item.bankAccountTransactionType === 3) ? "success.main" : void 0
 									},
-									children: t("transactions.edit")
-								}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Button, {
-									size: "small",
-									color: "error",
-									onClick: () => submit(() => deleteTransactionByType(item.type, item.id)),
-									children: t("transactions.delete")
-								})]
+									children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Stack, {
+										direction: "row",
+										justifyContent: "space-between",
+										alignItems: "flex-start",
+										spacing: 2,
+										children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Stack, {
+											spacing: .25,
+											children: [/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Stack, {
+												direction: "row",
+												spacing: 1,
+												alignItems: "center",
+												children: [
+													/* @__PURE__ */ (0, import_jsx_runtime.jsx)(BodyText, {
+														sx: { fontWeight: 700 },
+														children: item.transactionDate
+													}),
+													(() => {
+														const { className, icon: Icon } = getTransactionTypeUi(item.type);
+														return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+															className: `tx-type-icon ${className}`,
+															title: item.type,
+															children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Icon, { size: 16 })
+														});
+													})(),
+													item.type === "BankAccount" && getBankMovementIcon(item.bankAccountTransactionType) != null ? (() => {
+														const MovementIcon = getBankMovementIcon(item.bankAccountTransactionType);
+														return /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+															className: "tx-type-icon tx-type-bankaccount",
+															title: item.bankAccountTransactionType === 1 ? "InitialDeposit" : "PrincipalReturn",
+															children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(MovementIcon, { size: 16 })
+														});
+													})() : null
+												]
+											}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(BodyText, {
+												sx: {
+													color: "text.secondary",
+													fontSize: "0.9rem",
+													fontWeight: 400,
+													opacity: .8
+												},
+												children: item.description ?? "-"
+											})]
+										}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Stack, {
+											spacing: .5,
+											alignItems: "flex-end",
+											children: [
+												/* @__PURE__ */ (0, import_jsx_runtime.jsx)(BodyText, {
+													sx: {
+														color: item.type === "BankAccount" && (item.bankAccountTransactionType === 1 || item.bankAccountTransactionType === 3) ? "success.main" : item.direction === 1 ? "primary.main" : "error.main",
+														fontSize: 22,
+														fontWeight: 800,
+														lineHeight: 1.1
+													},
+													children: amountFormatter.format(item.amount)
+												}),
+												/* @__PURE__ */ (0, import_jsx_runtime.jsx)(BodyText, {
+													sx: { fontWeight: 700 },
+													children: item.currencyCode
+												}),
+												/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Stack, {
+													direction: "row",
+													spacing: 1,
+													children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(ActionButton, {
+														"aria-label": t("transactions.edit"),
+														noWrap: false,
+														onClick: () => {
+															handleEdit(item.type, item.id, item.transferId, item.bankAccountId, item.exchangeId);
+														},
+														size: "small",
+														sx: {
+															borderRadius: "999px",
+															minWidth: 34,
+															p: .5
+														},
+														variant: "outlined",
+														children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Pencil, { size: 16 })
+													}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(ActionButton, {
+														"aria-label": t("transactions.delete"),
+														color: "error",
+														noWrap: false,
+														onClick: () => submit(() => deleteTransactionByType(item.type, item.id, item.exchangeId)),
+														size: "small",
+														sx: {
+															borderRadius: "999px",
+															minWidth: 34,
+															p: .5
+														},
+														variant: "outlined",
+														children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Trash2, { size: 16 })
+													})]
+												})
+											]
+										})]
+									})
+								}, item.id))
 							})]
-						}, item.id))
+						})
+					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Grid, {
+						size: {
+							xs: 12,
+							md: 6
+						},
+						children: /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Paper, {
+							sx: {
+								p: 2,
+								height: "100%"
+							},
+							children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(PageTitleText, {
+								variant: "h6",
+								children: t("transactions.dashboardSummary")
+							}), /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Stack, {
+								spacing: 2,
+								sx: { mt: .5 },
+								children: [
+									/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Stack, {
+										spacing: .5,
+										children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(BodyText, {
+											sx: { fontWeight: 700 },
+											children: t("transactions.totalByCurrency")
+										}), (dashboardQuery.data?.currencyBalances ?? []).map((item) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(BodyText, { children: `${item.currencyCode}: ${item.total}` }, item.currencyCode))]
+									}),
+									/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Stack, {
+										spacing: .5,
+										children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(BodyText, {
+											sx: { fontWeight: 700 },
+											children: t("transactions.totalByBank")
+										}), (dashboardQuery.data?.activeBankBalances ?? []).map((item) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(BodyText, { children: `${item.bankName} (${item.currencyCode}): ${item.totalDeposited}` }, `${item.bankName}-${item.currencyCode}`))]
+									}),
+									/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Stack, {
+										spacing: .5,
+										children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(BodyText, {
+											sx: { fontWeight: 700 },
+											children: t("transactions.incomeOutcome")
+										}), (dashboardQuery.data?.incomeOutcomes ?? []).slice(0, 8).map((item) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)(BodyText, { children: `${item.year}-${String(item.month).padStart(2, "0")} ${item.currencyCode}: +${item.income} / -${item.outcome}` }, `${item.year}-${item.month}-${item.currencyCode}`))]
+									})
+								]
+							})]
+						})
 					})]
 				})
 			]
@@ -45059,4 +45320,4 @@ import_client.createRoot(document.getElementById("root")).render(/* @__PURE__ */
 }) }));
 //#endregion
 
-//# sourceMappingURL=index-V2SY2k0I.js.map
+//# sourceMappingURL=index--eE_uqgH.js.map

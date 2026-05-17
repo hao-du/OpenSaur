@@ -10,6 +10,7 @@ type Props = {
     id: string;
     counterpartyId: string;
     transferType: number;
+    status: number;
     currencyId: string;
     amount: number;
     transactionDate: string;
@@ -51,6 +52,7 @@ export function TransferFormDrawer({ editingMovement, isOpen, onClose, counterpa
           description: editingMovement.description,
           dueDate: editingMovement.dueDate,
           id: editingMovement.id,
+          status: editingMovement.status,
           transactionDate: editingMovement.transactionDate,
           transferType: editingMovement.transferType
         }}

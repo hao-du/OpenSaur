@@ -23,6 +23,8 @@ public static class GetTransactionsHandler
                 x.Id,
                 null,
                 null,
+                null,
+                null,
                 "CashFlow",
                 x.Description,
                 x.Transaction.Currency.ShortName,
@@ -39,6 +41,8 @@ public static class GetTransactionsHandler
                 x.Id,
                 x.BankAccountId,
                 null,
+                null,
+                (byte)x.TransactionType,
                 "BankAccount",
                 x.Description,
                 x.Transaction.Currency.ShortName,
@@ -55,6 +59,8 @@ public static class GetTransactionsHandler
                 x.Id,
                 null,
                 x.TransferId,
+                null,
+                null,
                 "Transfer",
                 x.Description,
                 x.Transaction.Currency.ShortName,
@@ -68,8 +74,10 @@ public static class GetTransactionsHandler
             .AsNoTracking()
             .Where(x => x.IsActive && x.Transaction.IsActive && x.Transaction.OwnerId == currentUserId)
             .Select(x => new TransactionListItemResponse(
-                x.CurrencyExchangeId,
+                x.Id,
                 null,
+                null,
+                x.CurrencyExchangeId,
                 null,
                 "Exchange",
                 x.Description,

@@ -41,6 +41,7 @@ public static class CreateTransferFormHandler
             DueDate = request.DueDate,
             TransactionDate = request.TransactionDate,
             TransferType = (TransferType)request.TransferType,
+            Status = (TransferStatus)request.Status,
             IsActive = request.IsActive
         };
         dbContext.Transfers.Add(transfer);
@@ -64,19 +65,6 @@ public static class CreateTransferFormHandler
                 }
             };
             dbContext.TransferTransactions.Add(movement);
-        }
-
-        if (transfer.TransferType is TransferType.Lend or TransferType.Borrow)
-        {
-            var settled = transfer.TransferType == TransferType.Lend
-                ? transfer.TransferTransactions.Where(x => x.IsActive && x.Transaction.IsActive && x.Transaction.Direction == TransactionDirection.In).Sum(x => x.Transaction.Amount)
-                : transfer.TransferTransactions.Where(x => x.IsActive && x.Transaction.IsActive && x.Transaction.Direction == TransactionDirection.Out).Sum(x => x.Transaction.Amount);
-
-            transfer.Status = settled >= transfer.Amount ? TransferStatus.Completed : TransferStatus.Active;
-        }
-        else
-        {
-            transfer.Status = TransferStatus.Active;
         }
 
         await dbContext.SaveChangesAsync(cancellationToken);

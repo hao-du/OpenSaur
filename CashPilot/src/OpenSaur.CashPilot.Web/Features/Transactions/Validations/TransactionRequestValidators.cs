@@ -96,6 +96,7 @@ public sealed class CreateTransferFormRequestValidator : AbstractValidator<SaveT
         RuleFor(x => x.CurrencyId).NotEmpty();
         RuleFor(x => x.Amount).GreaterThanOrEqualTo(0);
         RuleFor(x => x.TransferType).InclusiveBetween((byte)1, (byte)4);
+        RuleFor(x => x.Status).InclusiveBetween((byte)1, (byte)3);
         RuleForEach(x => x.Details).SetValidator(new SaveTransferDetailRequestValidator());
         RuleFor(x => x.Amount)
             .Equal(x => x.Details.Sum(y => y.Amount))
@@ -113,6 +114,7 @@ public sealed class UpdateTransferFormRequestValidator : AbstractValidator<SaveT
         RuleFor(x => x.CurrencyId).NotEmpty();
         RuleFor(x => x.Amount).GreaterThanOrEqualTo(0);
         RuleFor(x => x.TransferType).InclusiveBetween((byte)1, (byte)4);
+        RuleFor(x => x.Status).InclusiveBetween((byte)1, (byte)3);
         RuleForEach(x => x.Details).SetValidator(new SaveTransferDetailRequestValidator());
         RuleFor(x => x.Amount)
             .Equal(x => x.Details.Sum(y => y.Amount))

@@ -17,13 +17,45 @@ public static class DeleteCurrencyExchangeHandler
         CancellationToken cancellationToken)
     {
         var currentUserId = ClaimHelper.GetCurrentUserId(user);
-        var entity = await dbContext.CurrencyExchanges.SingleOrDefaultAsync(x => x.Id == id && x.IsActive && x.CurrencyExchangeTransactions.Any(y => y.Transaction.OwnerId == currentUserId), cancellationToken);
+
+        var entity = await dbContext.CurrencyExchanges
+            .Include(x => x.CurrencyExchangeTransactions)
+                .ThenInclude(x => x.Transaction)
+            .SingleOrDefaultAsync(
+                x => x.Id == id && x.IsActive && x.CurrencyExchangeTransactions.Any(y => y.Transaction.OwnerId == currentUserId),
+                cancellationToken);
+
+        // Backward compatibility: support delete by exchange-transaction id as well.
+        if (entity is null)
+        {
+            var exchangeId = await dbContext.CurrencyExchangeTransactions
+                .Where(x => x.Id == id && x.CurrencyExchange.IsActive && x.Transaction.OwnerId == currentUserId)
+                .Select(x => (Guid?)x.CurrencyExchangeId)
+                .SingleOrDefaultAsync(cancellationToken);
+
+            if (exchangeId.HasValue)
+            {
+                entity = await dbContext.CurrencyExchanges
+                    .Include(x => x.CurrencyExchangeTransactions)
+                        .ThenInclude(x => x.Transaction)
+                    .SingleOrDefaultAsync(
+                        x => x.Id == exchangeId.Value && x.IsActive && x.CurrencyExchangeTransactions.Any(y => y.Transaction.OwnerId == currentUserId),
+                        cancellationToken);
+            }
+        }
+
         if (entity is null)
         {
             return AppHttpResults.NotFound("CurrencyExchange not found.", "No CurrencyExchange matched the specified identifier.");
         }
 
         entity.IsActive = false;
+        foreach (var exchangeTransaction in entity.CurrencyExchangeTransactions)
+        {
+            exchangeTransaction.IsActive = false;
+            exchangeTransaction.Transaction.IsActive = false;
+        }
+
         await dbContext.SaveChangesAsync(cancellationToken);
         return TypedResults.NoContent();
     }

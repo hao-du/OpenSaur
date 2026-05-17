@@ -52,6 +52,7 @@ public static class UpdateTransferFormHandler
         transfer.DueDate = request.DueDate;
         transfer.TransactionDate = request.TransactionDate;
         transfer.TransferType = (TransferType)request.TransferType;
+        transfer.Status = (TransferStatus)request.Status;
         transfer.IsActive = request.IsActive;
 
         var requestedIds = request.Details.Where(x => x.Id.HasValue).Select(x => x.Id!.Value).ToHashSet();
@@ -96,19 +97,6 @@ public static class UpdateTransferFormHandler
             movement.Transaction.TransactionDate = detail.TransactionDate;
             movement.Transaction.Description = detail.Description?.Trim() ?? string.Empty;
             movement.Transaction.IsActive = detail.IsActive;
-        }
-
-        if (transfer.TransferType is TransferType.Lend or TransferType.Borrow)
-        {
-            var settled = transfer.TransferType == TransferType.Lend
-                ? transfer.TransferTransactions.Where(x => x.IsActive && x.Transaction.IsActive && x.Transaction.Direction == TransactionDirection.In).Sum(x => x.Transaction.Amount)
-                : transfer.TransferTransactions.Where(x => x.IsActive && x.Transaction.IsActive && x.Transaction.Direction == TransactionDirection.Out).Sum(x => x.Transaction.Amount);
-
-            transfer.Status = settled >= transfer.Amount ? TransferStatus.Completed : TransferStatus.Active;
-        }
-        else
-        {
-            transfer.Status = TransferStatus.Active;
         }
 
         await dbContext.SaveChangesAsync(cancellationToken);

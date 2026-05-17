@@ -81,7 +81,7 @@ export function BankAccountTransactionForm({
 
   if (!isEditing) {
     return (
-      <Stack spacing={2} sx={{ p: 2, border: '1px solid #eee', borderRadius: 1 }}>
+      <Stack spacing={2} sx={{ p: 2, border: "1px solid #eee", borderRadius: 1 }}>
         <Stack spacing={1}>
           <span><strong>Date:</strong> {draft.transactionDate}</span>
           <span><strong>Amount:</strong> {formatDisplayValue(draft.amount)}</span>
