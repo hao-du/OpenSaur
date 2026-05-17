@@ -1,5 +1,5 @@
 import { Button, Stack, TextField } from "@mui/material";
-import { DateTimePicker } from "../../../components/atoms/DateTimePicker";
+import { DatePicker } from "../../../components/atoms/DatePicker";
 import { useState } from "react";
 
 export type DetailEditor = {
@@ -109,7 +109,7 @@ export function BankAccountTransactionForm({
         autoComplete="off"
         inputMode="decimal"
       />
-      <DateTimePicker required label="Date" value={draft.transactionDate} onChange={value => setDraft({ ...draft, transactionDate: value })} error={errors.transactionDate != null} helperText={errors.transactionDate} />
+      <DatePicker required label="Date" value={draft.transactionDate} onChange={value => setDraft({ ...draft, transactionDate: value })} error={errors.transactionDate != null} helperText={errors.transactionDate} />
       <TextField label="Description" value={draft.description} onChange={e => setDraft({ ...draft, description: e.target.value })} multiline minRows={3} fullWidth />
       
       <Stack direction="row" justifyContent="flex-end" spacing={1} sx={{ mt: 1 }}>

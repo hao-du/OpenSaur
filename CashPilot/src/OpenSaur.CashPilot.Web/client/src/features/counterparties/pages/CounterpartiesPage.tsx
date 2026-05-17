@@ -5,7 +5,6 @@ import { useForm } from "react-hook-form";
 import { ActionButton } from "../../../components/atoms/ActionButton";
 import { DefaultLayout } from "../../../components/layouts/DefaultLayout";
 import { ConfirmationDialog } from "../../../components/organisms/ConfirmationDialog";
-import { layoutStyles } from "../../../infrastructure/theme/theme";
 import { useSettings } from "../../settings/provider/SettingProvider";
 import { createCounterparty, deleteCounterparty, updateCounterparty } from "../api/counterpartiesApi";
 import { CounterpartiesFilterDrawer } from "../components/CounterpartiesFilterDrawer";
@@ -137,28 +136,28 @@ export function CounterpartiesPage() {
     }
   }
 
+  const headerActions = (
+    <Stack direction="row" spacing={1.25}>
+      <ActionButton
+        onClick={() => {
+          setIsFilterDrawerOpen(true);
+        }}
+        variant="outlined"
+      >
+        {t("counterparties.filter")}
+      </ActionButton>
+      <ActionButton onClick={openCreateForm}>
+        {t("counterparties.create")}
+      </ActionButton>
+    </Stack>
+  );
+
   return (
     <DefaultLayout
-      subtitle={t("counterparties.subtitle")}
+      headerActions={headerActions}
       title={t("counterparties.title")}
     >
       <Stack spacing={3}>
-        <Stack direction={{ md: "row", xs: "column" }} justifyContent="space-between" spacing={2}>
-          <Stack direction="row" spacing={2} sx={layoutStyles.responsiveActionGroup}>
-            <ActionButton
-              onClick={() => {
-                setIsFilterDrawerOpen(true);
-              }}
-              sx={layoutStyles.responsiveActionButton}
-              variant="outlined"
-            >
-              {t("counterparties.filter")}
-            </ActionButton>
-          </Stack>
-          <ActionButton onClick={openCreateForm} sx={layoutStyles.responsiveActionButton}>
-            {t("counterparties.create")}
-          </ActionButton>
-        </Stack>
         {errorMessage != null ? <Alert severity="error">{errorMessage}</Alert> : null}
         <CounterpartiesList
           counterparties={counterparties}

@@ -5,7 +5,6 @@ import { useForm } from "react-hook-form";
 import { ActionButton } from "../../../components/atoms/ActionButton";
 import { DefaultLayout } from "../../../components/layouts/DefaultLayout";
 import { ConfirmationDialog } from "../../../components/organisms/ConfirmationDialog";
-import { layoutStyles } from "../../../infrastructure/theme/theme";
 import { BankFormDrawer } from "../components/BankFormDrawer";
 import type { BankFormValues } from "../components/BankForm";
 import { BanksFilterDrawer } from "../components/BanksFilterDrawer";
@@ -124,31 +123,28 @@ export function BanksPage() {
     }
   }
 
+  const headerActions = (
+    <Stack direction="row" spacing={1.25}>
+      <ActionButton
+        onClick={() => {
+          setIsFilterDrawerOpen(true);
+        }}
+        variant="outlined"
+      >
+        Filter
+      </ActionButton>
+      <ActionButton onClick={openCreateForm}>
+        Create
+      </ActionButton>
+    </Stack>
+  );
+
   return (
     <DefaultLayout
-      subtitle="Manage bank master data."
+      headerActions={headerActions}
       title="Banks"
     >
       <Stack spacing={3}>
-        <Stack direction={{ md: "row", xs: "column" }} justifyContent="space-between" spacing={2}>
-          <Stack direction="row" spacing={2} sx={layoutStyles.responsiveActionGroup}>
-            <ActionButton
-              onClick={() => {
-                setIsFilterDrawerOpen(true);
-              }}
-              sx={layoutStyles.responsiveActionButton}
-              variant="outlined"
-            >
-              Filter
-            </ActionButton>
-          </Stack>
-          <ActionButton
-            onClick={openCreateForm}
-            sx={layoutStyles.responsiveActionButton}
-          >
-            Create
-          </ActionButton>
-        </Stack>
         {errorMessage != null ? <Alert severity="error">{errorMessage}</Alert> : null}
         <BanksList
           banks={banks}

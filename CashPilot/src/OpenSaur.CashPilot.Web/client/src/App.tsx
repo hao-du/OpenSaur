@@ -1,4 +1,4 @@
-import { Navigate, Outlet, Route, Routes } from "react-router-dom";
+import { Navigate, Outlet, Route, Routes, useLocation } from "react-router-dom";
 import { AuthCallbackPage } from "./features/auth/pages/AuthCallbackPage";
 import { ForbiddenPage } from "./features/auth/pages/ForbiddenPage";
 import { PrepareSessionPage } from "./features/auth/pages/PrepareSessionPage";
@@ -8,12 +8,15 @@ import { BanksPage } from "./features/banks/pages/BanksPage";
 import { CounterpartiesPage } from "./features/counterparties/pages/CounterpartiesPage";
 import { CurrenciesPage } from "./features/currencies/pages/CurrenciesPage";
 import { TransactionsPage } from "./features/transactions/pages/TransactionsPage";
+import { SettingsPage } from "./features/settings/pages/SettingsPage";
 export function App() {
     const { authSession, isRestoring } = useAuthSession();
+    const location = useLocation();
+    const returnTo = `${location.pathname}${location.search}${location.hash}`;
 
     return (
         <Routes>
-            <Route element={isRestoring || authSession == null ? <Navigate replace to="/prepare-session" /> : <Outlet />}>
+            <Route element={isRestoring || authSession == null ? <Navigate replace state={{ returnTo }} to="/prepare-session" /> : <Outlet />}>
                 <Route
                     element={<DashboardPage />}
                     path="/"
@@ -37,6 +40,14 @@ export function App() {
                 <Route
                     element={<TransactionsPage />}
                     path="/transactions"
+                />
+                <Route
+                    element={<SettingsPage />}
+                    path="/settings"
+                />
+                <Route
+                    element={<SettingsPage />}
+                    path="/profile"
                 />
             </Route>
             <Route

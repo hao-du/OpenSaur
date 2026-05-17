@@ -2,7 +2,7 @@ import { Grid, Stack } from "@mui/material";
 import { useEffect } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { ActionButton } from "../../../components/atoms/ActionButton";
-import { DateTimePicker } from "../../../components/atoms/DateTimePicker";
+import { DatePicker } from "../../../components/atoms/DatePicker";
 import { DropDown } from "../../../components/atoms/DropDown";
 import { Number as NumberField } from "../../../components/atoms/Number";
 import { TextArea } from "../../../components/atoms/TextArea";
@@ -189,7 +189,7 @@ export function TransferHeaderForm({ counterparties, currencies, calculatedAmoun
           />
         </Grid>
         <Grid size={{ xs: 12, md: 6 }}>
-          <DateTimePicker
+          <DatePicker
             control={form.control}
             disabled={isSubmitting}
             label="Transaction Date"
@@ -199,7 +199,7 @@ export function TransferHeaderForm({ counterparties, currencies, calculatedAmoun
           />
         </Grid>
         <Grid size={{ xs: 12, md: 6 }}>
-          <DateTimePicker
+          <DatePicker
             control={form.control}
             disabled={isSubmitting}
             label="Due Date"

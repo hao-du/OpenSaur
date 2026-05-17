@@ -46,24 +46,24 @@ export function CounterpartiesList({
 
   return (
     <Paper elevation={0} sx={layoutStyles.borderedPanelScrollable}>
-      <Table>
+      <Table size="small">
         <TableHead>
           <TableRow>
-            <TableCell>{t("counterparties.fullName")}</TableCell>
-            <TableCell>{t("counterparties.email")}</TableCell>
-            <TableCell>{t("counterparties.phoneNumber")}</TableCell>
-            <TableCell>{t("counterparties.description")}</TableCell>
-            <TableCell align="right">{t("counterparties.actions")}</TableCell>
+            <TableCell sx={{ py: 1 }}>{t("counterparties.fullName")}</TableCell>
+            <TableCell sx={{ py: 1 }}>{t("counterparties.email")}</TableCell>
+            <TableCell sx={{ py: 1 }}>{t("counterparties.phoneNumber")}</TableCell>
+            <TableCell sx={{ py: 1 }}>{t("counterparties.description")}</TableCell>
+            <TableCell align="right" sx={{ py: 1 }}>{t("counterparties.actions")}</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
           {counterparties.map(counterparty => (
             <TableRow hover key={counterparty.id}>
-              <TableCell>{counterparty.fullName}</TableCell>
-              <TableCell>{counterparty.email ?? t("common.none")}</TableCell>
-              <TableCell>{counterparty.phoneNumber ?? t("common.none")}</TableCell>
-              <TableCell>{counterparty.description ?? t("common.none")}</TableCell>
-              <TableCell align="right">
+              <TableCell sx={{ py: 0.8 }}>{counterparty.fullName}</TableCell>
+              <TableCell sx={{ py: 0.8 }}>{counterparty.email ?? t("common.none")}</TableCell>
+              <TableCell sx={{ py: 0.8 }}>{counterparty.phoneNumber ?? t("common.none")}</TableCell>
+              <TableCell sx={{ py: 0.8 }}>{counterparty.description ?? t("common.none")}</TableCell>
+              <TableCell align="right" sx={{ py: 0.8 }}>
                 <Stack direction="row" justifyContent="flex-end" spacing={1}>
                   <LinkButton
                     disabled={isSubmitting}

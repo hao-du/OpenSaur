@@ -4,9 +4,9 @@ import { getPkceSession, savePkceSession } from "../storages/pkceStorage";
 
 export async function buildAuthorizeUrl(
   config: ConfigDto,
-  options?: { impersonatedUserId?: string | null; workspaceId?: string | null }
+  options?: { impersonatedUserId?: string | null; returnTo?: string | null; workspaceId?: string | null }
 ): Promise<string> {
-  const pkceSession = await savePkceSession();
+  const pkceSession = await savePkceSession(options?.returnTo);
   const authorizeUrl = new URL("/connect/authorize", config.authority);
 
   authorizeUrl.searchParams.set("response_type", "code");

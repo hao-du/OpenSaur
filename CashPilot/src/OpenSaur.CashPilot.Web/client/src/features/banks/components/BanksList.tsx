@@ -44,23 +44,23 @@ export function BanksList({
 
   return (
     <Paper elevation={0} sx={layoutStyles.borderedPanelScrollable}>
-      <Table>
+      <Table size="small">
         <TableHead>
           <TableRow>
-            <TableCell>Name</TableCell>
-            <TableCell>Short Name</TableCell>
-            <TableCell>Description</TableCell>
-            <TableCell>Is Default</TableCell>
-            <TableCell align="right">Actions</TableCell>
+            <TableCell sx={{ py: 1 }}>Name</TableCell>
+            <TableCell sx={{ py: 1 }}>Short Name</TableCell>
+            <TableCell sx={{ py: 1 }}>Description</TableCell>
+            <TableCell sx={{ py: 1 }}>Is Default</TableCell>
+            <TableCell align="right" sx={{ py: 1 }}>Actions</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
           {banks.map(bank => (
             <TableRow hover key={bank.id}>
-              <TableCell>{bank.name}</TableCell>
-              <TableCell>{bank.shortName}</TableCell>
-              <TableCell>{bank.description ?? "(None)"}</TableCell>
-              <TableCell>
+              <TableCell sx={{ py: 0.8 }}>{bank.name}</TableCell>
+              <TableCell sx={{ py: 0.8 }}>{bank.shortName}</TableCell>
+              <TableCell sx={{ py: 0.8 }}>{bank.description ?? "(None)"}</TableCell>
+              <TableCell sx={{ py: 0.8 }}>
                 {bank.isDefault ? (
                   <Chip
                     label="Yes"
@@ -78,7 +78,7 @@ export function BanksList({
                   />
                 )}
               </TableCell>
-              <TableCell align="right">
+              <TableCell align="right" sx={{ py: 0.8 }}>
                 <Stack direction="row" justifyContent="flex-end" spacing={1}>
                   <LinkButton
                     disabled={isSubmitting}

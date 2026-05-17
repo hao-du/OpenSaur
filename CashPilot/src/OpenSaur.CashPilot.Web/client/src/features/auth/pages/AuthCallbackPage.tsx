@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { getConfig } from "../../../infrastructure/config/Config";
 import { clearPkceSession, getPkceSession } from "../storages/pkceStorage";
 import { CenteredCardLayout } from "../../../components/layouts/CenteredCardLayout";
+import { LinkButton } from "../../../components/atoms/LinkButton";
 import { exchangeAuthCode, refreshAuthSession } from "../apis/authApi";
 import { useAuthSession } from "../hooks/AuthContext";
 import { readCallbackResult } from "../services/UriService";
@@ -15,6 +16,7 @@ export function AuthCallbackPage() {
   const callbackResult = readCallbackResult(window.location.search);
   const [callbackError, setCallbackError] = useState<string | null>(null);
   const [status, setStatus] = useState<"exchanging" | "failed" | "restoring">("exchanging");
+  const [showDetails, setShowDetails] = useState(false);
   const hasStarted = useRef(false);
 
   useEffect(() => {
@@ -65,8 +67,9 @@ export function AuthCallbackPage() {
         );
 
         setSession(authSession);
+        const returnTo = pkceSession.returnTo?.trim().length ? pkceSession.returnTo : "/";
         clearPkceSession();
-        navigate("/", { replace: true });
+        navigate(returnTo, { replace: true });
       } catch (error) {
         if (config == null) {
           setStatus("failed");
@@ -78,10 +81,12 @@ export function AuthCallbackPage() {
         try {
           setStatus("restoring");
           const refreshedSession = await refreshAuthSession(config);
+          const restoredPkceSession = getPkceSession();
+          const returnTo = restoredPkceSession?.returnTo?.trim().length ? restoredPkceSession.returnTo : "/";
 
           setSession(refreshedSession);
           clearPkceSession();
-          navigate("/", { replace: true });
+          navigate(returnTo, { replace: true });
         } catch {
           setStatus("failed");
           setCallbackError(getCallbackErrorMessage(error, t("auth.tokenExchangeFailed")));
@@ -95,19 +100,27 @@ export function AuthCallbackPage() {
 
   return (
     <CenteredCardLayout
-      description={t("auth.callbackDescription")}
+      description="We are securely completing your sign-in. You will be redirected automatically."
       title={t("auth.callbackTitle")}
     >
       <div>
-        <p><strong>{t("auth.status")}:</strong> {status}</p>
-        <p><strong>{t("auth.callbackError")}:</strong> {callbackError ?? t("common.none")}</p>
-        <p><strong>{t("auth.callbackCode")}:</strong> {callbackResult.code ?? t("common.missing")}</p>
-        <p><strong>{t("auth.returnedState")}:</strong> {callbackResult.returnedState ?? t("common.missing")}</p>
-        <p><strong>{t("auth.storedPkceState")}:</strong> {callbackResult.storedState ?? t("common.missing")}</p>
-        <p><strong>{t("auth.pkceSessionPresent")}:</strong> {callbackResult.hasPkceSession ? t("common.yes") : t("common.no")}</p>
-        <p><strong>{t("auth.stateMatches")}:</strong> {callbackResult.stateMatches == null ? t("common.notVerifiable") : callbackResult.stateMatches ? t("common.yes") : t("common.no")}</p>
-        <p><strong>{t("auth.error")}:</strong> {callbackResult.error ?? t("common.none")}</p>
-        <p><strong>{t("auth.errorDescription")}:</strong> {callbackResult.errorDescription ?? t("common.none")}</p>
+        <p>Please wait while we complete authentication and redirect you.</p>
+        <LinkButton onClick={() => setShowDetails(x => !x)} sx={{ px: 0 }}>
+          {showDetails ? "Hide details" : "Show details"}
+        </LinkButton>
+        {showDetails ? (
+          <>
+            <p><strong>{t("auth.status")}:</strong> {status}</p>
+            <p><strong>{t("auth.callbackError")}:</strong> {callbackError ?? t("common.none")}</p>
+            <p><strong>{t("auth.callbackCode")}:</strong> {callbackResult.code ?? t("common.missing")}</p>
+            <p><strong>{t("auth.returnedState")}:</strong> {callbackResult.returnedState ?? t("common.missing")}</p>
+            <p><strong>{t("auth.storedPkceState")}:</strong> {callbackResult.storedState ?? t("common.missing")}</p>
+            <p><strong>{t("auth.pkceSessionPresent")}:</strong> {callbackResult.hasPkceSession ? t("common.yes") : t("common.no")}</p>
+            <p><strong>{t("auth.stateMatches")}:</strong> {callbackResult.stateMatches == null ? t("common.notVerifiable") : callbackResult.stateMatches ? t("common.yes") : t("common.no")}</p>
+            <p><strong>{t("auth.error")}:</strong> {callbackResult.error ?? t("common.none")}</p>
+            <p><strong>{t("auth.errorDescription")}:</strong> {callbackResult.errorDescription ?? t("common.none")}</p>
+          </>
+        ) : null}
       </div>
     </CenteredCardLayout>
   );

@@ -2,7 +2,7 @@ import { Grid, Stack } from "@mui/material";
 import { useEffect, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { ActionButton } from "../../../components/atoms/ActionButton";
-import { DateTimePicker } from "../../../components/atoms/DateTimePicker";
+import { DatePicker } from "../../../components/atoms/DatePicker";
 import { DropDown } from "../../../components/atoms/DropDown";
 import { Number as NumberField } from "../../../components/atoms/Number";
 import { Text } from "../../../components/atoms/Text";
@@ -263,7 +263,7 @@ export function BankAccountForm({ banks, currencies, initialValue, onSubmit, sub
         </Grid>
 
         <Grid size={{ xs: 12, md: 6 }}>
-          <DateTimePicker
+          <DatePicker
             control={form.control}
             label="Start Date"
             name="startDate"
@@ -272,7 +272,7 @@ export function BankAccountForm({ banks, currencies, initialValue, onSubmit, sub
           />
         </Grid>
         <Grid size={{ xs: 12, md: 6 }}>
-          <DateTimePicker
+          <DatePicker
             control={form.control}
             label="Maturity Date"
             name="maturityDate"

@@ -1,5 +1,5 @@
 import { Button, Stack } from "@mui/material";
-import { DateTimePicker } from "../../../components/atoms/DateTimePicker";
+import { DatePicker } from "../../../components/atoms/DatePicker";
 import { DropDown } from "../../../components/atoms/DropDown";
 import { Number as NumberField } from "../../../components/atoms/Number";
 import { TextArea } from "../../../components/atoms/TextArea";
@@ -105,7 +105,7 @@ export function TransferFormTransaction({ detail, isSubmitting = false, onAccept
           />
         </Stack>
       </Stack>
-      <DateTimePicker
+      <DatePicker
         control={form.control}
         disabled={isSubmitting}
         label="Date"

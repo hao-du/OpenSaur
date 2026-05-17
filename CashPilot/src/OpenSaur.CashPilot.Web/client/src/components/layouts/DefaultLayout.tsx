@@ -1,4 +1,4 @@
-import { useState, type PropsWithChildren } from "react";
+import { useState, type PropsWithChildren, type ReactNode } from "react";
 import { Box, Drawer, useMediaQuery, useTheme } from "@mui/material";
 import { Header } from "../organisms/Header";
 import { SideMenu } from "../organisms/SideMenu";
@@ -6,11 +6,12 @@ import { MainContent } from "../templates/MainContent";
 import { layoutStyles } from "../../infrastructure/theme/theme";
 
 type DefaultLayoutProps = PropsWithChildren<{
+  headerActions?: ReactNode;
   subtitle?: string;
   title: string;
 }>;
 
-export function DefaultLayout({ children, subtitle, title }: DefaultLayoutProps) {
+export function DefaultLayout({ children, headerActions, subtitle, title }: DefaultLayoutProps) {
   const theme = useTheme();
   const isDesktop = useMediaQuery(theme.breakpoints.up("lg"));
   const [isNavigationOpen, setIsNavigationOpen] = useState(false);
@@ -49,6 +50,7 @@ export function DefaultLayout({ children, subtitle, title }: DefaultLayoutProps)
           }}
         />
         <MainContent
+          headerActions={headerActions}
           subtitle={subtitle}
           title={title}
         >

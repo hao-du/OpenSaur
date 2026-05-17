@@ -1,77 +1,49 @@
-import { getConfig } from "../../../infrastructure/config/Config";
-import { useAuthSession } from "../../auth/hooks/AuthContext";
 import { DefaultLayout } from "../../../components/layouts/DefaultLayout";
-import { useSettings } from "../../settings/provider/SettingProvider";
-import { BodyText } from "../../../components/atoms/BodyText";
-import { LabelText } from "../../../components/atoms/LabelText";
-import { PageTitleText } from "../../../components/atoms/PageTitleText";
 import { Grid, Paper, Stack } from "@mui/material";
 import { useTransactionDashboardQuery } from "../../transactions/hooks/useTransactionDashboardQuery";
+import { useSettings } from "../../settings/provider/SettingProvider";
+import { useCurrenciesQuery } from "../../currencies/hooks/useCurrenciesQuery";
+import { TotalAmountByCurrencyCard } from "../../transactions/components/dashboard/TotalAmountByCurrencyCard";
+import { TotalActiveBankAccountCard } from "../../transactions/components/dashboard/TotalActiveBankAccountCard";
+import { IncomeOutcomeCard } from "../../transactions/components/dashboard/IncomeOutcomeCard";
 
 export function DashboardPage() {
-  const config = getConfig();
-  const { authSession } = useAuthSession();
-  const { formatDateTime, t } = useSettings();
+  const { t } = useSettings();
   const transactionDashboard = useTransactionDashboardQuery();
+  const currencies = useCurrenciesQuery({ isActive: true, name: "", shortName: "" }).data ?? [];
+  const defaultCurrencyCode = currencies.find(x => x.isDefault)?.shortName;
+  const incomeOutcomeTitle = defaultCurrencyCode == null
+    ? t("transactions.incomeOutcome")
+    : `${t("transactions.incomeOutcome")} (${defaultCurrencyCode})`;
+  const incomeOutcomeItems = defaultCurrencyCode == null
+    ? (transactionDashboard.data?.incomeOutcomes ?? [])
+    : (transactionDashboard.data?.incomeOutcomes ?? []).filter(x => x.currencyCode === defaultCurrencyCode);
 
   return (
     <DefaultLayout
-      subtitle={t("dashboard.subtitle")}
       title={t("dashboard.title")}
     >
       <Stack spacing={3}>
         <Paper elevation={0} sx={{ border: "1px solid rgba(11,110,79,0.12)", p: 3 }}>
           <Stack spacing={2}>
-            <Stack spacing={0.75}>
-              <PageTitleText variant="h6">{t("dashboard.sessionRuntime")}</PageTitleText>
-              <BodyText>
-                {t("dashboard.oidcRuntimeConfig")} <code>/app-config.js</code>.
-              </BodyText>
-            </Stack>
-            <Grid container spacing={2}>
-              {[
-                [t("dashboard.authenticated"), authSession == null ? t("common.no") : t("common.yes")],
-                [t("auth.tokenType"), authSession?.tokenType ?? t("common.missing")],
-                [t("dashboard.expiresAt"), authSession?.expiresAt ? formatDateTime(authSession.expiresAt) : t("common.missing")],
-                [t("auth.scope"), authSession?.scope ?? t("common.missing")],
-                [t("auth.idToken"), authSession?.idToken == null ? t("common.missing") : t("dashboard.idTokenIssued")],
-                [t("auth.authority"), config.authority],
-                [t("auth.clientId"), config.clientId],
-                [t("auth.redirectUri"), config.redirectUri],
-                [t("auth.postLogoutRedirectUri"), config.postLogoutRedirectUri],
-                [t("dashboard.configScope"), config.scope]
-              ].map(([label, value]) => (
-                <Grid key={label} size={{ md: 6, xs: 12 }}>
-                  <Stack spacing={0.5}>
-                    <LabelText>{label}</LabelText>
-                    <BodyText sx={{ overflowWrap: "anywhere" }}>{value}</BodyText>
-                  </Stack>
-                </Grid>
-              ))}
-            </Grid>
-          </Stack>
-        </Paper>
-        <Paper elevation={0} sx={{ border: "1px solid rgba(11,110,79,0.12)", p: 3 }}>
-          <Stack spacing={2}>
-            <PageTitleText variant="h6">{t("transactions.dashboardSummary")}</PageTitleText>
-            <Grid container spacing={2}>
-              <Grid size={{ md: 4, xs: 12 }}>
-                <LabelText>{t("transactions.totalByCurrency")}</LabelText>
-                {(transactionDashboard.data?.currencyBalances ?? []).map(item => (
-                  <BodyText key={item.currencyCode}>{`${item.currencyCode}: ${item.total}`}</BodyText>
-                ))}
+            <Grid container spacing={2} alignItems="stretch">
+              <Grid size={{ lg: 4, sm: 6, xs: 12 }}>
+                <TotalAmountByCurrencyCard
+                  items={transactionDashboard.data?.currencyBalances ?? []}
+                  title={t("transactions.totalByCurrency")}
+                />
               </Grid>
-              <Grid size={{ md: 4, xs: 12 }}>
-                <LabelText>{t("transactions.totalByBank")}</LabelText>
-                {(transactionDashboard.data?.activeBankBalances ?? []).map(item => (
-                  <BodyText key={`${item.bankName}-${item.currencyCode}`}>{`${item.bankName} (${item.currencyCode}): ${item.totalDeposited}`}</BodyText>
-                ))}
+              <Grid size={{ lg: 4, sm: 6, xs: 12 }}>
+                <TotalActiveBankAccountCard
+                  items={transactionDashboard.data?.activeBankBalances ?? []}
+                  title={t("transactions.totalByBank")}
+                />
               </Grid>
-              <Grid size={{ md: 4, xs: 12 }}>
-                <LabelText>{t("transactions.incomeOutcome")}</LabelText>
-                {(transactionDashboard.data?.incomeOutcomes ?? []).slice(0, 8).map(item => (
-                  <BodyText key={`${item.year}-${item.month}-${item.currencyCode}`}>{`${item.year}-${String(item.month).padStart(2, "0")} ${item.currencyCode}: +${item.income} / -${item.outcome}`}</BodyText>
-                ))}
+              <Grid size={{ lg: 4, sm: 6, xs: 12 }}>
+                <IncomeOutcomeCard
+                  items={incomeOutcomeItems}
+                  title={incomeOutcomeTitle}
+                />
               </Grid>
             </Grid>
           </Stack>

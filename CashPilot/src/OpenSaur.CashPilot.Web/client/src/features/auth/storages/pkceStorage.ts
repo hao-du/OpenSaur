@@ -34,7 +34,7 @@ export function getPkceSession(): PkceSessionDto | null {
   return JSON.parse(rawValue) as PkceSessionDto;
 }
 
-export async function savePkceSession(): Promise<{
+export async function savePkceSession(returnTo?: string | null): Promise<{
   codeChallenge: string;
   codeVerifier: string;
   state: string;
@@ -47,6 +47,7 @@ export async function savePkceSession(): Promise<{
     pkceStorageKey,
     JSON.stringify({
       codeVerifier,
+      returnTo: returnTo ?? null,
       state
     } satisfies PkceSessionDto)
   );

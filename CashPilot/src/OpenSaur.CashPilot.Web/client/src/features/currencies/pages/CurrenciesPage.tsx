@@ -5,7 +5,6 @@ import { useForm } from "react-hook-form";
 import { ActionButton } from "../../../components/atoms/ActionButton";
 import { DefaultLayout } from "../../../components/layouts/DefaultLayout";
 import { ConfirmationDialog } from "../../../components/organisms/ConfirmationDialog";
-import { layoutStyles } from "../../../infrastructure/theme/theme";
 import { useSettings } from "../../settings/provider/SettingProvider";
 import { createCurrency, deleteCurrency, updateCurrency } from "../api/currenciesApi";
 import { CurrenciesFilterDrawer } from "../components/CurrenciesFilterDrawer";
@@ -126,25 +125,25 @@ export function CurrenciesPage() {
     }
   }
 
+  const headerActions = (
+    <Stack direction="row" spacing={1.25}>
+      <ActionButton
+        onClick={() => {
+          setIsFilterDrawerOpen(true);
+        }}
+        variant="outlined"
+      >
+        {t("currencies.filter")}
+      </ActionButton>
+      <ActionButton onClick={openCreateForm}>
+        {t("currencies.create")}
+      </ActionButton>
+    </Stack>
+  );
+
   return (
-    <DefaultLayout subtitle={t("currencies.subtitle")} title={t("currencies.title")}>
+    <DefaultLayout headerActions={headerActions} title={t("currencies.title")}>
       <Stack spacing={3}>
-        <Stack direction={{ md: "row", xs: "column" }} justifyContent="space-between" spacing={2}>
-          <Stack direction="row" spacing={2} sx={layoutStyles.responsiveActionGroup}>
-            <ActionButton
-              onClick={() => {
-                setIsFilterDrawerOpen(true);
-              }}
-              sx={layoutStyles.responsiveActionButton}
-              variant="outlined"
-            >
-              {t("currencies.filter")}
-            </ActionButton>
-          </Stack>
-          <ActionButton onClick={openCreateForm} sx={layoutStyles.responsiveActionButton}>
-            {t("currencies.create")}
-          </ActionButton>
-        </Stack>
         {errorMessage != null ? <Alert severity="error">{errorMessage}</Alert> : null}
         <CurrenciesList
           currencies={currencies}

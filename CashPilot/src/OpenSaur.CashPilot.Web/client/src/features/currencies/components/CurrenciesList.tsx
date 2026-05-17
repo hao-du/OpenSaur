@@ -47,23 +47,23 @@ export function CurrenciesList({
 
   return (
     <Paper elevation={0} sx={layoutStyles.borderedPanelScrollable}>
-      <Table>
+      <Table size="small">
         <TableHead>
           <TableRow>
-            <TableCell>{t("currencies.name")}</TableCell>
-            <TableCell>{t("currencies.shortCode")}</TableCell>
-            <TableCell>{t("currencies.description")}</TableCell>
-            <TableCell>{t("currencies.isDefault")}</TableCell>
-            <TableCell align="right">{t("currencies.actions")}</TableCell>
+            <TableCell sx={{ py: 1 }}>{t("currencies.name")}</TableCell>
+            <TableCell sx={{ py: 1 }}>{t("currencies.shortCode")}</TableCell>
+            <TableCell sx={{ py: 1 }}>{t("currencies.description")}</TableCell>
+            <TableCell sx={{ py: 1 }}>{t("currencies.isDefault")}</TableCell>
+            <TableCell align="right" sx={{ py: 1 }}>{t("currencies.actions")}</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
           {currencies.map(currency => (
             <TableRow hover key={currency.id}>
-              <TableCell>{currency.name}</TableCell>
-              <TableCell>{currency.shortName}</TableCell>
-              <TableCell>{currency.description ?? t("common.none")}</TableCell>
-              <TableCell>
+              <TableCell sx={{ py: 0.8 }}>{currency.name}</TableCell>
+              <TableCell sx={{ py: 0.8 }}>{currency.shortName}</TableCell>
+              <TableCell sx={{ py: 0.8 }}>{currency.description ?? t("common.none")}</TableCell>
+              <TableCell sx={{ py: 0.8 }}>
                 {currency.isDefault ? (
                   <Chip
                     label="Yes"
@@ -81,7 +81,7 @@ export function CurrenciesList({
                   />
                 )}
               </TableCell>
-              <TableCell align="right">
+              <TableCell align="right" sx={{ py: 0.8 }}>
                 <Stack direction="row" justifyContent="flex-end" spacing={1}>
                   <LinkButton
                     disabled={isSubmitting}
