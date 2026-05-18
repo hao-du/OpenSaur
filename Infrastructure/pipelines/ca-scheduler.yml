@@ -24,12 +24,14 @@ parameters:
       - "ca-gateway"
       - "ca-cloudflared"
       - "ca-umbraco"
+      - "ca-cashpilot"
     values:
       - "ca-zentry"
       - "ca-coregate"
       - "ca-gateway"
       - "ca-cloudflared"
       - "ca-umbraco"
+      - "ca-cashpilot"
 
 variables:
   azureServiceConnection: "Azure Service Connection"
