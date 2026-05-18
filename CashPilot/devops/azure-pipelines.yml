@@ -8,10 +8,10 @@ variables:
   buildConfiguration: Release
   dotnetSdkVersion: 10.0.x
   nodeVersion: 20.x
-  webProject: src/OpenSaur.CashPilot.Web/OpenSaur.CashPilot.Web.csproj
-  clientWorkingDirectory: src/OpenSaur.CashPilot.Web/client
+  webProject: CashPilot/src/OpenSaur.CashPilot.Web/OpenSaur.CashPilot.Web.csproj
+  clientWorkingDirectory: CashPilot/src/OpenSaur.CashPilot.Web/client
   publishOutputDirectory: $(Build.ArtifactStagingDirectory)/webapp-publish
-  dockerfileTemplate: devops/Dockerfile.artifact
+  dockerfileTemplate: CashPilot/devops/Dockerfile.artifact
   dockerHubServiceConnection: Docker Hub
   dockerRepository: duchihao/cashpilot
   azureServiceConnection: Azure Service Connection
