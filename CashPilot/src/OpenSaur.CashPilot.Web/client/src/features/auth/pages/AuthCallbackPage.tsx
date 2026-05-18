@@ -43,7 +43,7 @@ export function AuthCallbackPage() {
 
       if (callbackResult.stateMatches !== true) {
         setStatus("failed");
-        setCallbackError("Returned OAuth state did not match the stored PKCE state.");
+        setCallbackError(t("auth.stateMismatch"));
         clearSession();
         return;
       }
@@ -55,7 +55,7 @@ export function AuthCallbackPage() {
         const pkceSession = getPkceSession();
         if (pkceSession == null) {
           setStatus("failed");
-          setCallbackError("Stored PKCE session is missing.");
+          setCallbackError(t("auth.missingPkceSession"));
           clearSession();
           return;
         }
@@ -100,13 +100,13 @@ export function AuthCallbackPage() {
 
   return (
     <CenteredCardLayout
-      description="We are securely completing your sign-in. You will be redirected automatically."
+      description={t("auth.callbackGenericDescription")}
       title={t("auth.callbackTitle")}
     >
       <div>
-        <p>Please wait while we complete authentication and redirect you.</p>
+        <p>{t("auth.callbackGenericMessage")}</p>
         <LinkButton onClick={() => setShowDetails(x => !x)} sx={{ px: 0 }}>
-          {showDetails ? "Hide details" : "Show details"}
+          {showDetails ? t("common.hideDetails") : t("common.showDetails")}
         </LinkButton>
         {showDetails ? (
           <>
@@ -128,6 +128,6 @@ export function AuthCallbackPage() {
 
 function getCallbackErrorMessage(error: unknown, fallbackMessage: string) {
   return error instanceof Error && error.message.trim().length > 0
-    ? `Token exchange failed: ${error.message}`
+    ? `${fallbackMessage} ${error.message}`
     : fallbackMessage;
 }

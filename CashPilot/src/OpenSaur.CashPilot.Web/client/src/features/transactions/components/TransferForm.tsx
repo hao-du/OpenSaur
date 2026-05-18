@@ -6,6 +6,7 @@ import type { SaveTransferFormRequestDto } from "../dtos/TransactionDto";
 import { TransferHeaderForm } from "./TransferHeaderForm";
 import { TransferFormTransaction, type TransferDetailEditor } from "./TransferFormTransaction";
 import { ActionButton } from "../../../components/atoms/ActionButton";
+import { useSettings } from "../../settings/provider/SettingProvider";
 
 type Props = {
   counterparties: CounterpartyDto[];
@@ -50,6 +51,7 @@ type TransferHeaderValues = {
 };
 
 export function TransferForm({ counterparties, currencies, onSave, movementInitialValue, movementInitialDetails = [], movementSubmitLabel = "Create", isSubmitting = false, submitLabel = "Create", headerSubmitLabel = "Apply Header", onCompleted }: Props) {
+  const { t } = useSettings();
   const defaultHeaderValues = useMemo<TransferHeaderValues>(() => ({
     amount: "0",
     counterpartyId: counterparties[0]?.id ?? "",
@@ -160,7 +162,7 @@ export function TransferForm({ counterparties, currencies, onSave, movementIniti
 
   return (
     <Stack spacing={3}>
-      <h3 style={{ margin: 0 }}>Transfer Header</h3>
+      <h3 style={{ margin: 0 }}>{t("transactions.transferHeader")}</h3>
       <TransferHeaderForm
         calculatedAmount={calculatedAmount}
         counterparties={counterparties}
@@ -184,9 +186,9 @@ export function TransferForm({ counterparties, currencies, onSave, movementIniti
         submitLabel={headerSubmitLabel}
       />
       <Stack direction="row" justifyContent="space-between" alignItems="center">
-        <h3 style={{ margin: 0 }}>Transaction Details</h3>
+        <h3 style={{ margin: 0 }}>{t("transactions.transactionDetails")}</h3>
         <ActionButton onClick={addNewDetail} color="secondary" size="small" disabled={isSubmitting}>
-          Add Transaction
+          {t("transactions.addTransaction")}
         </ActionButton>
       </Stack>
 
@@ -205,7 +207,7 @@ export function TransferForm({ counterparties, currencies, onSave, movementIniti
 
       <Stack direction="row" justifyContent="flex-end">
         <ActionButton disabled={isSubmitting || calculatedAmount <= 0} onClick={() => { void handleSave(); }}>
-          {isSubmitting ? "Working..." : movementSubmitLabel ?? submitLabel}
+          {isSubmitting ? t("action.working") : movementSubmitLabel ?? submitLabel}
         </ActionButton>
       </Stack>
     </Stack>

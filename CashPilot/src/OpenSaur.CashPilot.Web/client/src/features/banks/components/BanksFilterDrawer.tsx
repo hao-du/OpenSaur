@@ -6,6 +6,7 @@ import { CheckBox } from "../../../components/atoms/CheckBox";
 import { Text } from "../../../components/atoms/Text";
 import { DrawerPanel } from "../../../components/organisms/DrawerPanel";
 import { layoutStyles } from "../../../infrastructure/theme/theme";
+import { useSettings } from "../../settings/provider/SettingProvider";
 import type { BankFilterParams } from "../api/banksApi";
 
 type BanksFilterDrawerProps = {
@@ -21,6 +22,7 @@ export function BanksFilterDrawer({
   onApply,
   onClose
 }: BanksFilterDrawerProps) {
+  const { t } = useSettings();
   const form = useForm<BankFilterParams>({
     defaultValues: initialValues
   });
@@ -37,7 +39,7 @@ export function BanksFilterDrawer({
     <DrawerPanel
       isOpen={isOpen}
       onClose={onClose}
-      title="Filter banks"
+      title={t("banks.filterTitle")}
     >
       <Stack
         component="form"
@@ -54,22 +56,22 @@ export function BanksFilterDrawer({
       >
         <Text
           control={form.control}
-          label="Name"
+          label={t("currencies.name")}
           name="name"
         />
         <Text
           control={form.control}
-          label="Short Name"
+          label={t("banks.shortName")}
           name="shortName"
         />
         <CheckBox
           control={form.control}
-          label="Active only"
+          label={t("counterparties.activeOnly")}
           name="isActive"
         />
         <Stack direction="row" spacing={1} sx={layoutStyles.formFooterRow}>
           <ActionButton type="submit">
-            Apply
+            {t("counterparties.apply")}
           </ActionButton>
           <ActionButton
             onClick={() => {
@@ -81,7 +83,7 @@ export function BanksFilterDrawer({
             }}
             variant="outlined"
           >
-            Reset
+            {t("counterparties.reset")}
           </ActionButton>
         </Stack>
       </Stack>

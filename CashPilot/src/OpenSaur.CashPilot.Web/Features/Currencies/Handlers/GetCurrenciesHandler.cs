@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using OpenSaur.CashPilot.Web.Features.Currencies.Dtos;
 using OpenSaur.CashPilot.Web.Infrastructure.Database;
+using OpenSaur.CashPilot.Web.Infrastructure.Helpers;
+using System.Security.Claims;
 
 namespace OpenSaur.CashPilot.Web.Features.Currencies.Handlers;
 
@@ -12,16 +14,18 @@ public static class GetCurrenciesHandler
         [FromQuery] bool? isActive,
         [FromQuery] string? name,
         [FromQuery] string? shortName,
+        ClaimsPrincipal user,
         CashPilotDbContext dbContext,
         CancellationToken cancellationToken)
     {
+        var currentUserId = ClaimHelper.GetCurrentUserId(user);
         var normalizedName = name?.Trim();
         var normalizedShortName = shortName?.Trim();
         var activeFilter = isActive ?? true;
 
         var query = dbContext.Currencies
             .AsNoTracking()
-            .Where(currency => currency.IsActive == activeFilter);
+            .Where(currency => currency.OwnerId == currentUserId && currency.IsActive == activeFilter);
 
         if (!string.IsNullOrWhiteSpace(normalizedName))
         {

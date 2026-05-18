@@ -4,6 +4,7 @@ import type { CounterpartyDto } from "../../counterparties/dtos/CounterpartyDto"
 import type { CurrencyDto } from "../../currencies/dtos/CurrencyDto";
 import type { SaveTransferFormRequestDto } from "../dtos/TransactionDto";
 import { TransferForm } from "./TransferForm";
+import { useSettings } from "../../settings/provider/SettingProvider";
 
 type Props = {
   editingMovement?: {
@@ -35,14 +36,15 @@ type Props = {
 };
 
 export function TransferFormDrawer({ editingMovement, isOpen, onClose, counterparties, currencies, onSave }: Props) {
+  const { t } = useSettings();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   return (
-    <DrawerPanel isOpen={isOpen} onClose={onClose} title={editingMovement == null ? "Transfer (Master/Detail)" : "Edit Transfer Movement"} width="wide">
+    <DrawerPanel isOpen={isOpen} onClose={onClose} title={editingMovement == null ? t("transactions.createTransfer") : t("transactions.editTransfer")} width="wide">
       <TransferForm
         counterparties={counterparties}
         currencies={currencies}
-        headerSubmitLabel="Apply Header"
+        headerSubmitLabel={t("transactions.applyHeader")}
         isSubmitting={isSubmitting}
         onCompleted={onClose}
         movementInitialValue={editingMovement == null ? null : {
@@ -57,7 +59,7 @@ export function TransferFormDrawer({ editingMovement, isOpen, onClose, counterpa
           transferType: editingMovement.transferType
         }}
         movementInitialDetails={editingMovement?.details ?? []}
-        movementSubmitLabel={editingMovement == null ? "Save" : "Save"}
+        movementSubmitLabel={t("transactions.save")}
         onSave={async payload => {
           setIsSubmitting(true);
           try {

@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form";
 import { ActionButton } from "../../../components/atoms/ActionButton";
 import { DefaultLayout } from "../../../components/layouts/DefaultLayout";
 import { ConfirmationDialog } from "../../../components/organisms/ConfirmationDialog";
+import { useSettings } from "../../settings/provider/SettingProvider";
 import { BankFormDrawer } from "../components/BankFormDrawer";
 import type { BankFormValues } from "../components/BankForm";
 import { BanksFilterDrawer } from "../components/BanksFilterDrawer";
@@ -36,6 +37,7 @@ function getErrorMessage(error: unknown, fallback: string) {
 }
 
 export function BanksPage() {
+  const { t } = useSettings();
   const [filters, setFilters] = useState({
     isActive: true,
     name: "",
@@ -76,7 +78,7 @@ export function BanksPage() {
       setIsFormOpen(false);
       await refetch();
     } catch (error) {
-      setErrorMessage(getErrorMessage(error, "Unable to save bank."));
+      setErrorMessage(getErrorMessage(error, t("banks.errorSave")));
     } finally {
       setIsSubmitting(false);
     }
@@ -117,7 +119,7 @@ export function BanksPage() {
       await refetch();
       setDeletingBank(null);
     } catch (error) {
-      setErrorMessage(getErrorMessage(error, "Unable to delete bank."));
+      setErrorMessage(getErrorMessage(error, t("banks.errorDelete")));
     } finally {
       setIsSubmitting(false);
     }
@@ -131,10 +133,10 @@ export function BanksPage() {
         }}
         variant="outlined"
       >
-        Filter
+        {t("banks.filter")}
       </ActionButton>
       <ActionButton onClick={openCreateForm}>
-        Create
+        {t("banks.create")}
       </ActionButton>
     </Stack>
   );
@@ -142,7 +144,7 @@ export function BanksPage() {
   return (
     <DefaultLayout
       headerActions={headerActions}
-      title="Banks"
+      title={t("banks.title")}
     >
       <Stack spacing={3}>
         {errorMessage != null ? <Alert severity="error">{errorMessage}</Alert> : null}
@@ -173,11 +175,11 @@ export function BanksPage() {
         onSubmit={handleSubmit}
       />
       <ConfirmationDialog
-        confirmLabel="Delete"
+        confirmLabel={t("banks.delete")}
         isConfirming={isSubmitting}
         message={deletingBank == null
           ? ""
-          : `Are you sure you want to delete ${deletingBank.name}?`}
+          : t("banks.deleteConfirm").replace("{name}", deletingBank.name)}
         onClose={() => {
           if (isSubmitting) {
             return;
@@ -189,7 +191,7 @@ export function BanksPage() {
           void handleDeleteConfirmed();
         }}
         open={deletingBank !== null}
-        title="Delete bank"
+        title={t("banks.deleteTitle")}
       />
       <BanksFilterDrawer
         initialValues={filters}

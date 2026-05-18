@@ -2,6 +2,7 @@ import { useState } from "react";
 import { DrawerPanel } from "../../../components/organisms/DrawerPanel";
 import type { CurrencyDto } from "../../currencies/dtos/CurrencyDto";
 import { ExchangeForm } from "./ExchangeForm";
+import { useSettings } from "../../settings/provider/SettingProvider";
 
 type Props = {
   editingExchange?: {
@@ -36,10 +37,11 @@ type Props = {
 };
 
 export function ExchangeFormDrawer({ editingExchange, isOpen, onClose, currencies, onSubmit, onUpdate }: Props) {
+  const { t } = useSettings();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   return (
-    <DrawerPanel isOpen={isOpen} onClose={onClose} title={editingExchange == null ? "Create Exchange" : "Edit Exchange"} width="wide">
+    <DrawerPanel isOpen={isOpen} onClose={onClose} title={editingExchange == null ? t("transactions.createExchange") : t("transactions.editExchange")} width="wide">
       <ExchangeForm
         currencies={currencies}
         initialValue={editingExchange == null ? null : editingExchange}
@@ -57,7 +59,7 @@ export function ExchangeFormDrawer({ editingExchange, isOpen, onClose, currencie
             setIsSubmitting(false);
           }
         }}
-        submitLabel={editingExchange == null ? "Create Exchange" : "Save Exchange"}
+        submitLabel={editingExchange == null ? t("transactions.createExchange") : t("transactions.saveExchange")}
       />
     </DrawerPanel>
   );

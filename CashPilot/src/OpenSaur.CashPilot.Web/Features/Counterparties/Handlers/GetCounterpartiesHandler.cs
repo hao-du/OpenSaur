@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using OpenSaur.CashPilot.Web.Features.Counterparties.Dtos;
 using OpenSaur.CashPilot.Web.Infrastructure.Database;
+using OpenSaur.CashPilot.Web.Infrastructure.Helpers;
+using System.Security.Claims;
 
 namespace OpenSaur.CashPilot.Web.Features.Counterparties.Handlers;
 
@@ -13,9 +15,11 @@ public static class GetCounterpartiesHandler
         [FromQuery] string? fullName,
         [FromQuery] string? email,
         [FromQuery] string? phoneNumber,
+        ClaimsPrincipal user,
         CashPilotDbContext dbContext,
         CancellationToken cancellationToken)
     {
+        var currentUserId = ClaimHelper.GetCurrentUserId(user);
         var normalizedFullName = fullName?.Trim();
         var normalizedEmail = email?.Trim();
         var normalizedPhoneNumber = phoneNumber?.Trim();
@@ -23,7 +27,7 @@ public static class GetCounterpartiesHandler
 
         var query = dbContext.Counterparties
             .AsNoTracking()
-            .Where(counterparty => counterparty.IsActive == activeFilter);
+            .Where(counterparty => counterparty.OwnerId == currentUserId && counterparty.IsActive == activeFilter);
 
         if (!string.IsNullOrWhiteSpace(normalizedFullName))
         {

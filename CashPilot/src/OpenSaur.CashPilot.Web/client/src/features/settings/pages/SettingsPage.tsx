@@ -17,43 +17,43 @@ export function SettingsPage() {
   const config = getConfig();
   const { authSession } = useAuthSession();
   const { data: profile } = useCurrentProfileQuery();
-  const { formatDateTime } = useSettings();
+  const { formatDateTime, t } = useSettings();
   const [tab, setTab] = useState<TabValue>(location.pathname === "/profile" ? "profile" : "oidc");
 
   const oidcItems = useMemo(() => ([
-    ["Authenticated", authSession == null ? "No" : "Yes"],
-    ["Token Type", authSession?.tokenType ?? "(Missing)"],
-    ["Expires At", authSession?.expiresAt ? formatDateTime(authSession.expiresAt) : "(Missing)"],
-    ["Scope", authSession?.scope ?? "(Missing)"],
-    ["ID Token", authSession?.idToken == null ? "(Missing)" : "Issued"],
-    ["Authority", config.authority],
-    ["Client ID", config.clientId],
-    ["Redirect URI", config.redirectUri],
-    ["Post logout redirect URI", config.postLogoutRedirectUri],
-    ["Configured scope", config.scope]
-  ]), [authSession, config.authority, config.clientId, config.postLogoutRedirectUri, config.redirectUri, config.scope, formatDateTime]);
+    [t("dashboard.authenticated"), authSession == null ? t("common.no") : t("common.yes")],
+    [t("auth.tokenType"), authSession?.tokenType ?? t("common.missing")],
+    [t("dashboard.expiresAt"), authSession?.expiresAt ? formatDateTime(authSession.expiresAt) : t("common.missing")],
+    [t("auth.scope"), authSession?.scope ?? t("common.missing")],
+    [t("auth.idToken"), authSession?.idToken == null ? t("common.missing") : t("dashboard.idTokenIssued")],
+    [t("auth.authority"), config.authority],
+    [t("auth.clientId"), config.clientId],
+    [t("auth.redirectUri"), config.redirectUri],
+    [t("auth.postLogoutRedirectUri"), config.postLogoutRedirectUri],
+    [t("settings.configuredScope"), config.scope]
+  ]), [authSession, config.authority, config.clientId, config.postLogoutRedirectUri, config.redirectUri, config.scope, formatDateTime, t]);
 
   return (
-    <DefaultLayout title="Settings">
+    <DefaultLayout title={t("settings.title")}>
       <Stack spacing={2}>
         <Paper elevation={0} sx={{ border: "1px solid rgba(11,110,79,0.12)", p: 1 }}>
           <Tabs onChange={(_, value: TabValue) => setTab(value)} value={tab}>
-            <Tab label="Profile" value="profile" />
-            <Tab label="OIDC" value="oidc" />
+            <Tab label={t("settings.profileTab")} value="profile" />
+            <Tab label={t("settings.oidcTab")} value="oidc" />
           </Tabs>
         </Paper>
 
         {tab === "profile" ? (
           <Paper elevation={0} sx={{ border: "1px solid rgba(11,110,79,0.12)", p: 3 }}>
             <Stack spacing={2}>
-              <PageTitleText variant="h6">User Profile</PageTitleText>
+              <PageTitleText variant="h6">{t("settings.userProfileTitle")}</PageTitleText>
               <Grid container spacing={2}>
                 {[
-                  ["First Name", profile?.firstName ?? "(Missing)"],
-                  ["Last Name", profile?.lastName ?? "(Missing)"],
-                  ["Username", profile?.userName ?? "(Missing)"],
-                  ["Email", profile?.email ?? "(Missing)"],
-                  ["Workspace", profile?.workspaceName ?? "(Missing)"]
+                  [t("settings.firstName"), profile?.firstName ?? t("common.missing")],
+                  [t("settings.lastName"), profile?.lastName ?? t("common.missing")],
+                  [t("settings.username"), profile?.userName ?? t("common.missing")],
+                  [t("settings.email"), profile?.email ?? t("common.missing")],
+                  [t("settings.workspace"), profile?.workspaceName ?? t("common.missing")]
                 ].map(([label, value]) => (
                   <Grid key={label} size={{ md: 6, xs: 12 }}>
                     <Stack spacing={0.5}>
@@ -69,9 +69,9 @@ export function SettingsPage() {
           <Paper elevation={0} sx={{ border: "1px solid rgba(11,110,79,0.12)", p: 3 }}>
             <Stack spacing={2}>
               <Stack spacing={0.75}>
-                <PageTitleText variant="h6">OIDC Session Runtime</PageTitleText>
+                <PageTitleText variant="h6">{t("settings.oidcRuntimeTitle")}</PageTitleText>
                 <BodyText>
-                  Runtime OIDC configuration is loaded from <code>/app-config.js</code>.
+                  {t("settings.oidcRuntimeDescription")} <code>/app-config.js</code>.
                 </BodyText>
               </Stack>
               <Grid container spacing={2}>
@@ -91,4 +91,3 @@ export function SettingsPage() {
     </DefaultLayout>
   );
 }
-

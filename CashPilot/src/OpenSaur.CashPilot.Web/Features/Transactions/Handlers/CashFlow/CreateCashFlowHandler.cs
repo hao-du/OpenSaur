@@ -7,6 +7,7 @@ using OpenSaur.CashPilot.Web.Infrastructure.Database;
 using OpenSaur.CashPilot.Web.Infrastructure.Helpers;
 using System.Security.Claims;
 using AppHttpResults = OpenSaur.CashPilot.Web.Infrastructure.Http.HttpResults;
+using Microsoft.EntityFrameworkCore;
 
 namespace OpenSaur.CashPilot.Web.Features.Transactions.Handlers;
 
@@ -30,6 +31,13 @@ public static class CreateCashFlowHandler
         if (!validationResult.IsValid)
         {
             return AppHttpResults.ValidationProblem(validationResult);
+        }
+        
+        var hasCurrency = await dbContext.Currencies
+            .AnyAsync(x => x.Id == request.CurrencyId && x.OwnerId == currentUserId && x.IsActive, cancellationToken);
+        if (!hasCurrency)
+        {
+            return AppHttpResults.BadRequest("Currency is invalid.", "The selected currency does not exist for the current user.");
         }
 
         var transaction = new Transaction

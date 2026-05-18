@@ -7,6 +7,7 @@ import { DropDown } from "../../../components/atoms/DropDown";
 import { Number as NumberField } from "../../../components/atoms/Number";
 import { TextArea } from "../../../components/atoms/TextArea";
 import type { CurrencyDto } from "../../currencies/dtos/CurrencyDto";
+import { useSettings } from "../../settings/provider/SettingProvider";
 
 type Props = {
   currencies: CurrencyDto[];
@@ -41,6 +42,7 @@ type FormValues = {
 };
 
 export function ExchangeForm({ currencies, initialValue, submitLabel = "Create Exchange", isSubmitting = false, onSubmit }: Props) {
+  const { t } = useSettings();
   const today = new Date().toISOString().slice(0, 10);
   const form = useForm<FormValues>({
     defaultValues: {
@@ -96,83 +98,83 @@ export function ExchangeForm({ currencies, initialValue, submitLabel = "Create E
           <DatePicker
             control={form.control}
             disabled={isSubmitting}
-            label="Exchange Date"
+            label={t("transactions.exchangeDate")}
             name="exchangeDate"
             required
-            rules={{ required: "Exchange Date is required." }}
+            rules={{ required: t("transactions.validation.exchangeDateRequired") }}
           />
         </Grid>
         <Grid size={{ xs: 12, md: 6 }}>
           <NumberField
             control={form.control}
             disabled={isSubmitting}
-            label="Exchange Rate"
+            label={t("transactions.exchangeRate")}
             name="exchangeRate"
             required
-            rules={{ required: "Exchange Rate is required." }}
+            rules={{ required: t("transactions.validation.exchangeRateRequired") }}
           />
         </Grid>
         <Grid size={{ xs: 12 }}>
           <TextArea
             control={form.control}
             disabled={isSubmitting}
-            label="Description"
+            label={t("transactions.description")}
             name="description"
             minRows={3}
           />
         </Grid>
 
         <Grid size={{ xs: 12 }}>
-          <h3 style={{ margin: 0 }}>Exchange Legs</h3>
+          <h3 style={{ margin: 0 }}>{t("transactions.exchangeLegs")}</h3>
         </Grid>
 
         <Grid size={{ xs: 12, md: 6 }}>
           <NumberField
             control={form.control}
             disabled={isSubmitting}
-            label="Out Amount"
+            label={t("transactions.outAmount")}
             name="outAmount"
             required
-            rules={{ required: "Out Amount is required." }}
+            rules={{ required: t("transactions.validation.outAmountRequired") }}
           />
         </Grid>
         <Grid size={{ xs: 12, md: 6 }}>
           <DropDown
             control={form.control}
             disabled={isSubmitting}
-            label="Out Currency"
+            label={t("transactions.outCurrency")}
             name="outCurrencyId"
             options={currencyOptions}
             required
-            rules={{ required: "Out Currency is required." }}
+            rules={{ required: t("transactions.validation.outCurrencyRequired") }}
           />
         </Grid>
         <Grid size={{ xs: 12, md: 6 }}>
           <NumberField
             control={form.control}
             disabled={isSubmitting}
-            label="In Amount"
+            label={t("transactions.inAmount")}
             name="inAmount"
             required
-            rules={{ required: "In Amount is required." }}
+            rules={{ required: t("transactions.validation.inAmountRequired") }}
           />
         </Grid>
         <Grid size={{ xs: 12, md: 6 }}>
           <DropDown
             control={form.control}
             disabled={isSubmitting}
-            label="In Currency"
+            label={t("transactions.inCurrency")}
             name="inCurrencyId"
             options={currencyOptions}
             required
-            rules={{ required: "In Currency is required." }}
+            rules={{ required: t("transactions.validation.inCurrencyRequired") }}
           />
         </Grid>
 
         <Grid size={{ xs: 12 }}>
           <Stack direction="row" justifyContent="flex-end">
             <ActionButton disabled={isSubmitting} type="submit">
-              {isSubmitting ? "Working..." : submitLabel}
+              {isSubmitting ? t("action.working") : submitLabel}
             </ActionButton>
           </Stack>
         </Grid>

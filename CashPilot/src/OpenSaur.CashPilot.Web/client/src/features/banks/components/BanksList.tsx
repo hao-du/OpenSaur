@@ -3,6 +3,7 @@ import { BodyText } from "../../../components/atoms/BodyText";
 import { LinkButton } from "../../../components/atoms/LinkButton";
 import { PageTitleText } from "../../../components/atoms/PageTitleText";
 import { layoutStyles } from "../../../infrastructure/theme/theme";
+import { useSettings } from "../../settings/provider/SettingProvider";
 import type { BankDto } from "../dtos/BankDto";
 
 type BanksListProps = {
@@ -20,12 +21,13 @@ export function BanksList({
   onDelete,
   onEdit
 }: BanksListProps) {
+  const { t } = useSettings();
   if (isLoading) {
     return (
       <Paper elevation={0} sx={layoutStyles.loadingPanel}>
         <Stack alignItems="center" spacing={2}>
           <CircularProgress size={28} />
-          <BodyText>Loading banks...</BodyText>
+          <BodyText>{t("banks.loading")}</BodyText>
         </Stack>
       </Paper>
     );
@@ -35,8 +37,8 @@ export function BanksList({
     return (
       <Paper elevation={0} sx={layoutStyles.emptyStatePanel}>
         <Stack spacing={1.5}>
-          <PageTitleText variant="h6">No banks found</PageTitleText>
-          <BodyText>Create a bank to start managing your bank master data.</BodyText>
+          <PageTitleText variant="h6">{t("banks.emptyTitle")}</PageTitleText>
+          <BodyText>{t("banks.emptySubtitle")}</BodyText>
         </Stack>
       </Paper>
     );
@@ -47,11 +49,11 @@ export function BanksList({
       <Table size="small">
         <TableHead>
           <TableRow>
-            <TableCell sx={{ py: 1 }}>Name</TableCell>
-            <TableCell sx={{ py: 1 }}>Short Name</TableCell>
-            <TableCell sx={{ py: 1 }}>Description</TableCell>
-            <TableCell sx={{ py: 1 }}>Is Default</TableCell>
-            <TableCell align="right" sx={{ py: 1 }}>Actions</TableCell>
+            <TableCell sx={{ py: 1 }}>{t("currencies.name")}</TableCell>
+            <TableCell sx={{ py: 1 }}>{t("banks.shortName")}</TableCell>
+            <TableCell sx={{ py: 1 }}>{t("currencies.description")}</TableCell>
+            <TableCell sx={{ py: 1 }}>{t("currencies.isDefault")}</TableCell>
+            <TableCell align="right" sx={{ py: 1 }}>{t("counterparties.actions")}</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
@@ -59,11 +61,11 @@ export function BanksList({
             <TableRow hover key={bank.id}>
               <TableCell sx={{ py: 0.8 }}>{bank.name}</TableCell>
               <TableCell sx={{ py: 0.8 }}>{bank.shortName}</TableCell>
-              <TableCell sx={{ py: 0.8 }}>{bank.description ?? "(None)"}</TableCell>
+              <TableCell sx={{ py: 0.8 }}>{bank.description ?? t("common.none")}</TableCell>
               <TableCell sx={{ py: 0.8 }}>
                 {bank.isDefault ? (
                   <Chip
-                    label="Yes"
+                    label={t("common.yes")}
                     size="small"
                     sx={{
                       bgcolor: "primary.main",
@@ -72,7 +74,7 @@ export function BanksList({
                   />
                 ) : (
                   <Chip
-                    label="No"
+                    label={t("common.no")}
                     size="small"
                     variant="outlined"
                   />
@@ -86,7 +88,7 @@ export function BanksList({
                       onEdit(bank);
                     }}
                   >
-                    Edit
+                    {t("counterparties.edit")}
                   </LinkButton>
                   <LinkButton
                     color="error"
@@ -95,7 +97,7 @@ export function BanksList({
                       onDelete(bank);
                     }}
                   >
-                    Delete
+                    {t("counterparties.delete")}
                   </LinkButton>
                 </Stack>
               </TableCell>

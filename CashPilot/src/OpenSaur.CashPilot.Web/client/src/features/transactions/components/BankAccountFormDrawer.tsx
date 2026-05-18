@@ -4,6 +4,7 @@ import type { BankDto } from "../../banks/dtos/BankDto";
 import type { CurrencyDto } from "../../currencies/dtos/CurrencyDto";
 import type { SaveBankAccountFormRequestDto } from "../dtos/TransactionDto";
 import { BankAccountForm } from "./BankAccountForm";
+import { useSettings } from "../../settings/provider/SettingProvider";
 
 type Props = {
   editingBankAccount?: SaveBankAccountFormRequestDto | null;
@@ -15,10 +16,11 @@ type Props = {
 };
 
 export function BankAccountFormDrawer({ editingBankAccount, isOpen, onClose, banks, currencies, onSave }: Props) {
+  const { t } = useSettings();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   return (
-    <DrawerPanel isOpen={isOpen} onClose={onClose} title={editingBankAccount == null ? "Create Bank Account" : "Edit Bank Account"} width="wide">
+    <DrawerPanel isOpen={isOpen} onClose={onClose} title={editingBankAccount == null ? t("transactions.createBankAccount") : t("transactions.editBankAccount")} width="wide">
       <BankAccountForm
         banks={banks}
         currencies={currencies}
@@ -33,7 +35,7 @@ export function BankAccountFormDrawer({ editingBankAccount, isOpen, onClose, ban
           }
         }}
         isSubmitting={isSubmitting}
-        submitLabel={editingBankAccount == null ? "Create" : "Save"}
+        submitLabel={editingBankAccount == null ? t("transactions.create") : t("transactions.save")}
       />
     </DrawerPanel>
   );

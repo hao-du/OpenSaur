@@ -38,9 +38,9 @@ export function PrepareSessionPage({ isRestoring }: PrepareSessionPageProps) {
       title={t("auth.prepareTitle")}
     >
       <div>
-        <p>Please wait while we prepare your secure session and sign you in.</p>
+        <p>{t("auth.prepareGenericMessage")}</p>
         <LinkButton onClick={() => setShowDetails(x => !x)} sx={{ px: 0 }}>
-          {showDetails ? "Hide details" : "Show details"}
+          {showDetails ? t("common.hideDetails") : t("common.showDetails")}
         </LinkButton>
         {showDetails ? (
           <>

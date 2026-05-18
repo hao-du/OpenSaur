@@ -6,6 +6,8 @@ using OpenSaur.CashPilot.Web.Domain;
 using OpenSaur.CashPilot.Web.Features.Banks.Dtos;
 using OpenSaur.CashPilot.Web.Features.Banks.Validations;
 using OpenSaur.CashPilot.Web.Infrastructure.Database;
+using OpenSaur.CashPilot.Web.Infrastructure.Helpers;
+using System.Security.Claims;
 using AppHttpResults = OpenSaur.CashPilot.Web.Infrastructure.Http.HttpResults;
 
 namespace OpenSaur.CashPilot.Web.Features.Banks.Handlers;
@@ -16,9 +18,11 @@ public static class CreateBankHandler
 
     public static async Task<Results<Created<BankResponse>, ValidationProblem, Conflict<ProblemDetails>>> HandleAsync(
         CreateBankRequest request,
+        ClaimsPrincipal user,
         CashPilotDbContext dbContext,
         CancellationToken cancellationToken)
     {
+        var currentUserId = ClaimHelper.GetCurrentUserId(user);
         var validationResult = await Validator.ValidateAsync(request, cancellationToken);
         if (!validationResult.IsValid)
         {
@@ -27,7 +31,7 @@ public static class CreateBankHandler
 
         var normalizedShortName = request.ShortName.Trim();
         var duplicateShortNameExists = await dbContext.Banks
-            .AnyAsync(candidate => candidate.ShortName == normalizedShortName, cancellationToken);
+            .AnyAsync(candidate => candidate.OwnerId == currentUserId && candidate.ShortName == normalizedShortName, cancellationToken);
         if (duplicateShortNameExists)
         {
             return AppHttpResults.Conflict("Short name already exists.", "A bank with the same short name already exists.");
@@ -38,12 +42,13 @@ public static class CreateBankHandler
         if (request.IsDefault)
         {
             await dbContext.Banks
-                .Where(candidate => candidate.IsDefault)
+                .Where(candidate => candidate.OwnerId == currentUserId && candidate.IsDefault)
                 .ExecuteUpdateAsync(updates => updates.SetProperty(candidate => candidate.IsDefault, false), cancellationToken);
         }
 
         var bank = new Bank
         {
+            OwnerId = currentUserId,
             Description = request.Description?.Trim(),
             IsDefault = request.IsDefault,
             Name = request.Name.Trim(),

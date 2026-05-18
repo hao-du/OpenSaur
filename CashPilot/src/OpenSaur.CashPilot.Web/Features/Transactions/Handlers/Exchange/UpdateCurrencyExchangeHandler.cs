@@ -22,11 +22,23 @@ public static class UpdateCurrencyExchangeHandler
         CancellationToken cancellationToken)
     {
         var currentUserId = ClaimHelper.GetCurrentUserId(user);
+        if (currentUserId == Guid.Empty)
+        {
+            return AppHttpResults.BadRequest("User is required.", "Transactions require an authenticated user identifier.");
+        }
 
         var validationResult = await Validator.ValidateAsync(request, cancellationToken);
         if (!validationResult.IsValid)
         {
             return AppHttpResults.ValidationProblem(validationResult);
+        }
+        
+        var currencyIds = new[] { request.OutLeg.CurrencyId, request.InLeg.CurrencyId }.Distinct().ToList();
+        var currencyCount = await dbContext.Currencies
+            .CountAsync(x => currencyIds.Contains(x.Id) && x.OwnerId == currentUserId && x.IsActive, cancellationToken);
+        if (currencyCount != currencyIds.Count)
+        {
+            return AppHttpResults.BadRequest("Currency is invalid.", "One or more selected currencies do not exist for the current user.");
         }
 
         var entity = await dbContext.CurrencyExchanges

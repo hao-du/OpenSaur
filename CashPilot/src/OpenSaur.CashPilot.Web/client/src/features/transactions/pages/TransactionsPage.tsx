@@ -33,6 +33,7 @@ import { ExchangeFormDrawer } from "../components/ExchangeFormDrawer";
 import { TotalAmountByCurrencyCard } from "../components/dashboard/TotalAmountByCurrencyCard";
 import { TotalActiveBankAccountCard } from "../components/dashboard/TotalActiveBankAccountCard";
 import { IncomeOutcomeCard } from "../components/dashboard/IncomeOutcomeCard";
+import { DashboardCardSkeleton } from "../components/dashboard/DashboardCardSkeleton";
 import { TransactionsFilterDrawer, type TransactionFilterValues } from "../components/TransactionsFilterDrawer";
 
 const amountFormatter = new Intl.NumberFormat("en-US", {
@@ -140,7 +141,9 @@ export function TransactionsPage() {
   const incomeOutcomeItems = defaultCurrencyCode == null
     ? (dashboardQuery.data?.incomeOutcomes ?? [])
     : (dashboardQuery.data?.incomeOutcomes ?? []).filter(x => x.currencyCode === defaultCurrencyCode);
-  const isListLoading = transactionsQuery.isLoading || dashboardQuery.isLoading;
+  const isTransactionsLoading = transactionsQuery.isLoading || transactionsQuery.isFetching || !transactionsQuery.data;
+  const isDashboardLoading = dashboardQuery.isLoading || dashboardQuery.isFetching || !dashboardQuery.data;
+  const isCurrenciesLoading = currencies.length === 0 && (isDashboardLoading || isTransactionsLoading);
 
   const filteredTransactions = useMemo(() => {
     const normalizedDescription = filters.description.trim().toLowerCase();
@@ -266,7 +269,7 @@ export function TransactionsPage() {
   const headerActions = (
     <Stack direction="row" spacing={1.25}>
       <ActionButton onClick={() => setIsFilterDrawerOpen(true)} variant="outlined">
-        Filter
+        {t("transactions.filter")}
       </ActionButton>
       <ActionButton
         endIcon={<ChevronDown size={16} />}
@@ -338,29 +341,28 @@ export function TransactionsPage() {
           onClose={() => setIsFilterDrawerOpen(false)}
         />
 
-        {isListLoading ? (
-          <Paper elevation={0} sx={layoutStyles.loadingPanel}>
-            <Stack alignItems="center" spacing={2}>
-              <CircularProgress size={28} />
-              <BodyText>Loading...</BodyText>
-            </Stack>
-          </Paper>
-        ) : (
-          <Grid container spacing={2} alignItems="stretch">
-            <Grid size={{ xs: 12, md: 6 }}>
-              <Paper sx={{ p: 2, height: "100%" }}>
-                <Stack spacing={1.25}>
-                  {pagedTransactions.length === 0 ? (
-                    <Paper elevation={0} sx={layoutStyles.emptyStatePanel}>
-                      <Stack spacing={1}>
-                        <BodyText sx={{ fontWeight: 700 }}>No transactions found</BodyText>
-                        <BodyText sx={{ color: "text.secondary" }}>
-                          Try adjusting your filters and search criteria.
-                        </BodyText>
-                      </Stack>
-                    </Paper>
-                  ) : (
-                    pagedTransactions.map(item => (
+        <Grid container spacing={2} alignItems="stretch">
+          <Grid size={{ xs: 12, md: 6 }}>
+            <Paper sx={{ p: 2, height: "100%" }}>
+              <Stack spacing={1.25}>
+                {isTransactionsLoading ? (
+                  <Paper elevation={0} sx={layoutStyles.loadingPanel}>
+                    <Stack alignItems="center" spacing={2}>
+                      <CircularProgress size={28} />
+                      <BodyText>{t("transactions.loading")}</BodyText>
+                    </Stack>
+                  </Paper>
+                ) : pagedTransactions.length === 0 ? (
+                  <Paper elevation={0} sx={layoutStyles.emptyStatePanel}>
+                    <Stack spacing={1}>
+                      <BodyText sx={{ fontWeight: 700 }}>{t("transactions.emptyTitle")}</BodyText>
+                      <BodyText sx={{ color: "text.secondary" }}>
+                        {t("transactions.emptySubtitle")}
+                      </BodyText>
+                    </Stack>
+                  </Paper>
+                ) : (
+                  pagedTransactions.map(item => (
                     <Paper
                       key={item.id}
                       variant="outlined"
@@ -386,7 +388,7 @@ export function TransactionsPage() {
                             {item.type === "BankAccount" && getBankMovementIcon(item.bankAccountTransactionType) != null ? (() => {
                               const MovementIcon = getBankMovementIcon(item.bankAccountTransactionType)!;
                               return (
-                                <span className="tx-type-icon tx-type-bankaccount" title={item.bankAccountTransactionType === 1 ? "InitialDeposit" : "PrincipalReturn"}>
+                                <span className="tx-type-icon tx-type-bankaccount" title={item.bankAccountTransactionType === 1 ? t("transactions.initialDeposit") : t("transactions.principalReturn")}>
                                   <MovementIcon size={16} />
                                 </span>
                               );
@@ -424,8 +426,9 @@ export function TransactionsPage() {
                         </Stack>
                       </Stack>
                     </Paper>
-                    ))
-                  )}
+                  ))
+                )}
+                {!isTransactionsLoading ? (
                   <Stack alignItems="center" sx={{ pt: 0.5 }}>
                     <Pagination
                       count={pageCount}
@@ -435,13 +438,22 @@ export function TransactionsPage() {
                       size="small"
                     />
                   </Stack>
-                </Stack>
-              </Paper>
-            </Grid>
+                ) : null}
+              </Stack>
+            </Paper>
+          </Grid>
 
-            <Grid size={{ xs: 12, md: 6 }}>
-              <Paper sx={{ p: 2, height: "100%" }}>
-                <Stack spacing={2}>
+          <Grid size={{ xs: 12, md: 6 }}>
+            <Paper sx={{ p: 2, height: "100%" }}>
+              <Stack spacing={2}>
+                {isDashboardLoading ? (
+                  <>
+                    <DashboardCardSkeleton rows={4} />
+                    <DashboardCardSkeleton rows={3} />
+                    <DashboardCardSkeleton rows={4} />
+                  </>
+                ) : (
+                  <>
                   <TotalAmountByCurrencyCard
                     items={dashboardQuery.data?.currencyBalances ?? []}
                     title={t("transactions.totalByCurrency")}
@@ -451,14 +463,15 @@ export function TransactionsPage() {
                     title={t("transactions.totalByBank")}
                   />
                   <IncomeOutcomeCard
-                    items={incomeOutcomeItems}
+                    items={isCurrenciesLoading ? [] : incomeOutcomeItems}
                     title={incomeOutcomeTitle}
                   />
-                </Stack>
-              </Paper>
-            </Grid>
+                  </>
+                )}
+              </Stack>
+            </Paper>
           </Grid>
-        )}
+        </Grid>
       </Stack>
     </DefaultLayout>
   );

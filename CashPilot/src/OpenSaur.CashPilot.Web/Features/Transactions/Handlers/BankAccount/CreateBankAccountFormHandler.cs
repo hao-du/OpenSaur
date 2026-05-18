@@ -6,6 +6,7 @@ using OpenSaur.CashPilot.Web.Features.Transactions.Validations;
 using OpenSaur.CashPilot.Web.Infrastructure.Database;
 using OpenSaur.CashPilot.Web.Infrastructure.Helpers;
 using System.Security.Claims;
+using Microsoft.EntityFrameworkCore;
 using AppHttpResults = OpenSaur.CashPilot.Web.Infrastructure.Http.HttpResults;
 
 namespace OpenSaur.CashPilot.Web.Features.Transactions.Handlers;
@@ -30,6 +31,21 @@ public static class CreateBankAccountFormHandler
         if (!validationResult.IsValid)
         {
             return AppHttpResults.ValidationProblem(validationResult);
+        }
+        
+        var hasBank = await dbContext.Banks
+            .AnyAsync(x => x.Id == request.BankId && x.OwnerId == currentUserId && x.IsActive, cancellationToken);
+        if (!hasBank)
+        {
+            return AppHttpResults.BadRequest("Bank is invalid.", "The selected bank does not exist for the current user.");
+        }
+
+        var currencyIds = request.Details.Select(x => x.CurrencyId).Append(request.CurrencyId).Distinct().ToList();
+        var currencyCount = await dbContext.Currencies
+            .CountAsync(x => currencyIds.Contains(x.Id) && x.OwnerId == currentUserId && x.IsActive, cancellationToken);
+        if (currencyCount != currencyIds.Count)
+        {
+            return AppHttpResults.BadRequest("Currency is invalid.", "One or more selected currencies do not exist for the current user.");
         }
 
         var bankAccount = new BankAccount();

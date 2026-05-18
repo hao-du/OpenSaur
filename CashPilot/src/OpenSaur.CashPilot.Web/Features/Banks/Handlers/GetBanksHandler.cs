@@ -3,6 +3,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
 using OpenSaur.CashPilot.Web.Features.Banks.Dtos;
 using OpenSaur.CashPilot.Web.Infrastructure.Database;
+using OpenSaur.CashPilot.Web.Infrastructure.Helpers;
+using System.Security.Claims;
 
 namespace OpenSaur.CashPilot.Web.Features.Banks.Handlers;
 
@@ -12,16 +14,18 @@ public static class GetBanksHandler
         [FromQuery] bool? isActive,
         [FromQuery] string? name,
         [FromQuery] string? shortName,
+        ClaimsPrincipal user,
         CashPilotDbContext dbContext,
         CancellationToken cancellationToken)
     {
+        var currentUserId = ClaimHelper.GetCurrentUserId(user);
         var normalizedName = name?.Trim();
         var normalizedShortName = shortName?.Trim();
         var activeFilter = isActive ?? true;
 
         var query = dbContext.Banks
             .AsNoTracking()
-            .Where(bank => bank.IsActive == activeFilter);
+            .Where(bank => bank.OwnerId == currentUserId && bank.IsActive == activeFilter);
 
         if (!string.IsNullOrWhiteSpace(normalizedName))
         {

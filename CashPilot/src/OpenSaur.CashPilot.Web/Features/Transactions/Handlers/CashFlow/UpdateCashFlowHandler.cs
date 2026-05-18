@@ -22,11 +22,22 @@ public static class UpdateCashFlowHandler
         CancellationToken cancellationToken)
     {
         var currentUserId = ClaimHelper.GetCurrentUserId(user);
+        if (currentUserId == Guid.Empty)
+        {
+            return AppHttpResults.BadRequest("User is required.", "Transactions require an authenticated user identifier.");
+        }
 
         var validationResult = await Validator.ValidateAsync(request, cancellationToken);
         if (!validationResult.IsValid)
         {
             return AppHttpResults.ValidationProblem(validationResult);
+        }
+        
+        var hasCurrency = await dbContext.Currencies
+            .AnyAsync(x => x.Id == request.CurrencyId && x.OwnerId == currentUserId && x.IsActive, cancellationToken);
+        if (!hasCurrency)
+        {
+            return AppHttpResults.BadRequest("Currency is invalid.", "The selected currency does not exist for the current user.");
         }
 
         var entity = await dbContext.CashFlows

@@ -32,6 +32,21 @@ public static class UpdateTransferFormHandler
         {
             return AppHttpResults.ValidationProblem(validationResult);
         }
+        
+        var hasCounterparty = await dbContext.Counterparties
+            .AnyAsync(x => x.Id == request.CounterpartyId && x.OwnerId == currentUserId && x.IsActive, cancellationToken);
+        if (!hasCounterparty)
+        {
+            return AppHttpResults.BadRequest("Counterparty is invalid.", "The selected counterparty does not exist for the current user.");
+        }
+
+        var currencyIds = request.Details.Select(x => x.CurrencyId).Append(request.CurrencyId).Distinct().ToList();
+        var currencyCount = await dbContext.Currencies
+            .CountAsync(x => currencyIds.Contains(x.Id) && x.OwnerId == currentUserId && x.IsActive, cancellationToken);
+        if (currencyCount != currencyIds.Count)
+        {
+            return AppHttpResults.BadRequest("Currency is invalid.", "One or more selected currencies do not exist for the current user.");
+        }
 
         var existingTransfer = await dbContext.Transfers
             .Include(x => x.TransferTransactions)

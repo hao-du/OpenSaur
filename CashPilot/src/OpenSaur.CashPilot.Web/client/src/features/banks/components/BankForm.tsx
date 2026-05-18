@@ -5,6 +5,7 @@ import { CheckBox } from "../../../components/atoms/CheckBox";
 import { Text } from "../../../components/atoms/Text";
 import { TextArea } from "../../../components/atoms/TextArea";
 import { layoutStyles } from "../../../infrastructure/theme/theme";
+import { useSettings } from "../../settings/provider/SettingProvider";
 
 export type BankFormValues = {
   name: string;
@@ -24,47 +25,48 @@ export function BankForm({
   isSubmitting,
   submitLabel
 }: BankFormProps) {
+  const { t } = useSettings();
   return (
     <Stack spacing={2} sx={layoutStyles.drawerBody}>
       <Text
         control={control}
         disabled={isSubmitting}
-        label="Name"
+        label={t("currencies.name")}
         name="name"
         required
         rules={{
-          required: "Name is required.",
-          validate: value => typeof value === "string" && value.trim().length > 0 ? true : "Name is required."
+          required: t("currencies.validation.nameRequired"),
+          validate: value => typeof value === "string" && value.trim().length > 0 ? true : t("currencies.validation.nameRequired")
         }}
       />
       <Text
         control={control}
         disabled={isSubmitting}
-        helperText="e.g. SCB, TCB"
-        label="Short Bank Name"
+        helperText={t("banks.shortNameHint")}
+        label={t("banks.shortName")}
         name="shortName"
         required
         rules={{
-          required: "Short bank name is required.",
-          validate: value => typeof value === "string" && value.trim().length > 0 ? true : "Short bank name is required."
+          required: t("banks.validation.shortNameRequired"),
+          validate: value => typeof value === "string" && value.trim().length > 0 ? true : t("banks.validation.shortNameRequired")
         }}
       />
       <TextArea
         control={control}
         disabled={isSubmitting}
-        label="Description"
+        label={t("currencies.description")}
         minRows={3}
         name="description"
       />
       <CheckBox
         control={control}
         disabled={isSubmitting}
-        label="Is Default"
+        label={t("currencies.isDefault")}
         name="isDefault"
       />
       <Stack direction="row" justifyContent="flex-end" spacing={1} sx={layoutStyles.formFooterRow}>
         <ActionButton disabled={isSubmitting} type="submit">
-          {isSubmitting ? "Working..." : submitLabel}
+          {isSubmitting ? t("action.working") : submitLabel}
         </ActionButton>
       </Stack>
     </Stack>

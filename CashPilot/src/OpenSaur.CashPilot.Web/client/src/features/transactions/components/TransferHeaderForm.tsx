@@ -8,6 +8,7 @@ import { Number as NumberField } from "../../../components/atoms/Number";
 import { TextArea } from "../../../components/atoms/TextArea";
 import type { CounterpartyDto } from "../../counterparties/dtos/CounterpartyDto";
 import type { CurrencyDto } from "../../currencies/dtos/CurrencyDto";
+import { useSettings } from "../../settings/provider/SettingProvider";
 
 type Props = {
   counterparties: CounterpartyDto[];
@@ -60,6 +61,7 @@ type FormValues = {
 };
 
 export function TransferHeaderForm({ counterparties, currencies, calculatedAmount, initialValues, isSubmitting = false, submitLabel = "Create Transfer", showSubmit = true, onChange, onSubmit }: Props) {
+  const { t } = useSettings();
   const today = new Date().toISOString().slice(0, 10);
   const form = useForm<FormValues>({
     defaultValues: {
@@ -129,80 +131,80 @@ export function TransferHeaderForm({ counterparties, currencies, calculatedAmoun
           <DropDown
             control={form.control}
             disabled={isSubmitting}
-            label="Counterparty"
+            label={t("transactions.counterparty")}
             name="counterpartyId"
             options={counterparties.map(x => ({ label: x.fullName, value: x.id }))}
             required
-            rules={{ required: "Counterparty is required." }}
+            rules={{ required: t("transactions.validation.counterpartyRequired") }}
           />
         </Grid>
         <Grid size={{ xs: 12, md: 6 }}>
           <DropDown
             control={form.control}
             disabled={isSubmitting}
-            label="Type"
+            label={t("transactions.type")}
             name="transferType"
             options={[
-              { label: "Lend", value: "1" },
-              { label: "Borrow", value: "2" },
-              { label: "Give", value: "3" },
-              { label: "Receive", value: "4" }
+              { label: t("transactions.transferType.lend"), value: "1" },
+              { label: t("transactions.transferType.borrow"), value: "2" },
+              { label: t("transactions.transferType.give"), value: "3" },
+              { label: t("transactions.transferType.receive"), value: "4" }
             ]}
             required
-            rules={{ required: "Type is required." }}
+            rules={{ required: t("transactions.validation.typeRequired") }}
           />
         </Grid>
         <Grid size={{ xs: 12, md: 6 }}>
           <DropDown
             control={form.control}
             disabled={isSubmitting}
-            label="Status"
+            label={t("transactions.status")}
             name="status"
             options={[
-              { label: "Active", value: "1" },
-              { label: "Completed", value: "2" },
-              { label: "Cancelled", value: "3" }
+              { label: t("transactions.statusType.active"), value: "1" },
+              { label: t("transactions.statusType.completed"), value: "2" },
+              { label: t("transactions.statusType.cancelled"), value: "3" }
             ]}
             required
-            rules={{ required: "Status is required." }}
+            rules={{ required: t("transactions.validation.statusRequired") }}
           />
         </Grid>
         <Grid size={{ xs: 12, md: 6 }}>
           <NumberField
             control={form.control}
             disabled
-            label="Amount"
+            label={t("transactions.amount")}
             name="amount"
             required
-            rules={{ required: "Amount is required." }}
+            rules={{ required: t("transactions.validation.amountRequired") }}
           />
         </Grid>
         <Grid size={{ xs: 12, md: 6 }}>
           <DropDown
             control={form.control}
             disabled={isSubmitting}
-            label="Currency"
+            label={t("transactions.currency")}
             name="currencyId"
             options={currencies.map(x => ({ label: x.shortName, value: x.id }))}
             required
-            rules={{ required: "Currency is required." }}
+            rules={{ required: t("transactions.validation.currencyRequired") }}
           />
         </Grid>
         <Grid size={{ xs: 12, md: 6 }}>
           <DatePicker
             control={form.control}
             disabled={isSubmitting}
-            label="Transaction Date"
+            label={t("transactions.transactionDate")}
             name="transactionDate"
             required
-            rules={{ required: "Transaction Date is required." }}
+            rules={{ required: t("transactions.validation.transactionDateRequired") }}
           />
         </Grid>
         <Grid size={{ xs: 12, md: 6 }}>
           <DatePicker
             control={form.control}
             disabled={isSubmitting}
-            label="Due Date"
+            label={t("transactions.dueDate")}
             name="dueDate"
           />
         </Grid>
@@ -210,7 +212,7 @@ export function TransferHeaderForm({ counterparties, currencies, calculatedAmoun
           <TextArea
             control={form.control}
             disabled={isSubmitting}
-            label="Description"
+            label={t("transactions.description")}
             name="description"
             minRows={3}
           />
@@ -219,7 +221,7 @@ export function TransferHeaderForm({ counterparties, currencies, calculatedAmoun
           <Grid size={{ xs: 12 }}>
             <Stack direction="row" justifyContent="flex-end">
               <ActionButton disabled={isSubmitting} type="submit">
-                {isSubmitting ? "Working..." : submitLabel}
+                {isSubmitting ? t("action.working") : submitLabel}
               </ActionButton>
             </Stack>
           </Grid>

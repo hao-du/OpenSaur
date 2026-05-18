@@ -32,6 +32,21 @@ public static class UpdateBankAccountFormHandler
         {
             return AppHttpResults.ValidationProblem(validationResult);
         }
+        
+        var hasBank = await dbContext.Banks
+            .AnyAsync(x => x.Id == request.BankId && x.OwnerId == currentUserId && x.IsActive, cancellationToken);
+        if (!hasBank)
+        {
+            return AppHttpResults.BadRequest("Bank is invalid.", "The selected bank does not exist for the current user.");
+        }
+
+        var currencyIds = request.Details.Select(x => x.CurrencyId).Append(request.CurrencyId).Distinct().ToList();
+        var currencyCount = await dbContext.Currencies
+            .CountAsync(x => currencyIds.Contains(x.Id) && x.OwnerId == currentUserId && x.IsActive, cancellationToken);
+        if (currencyCount != currencyIds.Count)
+        {
+            return AppHttpResults.BadRequest("Currency is invalid.", "One or more selected currencies do not exist for the current user.");
+        }
 
         var existingBankAccount = await dbContext.BankAccounts
             .Include(x => x.BankAccountTransactions)

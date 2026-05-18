@@ -11,6 +11,7 @@ import type { BankDto } from "../../banks/dtos/BankDto";
 import type { CurrencyDto } from "../../currencies/dtos/CurrencyDto";
 import type { SaveBankAccountDetailRequestDto, SaveBankAccountFormRequestDto } from "../dtos/TransactionDto";
 import { BankAccountTransactionForm, type DetailEditor } from "./BankAccountTransactionForm";
+import { useSettings } from "../../settings/provider/SettingProvider";
 
 type Props = {
   banks: BankDto[];
@@ -47,6 +48,7 @@ function toDetailRequest(detail: DetailEditor): SaveBankAccountDetailRequestDto 
 }
 
 export function BankAccountForm({ banks, currencies, initialValue, onSubmit, submitLabel = "Create", isSubmitting = false }: Props) {
+  const { t } = useSettings();
   const today = new Date().toISOString().slice(0, 10);
   const form = useForm<HeaderValues>({
     defaultValues: {
@@ -203,12 +205,12 @@ export function BankAccountForm({ banks, currencies, initialValue, onSubmit, sub
         <Grid size={{ xs: 12 }}>
           <Text
             control={form.control}
-            label="Account Number"
+            label={t("transactions.accountNumber")}
             name="accountNumber"
             required
             rules={{
-              required: "Account Number is required.",
-              validate: value => typeof value === "string" && value.trim().length > 0 ? true : "Account Number is required."
+              required: t("transactions.validation.accountNumberRequired"),
+              validate: value => typeof value === "string" && value.trim().length > 0 ? true : t("transactions.validation.accountNumberRequired")
             }}
           />
         </Grid>
@@ -216,24 +218,24 @@ export function BankAccountForm({ banks, currencies, initialValue, onSubmit, sub
         <Grid size={{ xs: 12, md: 6 }}>
           <DropDown
             control={form.control}
-            label="Bank"
+            label={t("transactions.bank")}
             name="bankId"
             options={banks.map(x => ({ label: x.shortName, value: x.id }))}
             required
-            rules={{ required: "Bank is required." }}
+            rules={{ required: t("transactions.validation.bankRequired") }}
           />
         </Grid>
         <Grid size={{ xs: 12, md: 6 }}>
           <NumberField
             control={form.control}
-            label="Interest %"
+            label={t("transactions.interestRate")}
             name="interestRate"
             required
             rules={{
-              required: "Interest % is required.",
+              required: t("transactions.validation.interestRateRequired"),
               validate: value => {
-                if (!Number.isFinite(Number(value))) return "Interest % is invalid.";
-                return Number(value) <= 100 ? true : "Interest rate must be 100 or less.";
+                if (!Number.isFinite(Number(value))) return t("transactions.validation.interestRateInvalid");
+                return Number(value) <= 100 ? true : t("transactions.validation.interestRateMax");
               }
             }}
           />
@@ -242,44 +244,44 @@ export function BankAccountForm({ banks, currencies, initialValue, onSubmit, sub
         <Grid size={{ xs: 12, md: 6 }}>
           <NumberField
             control={form.control}
-            label="Amount"
+            label={t("transactions.amount")}
             name="amount"
             required
             rules={{
-              required: "Amount is required.",
-              validate: value => Number.isFinite(Number(value)) ? true : "Amount is invalid."
+              required: t("transactions.validation.amountRequired"),
+              validate: value => Number.isFinite(Number(value)) ? true : t("transactions.validation.amountInvalid")
             }}
           />
         </Grid>
         <Grid size={{ xs: 12, md: 6 }}>
           <DropDown
             control={form.control}
-            label="Currency"
+            label={t("transactions.currency")}
             name="currencyId"
             options={currencies.map(x => ({ label: x.shortName, value: x.id }))}
             required
-            rules={{ required: "Currency is required." }}
+            rules={{ required: t("transactions.validation.currencyRequired") }}
           />
         </Grid>
 
         <Grid size={{ xs: 12, md: 6 }}>
           <DatePicker
             control={form.control}
-            label="Start Date"
+            label={t("transactions.startDate")}
             name="startDate"
             required
-            rules={{ required: "Start Date is required." }}
+            rules={{ required: t("transactions.validation.startDateRequired") }}
           />
         </Grid>
         <Grid size={{ xs: 12, md: 6 }}>
           <DatePicker
             control={form.control}
-            label="Maturity Date"
+            label={t("transactions.maturityDate")}
             name="maturityDate"
             required
             rules={{
-              required: "Maturity Date is required.",
-              validate: value => value >= form.getValues("startDate") ? true : "Maturity Date must be on or after Start Date."
+              required: t("transactions.validation.maturityDateRequired"),
+              validate: value => value >= form.getValues("startDate") ? true : t("transactions.validation.maturityDateAfterStartDate")
             }}
           />
         </Grid>
@@ -287,26 +289,26 @@ export function BankAccountForm({ banks, currencies, initialValue, onSubmit, sub
         <Grid size={{ xs: 12, md: 6 }}>
           <DropDown
             control={form.control}
-            label="Status"
+            label={t("transactions.status")}
             name="status"
             options={[
-              { label: "Active", value: "1" },
-              { label: "Matured", value: "2" },
-              { label: "Closed Early", value: "3" }
+              { label: t("transactions.statusType.active"), value: "1" },
+              { label: t("transactions.statusType.matured"), value: "2" },
+              { label: t("transactions.statusType.closedEarly"), value: "3" }
             ]}
             required
-            rules={{ required: "Status is required." }}
+            rules={{ required: t("transactions.validation.statusRequired") }}
           />
         </Grid>
         <Grid size={{ xs: 12 }}>
-          <TextArea control={form.control} label="Description" name="description" minRows={3} />
+          <TextArea control={form.control} label={t("transactions.description")} name="description" minRows={3} />
         </Grid>
       </Grid>
 
       <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mt: 2 }}>
-        <h3 style={{ margin: 0 }}>Transaction Details</h3>
+        <h3 style={{ margin: 0 }}>{t("transactions.transactionDetails")}</h3>
         <ActionButton onClick={addNewDetail} color="secondary" size="small">
-          Add Transaction
+          {t("transactions.addTransaction")}
         </ActionButton>
       </Stack>
 
@@ -327,7 +329,7 @@ export function BankAccountForm({ banks, currencies, initialValue, onSubmit, sub
           onClick={() => { void form.handleSubmit(submitHandler)(); }}
           disabled={isSubmitting}
         >
-          {isSubmitting ? "Working..." : submitLabel}
+          {isSubmitting ? t("action.working") : submitLabel}
         </ActionButton>
       </Stack>
     </Stack>
