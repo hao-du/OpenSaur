@@ -25,6 +25,11 @@ public static class GetTransactionsHandler
                 null,
                 null,
                 null,
+                null,
+                null,
+                null,
+                null,
+                null,
                 "CashFlow",
                 x.Description,
                 x.Transaction.Currency.ShortName,
@@ -38,11 +43,16 @@ public static class GetTransactionsHandler
             .AsNoTracking()
             .Where(x => x.IsActive && x.Transaction.IsActive && x.Transaction.OwnerId == currentUserId)
             .Select(x => new TransactionListItemResponse(
-                x.Id,
+                x.BankAccountId,
                 x.BankAccountId,
                 null,
                 null,
+                x.BankAccount.Bank.ShortName,
+                (byte)x.BankAccount.Status,
                 (byte)x.TransactionType,
+                null,
+                null,
+                null,
                 "BankAccount",
                 x.Description,
                 x.Transaction.Currency.ShortName,
@@ -56,11 +66,16 @@ public static class GetTransactionsHandler
             .AsNoTracking()
             .Where(x => x.IsActive && x.Transaction.IsActive && x.Transaction.OwnerId == currentUserId)
             .Select(x => new TransactionListItemResponse(
-                x.Id,
+                x.TransferId,
                 null,
                 x.TransferId,
                 null,
                 null,
+                null,
+                null,
+                x.Transfer.Counterparty.FullName,
+                (byte)x.Transfer.Status,
+                (byte)x.Transfer.TransferType,
                 "Transfer",
                 x.Description,
                 x.Transaction.Currency.ShortName,
@@ -72,12 +87,20 @@ public static class GetTransactionsHandler
 
         var exchange = await dbContext.CurrencyExchangeTransactions
             .AsNoTracking()
-            .Where(x => x.IsActive && x.Transaction.IsActive && x.Transaction.OwnerId == currentUserId)
+            .Where(x => x.IsActive
+                && x.CurrencyExchange.IsActive
+                && x.Transaction.IsActive
+                && x.Transaction.OwnerId == currentUserId)
             .Select(x => new TransactionListItemResponse(
-                x.Id,
+                x.CurrencyExchangeId,
                 null,
                 null,
                 x.CurrencyExchangeId,
+                null,
+                null,
+                null,
+                null,
+                null,
                 null,
                 "Exchange",
                 x.Description,

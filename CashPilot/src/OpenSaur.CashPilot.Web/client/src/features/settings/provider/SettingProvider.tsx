@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useMemo, useState, type PropsWi
 import { useAuthSession } from "../../auth/hooks/AuthContext";
 import type { SettingsDto } from "../dtos/SettingsDto";
 import { detectBrowserTimeZone, getSupportedTimeZones } from "../services/timeZones";
+import { getTodayIsoDateByTimeZone } from "../services/dateTime";
 import { translations, type AppLocale, type TranslationKey } from "./translations";
 import { useSettingsQuery } from "../hooks/useSettingsQuery";
 
@@ -12,6 +13,7 @@ export type AppSettings = {
 
 type SettingContextValue = {
   applyServerSettings: (settings: SettingsDto) => void;
+  formatDate: (value: Date | string | number | null | undefined) => string;
   formatDateTime: (value: Date | string | number | null | undefined) => string;
   locale: AppLocale;
   setSettings: (settings: AppSettings) => void;
@@ -19,6 +21,7 @@ type SettingContextValue = {
   supportedTimeZones: string[];
   t: (key: TranslationKey) => string;
   timeZone: string;
+  todayIsoDate: string;
 };
 
 const settingsStorageKey = "opensaur.cashpilot.settings";
@@ -126,16 +129,38 @@ export function SettingProvider({ children }: PropsWithChildren) {
     }).format(date);
   }, [settings.locale, settings.timeZone]);
 
+  const formatDate = useCallback((value: Date | string | number | null | undefined) => {
+    if (value == null || value === "") {
+      return "";
+    }
+
+    const date = value instanceof Date ? value : new Date(value);
+    if (Number.isNaN(date.getTime())) {
+      return String(value);
+    }
+
+    const locale = settings.locale === "vi" ? "vi-VN" : "en-US";
+
+    return new Intl.DateTimeFormat(locale, {
+      day: "2-digit",
+      month: "2-digit",
+      timeZone: settings.timeZone,
+      year: "numeric"
+    }).format(date);
+  }, [settings.locale, settings.timeZone]);
+
   const value = useMemo<SettingContextValue>(() => ({
     applyServerSettings,
+    formatDate,
     formatDateTime,
     locale: settings.locale,
     setSettings,
     settings,
     supportedTimeZones,
     t,
-    timeZone: settings.timeZone
-  }), [applyServerSettings, formatDateTime, settings, setSettings, supportedTimeZones, t]);
+    timeZone: settings.timeZone,
+    todayIsoDate: getTodayIsoDateByTimeZone(settings.timeZone)
+  }), [applyServerSettings, formatDate, formatDateTime, settings, setSettings, supportedTimeZones, t]);
 
   return (
     <SettingContext.Provider value={value}>

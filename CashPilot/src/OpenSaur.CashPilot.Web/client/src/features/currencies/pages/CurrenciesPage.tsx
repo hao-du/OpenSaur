@@ -1,10 +1,10 @@
-import { Alert, Stack } from "@mui/material";
+﻿import { Alert, Stack } from "@mui/material";
 import { AxiosError } from "axios";
 import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { ActionButton } from "../../../components/atoms/ActionButton";
 import { DefaultLayout } from "../../../components/layouts/DefaultLayout";
-import { ConfirmationDialog } from "../../../components/organisms/ConfirmationDialog";
+import { ConfirmModal } from "../../../components/atoms/ConfirmModal";
 import { useSettings } from "../../settings/provider/SettingProvider";
 import { createCurrency, deleteCurrency, updateCurrency } from "../api/currenciesApi";
 import { CurrenciesFilterDrawer } from "../components/CurrenciesFilterDrawer";
@@ -171,7 +171,7 @@ export function CurrenciesPage() {
         }}
         onSubmit={handleSubmit}
       />
-      <ConfirmationDialog
+      <ConfirmModal
         confirmLabel={t("currencies.delete")}
         isConfirming={isSubmitting}
         message={deletingCurrency == null

@@ -33,8 +33,13 @@ type FormValues = {
   description: string;
 };
 
+const amountFormatter = new Intl.NumberFormat("en-US", {
+  minimumFractionDigits: 0,
+  maximumFractionDigits: 2
+});
+
 export function TransferFormTransaction({ detail, isSubmitting = false, onAccept, onDelete, onCancelNew }: Props) {
-  const { t } = useSettings();
+  const { formatDate, t } = useSettings();
   const [isEditing, setIsEditing] = useState(detail.isNew || false);
   const form = useForm<FormValues>({
     defaultValues: {
@@ -64,11 +69,14 @@ export function TransferFormTransaction({ detail, isSubmitting = false, onAccept
   }
 
   const directionText = detail.direction === "1" ? t("transactions.directionIn") : t("transactions.directionOut");
+  const formattedAmount = Number.isFinite(Number(detail.amount))
+    ? amountFormatter.format(Number(detail.amount))
+    : detail.amount;
   if (!isEditing) {
     return (
       <Stack spacing={1.25} sx={{ p: 2, border: "1px solid #eee", borderRadius: 1 }}>
-        <span><strong>{t("transactions.date")}:</strong> {detail.transactionDate}</span>
-        <span><strong>{t("transactions.amount")}:</strong> {detail.amount}</span>
+        <span><strong>{t("transactions.date")}:</strong> {formatDate(detail.transactionDate)}</span>
+        <span><strong>{t("transactions.amount")}:</strong> {formattedAmount}</span>
         <span><strong>{t("transactions.direction")}:</strong> {directionText}</span>
         {detail.description.length > 0 ? <span><strong>{t("transactions.description")}:</strong> {detail.description}</span> : null}
         <Stack direction="row" justifyContent="flex-end" spacing={1}>

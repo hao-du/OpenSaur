@@ -17,13 +17,31 @@ public static class DeleteTransferTransactionHandler
         CancellationToken cancellationToken)
     {
         var currentUserId = ClaimHelper.GetCurrentUserId(user);
-        var entity = await dbContext.TransferTransactions.SingleOrDefaultAsync(x => x.Id == id && x.IsActive && x.Transaction.OwnerId == currentUserId, cancellationToken);
-        if (entity is null)
+
+        var transfer = await dbContext.Transfers
+            .Include(x => x.TransferTransactions)
+                .ThenInclude(x => x.Transaction)
+            .SingleOrDefaultAsync(
+                x => x.Id == id && x.TransferTransactions.Any(y => y.Transaction.OwnerId == currentUserId),
+                cancellationToken);
+
+        if (transfer is null)
         {
-            return AppHttpResults.NotFound("TransferTransaction not found.", "No TransferTransaction matched the specified identifier.");
+            return AppHttpResults.NotFound("Transfer not found.", "No Transfer matched the specified identifier.");
         }
 
-        entity.IsActive = false;
+        transfer.IsActive = false;
+        foreach (var item in transfer.TransferTransactions)
+        {
+            if (item.Transaction.OwnerId != currentUserId)
+            {
+                continue;
+            }
+
+            item.IsActive = false;
+            item.Transaction.IsActive = false;
+        }
+
         await dbContext.SaveChangesAsync(cancellationToken);
         return TypedResults.NoContent();
     }

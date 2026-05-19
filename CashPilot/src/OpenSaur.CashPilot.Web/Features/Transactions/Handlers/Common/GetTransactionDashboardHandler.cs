@@ -93,7 +93,16 @@ public static class GetTransactionDashboardHandler
             .ThenBy(x => x.CurrencyCode)
             .ToList();
 
+        var now = DateTime.UtcNow;
+        var currentMonthIndex = (now.Year * 12) + now.Month;
+        var minMonthIndex = currentMonthIndex - 2;
+
         var incomeOutcomes = transactionRows
+            .Where(x =>
+            {
+                var monthIndex = (x.TransactionDate.Year * 12) + x.TransactionDate.Month;
+                return monthIndex >= minMonthIndex && monthIndex <= currentMonthIndex;
+            })
             .GroupBy(x => new { x.TransactionDate.Year, x.TransactionDate.Month, x.Code })
             .Select(g => new IncomeOutcomeItemResponse(
                 g.Key.Year,

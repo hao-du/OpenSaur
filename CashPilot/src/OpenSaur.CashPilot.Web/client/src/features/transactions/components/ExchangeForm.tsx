@@ -42,8 +42,8 @@ type FormValues = {
 };
 
 export function ExchangeForm({ currencies, initialValue, submitLabel = "Create Exchange", isSubmitting = false, onSubmit }: Props) {
-  const { t } = useSettings();
-  const today = new Date().toISOString().slice(0, 10);
+  const { t, todayIsoDate } = useSettings();
+  const today = todayIsoDate;
   const form = useForm<FormValues>({
     defaultValues: {
       description: "",

@@ -3,7 +3,12 @@ export type TransactionListItemDto = {
   bankAccountId: string | null;
   transferId: string | null;
   exchangeId: string | null;
+  bankName: string | null;
+  bankAccountStatus: number | null;
   bankAccountTransactionType: number | null;
+  counterpartyName: string | null;
+  transferStatus: number | null;
+  transferType: number | null;
   type: "CashFlow" | "BankAccount" | "Transfer" | "Exchange";
   description: string | null;
   currencyCode: string;

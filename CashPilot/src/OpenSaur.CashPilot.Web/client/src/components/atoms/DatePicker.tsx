@@ -1,6 +1,10 @@
 import { DatePicker as MuiDatePicker } from "@mui/x-date-pickers";
 import dayjs from "dayjs";
+import localizedFormat from "dayjs/plugin/localizedFormat";
 import { Controller, type Control, type FieldPath, type FieldValues, type RegisterOptions } from "react-hook-form";
+import { useSettings } from "../../features/settings/provider/SettingProvider";
+
+dayjs.extend(localizedFormat);
 
 type RhfDatePickerProps<TFieldValues extends FieldValues> = {
   control: Control<TFieldValues>;
@@ -27,6 +31,14 @@ type ControlledDatePickerProps = {
 type DatePickerProps<TFieldValues extends FieldValues> = RhfDatePickerProps<TFieldValues> | ControlledDatePickerProps;
 
 export function DatePicker<TFieldValues extends FieldValues>(props: DatePickerProps<TFieldValues>) {
+  const { locale } = useSettings();
+  dayjs.locale(locale);
+  const displayFormat = props.mode === "month"
+    ? "MM/YYYY"
+    : props.mode === "year"
+      ? "YYYY"
+      : "L";
+
   if ("control" in props) {
     const {
       control,
@@ -46,6 +58,7 @@ export function DatePicker<TFieldValues extends FieldValues>(props: DatePickerPr
         render={({ field, fieldState }) => (
           <MuiDatePicker
             disabled={disabled}
+            format={displayFormat}
             label={label}
             onChange={value => {
               if (value == null) {
@@ -85,6 +98,7 @@ export function DatePicker<TFieldValues extends FieldValues>(props: DatePickerPr
   return (
     <MuiDatePicker
       disabled={disabled}
+      format={displayFormat}
       label={label}
       onChange={nextValue => {
         if (nextValue == null) {

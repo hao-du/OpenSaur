@@ -48,8 +48,8 @@ function toDetailRequest(detail: DetailEditor): SaveBankAccountDetailRequestDto 
 }
 
 export function BankAccountForm({ banks, currencies, initialValue, onSubmit, submitLabel = "Create", isSubmitting = false }: Props) {
-  const { t } = useSettings();
-  const today = new Date().toISOString().slice(0, 10);
+  const { t, todayIsoDate } = useSettings();
+  const today = todayIsoDate;
   const form = useForm<HeaderValues>({
     defaultValues: {
       accountNumber: initialValue?.accountNumber ?? "",

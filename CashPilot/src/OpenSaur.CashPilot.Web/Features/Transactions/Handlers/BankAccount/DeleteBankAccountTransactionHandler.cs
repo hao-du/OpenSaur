@@ -18,16 +18,30 @@ public static class DeleteBankAccountTransactionHandler
     {
         var currentUserId = ClaimHelper.GetCurrentUserId(user);
 
-        var entity = await dbContext.BankAccountTransactions
-            .Include(x => x.Transaction)
-            .SingleOrDefaultAsync(x => x.Id == id && x.Transaction.OwnerId == currentUserId, cancellationToken);
-        if (entity is null)
+        var bankAccount = await dbContext.BankAccounts
+            .Include(x => x.BankAccountTransactions)
+                .ThenInclude(x => x.Transaction)
+            .SingleOrDefaultAsync(
+                x => x.Id == id && x.BankAccountTransactions.Any(y => y.Transaction.OwnerId == currentUserId),
+                cancellationToken);
+
+        if (bankAccount is null)
         {
-            return AppHttpResults.NotFound("BankAccountTransaction not found.", "No BankAccountTransaction matched the specified identifier.");
+            return AppHttpResults.NotFound("BankAccount not found.", "No BankAccount matched the specified identifier.");
         }
 
-        dbContext.BankAccountTransactions.Remove(entity);
-        dbContext.Transactions.Remove(entity.Transaction);
+        bankAccount.IsActive = false;
+        foreach (var item in bankAccount.BankAccountTransactions)
+        {
+            if (item.Transaction.OwnerId != currentUserId)
+            {
+                continue;
+            }
+
+            item.IsActive = false;
+            item.Transaction.IsActive = false;
+        }
+
         await dbContext.SaveChangesAsync(cancellationToken);
         return TypedResults.NoContent();
     }

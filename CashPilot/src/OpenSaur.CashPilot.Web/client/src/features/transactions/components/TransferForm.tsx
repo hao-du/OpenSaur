@@ -51,17 +51,18 @@ type TransferHeaderValues = {
 };
 
 export function TransferForm({ counterparties, currencies, onSave, movementInitialValue, movementInitialDetails = [], movementSubmitLabel = "Create", isSubmitting = false, submitLabel = "Create", headerSubmitLabel = "Apply Header", onCompleted }: Props) {
-  const { t } = useSettings();
+  const { t, todayIsoDate } = useSettings();
+  const today = todayIsoDate;
   const defaultHeaderValues = useMemo<TransferHeaderValues>(() => ({
     amount: "0",
     counterpartyId: counterparties[0]?.id ?? "",
     currencyId: currencies[0]?.id ?? "",
     description: "",
     dueDate: "",
-    transactionDate: new Date().toISOString().slice(0, 10),
+    transactionDate: today,
     transferType: "1",
     status: "1"
-  }), [counterparties, currencies]);
+  }), [counterparties, currencies, today]);
 
   const initialHeaderValues = useMemo<TransferHeaderValues>(() => {
     if (movementInitialValue == null) {
@@ -82,7 +83,6 @@ export function TransferForm({ counterparties, currencies, onSave, movementIniti
   const [headerDraft, setHeaderDraft] = useState<TransferHeaderValues>(defaultHeaderValues);
   const [details, setDetails] = useState<TransferDetailEditor[]>([]);
 
-  const today = new Date().toISOString().slice(0, 10);
   const calculatedAmount = useMemo(
     () => details.reduce((sum, x) => sum + (Number.isFinite(Number(x.amount)) ? Number(x.amount) : 0), 0),
     [details]
@@ -90,7 +90,13 @@ export function TransferForm({ counterparties, currencies, onSave, movementIniti
 
   useEffect(() => {
     if (movementInitialValue == null) {
-      setHeaderDraft(defaultHeaderValues);
+      setDetails([]);
+      setHeaderDraft(prev => {
+        if (prev.counterpartyId.trim().length > 0 && prev.currencyId.trim().length > 0) {
+          return prev;
+        }
+        return defaultHeaderValues;
+      });
       return;
     }
     setHeaderDraft(initialHeaderValues);
@@ -167,7 +173,7 @@ export function TransferForm({ counterparties, currencies, onSave, movementIniti
         calculatedAmount={calculatedAmount}
         counterparties={counterparties}
         currencies={currencies}
-        initialValues={initialHeaderValues}
+        initialValues={movementInitialValue == null ? undefined : initialHeaderValues}
         isSubmitting={isSubmitting}
         onChange={payload => {
           handleHeaderSubmit({

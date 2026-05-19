@@ -52,7 +52,7 @@ export function BankAccountTransactionForm({
   onDelete,
   onCancelNew
 }: Props) {
-  const { t } = useSettings();
+  const { formatDate, t } = useSettings();
   const [isEditing, setIsEditing] = useState(detail.isNew || false);
   const [draft, setDraft] = useState<DetailEditor>(detail);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -85,7 +85,7 @@ export function BankAccountTransactionForm({
     return (
       <Stack spacing={2} sx={{ p: 2, border: "1px solid #eee", borderRadius: 1 }}>
         <Stack spacing={1}>
-          <span><strong>{t("transactions.date")}:</strong> {draft.transactionDate}</span>
+          <span><strong>{t("transactions.date")}:</strong> {formatDate(draft.transactionDate)}</span>
           <span><strong>{t("transactions.amount")}:</strong> {formatDisplayValue(draft.amount)}</span>
           <span><strong>{t("transactions.type")}:</strong> {typeText}</span>
           {draft.description && <span><strong>{t("transactions.description")}:</strong> {draft.description}</span>}

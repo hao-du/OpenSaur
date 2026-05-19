@@ -63,7 +63,7 @@ export async function updateCurrencyExchange(id: string, request: UpdateCurrency
   return client.put<string, UpdateCurrencyExchangeRequestDto & { id: string }>("/api/transactions/exchanges/update", { ...request, id });
 }
 
-export async function deleteTransactionByType(type: TransactionListItemDto["type"], id: string, exchangeId?: string | null) {
+export async function deleteTransactionByType(type: TransactionListItemDto["type"], id: string) {
   if (type === "CashFlow") {
     await client.delete(`/api/transactions/cashflows/delete?id=${id}`);
     return;
@@ -79,5 +79,5 @@ export async function deleteTransactionByType(type: TransactionListItemDto["type
     return;
   }
 
-  await client.delete(`/api/transactions/exchanges/delete?id=${exchangeId ?? id}`);
+  await client.delete(`/api/transactions/exchanges/delete?id=${id}`);
 }

@@ -14,11 +14,20 @@ const amountFormatter = new Intl.NumberFormat("en-US", {
 });
 
 export function IncomeOutcomeCard({ items, title }: Props) {
+  const latestThreeMonths = [...items]
+    .sort((a, b) => {
+      if (a.year !== b.year) {
+        return b.year - a.year;
+      }
+      return b.month - a.month;
+    })
+    .slice(0, 3);
+
   return (
     <Paper variant="outlined" sx={{ p: 1.5, height: "100%", display: "flex", flexDirection: "column" }}>
       <PageTitleText variant="h6">{title}</PageTitleText>
       <Stack spacing={0.5} sx={{ mt: 0.5, flex: 1 }}>
-        {items.slice(0, 8).map(item => (
+        {latestThreeMonths.map(item => (
           <Stack key={`${item.year}-${item.month}-${item.currencyCode}`} direction="row" justifyContent="space-between" spacing={2} alignItems="flex-start">
             <BodyText>{`${item.year}-${String(item.month).padStart(2, "0")} ${item.currencyCode}`}</BodyText>
             <Stack spacing={0.25} sx={{ fontVariantNumeric: "tabular-nums" }}>

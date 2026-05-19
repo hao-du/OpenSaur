@@ -61,8 +61,8 @@ type FormValues = {
 };
 
 export function TransferHeaderForm({ counterparties, currencies, calculatedAmount, initialValues, isSubmitting = false, submitLabel = "Create Transfer", showSubmit = true, onChange, onSubmit }: Props) {
-  const { t } = useSettings();
-  const today = new Date().toISOString().slice(0, 10);
+  const { t, todayIsoDate } = useSettings();
+  const today = todayIsoDate;
   const form = useForm<FormValues>({
     defaultValues: {
       amount: "",

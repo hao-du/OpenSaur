@@ -37,7 +37,8 @@ type Props = {
 };
 
 export function CashFlowFormDrawer({ editingCashFlow, isOpen, onClose, currencies, onSubmit, onUpdate }: Props) {
-  const { t } = useSettings();
+  const { t, todayIsoDate } = useSettings();
+  const today = todayIsoDate;
   const [isSubmitting, setIsSubmitting] = useState(false);
   const form = useForm<CashFlowFormValues>({
     defaultValues: {
@@ -45,7 +46,7 @@ export function CashFlowFormDrawer({ editingCashFlow, isOpen, onClose, currencie
       currencyId: currencies[0]?.id ?? "",
       description: "",
       direction: "2",
-      transactionDate: new Date().toISOString().slice(0, 10)
+      transactionDate: today
     }
   });
 
@@ -70,9 +71,9 @@ export function CashFlowFormDrawer({ editingCashFlow, isOpen, onClose, currencie
       currencyId: currencies[0]?.id ?? "",
       description: "",
       direction: "2",
-      transactionDate: new Date().toISOString().slice(0, 10)
+      transactionDate: today
     });
-  }, [currencies, editingCashFlow, form, isOpen]);
+  }, [currencies, editingCashFlow, form, isOpen, today]);
 
   const currencyOptions = useMemo(
     () => currencies.map(currency => ({ label: currency.shortName, value: currency.id })),
