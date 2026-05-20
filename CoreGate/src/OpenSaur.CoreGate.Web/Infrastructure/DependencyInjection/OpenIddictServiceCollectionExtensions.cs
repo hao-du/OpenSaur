@@ -17,6 +17,8 @@ public static class OpenIddictServiceCollectionExtensions
     {
         var oidcOptions = configuration.GetRequiredSection(OidcOptions.SectionName).Get<OidcOptions>()
             ?? throw new InvalidOperationException("OIDC configuration is required.");
+        var cookieOptions = configuration.GetSection(AuthCookieOptions.SectionName).Get<AuthCookieOptions>() ?? new AuthCookieOptions();
+        var cookieDomain = AuthCookieDomainNormalizer.Normalize(cookieOptions.Domain);
 
         services.AddIdentity<ApplicationUser, ApplicationRole>(options =>
             {
@@ -34,6 +36,7 @@ public static class OpenIddictServiceCollectionExtensions
         services.ConfigureApplicationCookie(options =>
         {
             options.Cookie.Name = CookieNames.Session;
+            options.Cookie.Domain = cookieDomain;
             options.Cookie.HttpOnly = true;
             options.Cookie.IsEssential = true;
             options.Cookie.SameSite = SameSiteMode.Lax;

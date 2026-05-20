@@ -1,10 +1,13 @@
+using Microsoft.Extensions.Options;
+using OpenSaur.CoreGate.Web.Infrastructure.Configuration;
 using OpenSaur.CoreGate.Web.Infrastructure.Security;
 
 namespace OpenSaur.CoreGate.Web.Features.Auth.Services;
 
-public sealed class CookieService
+public sealed class CookieService(IOptions<AuthCookieOptions> authCookieOptions)
 {
     private const string RefreshCookiePath = "/auth/";
+    private readonly string? cookieDomain = AuthCookieDomainNormalizer.Normalize(authCookieOptions.Value.Domain);
 
     public void WriteRefreshTokenCookie(HttpResponse response, string refreshToken)
     {
@@ -27,6 +30,7 @@ public sealed class CookieService
             CookieNames.Refresh,
             new CookieOptions
             {
+                Domain = cookieDomain,
                 HttpOnly = true,
                 IsEssential = true,
                 Path = RefreshCookiePath,
@@ -35,10 +39,11 @@ public sealed class CookieService
             });
     }
 
-    private static CookieOptions CreateCookieOptions()
+    private CookieOptions CreateCookieOptions()
     {
         return new CookieOptions
         {
+            Domain = cookieDomain,
             HttpOnly = true,
             IsEssential = true,
             Path = RefreshCookiePath,
