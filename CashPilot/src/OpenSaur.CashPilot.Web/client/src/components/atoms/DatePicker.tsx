@@ -75,7 +75,7 @@ export function DatePicker<TFieldValues extends FieldValues>(props: DatePickerPr
                 required: required
               }
             }}
-            value={field.value.trim().length === 0 ? null : dayjs(field.value)}
+            value={typeof field.value === "string" && field.value.trim().length > 0 ? dayjs(field.value) : null}
             views={mode === "month" ? ["month", "year"] : mode === "year" ? ["year"] : ["day", "month", "year"]}
           />
         )}
@@ -115,7 +115,7 @@ export function DatePicker<TFieldValues extends FieldValues>(props: DatePickerPr
           required
         }
       }}
-      value={value.trim().length === 0 ? null : dayjs(value)}
+      value={typeof value === "string" && value.trim().length > 0 ? dayjs(value) : null}
       views={mode === "month" ? ["month", "year"] : mode === "year" ? ["year"] : ["day", "month", "year"]}
     />
   );

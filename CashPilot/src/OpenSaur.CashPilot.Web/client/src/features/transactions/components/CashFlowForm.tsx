@@ -54,8 +54,8 @@ export function CashFlowForm({ control, currencyOptions, isEditMode, isSubmittin
         label={t("transactions.direction")}
         name="direction"
         options={[
-          { label: "In", value: "1" },
-          { label: "Out", value: "2" }
+          { label: t("transactions.directionIn"), value: "1" },
+          { label: t("transactions.directionOut"), value: "2" }
         ]}
         required
         rules={{

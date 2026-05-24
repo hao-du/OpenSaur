@@ -18,8 +18,11 @@ public sealed class SideMenuService
             items.Add(new CurrentProfileNavigationItemResponse("users", "Counterparties", "/counterparties"));
             items.Add(new CurrentProfileNavigationItemResponse("coins", "Currencies", "/currencies"));
             items.Add(new CurrentProfileNavigationItemResponse("receipt-text", "Transactions", "/transactions"));
+            items.Add(new CurrentProfileNavigationItemResponse("layout-template", "Templates", "/templates"));
         }
 
         return items;
     }
 }
+
+

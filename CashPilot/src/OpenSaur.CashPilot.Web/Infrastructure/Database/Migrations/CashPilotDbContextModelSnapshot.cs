@@ -8,7 +8,7 @@ using OpenSaur.CashPilot.Web.Infrastructure.Database;
 
 #nullable disable
 
-namespace OpenSaur.CashPilot.Web.Migrations
+namespace OpenSaur.CashPilot.Web.Infrastructure.Database.Migrations
 {
     [DbContext(typeof(CashPilotDbContext))]
     partial class CashPilotDbContextModelSnapshot : ModelSnapshot
@@ -49,6 +49,9 @@ namespace OpenSaur.CashPilot.Web.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
+                    b.Property<Guid>("OwnerId")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("ShortName")
                         .IsRequired()
                         .HasMaxLength(20)
@@ -62,7 +65,7 @@ namespace OpenSaur.CashPilot.Web.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ShortName")
+                    b.HasIndex("OwnerId", "ShortName")
                         .IsUnique();
 
                     b.ToTable("Banks", (string)null);
@@ -231,6 +234,9 @@ namespace OpenSaur.CashPilot.Web.Migrations
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
 
+                    b.Property<Guid>("OwnerId")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("PhoneNumber")
                         .HasMaxLength(25)
                         .HasColumnType("character varying(25)");
@@ -242,6 +248,8 @@ namespace OpenSaur.CashPilot.Web.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("OwnerId", "FullName");
 
                     b.ToTable("Counterparties", (string)null);
                 });
@@ -273,6 +281,9 @@ namespace OpenSaur.CashPilot.Web.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
+                    b.Property<Guid>("OwnerId")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("ShortName")
                         .IsRequired()
                         .HasMaxLength(4)
@@ -286,7 +297,7 @@ namespace OpenSaur.CashPilot.Web.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ShortName")
+                    b.HasIndex("OwnerId", "ShortName")
                         .IsUnique();
 
                     b.ToTable("Currencies", (string)null);
@@ -365,6 +376,54 @@ namespace OpenSaur.CashPilot.Web.Migrations
                     b.HasIndex("TransactionId");
 
                     b.ToTable("CurrencyExchangeTransactions", (string)null);
+                });
+
+            modelBuilder.Entity("OpenSaur.CashPilot.Web.Domain.Template", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedOn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<Guid>("OwnerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("TemplateDataJson")
+                        .IsRequired()
+                        .HasColumnType("jsonb");
+
+                    b.Property<byte>("TemplateType")
+                        .HasColumnType("smallint");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("UpdatedOn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OwnerId", "TemplateType", "Name")
+                        .IsUnique();
+
+                    b.ToTable("Templates", (string)null);
                 });
 
             modelBuilder.Entity("OpenSaur.CashPilot.Web.Domain.Transaction", b =>
@@ -576,6 +635,15 @@ namespace OpenSaur.CashPilot.Web.Migrations
                     b.ToTable("Users", (string)null);
                 });
 
+            modelBuilder.Entity("OpenSaur.CashPilot.Web.Domain.Bank", b =>
+                {
+                    b.HasOne("OpenSaur.CashPilot.Web.Domain.User", null)
+                        .WithMany()
+                        .HasForeignKey("OwnerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("OpenSaur.CashPilot.Web.Domain.BankAccount", b =>
                 {
                     b.HasOne("OpenSaur.CashPilot.Web.Domain.Bank", "Bank")
@@ -625,6 +693,24 @@ namespace OpenSaur.CashPilot.Web.Migrations
                     b.Navigation("Transaction");
                 });
 
+            modelBuilder.Entity("OpenSaur.CashPilot.Web.Domain.Counterparty", b =>
+                {
+                    b.HasOne("OpenSaur.CashPilot.Web.Domain.User", null)
+                        .WithMany()
+                        .HasForeignKey("OwnerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("OpenSaur.CashPilot.Web.Domain.Currency", b =>
+                {
+                    b.HasOne("OpenSaur.CashPilot.Web.Domain.User", null)
+                        .WithMany()
+                        .HasForeignKey("OwnerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("OpenSaur.CashPilot.Web.Domain.CurrencyExchangeTransaction", b =>
                 {
                     b.HasOne("OpenSaur.CashPilot.Web.Domain.CurrencyExchange", "CurrencyExchange")
@@ -642,6 +728,15 @@ namespace OpenSaur.CashPilot.Web.Migrations
                     b.Navigation("CurrencyExchange");
 
                     b.Navigation("Transaction");
+                });
+
+            modelBuilder.Entity("OpenSaur.CashPilot.Web.Domain.Template", b =>
+                {
+                    b.HasOne("OpenSaur.CashPilot.Web.Domain.User", null)
+                        .WithMany()
+                        .HasForeignKey("OwnerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("OpenSaur.CashPilot.Web.Domain.Transaction", b =>

@@ -13,6 +13,7 @@ import {
   Coins,
   KeyRound,
   LayoutDashboard,
+  LayoutTemplate,
   ReceiptText,
   Shield,
   UserRound,
@@ -33,6 +34,7 @@ const navigationIcons: Record<string, LucideIcon> = {
   dashboard: LayoutDashboard,
   "key-round": KeyRound,
   "receipt-text": ReceiptText,
+  "layout-template": LayoutTemplate,
   shield: Shield,
   "user-round": UserRound,
   users: Users
@@ -44,6 +46,7 @@ const navigationLabelKeys: Record<string, TranslationKey> = {
   "/counterparties": "nav.counterparties",
   "/currencies": "nav.currencies",
   "/transactions": "nav.transactions",
+  "/templates": "nav.templates",
 };
 
 type SideMenuProps = {
@@ -128,3 +131,8 @@ export function SideMenu({ currentYear }: SideMenuProps) {
     </Box>
   );
 }
+
+
+
+
+

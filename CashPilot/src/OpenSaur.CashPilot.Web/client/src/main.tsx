@@ -12,7 +12,13 @@ import "./infrastructure/styles/transactionType.css";
 import "dayjs/locale/vi";
 import "dayjs/locale/en";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+    defaultOptions: {
+        queries: {
+            refetchOnWindowFocus: false
+        }
+    }
+});
 
 function AppLocalizationProvider({ children }: { children: React.ReactNode }) {
     const { locale } = useSettings();

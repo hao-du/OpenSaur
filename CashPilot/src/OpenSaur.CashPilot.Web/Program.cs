@@ -8,6 +8,7 @@ using OpenSaur.CashPilot.Web.Features.Banks;
 using OpenSaur.CashPilot.Web.Features.Counterparties;
 using OpenSaur.CashPilot.Web.Features.Currencies;
 using OpenSaur.CashPilot.Web.Features.Transactions;
+using OpenSaur.CashPilot.Web.Features.Templates;
 using OpenSaur.CashPilot.Web.Features.Profile;
 using OpenSaur.CashPilot.Web.Features.Profile.Profile.Services;
 using OpenSaur.CashPilot.Web.Features.Settings;
@@ -76,6 +77,9 @@ app.MapBanksEndpoints();
 app.MapCounterpartiesEndpoints();
 app.MapCurrenciesEndpoints();
 app.MapTransactionsEndpoints();
+app.MapTemplatesEndpoints();
 
 app.Run();
+
+
 

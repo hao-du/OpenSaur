@@ -13,7 +13,8 @@ public static class FrontendEndpoints
         "/banks",
         "/counterparties",
         "/currencies",
-        "/transactions"
+        "/transactions",
+        "/templates"
     ];
 
     public static IEndpointRouteBuilder MapFrontEndRoutes(this IEndpointRouteBuilder app)

@@ -23,6 +23,7 @@ public sealed class CashPilotDbContext: DbContext
     public DbSet<TransferTransaction> TransferTransactions => Set<TransferTransaction>();
     public DbSet<CurrencyExchange> CurrencyExchanges => Set<CurrencyExchange>();
     public DbSet<CurrencyExchangeTransaction> CurrencyExchangeTransactions => Set<CurrencyExchangeTransaction>();
+    public DbSet<Template> Templates => Set<Template>();
 
     public override int SaveChanges(bool acceptAllChangesOnSuccess)
     {
@@ -90,3 +91,5 @@ public sealed class CashPilotDbContext: DbContext
         }
     }
 }
+
+

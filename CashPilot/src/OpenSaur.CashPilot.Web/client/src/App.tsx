@@ -8,6 +8,7 @@ import { BanksPage } from "./features/banks/pages/BanksPage";
 import { CounterpartiesPage } from "./features/counterparties/pages/CounterpartiesPage";
 import { CurrenciesPage } from "./features/currencies/pages/CurrenciesPage";
 import { TransactionsPage } from "./features/transactions/pages/TransactionsPage";
+import { TemplatesPage } from "./features/templates/pages/TemplatesPage";
 import { SettingsPage } from "./features/settings/pages/SettingsPage";
 export function App() {
     const { authSession, isRestoring } = useAuthSession();
@@ -46,6 +47,10 @@ export function App() {
                     path="/settings"
                 />
                 <Route
+                    element={<TemplatesPage />}
+                    path="/templates"
+                />
+                <Route
                     element={<SettingsPage />}
                     path="/profile"
                 />
@@ -61,3 +66,5 @@ export function App() {
         </Routes>
     );
 }
+
+
