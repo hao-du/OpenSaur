@@ -1,6 +1,6 @@
-﻿import type { ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 import { FormControl, Grid, Stack } from "@mui/material";
-import { Controller, useFormContext, type Control } from "react-hook-form";
+import { Controller, useFormContext, useWatch, type Control } from "react-hook-form";
 import { Switch } from "../../../components/atoms/Switch";
 import { useSettings } from "../../settings/provider/SettingProvider";
 import type { TemplateFormValues } from "./TemplateForm";
@@ -34,8 +34,16 @@ export type ModePath =
 
 function FieldModeSelector({ control, name }: { control: Control<TemplateFormValues>; name: ModePath }) {
   const { t } = useSettings();
-  const { clearErrors } = useFormContext<TemplateFormValues>();
+  const { clearErrors, setValue } = useFormContext<TemplateFormValues>();
   const showUiName = name.replace(".autoPopulate", ".showUi");
+  const autoPopulateEnabled = Boolean(useWatch({ control, name: name as never }));
+  const showUiEnabled = Boolean(useWatch({ control, name: showUiName as never }));
+
+  useEffect(() => {
+    if (!autoPopulateEnabled && !showUiEnabled) {
+      setValue(showUiName as never, true as never, { shouldDirty: true, shouldValidate: false });
+    }
+  }, [autoPopulateEnabled, setValue, showUiEnabled, showUiName]);
 
   return (
     <Stack spacing={0.25}>
@@ -53,6 +61,7 @@ function FieldModeSelector({ control, name }: { control: Control<TemplateFormVal
                   if (!checked) {
                     const valuePath = name.replace(".autoPopulate", ".value");
                     clearErrors(valuePath as never);
+                    setValue(showUiName as never, true as never, { shouldDirty: true, shouldValidate: false });
                   }
                 }}
               />
@@ -69,6 +78,7 @@ function FieldModeSelector({ control, name }: { control: Control<TemplateFormVal
               <Switch
                 checked={field.value === true}
                 label={t("templates.showUi")}
+                disabled={!autoPopulateEnabled}
                 onChange={checked => field.onChange(checked)}
               />
             </Stack>
@@ -89,3 +99,4 @@ export function FieldRow({ children, control, modeName }: { children: ReactNode;
     </Grid>
   );
 }
+
