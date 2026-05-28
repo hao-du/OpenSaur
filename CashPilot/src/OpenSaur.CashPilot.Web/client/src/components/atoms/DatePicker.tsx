@@ -59,7 +59,7 @@ export function DatePicker<TFieldValues extends FieldValues>(props: DatePickerPr
           <MuiDatePicker
             disabled={disabled}
             format={displayFormat}
-            label={label}
+            label={required ? `${label} *` : label}
             onChange={value => {
               if (value == null) {
                 field.onChange("");
@@ -72,7 +72,7 @@ export function DatePicker<TFieldValues extends FieldValues>(props: DatePickerPr
                 error: fieldState.error != null,
                 fullWidth: true,
                 helperText: fieldState.error?.message ?? helperText,
-                required: required
+                required: false
               }
             }}
             value={typeof field.value === "string" && field.value.trim().length > 0 ? dayjs(field.value) : null}
@@ -99,7 +99,7 @@ export function DatePicker<TFieldValues extends FieldValues>(props: DatePickerPr
     <MuiDatePicker
       disabled={disabled}
       format={displayFormat}
-      label={label}
+      label={required ? `${label} *` : label}
       onChange={nextValue => {
         if (nextValue == null) {
           onChange("");
@@ -112,7 +112,7 @@ export function DatePicker<TFieldValues extends FieldValues>(props: DatePickerPr
           error,
           fullWidth: true,
           helperText,
-          required
+          required: false
         }
       }}
       value={typeof value === "string" && value.trim().length > 0 ? dayjs(value) : null}

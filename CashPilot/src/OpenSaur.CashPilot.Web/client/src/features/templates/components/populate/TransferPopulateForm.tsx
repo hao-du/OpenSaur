@@ -14,48 +14,55 @@ type TemplateDataShape = { counterpartyId?: TemplateField; transferType?: Templa
 type FormValues = { counterpartyId: string; transferType: string; status: string; amount: string; currencyId: string; direction: string; transactionDate: string; dueDate: string; description: string };
 type Props = { t: (key: TranslationKey) => string; todayIsoDate: string; currencyOptions: Array<{ label: string; value: string }>; counterpartyOptions: Array<{ label: string; value: string }>; templateData: TemplateDataShape; onSaved?: () => Promise<void> | void; onClose: () => void; };
 const shown = (f?: TemplateField) => f?.showUi === true;
-const resolve = (f: TemplateField | undefined, v: string) => (f?.autoPopulate === true && !f?.showUi ? (f.value ?? "") : v);
+const replaceDateTokens = (value: string, todayIsoDate: string) => {
+  const [year, month, day] = todayIsoDate.split("-");
+  return value
+    .replaceAll("{datetime-Day}", day ?? "")
+    .replaceAll("{datetime-Month}", month ?? "")
+    .replaceAll("{datetime-Year}", year ?? "");
+};
+const resolve = (f: TemplateField | undefined, v: string, todayIsoDate: string) => {
+  const raw = f?.autoPopulate === true && !f?.showUi ? (f.value ?? "") : v;
+  return replaceDateTokens(raw, todayIsoDate);
+};
+const resolveDate = (f: TemplateField | undefined, v: string, todayIsoDate: string) => (f?.autoPopulate === true ? todayIsoDate : resolve(f, v, todayIsoDate));
+const initialValue = (f: TemplateField | undefined, todayIsoDate: string) => replaceDateTokens(f?.autoPopulate === true ? (f.value ?? "") : "", todayIsoDate);
+const initialDateValue = (f: TemplateField | undefined, todayIsoDate: string) => (f?.autoPopulate === true ? todayIsoDate : "");
+const isRequired = (f?: TemplateField) => f?.showUi === true || (f?.autoPopulate === true && !f?.showUi);
 
 export function TransferPopulateForm({ t, todayIsoDate, currencyOptions, counterpartyOptions, templateData, onSaved, onClose }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const defaults = useMemo<FormValues>(() => ({
-    counterpartyId: templateData.counterpartyId?.autoPopulate ? (templateData.counterpartyId.value ?? "") : "",
-    transferType: templateData.transferType?.autoPopulate ? (templateData.transferType.value ?? "") : "",
-    status: templateData.status?.autoPopulate ? (templateData.status.value ?? "") : "",
-    amount: templateData.amount?.autoPopulate ? (templateData.amount.value ?? "") : "",
-    currencyId: templateData.currencyId?.autoPopulate ? (templateData.currencyId.value ?? "") : "",
-    direction: templateData.direction?.autoPopulate ? (templateData.direction.value ?? "") : "",
-    transactionDate: templateData.transactionDate?.autoPopulate ? (templateData.transactionDate.value ?? "") : "",
-    dueDate: templateData.dueDate?.autoPopulate ? (templateData.dueDate.value ?? "") : "",
-    description: templateData.description?.autoPopulate ? (templateData.description.value ?? "") : ""
-  }), [templateData]);
+    counterpartyId: initialValue(templateData.counterpartyId, todayIsoDate),
+    transferType: initialValue(templateData.transferType, todayIsoDate),
+    status: initialValue(templateData.status, todayIsoDate),
+    amount: initialValue(templateData.amount, todayIsoDate),
+    currencyId: initialValue(templateData.currencyId, todayIsoDate),
+    direction: initialValue(templateData.direction, todayIsoDate),
+    transactionDate: initialDateValue(templateData.transactionDate, todayIsoDate),
+    dueDate: initialDateValue(templateData.dueDate, todayIsoDate),
+    description: initialValue(templateData.description, todayIsoDate)
+  }), [templateData, todayIsoDate]);
   const form = useForm<FormValues>({ defaultValues: defaults });
   useEffect(() => { form.reset(defaults); }, [defaults, form]);
 
-  const validate = (v: FormValues) => {
-    const req = (f?: TemplateField, val?: string) => f?.showUi === true || (f?.autoPopulate === true && !f?.showUi) ? (resolve(f, val ?? "").trim().length > 0) : true;
-    if (!req(templateData.counterpartyId, v.counterpartyId) || !req(templateData.transferType, v.transferType) || !req(templateData.status, v.status) || !req(templateData.amount, v.amount) || !req(templateData.currencyId, v.currencyId) || !req(templateData.direction, v.direction) || !req(templateData.transactionDate, v.transactionDate) || !req(templateData.dueDate, v.dueDate)) return "Please fill all required fields.";
-    return null;
-  };
-
   const submit = async (v: FormValues) => {
-    const err = validate(v); if (err) { setError(err); return; }
     setIsSubmitting(true); setError(null);
     try {
-      const amount = globalThis.Number(resolve(templateData.amount, v.amount));
-      const currencyId = resolve(templateData.currencyId, v.currencyId);
-      const direction = globalThis.Number(resolve(templateData.direction, v.direction));
-      const transactionDate = resolve(templateData.transactionDate, v.transactionDate) || todayIsoDate;
+      const amount = globalThis.Number(resolve(templateData.amount, v.amount, todayIsoDate));
+      const currencyId = resolve(templateData.currencyId, v.currencyId, todayIsoDate);
+      const direction = globalThis.Number(resolve(templateData.direction, v.direction, todayIsoDate));
+      const transactionDate = resolveDate(templateData.transactionDate, v.transactionDate, todayIsoDate);
       await saveTransferForm({
-        counterpartyId: resolve(templateData.counterpartyId, v.counterpartyId),
-        transferType: globalThis.Number(resolve(templateData.transferType, v.transferType)),
-        status: globalThis.Number(resolve(templateData.status, v.status)),
+        counterpartyId: resolve(templateData.counterpartyId, v.counterpartyId, todayIsoDate),
+        transferType: globalThis.Number(resolve(templateData.transferType, v.transferType, todayIsoDate)),
+        status: globalThis.Number(resolve(templateData.status, v.status, todayIsoDate)),
         amount,
         currencyId,
         transactionDate,
-        dueDate: resolve(templateData.dueDate, v.dueDate),
-        description: resolve(templateData.description, v.description).trim().length > 0 ? resolve(templateData.description, v.description).trim() : undefined,
+        dueDate: resolveDate(templateData.dueDate, v.dueDate, todayIsoDate),
+        description: resolve(templateData.description, v.description, todayIsoDate).trim().length > 0 ? resolve(templateData.description, v.description, todayIsoDate).trim() : undefined,
         isActive: true,
         details: [{ amount, currencyId, direction, transactionDate, isActive: true }]
       });
@@ -67,14 +74,14 @@ export function TransferPopulateForm({ t, todayIsoDate, currencyOptions, counter
     <Stack spacing={2} component="form" onSubmit={form.handleSubmit(submit)}>
       {error ? <Alert severity="error">{error}</Alert> : null}
       <Grid container spacing={2}>
-        {shown(templateData.counterpartyId) ? <Grid size={{ xs: 12, md: 6 }}><DropDown control={form.control} name="counterpartyId" label={t("transactions.counterparty")} options={counterpartyOptions} required /></Grid> : null}
-        {shown(templateData.transferType) ? <Grid size={{ xs: 12, md: 6 }}><DropDown control={form.control} name="transferType" label={t("transactions.type")} options={[{ label: t("transactions.transferType.lend"), value: "1" }, { label: t("transactions.transferType.borrow"), value: "2" }, { label: t("transactions.transferType.give"), value: "3" }, { label: t("transactions.transferType.receive"), value: "4" }]} required /></Grid> : null}
-        {shown(templateData.status) ? <Grid size={{ xs: 12, md: 6 }}><DropDown control={form.control} name="status" label={t("transactions.status")} options={[{ label: t("transactions.statusType.active"), value: "1" }, { label: t("transactions.statusType.completed"), value: "2" }, { label: t("transactions.statusType.cancelled"), value: "3" }]} required /></Grid> : null}
-        {shown(templateData.amount) ? <Grid size={{ xs: 12, md: 6 }}><NumberInput control={form.control} name="amount" label={t("transactions.amount")} required /></Grid> : null}
-        {shown(templateData.currencyId) ? <Grid size={{ xs: 12, md: 6 }}><DropDown control={form.control} name="currencyId" label={t("transactions.currency")} options={currencyOptions} required /></Grid> : null}
-        {shown(templateData.direction) ? <Grid size={{ xs: 12, md: 6 }}><DropDown control={form.control} name="direction" label={t("transactions.direction")} options={[{ label: t("transactions.directionIn"), value: "1" }, { label: t("transactions.directionOut"), value: "2" }]} required /></Grid> : null}
-        {shown(templateData.transactionDate) ? <Grid size={{ xs: 12, md: 6 }}><DatePicker control={form.control} name="transactionDate" label={t("transactions.transactionDate")} required /></Grid> : null}
-        {shown(templateData.dueDate) ? <Grid size={{ xs: 12, md: 6 }}><DatePicker control={form.control} name="dueDate" label={t("transactions.dueDate")} required /></Grid> : null}
+        {shown(templateData.counterpartyId) ? <Grid size={{ xs: 12, md: 6 }}><DropDown control={form.control} name="counterpartyId" label={t("transactions.counterparty")} options={counterpartyOptions} required={isRequired(templateData.counterpartyId)} rules={isRequired(templateData.counterpartyId) ? { required: "This field is required." } : undefined} /></Grid> : null}
+        {shown(templateData.transferType) ? <Grid size={{ xs: 12, md: 6 }}><DropDown control={form.control} name="transferType" label={t("transactions.type")} options={[{ label: t("transactions.transferType.lend"), value: "1" }, { label: t("transactions.transferType.borrow"), value: "2" }, { label: t("transactions.transferType.give"), value: "3" }, { label: t("transactions.transferType.receive"), value: "4" }]} required={isRequired(templateData.transferType)} rules={isRequired(templateData.transferType) ? { required: "This field is required." } : undefined} /></Grid> : null}
+        {shown(templateData.status) ? <Grid size={{ xs: 12, md: 6 }}><DropDown control={form.control} name="status" label={t("transactions.status")} options={[{ label: t("transactions.statusType.active"), value: "1" }, { label: t("transactions.statusType.completed"), value: "2" }, { label: t("transactions.statusType.cancelled"), value: "3" }]} required={isRequired(templateData.status)} rules={isRequired(templateData.status) ? { required: "This field is required." } : undefined} /></Grid> : null}
+        {shown(templateData.amount) ? <Grid size={{ xs: 12, md: 6 }}><NumberInput control={form.control} name="amount" label={t("transactions.amount")} required={isRequired(templateData.amount)} rules={isRequired(templateData.amount) ? { required: "This field is required." } : undefined} /></Grid> : null}
+        {shown(templateData.currencyId) ? <Grid size={{ xs: 12, md: 6 }}><DropDown control={form.control} name="currencyId" label={t("transactions.currency")} options={currencyOptions} required={isRequired(templateData.currencyId)} rules={isRequired(templateData.currencyId) ? { required: "This field is required." } : undefined} /></Grid> : null}
+        {shown(templateData.direction) ? <Grid size={{ xs: 12, md: 6 }}><DropDown control={form.control} name="direction" label={t("transactions.direction")} options={[{ label: t("transactions.directionIn"), value: "1" }, { label: t("transactions.directionOut"), value: "2" }]} required={isRequired(templateData.direction)} rules={isRequired(templateData.direction) ? { required: "This field is required." } : undefined} /></Grid> : null}
+        {shown(templateData.transactionDate) ? <Grid size={{ xs: 12, md: 6 }}><DatePicker control={form.control} name="transactionDate" label={t("transactions.transactionDate")} required={isRequired(templateData.transactionDate)} rules={isRequired(templateData.transactionDate) ? { required: "This field is required." } : undefined} /></Grid> : null}
+        {shown(templateData.dueDate) ? <Grid size={{ xs: 12, md: 6 }}><DatePicker control={form.control} name="dueDate" label={t("transactions.dueDate")} /></Grid> : null}
         {shown(templateData.description) ? <Grid size={{ xs: 12 }}><TextArea control={form.control} name="description" label={t("transactions.description")} minRows={3} /></Grid> : null}
       </Grid>
       <Stack direction="row" justifyContent="flex-end"><ActionButton type="submit" disabled={isSubmitting}>{isSubmitting ? t("action.working") : t("transactions.create")}</ActionButton></Stack>

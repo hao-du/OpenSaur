@@ -15,45 +15,54 @@ type TemplateDataShape = { bankId?: TemplateField; accountNumber?: TemplateField
 type FormValues = { bankId: string; accountNumber: string; status: string; amount: string; currencyId: string; interestRate: string; startDate: string; maturityDate: string; description: string };
 type Props = { t: (key: TranslationKey) => string; todayIsoDate: string; currencyOptions: Array<{ label: string; value: string }>; bankOptions: Array<{ label: string; value: string }>; templateData: TemplateDataShape; onSaved?: () => Promise<void> | void; onClose: () => void; };
 const shown = (f?: TemplateField) => f?.showUi === true;
-const resolve = (f: TemplateField | undefined, v: string) => (f?.autoPopulate === true && !f?.showUi ? (f.value ?? "") : v);
+const replaceDateTokens = (value: string, todayIsoDate: string) => {
+  const [year, month, day] = todayIsoDate.split("-");
+  return value
+    .replaceAll("{datetime-Day}", day ?? "")
+    .replaceAll("{datetime-Month}", month ?? "")
+    .replaceAll("{datetime-Year}", year ?? "");
+};
+const resolve = (f: TemplateField | undefined, v: string, todayIsoDate: string) => {
+  const raw = f?.autoPopulate === true && !f?.showUi ? (f.value ?? "") : v;
+  return replaceDateTokens(raw, todayIsoDate);
+};
+const resolveDate = (f: TemplateField | undefined, v: string, todayIsoDate: string) => (f?.autoPopulate === true ? todayIsoDate : resolve(f, v, todayIsoDate));
+const initialValue = (f: TemplateField | undefined, todayIsoDate: string) => replaceDateTokens(f?.autoPopulate === true ? (f.value ?? "") : "", todayIsoDate);
+const initialDateValue = (f: TemplateField | undefined, todayIsoDate: string) => (f?.autoPopulate === true ? todayIsoDate : "");
+const isRequired = (f?: TemplateField) => f?.showUi === true || (f?.autoPopulate === true && !f?.showUi);
 
 export function BankAccountPopulateForm({ t, todayIsoDate, currencyOptions, bankOptions, templateData, onSaved, onClose }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const defaults = useMemo<FormValues>(() => ({
-    bankId: templateData.bankId?.autoPopulate ? (templateData.bankId.value ?? "") : "",
-    accountNumber: templateData.accountNumber?.autoPopulate ? (templateData.accountNumber.value ?? "") : "",
-    status: templateData.status?.autoPopulate ? (templateData.status.value ?? "") : "",
-    amount: templateData.amount?.autoPopulate ? (templateData.amount.value ?? "") : "",
-    currencyId: templateData.currencyId?.autoPopulate ? (templateData.currencyId.value ?? "") : "",
-    interestRate: templateData.interestRate?.autoPopulate ? (templateData.interestRate.value ?? "") : "",
-    startDate: templateData.startDate?.autoPopulate ? (templateData.startDate.value ?? "") : "",
-    maturityDate: templateData.maturityDate?.autoPopulate ? (templateData.maturityDate.value ?? "") : "",
-    description: templateData.description?.autoPopulate ? (templateData.description.value ?? "") : ""
-  }), [templateData]);
+    bankId: initialValue(templateData.bankId, todayIsoDate),
+    accountNumber: initialValue(templateData.accountNumber, todayIsoDate),
+    status: initialValue(templateData.status, todayIsoDate),
+    amount: initialValue(templateData.amount, todayIsoDate),
+    currencyId: initialValue(templateData.currencyId, todayIsoDate),
+    interestRate: initialValue(templateData.interestRate, todayIsoDate),
+    startDate: initialDateValue(templateData.startDate, todayIsoDate),
+    maturityDate: initialDateValue(templateData.maturityDate, todayIsoDate),
+    description: initialValue(templateData.description, todayIsoDate)
+  }), [templateData, todayIsoDate]);
   const form = useForm<FormValues>({ defaultValues: defaults });
+  const statusValue = form.watch("status");
   useEffect(() => { form.reset(defaults); }, [defaults, form]);
-
-  const validate = (v: FormValues) => {
-    const req = (f?: TemplateField, val?: string) => f?.showUi === true || (f?.autoPopulate === true && !f?.showUi) ? (resolve(f, val ?? "").trim().length > 0) : true;
-    if (!req(templateData.bankId, v.bankId) || !req(templateData.accountNumber, v.accountNumber) || !req(templateData.status, v.status) || !req(templateData.amount, v.amount) || !req(templateData.currencyId, v.currencyId) || !req(templateData.interestRate, v.interestRate) || !req(templateData.startDate, v.startDate) || !req(templateData.maturityDate, v.maturityDate)) return "Please fill all required fields.";
-    return null;
-  };
+  const isMaturedStatus = resolve(templateData.status, statusValue, todayIsoDate) === "2";
 
   const submit = async (v: FormValues) => {
-    const err = validate(v); if (err) { setError(err); return; }
     setIsSubmitting(true); setError(null);
     try {
       await saveBankAccountForm({
-        bankId: resolve(templateData.bankId, v.bankId),
-        accountNumber: resolve(templateData.accountNumber, v.accountNumber),
-        status: globalThis.Number(resolve(templateData.status, v.status)),
-        amount: globalThis.Number(resolve(templateData.amount, v.amount)),
-        currencyId: resolve(templateData.currencyId, v.currencyId),
-        interestRate: globalThis.Number(resolve(templateData.interestRate, v.interestRate)),
-        startDate: resolve(templateData.startDate, v.startDate) || todayIsoDate,
-        maturityDate: resolve(templateData.maturityDate, v.maturityDate),
-        description: resolve(templateData.description, v.description).trim().length > 0 ? resolve(templateData.description, v.description).trim() : undefined,
+        bankId: resolve(templateData.bankId, v.bankId, todayIsoDate),
+        accountNumber: resolve(templateData.accountNumber, v.accountNumber, todayIsoDate),
+        status: globalThis.Number(resolve(templateData.status, v.status, todayIsoDate)),
+        amount: globalThis.Number(resolve(templateData.amount, v.amount, todayIsoDate)),
+        currencyId: resolve(templateData.currencyId, v.currencyId, todayIsoDate),
+        interestRate: globalThis.Number(resolve(templateData.interestRate, v.interestRate, todayIsoDate)),
+        startDate: resolveDate(templateData.startDate, v.startDate, todayIsoDate),
+        maturityDate: resolveDate(templateData.maturityDate, v.maturityDate, todayIsoDate),
+        description: resolve(templateData.description, v.description, todayIsoDate).trim().length > 0 ? resolve(templateData.description, v.description, todayIsoDate).trim() : undefined,
         isActive: true,
         details: []
       });
@@ -65,14 +74,14 @@ export function BankAccountPopulateForm({ t, todayIsoDate, currencyOptions, bank
     <Stack spacing={2} component="form" onSubmit={form.handleSubmit(submit)}>
       {error ? <Alert severity="error">{error}</Alert> : null}
       <Grid container spacing={2}>
-        {shown(templateData.bankId) ? <Grid size={{ xs: 12, md: 6 }}><DropDown control={form.control} name="bankId" label={t("transactions.bank")} options={bankOptions} required /></Grid> : null}
-        {shown(templateData.accountNumber) ? <Grid size={{ xs: 12, md: 6 }}><Text control={form.control} name="accountNumber" label={t("transactions.accountNumber")} required /></Grid> : null}
-        {shown(templateData.status) ? <Grid size={{ xs: 12, md: 6 }}><DropDown control={form.control} name="status" label={t("transactions.status")} options={[{ label: t("transactions.statusType.active"), value: "1" }, { label: t("transactions.statusType.matured"), value: "2" }, { label: t("transactions.statusType.closedEarly"), value: "3" }]} required /></Grid> : null}
-        {shown(templateData.amount) ? <Grid size={{ xs: 12, md: 6 }}><NumberInput control={form.control} name="amount" label={t("transactions.amount")} required /></Grid> : null}
-        {shown(templateData.currencyId) ? <Grid size={{ xs: 12, md: 6 }}><DropDown control={form.control} name="currencyId" label={t("transactions.currency")} options={currencyOptions} required /></Grid> : null}
-        {shown(templateData.interestRate) ? <Grid size={{ xs: 12, md: 6 }}><NumberInput control={form.control} name="interestRate" label={t("transactions.interestRate")} required /></Grid> : null}
-        {shown(templateData.startDate) ? <Grid size={{ xs: 12, md: 6 }}><DatePicker control={form.control} name="startDate" label={t("transactions.startDate")} required /></Grid> : null}
-        {shown(templateData.maturityDate) ? <Grid size={{ xs: 12, md: 6 }}><DatePicker control={form.control} name="maturityDate" label={t("transactions.maturityDate")} required /></Grid> : null}
+        {shown(templateData.accountNumber) ? <Grid size={{ xs: 12 }}><Text control={form.control} name="accountNumber" label={t("transactions.accountNumber")} /></Grid> : null}
+        {shown(templateData.bankId) ? <Grid size={{ xs: 12, md: 6 }}><DropDown control={form.control} name="bankId" label={t("transactions.bank")} options={bankOptions} required={isRequired(templateData.bankId)} rules={isRequired(templateData.bankId) ? { required: "This field is required." } : undefined} /></Grid> : null}
+        {shown(templateData.interestRate) ? <Grid size={{ xs: 12, md: 6 }}><NumberInput control={form.control} name="interestRate" label={t("transactions.interestRate")} /></Grid> : null}
+        {shown(templateData.amount) ? <Grid size={{ xs: 12, md: 6 }}><NumberInput control={form.control} name="amount" label={t("transactions.amount")} required={isRequired(templateData.amount)} rules={isRequired(templateData.amount) ? { required: "This field is required." } : undefined} /></Grid> : null}
+        {shown(templateData.currencyId) ? <Grid size={{ xs: 12, md: 6 }}><DropDown control={form.control} name="currencyId" label={t("transactions.currency")} options={currencyOptions} required={isRequired(templateData.currencyId)} rules={isRequired(templateData.currencyId) ? { required: "This field is required." } : undefined} /></Grid> : null}
+        {shown(templateData.startDate) ? <Grid size={{ xs: 12, md: 6 }}><DatePicker control={form.control} name="startDate" label={t("transactions.startDate")} required={isRequired(templateData.startDate)} rules={isRequired(templateData.startDate) ? { required: "This field is required." } : undefined} /></Grid> : null}
+        {shown(templateData.maturityDate) ? <Grid size={{ xs: 12, md: 6 }}><DatePicker control={form.control} name="maturityDate" label={t("transactions.maturityDate")} required={isMaturedStatus} rules={isMaturedStatus ? { required: "This field is required." } : undefined} /></Grid> : null}
+        {shown(templateData.status) ? <Grid size={{ xs: 12, md: 6 }}><DropDown control={form.control} name="status" label={t("transactions.status")} options={[{ label: t("transactions.statusType.active"), value: "1" }, { label: t("transactions.statusType.matured"), value: "2" }, { label: t("transactions.statusType.closedEarly"), value: "3" }]} required={isRequired(templateData.status)} rules={isRequired(templateData.status) ? { required: "This field is required." } : undefined} /></Grid> : null}
         {shown(templateData.description) ? <Grid size={{ xs: 12 }}><TextArea control={form.control} name="description" label={t("transactions.description")} minRows={3} /></Grid> : null}
       </Grid>
       <Stack direction="row" justifyContent="flex-end"><ActionButton type="submit" disabled={isSubmitting}>{isSubmitting ? t("action.working") : t("transactions.create")}</ActionButton></Stack>

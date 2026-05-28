@@ -2,6 +2,7 @@ import { Alert, Grid, Stack } from "@mui/material";
 import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { ActionButton } from "../../../../components/atoms/ActionButton";
+import { PageTitleText } from "../../../../components/atoms/PageTitleText";
 import { DatePicker } from "../../../../components/atoms/DatePicker";
 import { DropDown } from "../../../../components/atoms/DropDown";
 import { Number as NumberInput } from "../../../../components/atoms/Number";
@@ -16,39 +17,46 @@ type TemplateDataShape = {
 type FormValues = { exchangeRate: string; exchangeDate: string; outAmount: string; outCurrencyId: string; inAmount: string; inCurrencyId: string; description: string };
 type Props = { t: (key: TranslationKey) => string; todayIsoDate: string; currencyOptions: Array<{ label: string; value: string }>; templateData: TemplateDataShape; onSaved?: () => Promise<void> | void; onClose: () => void; };
 const shown = (f?: TemplateField) => f?.showUi === true;
-const resolve = (f: TemplateField | undefined, v: string) => (f?.autoPopulate === true && !f?.showUi ? (f.value ?? "") : v);
+const replaceDateTokens = (value: string, todayIsoDate: string) => {
+  const [year, month, day] = todayIsoDate.split("-");
+  return value
+    .replaceAll("{datetime-Day}", day ?? "")
+    .replaceAll("{datetime-Month}", month ?? "")
+    .replaceAll("{datetime-Year}", year ?? "");
+};
+const resolve = (f: TemplateField | undefined, v: string, todayIsoDate: string) => {
+  const raw = f?.autoPopulate === true && !f?.showUi ? (f.value ?? "") : v;
+  return replaceDateTokens(raw, todayIsoDate);
+};
+const resolveDate = (f: TemplateField | undefined, v: string, todayIsoDate: string) => (f?.autoPopulate === true ? todayIsoDate : resolve(f, v, todayIsoDate));
+const initialValue = (f: TemplateField | undefined, todayIsoDate: string) => replaceDateTokens(f?.autoPopulate === true ? (f.value ?? "") : "", todayIsoDate);
+const initialDateValue = (f: TemplateField | undefined, todayIsoDate: string) => (f?.autoPopulate === true ? todayIsoDate : "");
+const isRequired = (f?: TemplateField) => f?.showUi === true || (f?.autoPopulate === true && !f?.showUi);
 
 export function ExchangePopulateForm({ t, todayIsoDate, currencyOptions, templateData, onSaved, onClose }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const defaults = useMemo<FormValues>(() => ({
-    exchangeRate: templateData.exchangeRate?.autoPopulate ? (templateData.exchangeRate.value ?? "") : "",
-    exchangeDate: templateData.exchangeDate?.autoPopulate ? (templateData.exchangeDate.value ?? "") : "",
-    outAmount: templateData.outAmount?.autoPopulate ? (templateData.outAmount.value ?? "") : "",
-    outCurrencyId: templateData.outCurrencyId?.autoPopulate ? (templateData.outCurrencyId.value ?? "") : "",
-    inAmount: templateData.inAmount?.autoPopulate ? (templateData.inAmount.value ?? "") : "",
-    inCurrencyId: templateData.inCurrencyId?.autoPopulate ? (templateData.inCurrencyId.value ?? "") : "",
-    description: templateData.description?.autoPopulate ? (templateData.description.value ?? "") : ""
-  }), [templateData]);
+    exchangeRate: initialValue(templateData.exchangeRate, todayIsoDate),
+    exchangeDate: initialDateValue(templateData.exchangeDate, todayIsoDate),
+    outAmount: initialValue(templateData.outAmount, todayIsoDate),
+    outCurrencyId: initialValue(templateData.outCurrencyId, todayIsoDate),
+    inAmount: initialValue(templateData.inAmount, todayIsoDate),
+    inCurrencyId: initialValue(templateData.inCurrencyId, todayIsoDate),
+    description: initialValue(templateData.description, todayIsoDate)
+  }), [templateData, todayIsoDate]);
   const form = useForm<FormValues>({ defaultValues: defaults });
   useEffect(() => { form.reset(defaults); }, [defaults, form]);
 
-  const validate = (v: FormValues) => {
-    const req = (f?: TemplateField, val?: string) => f?.showUi === true || (f?.autoPopulate === true && !f?.showUi) ? (resolve(f, val ?? "").trim().length > 0) : true;
-    if (!req(templateData.exchangeRate, v.exchangeRate) || !req(templateData.exchangeDate, v.exchangeDate) || !req(templateData.outAmount, v.outAmount) || !req(templateData.outCurrencyId, v.outCurrencyId) || !req(templateData.inAmount, v.inAmount) || !req(templateData.inCurrencyId, v.inCurrencyId)) return "Please fill all required fields.";
-    return null;
-  };
-
   const submit = async (v: FormValues) => {
-    const err = validate(v); if (err) { setError(err); return; }
     setIsSubmitting(true); setError(null);
     try {
       await createCurrencyExchange({
-        exchangeRate: globalThis.Number(resolve(templateData.exchangeRate, v.exchangeRate)),
-        exchangeDate: resolve(templateData.exchangeDate, v.exchangeDate) || todayIsoDate,
-        outLeg: { amount: globalThis.Number(resolve(templateData.outAmount, v.outAmount)), currencyId: resolve(templateData.outCurrencyId, v.outCurrencyId) },
-        inLeg: { amount: globalThis.Number(resolve(templateData.inAmount, v.inAmount)), currencyId: resolve(templateData.inCurrencyId, v.inCurrencyId) },
-        description: resolve(templateData.description, v.description).trim().length > 0 ? resolve(templateData.description, v.description).trim() : undefined
+        exchangeRate: globalThis.Number(resolve(templateData.exchangeRate, v.exchangeRate, todayIsoDate)),
+        exchangeDate: resolveDate(templateData.exchangeDate, v.exchangeDate, todayIsoDate),
+        outLeg: { amount: globalThis.Number(resolve(templateData.outAmount, v.outAmount, todayIsoDate)), currencyId: resolve(templateData.outCurrencyId, v.outCurrencyId, todayIsoDate) },
+        inLeg: { amount: globalThis.Number(resolve(templateData.inAmount, v.inAmount, todayIsoDate)), currencyId: resolve(templateData.inCurrencyId, v.inCurrencyId, todayIsoDate) },
+        description: resolve(templateData.description, v.description, todayIsoDate).trim().length > 0 ? resolve(templateData.description, v.description, todayIsoDate).trim() : undefined
       });
       await onSaved?.(); onClose();
     } catch (e) { setError(e instanceof Error ? e.message : "Unable to save transaction."); } finally { setIsSubmitting(false); }
@@ -58,13 +66,16 @@ export function ExchangePopulateForm({ t, todayIsoDate, currencyOptions, templat
     <Stack spacing={2} component="form" onSubmit={form.handleSubmit(submit)}>
       {error ? <Alert severity="error">{error}</Alert> : null}
       <Grid container spacing={2}>
-        {shown(templateData.exchangeRate) ? <Grid size={{ xs: 12, md: 6 }}><NumberInput control={form.control} name="exchangeRate" label={t("transactions.exchangeRate")} required /></Grid> : null}
-        {shown(templateData.exchangeDate) ? <Grid size={{ xs: 12, md: 6 }}><DatePicker control={form.control} name="exchangeDate" label={t("transactions.exchangeDate")} required /></Grid> : null}
-        {shown(templateData.outAmount) ? <Grid size={{ xs: 12, md: 6 }}><NumberInput control={form.control} name="outAmount" label={t("transactions.outAmount")} required /></Grid> : null}
-        {shown(templateData.outCurrencyId) ? <Grid size={{ xs: 12, md: 6 }}><DropDown control={form.control} name="outCurrencyId" label={t("transactions.outCurrency")} options={currencyOptions} required /></Grid> : null}
-        {shown(templateData.inAmount) ? <Grid size={{ xs: 12, md: 6 }}><NumberInput control={form.control} name="inAmount" label={t("transactions.inAmount")} required /></Grid> : null}
-        {shown(templateData.inCurrencyId) ? <Grid size={{ xs: 12, md: 6 }}><DropDown control={form.control} name="inCurrencyId" label={t("transactions.inCurrency")} options={currencyOptions} required /></Grid> : null}
+        {shown(templateData.exchangeDate) ? <Grid size={{ xs: 12, md: 6 }}><DatePicker control={form.control} name="exchangeDate" label={t("transactions.exchangeDate")} required={isRequired(templateData.exchangeDate)} rules={isRequired(templateData.exchangeDate) ? { required: "This field is required." } : undefined} /></Grid> : null}
+        {shown(templateData.exchangeRate) ? <Grid size={{ xs: 12, md: 6 }}><NumberInput control={form.control} name="exchangeRate" label={t("transactions.exchangeRate")} /></Grid> : null}
         {shown(templateData.description) ? <Grid size={{ xs: 12 }}><TextArea control={form.control} name="description" label={t("transactions.description")} minRows={3} /></Grid> : null}
+        <Grid size={{ xs: 12 }}>
+          <PageTitleText variant="h6">Exchange Legs</PageTitleText>
+        </Grid>
+        {shown(templateData.outAmount) ? <Grid size={{ xs: 12, md: 6 }}><NumberInput control={form.control} name="outAmount" label={t("transactions.outAmount")} required={isRequired(templateData.outAmount)} rules={isRequired(templateData.outAmount) ? { required: "This field is required." } : undefined} /></Grid> : null}
+        {shown(templateData.outCurrencyId) ? <Grid size={{ xs: 12, md: 6 }}><DropDown control={form.control} name="outCurrencyId" label={t("transactions.outCurrency")} options={currencyOptions} required={isRequired(templateData.outCurrencyId)} rules={isRequired(templateData.outCurrencyId) ? { required: "This field is required." } : undefined} /></Grid> : null}
+        {shown(templateData.inAmount) ? <Grid size={{ xs: 12, md: 6 }}><NumberInput control={form.control} name="inAmount" label={t("transactions.inAmount")} required={isRequired(templateData.inAmount)} rules={isRequired(templateData.inAmount) ? { required: "This field is required." } : undefined} /></Grid> : null}
+        {shown(templateData.inCurrencyId) ? <Grid size={{ xs: 12, md: 6 }}><DropDown control={form.control} name="inCurrencyId" label={t("transactions.inCurrency")} options={currencyOptions} required={isRequired(templateData.inCurrencyId)} rules={isRequired(templateData.inCurrencyId) ? { required: "This field is required." } : undefined} /></Grid> : null}
       </Grid>
       <Stack direction="row" justifyContent="flex-end"><ActionButton type="submit" disabled={isSubmitting}>{isSubmitting ? t("action.working") : t("transactions.create")}</ActionButton></Stack>
     </Stack>

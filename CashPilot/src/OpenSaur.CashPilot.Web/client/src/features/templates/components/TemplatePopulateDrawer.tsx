@@ -59,9 +59,19 @@ export function TemplatePopulateDrawer({ isOpen, onClose, banks, currencies, cou
   const currencyOptions = useMemo(() => currencies.map(x => ({ label: x.shortName, value: x.id })), [currencies]);
   const bankOptions = useMemo(() => banks.map(x => ({ label: x.shortName, value: x.id })), [banks]);
   const counterpartyOptions = useMemo(() => counterparties.map(x => ({ label: x.fullName, value: x.id })), [counterparties]);
+  const typeLabel = selectedType === "CashFlow"
+    ? t("templates.templateType.cashFlow")
+    : selectedType === "Transfer"
+      ? t("templates.templateType.transfer")
+      : selectedType === "Exchange"
+        ? t("templates.templateType.exchange")
+        : selectedType === "BankAccount"
+          ? t("templates.templateType.bankAccount")
+          : "";
+  const drawerTitle = typeLabel.length > 0 ? `${t("templates.populate")} ${typeLabel}` : t("templates.populate");
 
   return (
-    <DrawerPanel isOpen={isOpen} onClose={onClose} title={t("templates.populate")} width="wide">
+    <DrawerPanel isOpen={isOpen} onClose={onClose} title={drawerTitle} width="wide">
       <Stack spacing={2}>
         {error != null ? <Alert severity="error">{error}</Alert> : null}
 

@@ -61,8 +61,8 @@ function validateAutoPopulateFields(templateData: unknown): string | null {
     }
     if (typeof node !== "object") return null;
 
-    const field = node as { autoPopulate?: boolean; value?: unknown };
-    if (field.autoPopulate === true) {
+    const field = node as { autoPopulate?: boolean; showUi?: boolean; value?: unknown };
+    if (field.autoPopulate === true && field.showUi !== true) {
       if (typeof field.value === "string" && field.value.trim().length === 0) {
         return `Auto populate field '${path}' is required.`;
       }

@@ -1,5 +1,6 @@
 import { Stack } from "@mui/material";
-import { useWatch, type Control } from "react-hook-form";
+import { useEffect } from "react";
+import { useFormContext, useWatch, type Control } from "react-hook-form";
 import { DatePicker } from "../../../../components/atoms/DatePicker";
 import { DropDown } from "../../../../components/atoms/DropDown";
 import { Number } from "../../../../components/atoms/Number";
@@ -12,45 +13,73 @@ import { FieldRow } from "./TemplateFormShared";
 
 export function TransferTemplateForm({ control, counterparties, currencies, isSubmitting }: { control: Control<TemplateFormValues>; counterparties: CounterpartyDto[]; currencies: CurrencyDto[]; isSubmitting: boolean; }) {
   const { t } = useSettings();
-  const templateData = useWatch({ control, name: "templateData" as never }) as {
-    counterpartyId?: { autoPopulate?: boolean };
-    transferType?: { autoPopulate?: boolean };
-    status?: { autoPopulate?: boolean };
-    amount?: { autoPopulate?: boolean };
-    currencyId?: { autoPopulate?: boolean };
-    direction?: { autoPopulate?: boolean };
-    transactionDate?: { autoPopulate?: boolean };
-    dueDate?: { autoPopulate?: boolean };
-    description?: { autoPopulate?: boolean };
-  } | undefined;
-
-  const counterpartyMode = templateData?.counterpartyId?.autoPopulate;
-  const transferTypeMode = templateData?.transferType?.autoPopulate;
-  const statusMode = templateData?.status?.autoPopulate;
-  const amountMode = templateData?.amount?.autoPopulate;
-  const currencyMode = templateData?.currencyId?.autoPopulate;
-  const directionMode = templateData?.direction?.autoPopulate;
-  const transactionDateMode = templateData?.transactionDate?.autoPopulate;
-  const dueDateMode = templateData?.dueDate?.autoPopulate;
-  const descriptionMode = templateData?.description?.autoPopulate;
+  const { clearErrors, getValues } = useFormContext<TemplateFormValues>();
+  const counterpartyMode = useWatch({ control, name: "templateData.counterpartyId.autoPopulate" });
+  const counterpartyShowUi = useWatch({ control, name: "templateData.counterpartyId.showUi" });
+  const transferTypeMode = useWatch({ control, name: "templateData.transferType.autoPopulate" });
+  const transferTypeShowUi = useWatch({ control, name: "templateData.transferType.showUi" });
+  const statusMode = useWatch({ control, name: "templateData.status.autoPopulate" });
+  const statusShowUi = useWatch({ control, name: "templateData.status.showUi" });
+  const amountMode = useWatch({ control, name: "templateData.amount.autoPopulate" });
+  const amountShowUi = useWatch({ control, name: "templateData.amount.showUi" });
+  const currencyMode = useWatch({ control, name: "templateData.currencyId.autoPopulate" });
+  const currencyShowUi = useWatch({ control, name: "templateData.currencyId.showUi" });
+  const directionMode = useWatch({ control, name: "templateData.direction.autoPopulate" });
+  const directionShowUi = useWatch({ control, name: "templateData.direction.showUi" });
+  const transactionDateMode = useWatch({ control, name: "templateData.transactionDate.autoPopulate" });
+  const transactionDateShowUi = useWatch({ control, name: "templateData.transactionDate.showUi" });
+  const dueDateMode = useWatch({ control, name: "templateData.dueDate.autoPopulate" });
+  const dueDateShowUi = useWatch({ control, name: "templateData.dueDate.showUi" });
+  const descriptionMode = useWatch({ control, name: "templateData.description.autoPopulate" });
+  const descriptionShowUi = useWatch({ control, name: "templateData.description.showUi" });
+  const counterpartyRequired = counterpartyMode === true && counterpartyShowUi !== true;
+  const transferTypeRequired = transferTypeMode === true && transferTypeShowUi !== true;
+  const statusRequired = statusMode === true && statusShowUi !== true;
+  const amountRequired = amountMode === true && amountShowUi !== true;
+  const currencyRequired = currencyMode === true && currencyShowUi !== true;
+  const directionRequired = directionMode === true && directionShowUi !== true;
+  const transactionDateRequired = transactionDateMode === true && transactionDateShowUi !== true;
+  const dueDateRequired = dueDateMode === true && dueDateShowUi !== true;
+  const descriptionRequired = descriptionMode === true && descriptionShowUi !== true;
 
   const transferTypeOptions = [{ label: t("transactions.transferType.lend"), value: "1" }, { label: t("transactions.transferType.borrow"), value: "2" }, { label: t("transactions.transferType.give"), value: "3" }, { label: t("transactions.transferType.receive"), value: "4" }];
   const transferStatusOptions = [{ label: t("transactions.statusType.active"), value: "1" }, { label: t("transactions.statusType.completed"), value: "2" }, { label: t("transactions.statusType.cancelled"), value: "3" }];
   const directionOptions = [{ label: t("transactions.directionIn"), value: "1" }, { label: t("transactions.directionOut"), value: "2" }];
   const currencyOptions = currencies.map(x => ({ label: x.shortName, value: x.id }));
   const counterpartyOptions = counterparties.map(x => ({ label: x.fullName, value: x.id }));
+  type TransferFieldKey = "counterpartyId" | "transferType" | "status" | "amount" | "currencyId" | "direction" | "transactionDate" | "dueDate" | "description";
+  const requiredWhenHidden = (valuePath: TransferFieldKey, message: string) => (value: unknown) => {
+    const autoPopulate = getValues(`templateData.${valuePath}.autoPopulate` as any) as boolean | undefined;
+    const showUi = getValues(`templateData.${valuePath}.showUi` as any) as boolean | undefined;
+    if (autoPopulate === true && showUi !== true) {
+      if (value == null) return message;
+      if (typeof value === "string" && value.trim().length === 0) return message;
+    }
+    return true;
+  };
+  useEffect(() => {
+    if (!counterpartyRequired) clearErrors("templateData.counterpartyId.value");
+    if (!transferTypeRequired) clearErrors("templateData.transferType.value");
+    if (!statusRequired) clearErrors("templateData.status.value");
+    if (!amountRequired) clearErrors("templateData.amount.value");
+    if (!currencyRequired) clearErrors("templateData.currencyId.value");
+    if (!directionRequired) clearErrors("templateData.direction.value");
+    if (!transactionDateRequired) clearErrors("templateData.transactionDate.value");
+    if (!dueDateRequired) clearErrors("templateData.dueDate.value");
+    if (!descriptionRequired) clearErrors("templateData.description.value");
+  }, [amountRequired, clearErrors, counterpartyRequired, currencyRequired, descriptionRequired, directionRequired, dueDateRequired, statusRequired, transactionDateRequired, transferTypeRequired]);
 
   return (
     <Stack spacing={2}>
-      <FieldRow control={control} modeName="templateData.counterpartyId.autoPopulate"><DropDown control={control} disabled={isSubmitting} label={t("transactions.counterparty")} name="templateData.counterpartyId.value" options={counterpartyOptions} required={counterpartyMode === true} rules={counterpartyMode === true ? { required: t("transactions.validation.counterpartyRequired") } : undefined} /></FieldRow>
-      <FieldRow control={control} modeName="templateData.transferType.autoPopulate"><DropDown control={control} disabled={isSubmitting} label={t("transactions.type")} name="templateData.transferType.value" options={transferTypeOptions} required={transferTypeMode === true} rules={transferTypeMode === true ? { required: t("transactions.validation.typeRequired") } : undefined} /></FieldRow>
-      <FieldRow control={control} modeName="templateData.status.autoPopulate"><DropDown control={control} disabled={isSubmitting} label={t("transactions.status")} name="templateData.status.value" options={transferStatusOptions} required={statusMode === true} rules={statusMode === true ? { required: t("transactions.validation.statusRequired") } : undefined} /></FieldRow>
-      <FieldRow control={control} modeName="templateData.amount.autoPopulate"><Number control={control} disabled={isSubmitting} label={t("transactions.amount")} name="templateData.amount.value" required={amountMode === true} rules={amountMode === true ? { required: t("transactions.validation.amountRequired") } : undefined} /></FieldRow>
-      <FieldRow control={control} modeName="templateData.currencyId.autoPopulate"><DropDown control={control} disabled={isSubmitting} label={t("transactions.currency")} name="templateData.currencyId.value" options={currencyOptions} required={currencyMode === true} rules={currencyMode === true ? { required: t("transactions.validation.currencyRequired") } : undefined} /></FieldRow>
-      <FieldRow control={control} modeName="templateData.direction.autoPopulate"><DropDown control={control} disabled={isSubmitting} label={t("transactions.direction")} name="templateData.direction.value" options={directionOptions} required={directionMode === true} rules={directionMode === true ? { required: t("transactions.validation.directionRequired") } : undefined} /></FieldRow>
-      <FieldRow control={control} modeName="templateData.transactionDate.autoPopulate"><DatePicker control={control} label={t("transactions.transactionDate")} name="templateData.transactionDate.value" disabled={isSubmitting || transactionDateMode === true} required={transactionDateMode === true} rules={transactionDateMode === true ? { required: t("transactions.validation.transactionDateRequired") } : undefined} /></FieldRow>
-      <FieldRow control={control} modeName="templateData.dueDate.autoPopulate"><DatePicker control={control} label={t("transactions.dueDate")} name="templateData.dueDate.value" disabled={isSubmitting || dueDateMode === true} required={dueDateMode === true} rules={dueDateMode === true ? { required: t("transactions.validation.dateRequired") } : undefined} /></FieldRow>
-      <FieldRow control={control} modeName="templateData.description.autoPopulate"><TextArea control={control} disabled={isSubmitting} label={t("transactions.description")} minRows={3} name="templateData.description.value" required={descriptionMode === true} rules={descriptionMode === true ? { required: t("templates.validation.descriptionRequired") } : undefined} /></FieldRow>
+      <FieldRow control={control} modeName="templateData.counterpartyId.autoPopulate"><DropDown control={control} disabled={isSubmitting} label={t("transactions.counterparty")} name="templateData.counterpartyId.value" options={counterpartyOptions} required={counterpartyRequired} rules={{ validate: requiredWhenHidden("counterpartyId", t("transactions.validation.counterpartyRequired")) }} /></FieldRow>
+      <FieldRow control={control} modeName="templateData.transferType.autoPopulate"><DropDown control={control} disabled={isSubmitting} label={t("transactions.type")} name="templateData.transferType.value" options={transferTypeOptions} required={transferTypeRequired} rules={{ validate: requiredWhenHidden("transferType", t("transactions.validation.typeRequired")) }} /></FieldRow>
+      <FieldRow control={control} modeName="templateData.status.autoPopulate"><DropDown control={control} disabled={isSubmitting} label={t("transactions.status")} name="templateData.status.value" options={transferStatusOptions} required={statusRequired} rules={{ validate: requiredWhenHidden("status", t("transactions.validation.statusRequired")) }} /></FieldRow>
+      <FieldRow control={control} modeName="templateData.amount.autoPopulate"><Number control={control} disabled={isSubmitting} label={t("transactions.amount")} name="templateData.amount.value" required={amountRequired} rules={{ validate: requiredWhenHidden("amount", t("transactions.validation.amountRequired")) }} /></FieldRow>
+      <FieldRow control={control} modeName="templateData.currencyId.autoPopulate"><DropDown control={control} disabled={isSubmitting} label={t("transactions.currency")} name="templateData.currencyId.value" options={currencyOptions} required={currencyRequired} rules={{ validate: requiredWhenHidden("currencyId", t("transactions.validation.currencyRequired")) }} /></FieldRow>
+      <FieldRow control={control} modeName="templateData.direction.autoPopulate"><DropDown control={control} disabled={isSubmitting} label={t("transactions.direction")} name="templateData.direction.value" options={directionOptions} required={directionRequired} rules={{ validate: requiredWhenHidden("direction", t("transactions.validation.directionRequired")) }} /></FieldRow>
+      <FieldRow control={control} modeName="templateData.transactionDate.autoPopulate"><DatePicker control={control} label={t("transactions.transactionDate")} name="templateData.transactionDate.value" disabled={isSubmitting || transactionDateMode === true} required={transactionDateRequired} rules={{ validate: requiredWhenHidden("transactionDate", t("transactions.validation.transactionDateRequired")) }} /></FieldRow>
+      <FieldRow control={control} modeName="templateData.dueDate.autoPopulate"><DatePicker control={control} label={t("transactions.dueDate")} name="templateData.dueDate.value" disabled={isSubmitting || dueDateMode === true} required={dueDateRequired} rules={{ validate: requiredWhenHidden("dueDate", t("transactions.validation.dateRequired")) }} /></FieldRow>
+      <FieldRow control={control} modeName="templateData.description.autoPopulate"><TextArea control={control} disabled={isSubmitting} label={t("transactions.description")} minRows={3} name="templateData.description.value" required={descriptionRequired} rules={{ validate: requiredWhenHidden("description", t("templates.validation.descriptionRequired")) }} /></FieldRow>
     </Stack>
   );
 }
