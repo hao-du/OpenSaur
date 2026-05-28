@@ -118,7 +118,7 @@ public static class CreateBankAccountFormHandler
                     Amount = request.Amount,
                     CurrencyId = request.CurrencyId,
                     Direction = TransactionDirection.In,
-                    TransactionDate = request.MaturityDate,
+                    TransactionDate = request.MaturityDate ?? request.StartDate,
                     Description = request.Description?.Trim() ?? string.Empty,
                     IsActive = request.IsActive
                 }

@@ -31,10 +31,10 @@ import { CashFlowFormDrawer } from "../components/CashFlowFormDrawer";
 import { BankAccountFormDrawer } from "../components/BankAccountFormDrawer";
 import { TransferFormDrawer } from "../components/TransferFormDrawer";
 import { ExchangeFormDrawer } from "../components/ExchangeFormDrawer";
-import { TotalAmountByCurrencyCard } from "../components/dashboard/TotalAmountByCurrencyCard";
-import { TotalActiveBankAccountCard } from "../components/dashboard/TotalActiveBankAccountCard";
-import { IncomeOutcomeCard } from "../components/dashboard/IncomeOutcomeCard";
-import { DashboardCardSkeleton } from "../components/dashboard/DashboardCardSkeleton";
+import { TotalAmountByCurrencyCard } from "../../dashboard/components/TotalAmountByCurrencyCard";
+import { TotalActiveBankAccountCard } from "../../dashboard/components/TotalActiveBankAccountCard";
+import { IncomeOutcomeCard } from "../../dashboard/components/IncomeOutcomeCard";
+import { DashboardCardSkeleton } from "../../dashboard/components/DashboardCardSkeleton";
 import { TransactionsFilterDrawer, type TransactionFilterValues } from "../components/TransactionsFilterDrawer";
 
 const amountFormatter = new Intl.NumberFormat("en-US", {
@@ -109,7 +109,7 @@ export function TransactionsPage() {
   } | null>(null);
   const [editingExchange, setEditingExchange] = useState<{
     id: string;
-    exchangeRate: number;
+    exchangeRate: number | null;
     exchangeDate: string;
     outCurrencyId: string;
     outAmount: number;

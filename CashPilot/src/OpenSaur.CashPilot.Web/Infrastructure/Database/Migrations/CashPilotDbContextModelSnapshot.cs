@@ -99,14 +99,14 @@ namespace OpenSaur.CashPilot.Web.Infrastructure.Database.Migrations
                     b.Property<string>("Description")
                         .HasColumnType("text");
 
-                    b.Property<decimal>("InterestRate")
+                    b.Property<decimal?>("InterestRate")
                         .HasPrecision(8, 4)
                         .HasColumnType("numeric(8,4)");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
 
-                    b.Property<DateOnly>("MaturityDate")
+                    b.Property<DateOnly?>("MaturityDate")
                         .HasColumnType("date");
 
                     b.Property<DateOnly>("StartDate")
@@ -321,7 +321,7 @@ namespace OpenSaur.CashPilot.Web.Infrastructure.Database.Migrations
                     b.Property<DateOnly>("ExchangeDate")
                         .HasColumnType("date");
 
-                    b.Property<decimal>("ExchangeRate")
+                    b.Property<decimal?>("ExchangeRate")
                         .HasPrecision(18, 6)
                         .HasColumnType("numeric(18,6)");
 

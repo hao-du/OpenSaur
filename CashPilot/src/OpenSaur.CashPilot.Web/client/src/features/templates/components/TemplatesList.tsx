@@ -1,4 +1,4 @@
-﻿import { Chip, CircularProgress, Paper, Stack, Table, TableBody, TableCell, TableHead, TableRow } from "@mui/material";
+import { Chip, CircularProgress, Paper, Stack, Table, TableBody, TableCell, TableHead, TableRow } from "@mui/material";
 import { BodyText } from "../../../components/atoms/BodyText";
 import { LinkButton } from "../../../components/atoms/LinkButton";
 import { PageTitleText } from "../../../components/atoms/PageTitleText";
@@ -12,6 +12,7 @@ type Props = {
   isSubmitting: boolean;
   onDelete: (template: TemplateListItemDto) => void;
   onEdit: (template: TemplateListItemDto) => void;
+  onPopulate: (template: TemplateListItemDto) => void;
 };
 
 function typeLabel(templateType: number, t: (key: any) => string) {
@@ -21,7 +22,7 @@ function typeLabel(templateType: number, t: (key: any) => string) {
   return t("templates.templateType.bankAccount");
 }
 
-export function TemplatesList({ isLoading, isSubmitting, onDelete, onEdit, templates }: Props) {
+export function TemplatesList({ isLoading, isSubmitting, onDelete, onEdit, onPopulate, templates }: Props) {
   const { t } = useSettings();
 
   if (isLoading) {
@@ -70,6 +71,7 @@ export function TemplatesList({ isLoading, isSubmitting, onDelete, onEdit, templ
               <TableCell align="right" sx={{ py: 0.8 }}>
                 <Stack direction="row" justifyContent="flex-end" spacing={1}>
                   <LinkButton disabled={isSubmitting} onClick={() => onEdit(item)}>{t("counterparties.edit")}</LinkButton>
+                  <LinkButton disabled={isSubmitting} onClick={() => onPopulate(item)}>{t("templates.populate")}</LinkButton>
                   <LinkButton color="error" disabled={isSubmitting} onClick={() => onDelete(item)}>{t("counterparties.delete")}</LinkButton>
                 </Stack>
               </TableCell>
@@ -80,4 +82,3 @@ export function TemplatesList({ isLoading, isSubmitting, onDelete, onEdit, templ
     </Paper>
   );
 }
-

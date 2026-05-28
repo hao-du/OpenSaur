@@ -47,7 +47,6 @@ export type ExchangeTemplateData = {
 export type BankAccountTemplateData = {
   bankId: TemplateFieldValue<string>;
   accountNumber: TemplateFieldValue<string>;
-  movementType: TemplateFieldValue<string>;
   status: TemplateFieldValue<string>;
   amount: TemplateFieldValue<string>;
   currencyId: TemplateFieldValue<string>;

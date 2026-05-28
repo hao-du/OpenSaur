@@ -16,11 +16,11 @@ public sealed class BankAccount : EntityBase
 
     public decimal Amount { get; set; }
 
-    public decimal InterestRate { get; set; }
+    public decimal? InterestRate { get; set; }
 
     public DateOnly StartDate { get; set; }
 
-    public DateOnly MaturityDate { get; set; }
+    public DateOnly? MaturityDate { get; set; }
 
     public BankAccountStatus Status { get; set; } = BankAccountStatus.Active;
 

@@ -4,7 +4,7 @@ namespace OpenSaur.CashPilot.Web.Domain;
 
 public sealed class CurrencyExchange : EntityBase
 {
-    public decimal ExchangeRate { get; set; }
+    public decimal? ExchangeRate { get; set; }
 
     public DateOnly ExchangeDate { get; set; }
 

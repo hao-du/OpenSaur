@@ -11,6 +11,7 @@ public sealed class CurrencyExchangeConfiguration : IEntityTypeConfiguration<Cur
         builder.ToTable("CurrencyExchanges");
 
         builder.Property(x => x.ExchangeRate)
-            .HasPrecision(18, 6);
+            .HasPrecision(18, 6)
+            .IsRequired(false);
     }
 }

@@ -80,6 +80,7 @@ export function BankAccountForm({ banks, currencies, initialValue, onSubmit, sub
   );
   const startDate = useWatch({ control: form.control, name: "startDate" });
   const maturityDate = useWatch({ control: form.control, name: "maturityDate" });
+  const status = useWatch({ control: form.control, name: "status" });
 
   useEffect(() => {
     form.reset({
@@ -163,7 +164,7 @@ export function BankAccountForm({ banks, currencies, initialValue, onSubmit, sub
     if (values.status === "2" || values.status === "3") {
       if (matured) {
         matured.amount = Number(values.amount);
-        matured.transactionDate = values.maturityDate;
+        matured.transactionDate = values.maturityDate || values.startDate;
         matured.description = values.description.trim().length === 0 ? undefined : values.description.trim();
         matured.currencyId = values.currencyId;
         matured.direction = 1;
@@ -173,7 +174,7 @@ export function BankAccountForm({ banks, currencies, initialValue, onSubmit, sub
           currencyId: values.currencyId,
           amount: Number(values.amount),
           direction: 1,
-          transactionDate: values.maturityDate,
+          transactionDate: values.maturityDate || values.startDate,
           transactionType: 3,
           description: values.description.trim().length === 0 ? undefined : values.description.trim(),
           isActive: headerIsActive
@@ -188,9 +189,9 @@ export function BankAccountForm({ banks, currencies, initialValue, onSubmit, sub
       bankId: values.bankId,
       currencyId: values.currencyId,
       amount: Number(values.amount),
-      interestRate: Number(values.interestRate),
+      interestRate: values.interestRate.trim().length === 0 ? undefined : Number(values.interestRate),
       startDate: values.startDate,
-      maturityDate: values.maturityDate,
+      maturityDate: values.maturityDate.trim().length === 0 ? undefined : values.maturityDate,
       status: Number(values.status),
       accountNumber: values.accountNumber.trim().length === 0 ? undefined : values.accountNumber.trim(),
       description: values.description.trim().length === 0 ? undefined : values.description.trim(),
@@ -207,11 +208,6 @@ export function BankAccountForm({ banks, currencies, initialValue, onSubmit, sub
             control={form.control}
             label={t("transactions.accountNumber")}
             name="accountNumber"
-            required
-            rules={{
-              required: t("transactions.validation.accountNumberRequired"),
-              validate: value => typeof value === "string" && value.trim().length > 0 ? true : t("transactions.validation.accountNumberRequired")
-            }}
           />
         </Grid>
 
@@ -230,10 +226,9 @@ export function BankAccountForm({ banks, currencies, initialValue, onSubmit, sub
             control={form.control}
             label={t("transactions.interestRate")}
             name="interestRate"
-            required
             rules={{
-              required: t("transactions.validation.interestRateRequired"),
               validate: value => {
+                if (typeof value === "string" && value.trim().length === 0) return true;
                 if (!Number.isFinite(Number(value))) return t("transactions.validation.interestRateInvalid");
                 return Number(value) <= 100 ? true : t("transactions.validation.interestRateMax");
               }
@@ -278,10 +273,17 @@ export function BankAccountForm({ banks, currencies, initialValue, onSubmit, sub
             control={form.control}
             label={t("transactions.maturityDate")}
             name="maturityDate"
-            required
+            required={status === "2"}
             rules={{
-              required: t("transactions.validation.maturityDateRequired"),
-              validate: value => value >= form.getValues("startDate") ? true : t("transactions.validation.maturityDateAfterStartDate")
+              validate: value => {
+                if (status === "2" && (!value || value.trim().length === 0)) {
+                  return t("transactions.validation.maturityDateRequired");
+                }
+                if (!value || value.trim().length === 0) {
+                  return true;
+                }
+                return value >= form.getValues("startDate") ? true : t("transactions.validation.maturityDateAfterStartDate");
+              }
             }}
           />
         </Grid>

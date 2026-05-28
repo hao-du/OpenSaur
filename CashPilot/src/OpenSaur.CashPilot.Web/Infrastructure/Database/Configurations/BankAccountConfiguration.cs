@@ -14,10 +14,14 @@ public sealed class BankAccountConfiguration : IEntityTypeConfiguration<BankAcco
             .HasPrecision(18, 4);
 
         builder.Property(x => x.InterestRate)
-            .HasPrecision(8, 4);
+            .HasPrecision(8, 4)
+            .IsRequired(false);
 
         builder.Property(x => x.Status)
             .HasConversion<byte>();
+
+        builder.Property(x => x.MaturityDate)
+            .IsRequired(false);
 
         builder.HasOne(x => x.Bank)
             .WithMany()

@@ -7,7 +7,7 @@ import { useSettings } from "../../settings/provider/SettingProvider";
 type Props = {
   editingExchange?: {
     id: string;
-    exchangeRate: number;
+    exchangeRate: number | null;
     exchangeDate: string;
     outCurrencyId: string;
     outAmount: number;
@@ -20,14 +20,14 @@ type Props = {
   onClose: () => void;
   currencies: CurrencyDto[];
   onSubmit: (payload: {
-    exchangeRate: number;
+    exchangeRate?: number;
     exchangeDate: string;
     outLeg: { currencyId: string; amount: number; description?: string };
     inLeg: { currencyId: string; amount: number; description?: string };
     description?: string;
   }) => Promise<void>;
   onUpdate?: (id: string, payload: {
-    exchangeRate: number;
+    exchangeRate?: number;
     exchangeDate: string;
     outLeg: { currencyId: string; amount: number; description?: string };
     inLeg: { currencyId: string; amount: number; description?: string };

@@ -171,7 +171,7 @@ public static class UpdateBankAccountFormHandler
             principalReturn.Transaction.Amount = request.Amount;
             principalReturn.Transaction.CurrencyId = request.CurrencyId;
             principalReturn.Transaction.Direction = TransactionDirection.In;
-            principalReturn.Transaction.TransactionDate = request.MaturityDate;
+            principalReturn.Transaction.TransactionDate = request.MaturityDate ?? request.StartDate;
             principalReturn.Transaction.Description = request.Description?.Trim() ?? string.Empty;
             principalReturn.Transaction.IsActive = request.IsActive;
         }

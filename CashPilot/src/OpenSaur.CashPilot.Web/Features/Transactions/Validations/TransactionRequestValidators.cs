@@ -1,4 +1,5 @@
 using FluentValidation;
+using OpenSaur.CashPilot.Web.Domain;
 using OpenSaur.CashPilot.Web.Features.Transactions.Dtos;
 
 namespace OpenSaur.CashPilot.Web.Features.Transactions.Validations;
@@ -48,8 +49,16 @@ public sealed class CreateBankAccountFormRequestValidator : AbstractValidator<Sa
         RuleFor(x => x.BankId).NotEmpty();
         RuleFor(x => x.CurrencyId).NotEmpty();
         RuleFor(x => x.Amount).GreaterThan(0);
-        RuleFor(x => x.InterestRate).InclusiveBetween(0, 100);
-        RuleFor(x => x.MaturityDate).GreaterThanOrEqualTo(x => x.StartDate);
+        RuleFor(x => x.InterestRate)
+            .InclusiveBetween(0, 100)
+            .When(x => x.InterestRate.HasValue);
+        RuleFor(x => x.MaturityDate)
+            .GreaterThanOrEqualTo(x => x.StartDate)
+            .When(x => x.MaturityDate.HasValue);
+        RuleFor(x => x.MaturityDate)
+            .NotNull()
+            .When(x => x.Status == (byte)BankAccountStatus.Matured)
+            .WithMessage("MaturityDate is required when status is Matured.");
         RuleFor(x => x.Status).InclusiveBetween((byte)1, (byte)3);
         RuleForEach(x => x.Details).SetValidator(new SaveBankAccountDetailRequestValidator());
     }
@@ -65,8 +74,16 @@ public sealed class UpdateBankAccountFormRequestValidator : AbstractValidator<Sa
         RuleFor(x => x.BankId).NotEmpty();
         RuleFor(x => x.CurrencyId).NotEmpty();
         RuleFor(x => x.Amount).GreaterThan(0);
-        RuleFor(x => x.InterestRate).InclusiveBetween(0, 100);
-        RuleFor(x => x.MaturityDate).GreaterThanOrEqualTo(x => x.StartDate);
+        RuleFor(x => x.InterestRate)
+            .InclusiveBetween(0, 100)
+            .When(x => x.InterestRate.HasValue);
+        RuleFor(x => x.MaturityDate)
+            .GreaterThanOrEqualTo(x => x.StartDate)
+            .When(x => x.MaturityDate.HasValue);
+        RuleFor(x => x.MaturityDate)
+            .NotNull()
+            .When(x => x.Status == (byte)BankAccountStatus.Matured)
+            .WithMessage("MaturityDate is required when status is Matured.");
         RuleFor(x => x.Status).InclusiveBetween((byte)1, (byte)3);
         RuleForEach(x => x.Details).SetValidator(new SaveBankAccountDetailRequestValidator());
     }
@@ -135,7 +152,9 @@ public sealed class CreateCurrencyExchangeRequestValidator : AbstractValidator<C
 {
     public CreateCurrencyExchangeRequestValidator()
     {
-        RuleFor(x => x.ExchangeRate).GreaterThan(0);
+        RuleFor(x => x.ExchangeRate)
+            .GreaterThan(0)
+            .When(x => x.ExchangeRate.HasValue);
         RuleFor(x => x.OutLeg).SetValidator(new ExchangeLegRequestValidator());
         RuleFor(x => x.InLeg).SetValidator(new ExchangeLegRequestValidator());
     }
@@ -146,7 +165,9 @@ public sealed class UpdateCurrencyExchangeRequestValidator : AbstractValidator<U
     public UpdateCurrencyExchangeRequestValidator()
     {
         RuleFor(x => x.Id).NotEmpty();
-        RuleFor(x => x.ExchangeRate).GreaterThan(0);
+        RuleFor(x => x.ExchangeRate)
+            .GreaterThan(0)
+            .When(x => x.ExchangeRate.HasValue);
         RuleFor(x => x.OutLeg).SetValidator(new ExchangeLegRequestValidator());
         RuleFor(x => x.InLeg).SetValidator(new ExchangeLegRequestValidator());
     }

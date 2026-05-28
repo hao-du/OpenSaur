@@ -42,9 +42,9 @@ export type SaveBankAccountFormRequestDto = {
   bankId: string;
   currencyId: string;
   amount: number;
-  interestRate: number;
+  interestRate?: number;
   startDate: string;
-  maturityDate: string;
+  maturityDate?: string;
   status: number;
   accountNumber?: string;
   description?: string;
@@ -77,7 +77,7 @@ export type SaveTransferFormRequestDto = {
 };
 
 export type CreateCurrencyExchangeRequestDto = {
-  exchangeRate: number;
+  exchangeRate?: number;
   exchangeDate: string;
   outLeg: { currencyId: string; amount: number; description?: string };
   inLeg: { currencyId: string; amount: number; description?: string };
@@ -178,7 +178,7 @@ export type TransferFormDto = {
 
 export type CurrencyExchangeDetailDto = {
   id: string;
-  exchangeRate: number;
+  exchangeRate: number | null;
   exchangeDate: string;
   outLeg: { currencyId: string; amount: number; description: string | null };
   inLeg: { currencyId: string; amount: number; description: string | null };

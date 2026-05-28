@@ -55,9 +55,9 @@ public sealed record SaveBankAccountFormRequest(
     Guid BankId,
     Guid CurrencyId,
     decimal Amount,
-    decimal InterestRate,
+    decimal? InterestRate,
     DateOnly StartDate,
-    DateOnly MaturityDate,
+    DateOnly? MaturityDate,
     byte Status,
     string? AccountNumber,
     string? Description,
@@ -96,14 +96,14 @@ public sealed record SaveTransferDetailRequest(
     bool IsActive);
 
 public sealed record CreateCurrencyExchangeRequest(
-    decimal ExchangeRate,
+    decimal? ExchangeRate,
     DateOnly ExchangeDate,
     ExchangeLegRequest OutLeg,
     ExchangeLegRequest InLeg,
     string? Description);
 public sealed record UpdateCurrencyExchangeRequest(
     Guid Id,
-    decimal ExchangeRate,
+    decimal? ExchangeRate,
     DateOnly ExchangeDate,
     ExchangeLegRequest OutLeg,
     ExchangeLegRequest InLeg,
@@ -168,7 +168,7 @@ public sealed record TransferFormResponse(
 
 public sealed record CurrencyExchangeDetailResponse(
     Guid Id,
-    decimal ExchangeRate,
+    decimal? ExchangeRate,
     DateOnly ExchangeDate,
     ExchangeLegResponse OutLeg,
     ExchangeLegResponse InLeg,

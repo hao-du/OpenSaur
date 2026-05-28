@@ -12,7 +12,7 @@ import { useSettings } from "../../settings/provider/SettingProvider";
 type Props = {
   currencies: CurrencyDto[];
   initialValue?: {
-    exchangeRate: number;
+    exchangeRate: number | null;
     exchangeDate: string;
     outCurrencyId: string;
     outAmount: number;
@@ -23,7 +23,7 @@ type Props = {
   submitLabel?: string;
   isSubmitting?: boolean;
   onSubmit: (payload: {
-    exchangeRate: number;
+    exchangeRate?: number;
     exchangeDate: string;
     outLeg: { currencyId: string; amount: number; description?: string };
     inLeg: { currencyId: string; amount: number; description?: string };
@@ -73,7 +73,7 @@ export function ExchangeForm({ currencies, initialValue, submitLabel = "Create E
     form.reset({
       description: initialValue.description ?? "",
       exchangeDate: initialValue.exchangeDate,
-      exchangeRate: initialValue.exchangeRate.toString(),
+      exchangeRate: initialValue.exchangeRate == null ? "" : initialValue.exchangeRate.toString(),
       inAmount: initialValue.inAmount.toString(),
       inCurrencyId: initialValue.inCurrencyId,
       outAmount: initialValue.outAmount.toString(),
@@ -89,7 +89,7 @@ export function ExchangeForm({ currencies, initialValue, submitLabel = "Create E
         await onSubmit({
           description: values.description.trim().length === 0 ? undefined : values.description.trim(),
           exchangeDate: values.exchangeDate,
-          exchangeRate: Number(values.exchangeRate),
+          exchangeRate: values.exchangeRate.trim().length === 0 ? undefined : Number(values.exchangeRate),
           inLeg: { amount: Number(values.inAmount), currencyId: values.inCurrencyId },
           outLeg: { amount: Number(values.outAmount), currencyId: values.outCurrencyId }
         });
@@ -110,8 +110,6 @@ export function ExchangeForm({ currencies, initialValue, submitLabel = "Create E
             disabled={isSubmitting}
             label={t("transactions.exchangeRate")}
             name="exchangeRate"
-            required
-            rules={{ required: t("transactions.validation.exchangeRateRequired") }}
           />
         </Grid>
         <Grid size={{ xs: 12 }}>

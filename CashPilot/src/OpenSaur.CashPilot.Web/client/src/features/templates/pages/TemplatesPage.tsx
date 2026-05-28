@@ -11,8 +11,9 @@ import { useCounterpartiesQuery } from "../../counterparties/hooks/useCounterpar
 import { useCurrenciesQuery } from "../../currencies/hooks/useCurrenciesQuery";
 import { useSettings } from "../../settings/provider/SettingProvider";
 import { createTemplate, deleteTemplate, getTemplateById, updateTemplate } from "../api/templatesApi";
-import { TemplateFormDrawer } from "../components/TemplateFormDrawer";
-import { buildDefaultTemplateData, safeParseTemplateData, toStoredTemplateData, type TemplateFormValues } from "../components/TemplateForm";
+import { TemplateFormDrawer } from "../components/settings/TemplateFormDrawer";
+import { TemplatePopulateDrawer } from "../components/TemplatePopulateDrawer";
+import { buildDefaultTemplateData, safeParseTemplateData, toStoredTemplateData, type TemplateFormValues } from "../components/settings/TemplateForm";
 import { TemplatesFilterDrawer } from "../components/TemplatesFilterDrawer";
 import { TemplatesList } from "../components/TemplatesList";
 import type { TemplateListItemDto } from "../dtos/TemplateDto";
@@ -97,6 +98,8 @@ export function TemplatesPage() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [createMenuAnchor, setCreateMenuAnchor] = useState<null | HTMLElement>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isPopulateOpen, setIsPopulateOpen] = useState(false);
+  const [populateTemplateId, setPopulateTemplateId] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const form = useForm<TemplateFormValues>({ defaultValues: emptyFormState });
@@ -217,6 +220,10 @@ export function TemplatesPage() {
           isSubmitting={isSubmitting}
           onDelete={template => setDeletingTemplate(template)}
           onEdit={template => { void openEditForm(template); }}
+          onPopulate={template => {
+            setPopulateTemplateId(template.id);
+            setIsPopulateOpen(true);
+          }}
           templates={templates}
         />
       </Stack>
@@ -259,6 +266,19 @@ export function TemplatesPage() {
           setIsFilterDrawerOpen(false);
         }}
         onClose={() => setIsFilterDrawerOpen(false)}
+      />
+
+      <TemplatePopulateDrawer
+        banks={banks}
+        counterparties={counterparties}
+        currencies={currencies}
+        initialTemplateId={populateTemplateId ?? ""}
+        isOpen={isPopulateOpen}
+        onClose={() => {
+          setIsPopulateOpen(false);
+          setPopulateTemplateId(null);
+        }}
+        onSaved={async () => { await refetch(); }}
       />
     </DefaultLayout>
   );
