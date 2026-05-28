@@ -73,7 +73,7 @@ function toStoredTemplateNode(node: unknown): unknown {
 export function buildDefaultTemplateData(type: TemplateType): TemplateData {
   const f = (value: string) => ({ autoPopulate: false, showUi: false, value });
   if (type === "CashFlow") return { amount: f(""), currencyId: f(""), description: f(""), direction: f("2"), transactionDate: f("") } satisfies CashFlowTemplateData;
-  if (type === "Transfer") return { amount: f(""), counterpartyId: f(""), currencyId: f(""), description: f(""), dueDate: f(""), status: f("1"), transactionDate: f(""), transferType: f("1"), details: [] } satisfies TransferTemplateData;
+  if (type === "Transfer") return { amount: f(""), counterpartyId: f(""), currencyId: f(""), description: f(""), direction: f("1"), dueDate: f(""), status: f("1"), transactionDate: f(""), transferType: f("1"), details: [] } satisfies TransferTemplateData;
   if (type === "Exchange") return { description: f(""), exchangeDate: f(""), exchangeRate: f(""), inAmount: f(""), inCurrencyId: f(""), outAmount: f(""), outCurrencyId: f("") };
   return { accountNumber: f(""), amount: f(""), bankId: f(""), currencyId: f(""), description: f(""), interestRate: f(""), maturityDate: f(""), movementType: f("1"), startDate: f(""), status: f("1"), details: [] } satisfies BankAccountTemplateData;
 }

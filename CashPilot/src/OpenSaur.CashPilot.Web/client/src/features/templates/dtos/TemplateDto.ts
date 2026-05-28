@@ -20,6 +20,7 @@ export type TransferTemplateData = {
   status: TemplateFieldValue<string>;
   amount: TemplateFieldValue<string>;
   currencyId: TemplateFieldValue<string>;
+  direction: TemplateFieldValue<string>;
   transactionDate: TemplateFieldValue<string>;
   dueDate: TemplateFieldValue<string>;
   description: TemplateFieldValue<string>;
