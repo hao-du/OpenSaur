@@ -7,7 +7,11 @@ import type { BankDto } from "../../../banks/dtos/BankDto";
 import type { CounterpartyDto } from "../../../counterparties/dtos/CounterpartyDto";
 import type { CurrencyDto } from "../../../currencies/dtos/CurrencyDto";
 import { useSettings } from "../../../settings/provider/SettingProvider";
-import { buildDefaultTemplateData, TemplateForm, type TemplateFormValues } from "./TemplateForm";
+import {
+  buildDefaultTemplateData,
+  TemplateForm,
+  type TemplateFormValues,
+} from "./TemplateForm";
 
 type Props = {
   form: UseFormReturn<TemplateFormValues>;
@@ -21,17 +25,40 @@ type Props = {
   currencies: CurrencyDto[];
 };
 
-export function TemplateFormDrawer({ banks, counterparties, currencies, form, isEditMode, isOpen, isSubmitting, onClose, onSubmit }: Props) {
+export function TemplateFormDrawer({
+  banks,
+  counterparties,
+  currencies,
+  form,
+  isEditMode,
+  isOpen,
+  isSubmitting,
+  onClose,
+  onSubmit,
+}: Props) {
   const { t, todayIsoDate } = useSettings();
-  const selectedType = useWatch({ control: form.control, name: "templateType" });
-  const previousTypeRef = useRef<TemplateFormValues["templateType"]>(selectedType);
+  const selectedType = useWatch({
+    control: form.control,
+    name: "templateType",
+  });
+  const previousTypeRef =
+    useRef<TemplateFormValues["templateType"]>(selectedType);
 
-  const watchedTemplateData = useWatch({ control: form.control, name: "templateData" as never }) as (Record<string, { autoPopulate?: boolean; value?: string } | undefined> & {
-    details?: Array<{
-      transactionDate?: { autoPopulate?: boolean; value?: string };
-    }>;
-  }) | undefined;
-  const transactionDateMode = watchedTemplateData?.transactionDate?.autoPopulate;
+  const watchedTemplateData = useWatch({
+    control: form.control,
+    name: "templateData" as never,
+  }) as
+    | (Record<
+        string,
+        { autoPopulate?: boolean; value?: string } | undefined
+      > & {
+        details?: Array<{
+          transactionDate?: { autoPopulate?: boolean; value?: string };
+        }>;
+      })
+    | undefined;
+  const transactionDateMode =
+    watchedTemplateData?.transactionDate?.autoPopulate;
   const dueDateMode = watchedTemplateData?.dueDate?.autoPopulate;
   const exchangeDateMode = watchedTemplateData?.exchangeDate?.autoPopulate;
   const startDateMode = watchedTemplateData?.startDate?.autoPopulate;
@@ -50,11 +77,17 @@ export function TemplateFormDrawer({ banks, counterparties, currencies, form, is
 
     const previousType = previousTypeRef.current;
     if (selectedType !== previousType && form.formState.isDirty) {
-      form.setValue("templateData", buildDefaultTemplateData(selectedType), { shouldDirty: true, shouldValidate: false });
+      form.setValue("templateData", buildDefaultTemplateData(selectedType), {
+        shouldDirty: true,
+        shouldValidate: false,
+      });
     }
 
     if (selectedType === "BankAccount") {
-      form.setValue("templateData.status.value" as never, "1" as never, { shouldDirty: false, shouldValidate: false });
+      form.setValue("templateData.status.value" as never, "1" as never, {
+        shouldDirty: false,
+        shouldValidate: false,
+      });
     }
 
     previousTypeRef.current = selectedType;
@@ -66,14 +99,17 @@ export function TemplateFormDrawer({ banks, counterparties, currencies, form, is
       [dueDateMode, "templateData.dueDate.value"],
       [exchangeDateMode, "templateData.exchangeDate.value"],
       [startDateMode, "templateData.startDate.value"],
-      [maturityDateMode, "templateData.maturityDate.value"]
+      [maturityDateMode, "templateData.maturityDate.value"],
     ] as const;
 
     autoDatePaths.forEach(([mode, path]) => {
       if (mode === true) {
         const current = String(form.getValues(path as never) ?? "");
         if (current !== todayIsoDate) {
-          form.setValue(path as never, todayIsoDate as never, { shouldDirty: true, shouldValidate: true });
+          form.setValue(path as never, todayIsoDate as never, {
+            shouldDirty: true,
+            shouldValidate: true,
+          });
         }
       }
     });
@@ -83,29 +119,49 @@ export function TemplateFormDrawer({ banks, counterparties, currencies, form, is
         const datePath = `templateData.details.${index}.transactionDate.value`;
         const current = String(form.getValues(datePath as never) ?? "");
         if (current !== todayIsoDate) {
-          form.setValue(datePath as never, todayIsoDate as never, { shouldDirty: true, shouldValidate: true });
+          form.setValue(datePath as never, todayIsoDate as never, {
+            shouldDirty: true,
+            shouldValidate: true,
+          });
         }
       }
     });
-  }, [transactionDateMode, dueDateMode, exchangeDateMode, startDateMode, maturityDateMode, watchedTemplateData, form, todayIsoDate]);
+  }, [
+    transactionDateMode,
+    dueDateMode,
+    exchangeDateMode,
+    startDateMode,
+    maturityDateMode,
+    watchedTemplateData,
+    form,
+    todayIsoDate,
+  ]);
 
   useEffect(() => {
     if (!isOpen) {
       return;
     }
 
-    const defaultCurrencyId = currencies.find(x => x.isDefault)?.id ?? currencies[0]?.id ?? "";
-    const defaultBankId = banks.find(x => x.isDefault)?.id ?? banks[0]?.id ?? "";
+    const defaultCurrencyId =
+      currencies.find((x) => x.isDefault)?.id ?? currencies[0]?.id ?? "";
+    const defaultBankId =
+      banks.find((x) => x.isDefault)?.id ?? banks[0]?.id ?? "";
 
     const setIfEmpty = (path: string, value: string) => {
       const current = String(form.getValues(path as never) ?? "").trim();
       if (current.length === 0 && value.length > 0) {
-        form.setValue(path as never, value as never, { shouldDirty: false, shouldValidate: true });
+        form.setValue(path as never, value as never, {
+          shouldDirty: false,
+          shouldValidate: true,
+        });
       }
     };
     const setAlways = (path: string, value: string) => {
       if (value.length > 0) {
-        form.setValue(path as never, value as never, { shouldDirty: false, shouldValidate: true });
+        form.setValue(path as never, value as never, {
+          shouldDirty: false,
+          shouldValidate: true,
+        });
       }
     };
 
@@ -118,7 +174,11 @@ export function TemplateFormDrawer({ banks, counterparties, currencies, form, is
       setAlways("templateData.currencyId.value", defaultCurrencyId);
       setIfEmpty("templateData.transferType.value", "1");
       setIfEmpty("templateData.status.value", "1");
-      form.setValue("templateData.amount.autoPopulate" as never, false as never, { shouldDirty: false, shouldValidate: false });
+      form.setValue(
+        "templateData.amount.autoPopulate" as never,
+        false as never,
+        { shouldDirty: false, shouldValidate: false },
+      );
     }
 
     if (selectedType === "Exchange") {
@@ -134,54 +194,84 @@ export function TemplateFormDrawer({ banks, counterparties, currencies, form, is
 
     // Keep Auto behavior deterministic.
     if (currencyMode === true) {
-      form.setValue("templateData.currencyId.value" as never, defaultCurrencyId as never, { shouldDirty: true, shouldValidate: true });
+      form.setValue(
+        "templateData.currencyId.value" as never,
+        defaultCurrencyId as never,
+        { shouldDirty: true, shouldValidate: true },
+      );
     }
     if (outCurrencyMode === true) {
-      form.setValue("templateData.outCurrencyId.value" as never, defaultCurrencyId as never, { shouldDirty: true, shouldValidate: true });
+      form.setValue(
+        "templateData.outCurrencyId.value" as never,
+        defaultCurrencyId as never,
+        { shouldDirty: true, shouldValidate: true },
+      );
     }
     if (inCurrencyMode === true) {
-      form.setValue("templateData.inCurrencyId.value" as never, defaultCurrencyId as never, { shouldDirty: true, shouldValidate: true });
+      form.setValue(
+        "templateData.inCurrencyId.value" as never,
+        defaultCurrencyId as never,
+        { shouldDirty: true, shouldValidate: true },
+      );
     }
     if (bankMode === true) {
-      form.setValue("templateData.bankId.value" as never, defaultBankId as never, { shouldDirty: true, shouldValidate: true });
+      form.setValue(
+        "templateData.bankId.value" as never,
+        defaultBankId as never,
+        { shouldDirty: true, shouldValidate: true },
+      );
     }
-  }, [banks, currencies, currencyMode, outCurrencyMode, inCurrencyMode, bankMode, form, isOpen, selectedType]);
+  }, [
+    banks,
+    currencies,
+    currencyMode,
+    outCurrencyMode,
+    inCurrencyMode,
+    bankMode,
+    form,
+    isOpen,
+    selectedType,
+  ]);
 
-  const typeTitle = selectedType === "CashFlow"
-    ? t("templates.templateType.cashFlow")
-    : selectedType === "Transfer"
-      ? t("templates.templateType.transfer")
-      : selectedType === "Exchange"
-        ? t("templates.templateType.exchange")
-        : t("templates.templateType.bankAccount");
+  const typeTitle =
+    selectedType === "CashFlow"
+      ? t("templates.templateType.cashFlow")
+      : selectedType === "Transfer"
+        ? t("templates.templateType.transfer")
+        : selectedType === "Exchange"
+          ? t("templates.templateType.exchange")
+          : t("templates.templateType.bankAccount");
 
   const title = (
     <Stack alignItems="center" direction="row">
       <span>{`${isEditMode ? t("templates.editTitle") : t("templates.createTitle")} ${typeTitle}`}</span>
-      <FormTitleHelpIcon ariaLabel={t("common.showDetails")} message={t("templates.formulaHint")} />
+      <FormTitleHelpIcon
+        ariaLabel={t("common.showDetails")}
+        message={t("templates.formulaHint")}
+      />
     </Stack>
   );
 
   return (
     <DrawerPanel isOpen={isOpen} onClose={onClose} title={title} width="wide">
       <FormProvider {...form}>
-        <Stack component="form" noValidate onSubmit={form.handleSubmit(onSubmit)}>
+        <Stack
+          component="form"
+          noValidate
+          onSubmit={form.handleSubmit(onSubmit)}
+        >
           <TemplateForm
             banks={banks}
             control={form.control}
             counterparties={counterparties}
             currencies={currencies}
             isSubmitting={isSubmitting}
-            submitLabel={isEditMode ? t("counterparties.save") : t("templates.create")}
+            submitLabel={
+              isEditMode ? t("counterparties.save") : t("templates.create")
+            }
           />
         </Stack>
       </FormProvider>
     </DrawerPanel>
   );
 }
-
-
-
-
-
-

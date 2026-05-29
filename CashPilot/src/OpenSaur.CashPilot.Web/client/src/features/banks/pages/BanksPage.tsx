@@ -11,14 +11,16 @@ import type { BankFormValues } from "../components/BankForm";
 import { BanksFilterDrawer } from "../components/BanksFilterDrawer";
 import { BanksList } from "../components/BanksList";
 import type { BankDto, UpsertBankRequestDto } from "../dtos/BankDto";
-import { createBank, deleteBank, updateBank } from "../api/banksApi";
+import { useCreateBankMutation } from "../hooks/useCreateBankMutation";
+import { useDeleteBankMutation } from "../hooks/useDeleteBankMutation";
 import { useBanksQuery } from "../hooks/useBanksQuery";
+import { useUpdateBankMutation } from "../hooks/useUpdateBankMutation";
 
 const emptyFormState: BankFormValues = {
   description: "",
   isDefault: false,
   name: "",
-  shortName: ""
+  shortName: "",
 };
 
 function getErrorMessage(error: unknown, fallback: string) {
@@ -41,17 +43,20 @@ export function BanksPage() {
   const [filters, setFilters] = useState({
     isActive: true,
     name: "",
-    shortName: ""
+    shortName: "",
   });
   const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
-  const { data: banks = [], isLoading, refetch } = useBanksQuery(filters);
+  const { data: banks = [], isLoading } = useBanksQuery(filters);
+  const createBankMutation = useCreateBankMutation();
+  const updateBankMutation = useUpdateBankMutation();
+  const deleteBankMutation = useDeleteBankMutation();
   const [editingBank, setEditingBank] = useState<BankDto | null>(null);
   const [deletingBank, setDeletingBank] = useState<BankDto | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const form = useForm<BankFormValues>({
-    defaultValues: emptyFormState
+    defaultValues: emptyFormState,
   });
   const isEditMode = useMemo(() => editingBank != null, [editingBank]);
 
@@ -61,22 +66,24 @@ export function BanksPage() {
 
     try {
       const payload: UpsertBankRequestDto = {
-        description: values.description.trim().length === 0 ? null : values.description.trim(),
+        description:
+          values.description.trim().length === 0
+            ? null
+            : values.description.trim(),
         isDefault: values.isDefault,
         name: values.name.trim(),
-        shortName: values.shortName.trim().toUpperCase()
+        shortName: values.shortName.trim().toUpperCase(),
       };
 
       if (editingBank == null) {
-        await createBank(payload);
+        await createBankMutation.mutateAsync(payload);
       } else {
-        await updateBank(editingBank.id, payload);
+        await updateBankMutation.mutateAsync({ id: editingBank.id, payload });
       }
 
       form.reset(emptyFormState);
       setEditingBank(null);
       setIsFormOpen(false);
-      await refetch();
     } catch (error) {
       setErrorMessage(getErrorMessage(error, t("banks.errorSave")));
     } finally {
@@ -96,7 +103,7 @@ export function BanksPage() {
       description: bank.description ?? "",
       isDefault: bank.isDefault,
       name: bank.name,
-      shortName: bank.shortName
+      shortName: bank.shortName,
     });
     setIsFormOpen(true);
   }
@@ -110,13 +117,12 @@ export function BanksPage() {
     setIsSubmitting(true);
 
     try {
-      await deleteBank(deletingBank.id);
+      await deleteBankMutation.mutateAsync(deletingBank.id);
       if (editingBank?.id === deletingBank.id) {
         setEditingBank(null);
         form.reset(emptyFormState);
         setIsFormOpen(false);
       }
-      await refetch();
       setDeletingBank(null);
     } catch (error) {
       setErrorMessage(getErrorMessage(error, t("banks.errorDelete")));
@@ -135,24 +141,21 @@ export function BanksPage() {
       >
         {t("banks.filter")}
       </ActionButton>
-      <ActionButton onClick={openCreateForm}>
-        {t("banks.create")}
-      </ActionButton>
+      <ActionButton onClick={openCreateForm}>{t("banks.create")}</ActionButton>
     </Stack>
   );
 
   return (
-    <DefaultLayout
-      headerActions={headerActions}
-      title={t("banks.title")}
-    >
+    <DefaultLayout headerActions={headerActions} title={t("banks.title")}>
       <Stack spacing={3}>
-        {errorMessage != null ? <Alert severity="error">{errorMessage}</Alert> : null}
+        {errorMessage != null ? (
+          <Alert severity="error">{errorMessage}</Alert>
+        ) : null}
         <BanksList
           banks={banks}
           isLoading={isLoading}
           isSubmitting={isSubmitting}
-          onDelete={bank => {
+          onDelete={(bank) => {
             setDeletingBank(bank);
           }}
           onEdit={openEditForm}
@@ -177,9 +180,11 @@ export function BanksPage() {
       <ConfirmModal
         confirmLabel={t("banks.delete")}
         isConfirming={isSubmitting}
-        message={deletingBank == null
-          ? ""
-          : t("banks.deleteConfirm").replace("{name}", deletingBank.name)}
+        message={
+          deletingBank == null
+            ? ""
+            : t("banks.deleteConfirm").replace("{name}", deletingBank.name)
+        }
         onClose={() => {
           if (isSubmitting) {
             return;
@@ -196,7 +201,7 @@ export function BanksPage() {
       <BanksFilterDrawer
         initialValues={filters}
         isOpen={isFilterDrawerOpen}
-        onApply={values => {
+        onApply={(values) => {
           setFilters(values);
           setIsFilterDrawerOpen(false);
         }}

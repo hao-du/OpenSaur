@@ -29,10 +29,10 @@ function typeIcon(templateType: number) {
 }
 
 function typeColor(templateType: number) {
-  if (templateType === 1) return "#1565c0";
-  if (templateType === 2) return "#6a1b9a";
-  if (templateType === 3) return "#ef6c00";
-  return "#2e7d32";
+  if (templateType === 1) return "var(--tx-type-cashflow-color)";
+  if (templateType === 2) return "var(--tx-type-transfer-color)";
+  if (templateType === 3) return "var(--tx-type-exchange-color)";
+  return "var(--tx-type-bankaccount-color)";
 }
 
 export function TemplatePopulateActionCard({ templates, banks, currencies, counterparties, onSaved }: Props) {

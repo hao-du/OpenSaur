@@ -1,7 +1,24 @@
 import { useEffect, useMemo, useState } from "react";
-import { Alert, Chip, CircularProgress, Grid, Menu, MenuItem, Pagination, Paper, Stack } from "@mui/material";
-import { useQueryClient } from "@tanstack/react-query";
-import { Banknote, ChevronDown, Landmark, Pencil, Repeat, Trash2, Users } from "lucide-react";
+import {
+  Alert,
+  Chip,
+  CircularProgress,
+  Grid,
+  Menu,
+  MenuItem,
+  Pagination,
+  Paper,
+  Stack,
+} from "@mui/material";
+import {
+  Banknote,
+  ChevronDown,
+  Landmark,
+  Pencil,
+  Repeat,
+  Trash2,
+  Users,
+} from "lucide-react";
 import { ActionButton } from "../../../components/atoms/ActionButton";
 import { ConfirmModal } from "../../../components/atoms/ConfirmModal";
 import { DefaultLayout } from "../../../components/layouts/DefaultLayout";
@@ -12,21 +29,21 @@ import { useBanksQuery } from "../../banks/hooks/useBanksQuery";
 import { useCurrenciesQuery } from "../../currencies/hooks/useCurrenciesQuery";
 import { useCounterpartiesQuery } from "../../counterparties/hooks/useCounterpartiesQuery";
 import {
-  saveBankAccountForm,
-  saveTransferForm,
-  createCashFlow,
-  createCurrencyExchange,
-  deleteTransactionByType,
   getBankAccountFormById,
   getCashFlowById,
   getCurrencyExchangeById,
   getTransferFormById,
-  updateCashFlow,
-  updateCurrencyExchange
 } from "../api/transactionsApi";
 import type { SaveBankAccountFormRequestDto } from "../dtos/TransactionDto";
+import { useCreateCashFlowMutation } from "../hooks/useCreateCashFlowMutation";
+import { useCreateCurrencyExchangeMutation } from "../hooks/useCreateCurrencyExchangeMutation";
+import { useDeleteTransactionMutation } from "../hooks/useDeleteTransactionMutation";
+import { useSaveBankAccountMutation } from "../hooks/useSaveBankAccountMutation";
+import { useSaveTransferMutation } from "../hooks/useSaveTransferMutation";
 import { useTransactionsQuery } from "../hooks/useTransactionsQuery";
 import { useTransactionDashboardQuery } from "../hooks/useTransactionDashboardQuery";
+import { useUpdateCashFlowMutation } from "../hooks/useUpdateCashFlowMutation";
+import { useUpdateCurrencyExchangeMutation } from "../hooks/useUpdateCurrencyExchangeMutation";
 import { CashFlowFormDrawer } from "../components/CashFlowFormDrawer";
 import { BankAccountFormDrawer } from "../components/BankAccountFormDrawer";
 import { TransferFormDrawer } from "../components/TransferFormDrawer";
@@ -35,15 +52,20 @@ import { TotalAmountByCurrencyCard } from "../../dashboard/components/TotalAmoun
 import { TotalActiveBankAccountCard } from "../../dashboard/components/TotalActiveBankAccountCard";
 import { IncomeOutcomeCard } from "../../dashboard/components/IncomeOutcomeCard";
 import { DashboardCardSkeleton } from "../../dashboard/components/DashboardCardSkeleton";
-import { TransactionsFilterDrawer, type TransactionFilterValues } from "../components/TransactionsFilterDrawer";
+import {
+  TransactionsFilterDrawer,
+  type TransactionFilterValues,
+} from "../components/TransactionsFilterDrawer";
 
 const amountFormatter = new Intl.NumberFormat("en-US", {
   minimumFractionDigits: 2,
-  maximumFractionDigits: 2
+  maximumFractionDigits: 2,
 });
 const ITEMS_PER_PAGE = 30;
 
-function getTransactionTypeUi(type: "CashFlow" | "BankAccount" | "Transfer" | "Exchange") {
+function getTransactionTypeUi(
+  type: "CashFlow" | "BankAccount" | "Transfer" | "Exchange",
+) {
   if (type === "CashFlow") {
     return { className: "tx-type-cashflow", icon: Banknote };
   }
@@ -56,17 +78,35 @@ function getTransactionTypeUi(type: "CashFlow" | "BankAccount" | "Transfer" | "E
   return { className: "tx-type-exchange", icon: Repeat };
 }
 
-function getTransactionTypeTagSx(type: "CashFlow" | "BankAccount" | "Transfer" | "Exchange") {
+function getTransactionTypeTagSx(
+  type: "CashFlow" | "BankAccount" | "Transfer" | "Exchange",
+) {
   if (type === "CashFlow") {
-    return { color: "#1565c0", borderColor: "#bbdefb", backgroundColor: "#e3f2fd" };
+    return {
+      color: "#1565c0",
+      borderColor: "#bbdefb",
+      backgroundColor: "#e3f2fd",
+    };
   }
   if (type === "BankAccount") {
-    return { color: "#2e7d32", borderColor: "#c8e6c9", backgroundColor: "#e8f5e9" };
+    return {
+      color: "#2e7d32",
+      borderColor: "#c8e6c9",
+      backgroundColor: "#e8f5e9",
+    };
   }
   if (type === "Transfer") {
-    return { color: "#6a1b9a", borderColor: "#e1bee7", backgroundColor: "#f3e5f5" };
+    return {
+      color: "#6a1b9a",
+      borderColor: "#e1bee7",
+      backgroundColor: "#f3e5f5",
+    };
   }
-  return { color: "#ef6c00", borderColor: "#ffe0b2", backgroundColor: "#fff3e0" };
+  return {
+    color: "#ef6c00",
+    borderColor: "#ffe0b2",
+    backgroundColor: "#fff3e0",
+  };
 }
 
 export function TransactionsPage() {
@@ -75,7 +115,9 @@ export function TransactionsPage() {
   const [isTransferDrawerOpen, setIsTransferDrawerOpen] = useState(false);
   const [isExchangeDrawerOpen, setIsExchangeDrawerOpen] = useState(false);
   const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
-  const [createMenuAnchor, setCreateMenuAnchor] = useState<null | HTMLElement>(null);
+  const [createMenuAnchor, setCreateMenuAnchor] = useState<null | HTMLElement>(
+    null,
+  );
   const [editingCashFlow, setEditingCashFlow] = useState<{
     id: string;
     amount: number;
@@ -85,7 +127,8 @@ export function TransactionsPage() {
     transactionDate: string;
     isActive: boolean;
   } | null>(null);
-  const [editingBankAccount, setEditingBankAccount] = useState<SaveBankAccountFormRequestDto | null>(null);
+  const [editingBankAccount, setEditingBankAccount] =
+    useState<SaveBankAccountFormRequestDto | null>(null);
   const [editingTransferMovement, setEditingTransferMovement] = useState<{
     id: string;
     counterpartyId: string;
@@ -127,7 +170,13 @@ export function TransactionsPage() {
   const [page, setPage] = useState(1);
   const [error, setError] = useState<string | null>(null);
   const { formatDate, t } = useSettings();
-  const queryClient = useQueryClient();
+  const createCashFlowMutation = useCreateCashFlowMutation();
+  const updateCashFlowMutation = useUpdateCashFlowMutation();
+  const saveBankAccountMutation = useSaveBankAccountMutation();
+  const saveTransferMutation = useSaveTransferMutation();
+  const createCurrencyExchangeMutation = useCreateCurrencyExchangeMutation();
+  const updateCurrencyExchangeMutation = useUpdateCurrencyExchangeMutation();
+  const deleteTransactionMutation = useDeleteTransactionMutation();
   const now = new Date();
   const startOfMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
   const endOfMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()).padStart(2, "0")}`;
@@ -136,32 +185,54 @@ export function TransactionsPage() {
     fromDate: startOfMonth,
     rangePreset: "Month",
     toDate: endOfMonth,
-    types: ["CashFlow", "BankAccount", "Transfer", "Exchange"]
+    types: ["CashFlow", "BankAccount", "Transfer", "Exchange"],
   });
 
-  const banks = useBanksQuery({ isActive: true, name: "", shortName: "" }).data ?? [];
-  const currencies = useCurrenciesQuery({ isActive: true, name: "", shortName: "" }).data ?? [];
-  const counterparties = useCounterpartiesQuery({ isActive: true, fullName: "", email: "", phoneNumber: "" }).data ?? [];
+  const banks =
+    useBanksQuery({ isActive: true, name: "", shortName: "" }).data ?? [];
+  const currencies =
+    useCurrenciesQuery({ isActive: true, name: "", shortName: "" }).data ?? [];
+  const counterparties =
+    useCounterpartiesQuery({
+      isActive: true,
+      fullName: "",
+      email: "",
+      phoneNumber: "",
+    }).data ?? [];
   const transactionsQuery = useTransactionsQuery();
   const dashboardQuery = useTransactionDashboardQuery();
-  const defaultCurrencyCode = currencies.find(x => x.isDefault)?.shortName;
-  const incomeOutcomeTitle = defaultCurrencyCode == null
-    ? t("transactions.incomeOutcome")
-    : `${t("transactions.incomeOutcome")} (${defaultCurrencyCode})`;
-  const incomeOutcomeItems = defaultCurrencyCode == null
-    ? (dashboardQuery.data?.incomeOutcomes ?? [])
-    : (dashboardQuery.data?.incomeOutcomes ?? []).filter(x => x.currencyCode === defaultCurrencyCode);
-  const isTransactionsLoading = transactionsQuery.isLoading || transactionsQuery.isFetching || !transactionsQuery.data;
-  const isDashboardLoading = dashboardQuery.isLoading || dashboardQuery.isFetching || !dashboardQuery.data;
-  const isCurrenciesLoading = currencies.length === 0 && (isDashboardLoading || isTransactionsLoading);
+  const defaultCurrencyCode = currencies.find((x) => x.isDefault)?.shortName;
+  const incomeOutcomeTitle =
+    defaultCurrencyCode == null
+      ? t("transactions.incomeOutcome")
+      : `${t("transactions.incomeOutcome")} (${defaultCurrencyCode})`;
+  const incomeOutcomeItems =
+    defaultCurrencyCode == null
+      ? (dashboardQuery.data?.incomeOutcomes ?? [])
+      : (dashboardQuery.data?.incomeOutcomes ?? []).filter(
+          (x) => x.currencyCode === defaultCurrencyCode,
+        );
+  const isTransactionsLoading =
+    transactionsQuery.isLoading ||
+    transactionsQuery.isFetching ||
+    !transactionsQuery.data;
+  const isDashboardLoading =
+    dashboardQuery.isLoading ||
+    dashboardQuery.isFetching ||
+    !dashboardQuery.data;
+  const isCurrenciesLoading =
+    currencies.length === 0 && (isDashboardLoading || isTransactionsLoading);
 
   const filteredTransactions = useMemo(() => {
     const normalizedDescription = filters.description.trim().toLowerCase();
-    return (transactionsQuery.data ?? []).filter(item => {
+    return (transactionsQuery.data ?? []).filter((item) => {
       if (filters.types.length > 0 && !filters.types.includes(item.type)) {
         return false;
       }
-      if (filters.fromDate.length > 0 && item.transactionDate < filters.fromDate) {
+      if (
+        filters.fromDate.length > 0 &&
+        item.transactionDate < filters.fromDate
+      ) {
         return false;
       }
       if (filters.toDate.length > 0 && item.transactionDate > filters.toDate) {
@@ -177,10 +248,17 @@ export function TransactionsPage() {
     });
   }, [transactionsQuery.data, filters]);
 
-  const pageCount = Math.max(1, Math.ceil(filteredTransactions.length / ITEMS_PER_PAGE));
+  const pageCount = Math.max(
+    1,
+    Math.ceil(filteredTransactions.length / ITEMS_PER_PAGE),
+  );
   const pagedTransactions = useMemo(
-    () => filteredTransactions.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE),
-    [filteredTransactions, page]
+    () =>
+      filteredTransactions.slice(
+        (page - 1) * ITEMS_PER_PAGE,
+        page * ITEMS_PER_PAGE,
+      ),
+    [filteredTransactions, page],
   );
 
   useEffect(() => {
@@ -193,16 +271,10 @@ export function TransactionsPage() {
     }
   }, [page, pageCount]);
 
-  const refresh = async () => {
-    await queryClient.invalidateQueries({ queryKey: ["transactions"] });
-    await queryClient.invalidateQueries({ queryKey: ["transaction-dashboard"] });
-  };
-
   const submit = async (action: () => Promise<unknown>) => {
     try {
       setError(null);
       await action();
-      await refresh();
     } catch (e) {
       setError(e instanceof Error ? e.message : t("transactions.errorSave"));
     }
@@ -215,7 +287,12 @@ export function TransactionsPage() {
 
     try {
       setIsDeleteConfirming(true);
-      await submit(() => deleteTransactionByType(deletingTransaction.type, deletingTransaction.id));
+      await submit(() =>
+        deleteTransactionMutation.mutateAsync({
+          id: deletingTransaction.id,
+          type: deletingTransaction.type,
+        }),
+      );
       setDeletingTransaction(null);
     } finally {
       setIsDeleteConfirming(false);
@@ -225,7 +302,7 @@ export function TransactionsPage() {
   const handleEdit = async (
     type: "CashFlow" | "BankAccount" | "Transfer" | "Exchange",
     id: string,
-    transferId?: string | null
+    transferId?: string | null,
   ) => {
     try {
       setError(null);
@@ -250,21 +327,21 @@ export function TransactionsPage() {
           counterpartyId: transferForm.counterpartyId,
           currencyId: transferForm.currencyId,
           description: transferForm.description,
-          details: transferForm.details.map(x => ({
+          details: transferForm.details.map((x) => ({
             amount: x.amount,
             currencyId: x.currencyId,
             description: x.description,
             direction: x.direction,
             id: x.id,
             isActive: x.isActive,
-            transactionDate: x.transactionDate
+            transactionDate: x.transactionDate,
           })),
           dueDate: transferForm.dueDate,
           id: transferForm.id,
           isActive: transferForm.isActive,
           status: transferForm.status,
           transactionDate: transferForm.transactionDate,
-          transferType: transferForm.transferType
+          transferType: transferForm.transferType,
         });
         setIsTransferDrawerOpen(true);
         return;
@@ -280,7 +357,7 @@ export function TransactionsPage() {
         inCurrencyId: detail.inLeg.currencyId,
         isActive: detail.isActive,
         outAmount: detail.outLeg.amount,
-        outCurrencyId: detail.outLeg.currencyId
+        outCurrencyId: detail.outLeg.currencyId,
       });
       setIsExchangeDrawerOpen(true);
     } catch (e) {
@@ -290,12 +367,15 @@ export function TransactionsPage() {
 
   const headerActions = (
     <Stack direction="row" spacing={1.25}>
-      <ActionButton onClick={() => setIsFilterDrawerOpen(true)} variant="outlined">
+      <ActionButton
+        onClick={() => setIsFilterDrawerOpen(true)}
+        variant="outlined"
+      >
         {t("transactions.filter")}
       </ActionButton>
       <ActionButton
         endIcon={<ChevronDown size={16} />}
-        onClick={event => setCreateMenuAnchor(event.currentTarget)}
+        onClick={(event) => setCreateMenuAnchor(event.currentTarget)}
         variant="contained"
       >
         {t("transactions.create")}
@@ -305,16 +385,48 @@ export function TransactionsPage() {
         onClose={() => setCreateMenuAnchor(null)}
         open={createMenuAnchor != null}
       >
-        <MenuItem onClick={() => { setCreateMenuAnchor(null); setIsCashFlowDrawerOpen(true); }}>{t("transactions.cashFlow")}</MenuItem>
-        <MenuItem onClick={() => { setCreateMenuAnchor(null); setEditingBankAccount(null); setIsBankAccountDrawerOpen(true); }}>{t("transactions.bankAccount")}</MenuItem>
-        <MenuItem onClick={() => { setCreateMenuAnchor(null); setIsTransferDrawerOpen(true); }}>{t("transactions.transfer")}</MenuItem>
-        <MenuItem onClick={() => { setCreateMenuAnchor(null); setIsExchangeDrawerOpen(true); }}>{t("transactions.exchange")}</MenuItem>
+        <MenuItem
+          onClick={() => {
+            setCreateMenuAnchor(null);
+            setIsCashFlowDrawerOpen(true);
+          }}
+        >
+          {t("transactions.cashFlow")}
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            setCreateMenuAnchor(null);
+            setEditingBankAccount(null);
+            setIsBankAccountDrawerOpen(true);
+          }}
+        >
+          {t("transactions.bankAccount")}
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            setCreateMenuAnchor(null);
+            setIsTransferDrawerOpen(true);
+          }}
+        >
+          {t("transactions.transfer")}
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            setCreateMenuAnchor(null);
+            setIsExchangeDrawerOpen(true);
+          }}
+        >
+          {t("transactions.exchange")}
+        </MenuItem>
       </Menu>
     </Stack>
   );
 
   return (
-    <DefaultLayout headerActions={headerActions} title={t("transactions.title")}>
+    <DefaultLayout
+      headerActions={headerActions}
+      title={t("transactions.title")}
+    >
       <Stack spacing={3}>
         {error != null ? <Alert severity="error">{error}</Alert> : null}
 
@@ -322,9 +434,16 @@ export function TransactionsPage() {
           currencies={currencies}
           editingCashFlow={editingCashFlow}
           isOpen={isCashFlowDrawerOpen}
-          onClose={() => { setIsCashFlowDrawerOpen(false); setEditingCashFlow(null); }}
-          onSubmit={payload => submit(() => createCashFlow(payload))}
-          onUpdate={(id, payload) => submit(() => updateCashFlow(id, payload))}
+          onClose={() => {
+            setIsCashFlowDrawerOpen(false);
+            setEditingCashFlow(null);
+          }}
+          onSubmit={(payload) =>
+            submit(() => createCashFlowMutation.mutateAsync(payload))
+          }
+          onUpdate={(id, payload) =>
+            submit(() => updateCashFlowMutation.mutateAsync({ id, payload }))
+          }
         />
 
         <BankAccountFormDrawer
@@ -332,8 +451,13 @@ export function TransactionsPage() {
           currencies={currencies}
           editingBankAccount={editingBankAccount}
           isOpen={isBankAccountDrawerOpen}
-          onClose={() => { setIsBankAccountDrawerOpen(false); setEditingBankAccount(null); }}
-          onSave={payload => submit(() => saveBankAccountForm(payload))}
+          onClose={() => {
+            setIsBankAccountDrawerOpen(false);
+            setEditingBankAccount(null);
+          }}
+          onSave={(payload) =>
+            submit(() => saveBankAccountMutation.mutateAsync(payload))
+          }
         />
 
         <TransferFormDrawer
@@ -341,22 +465,36 @@ export function TransactionsPage() {
           currencies={currencies}
           editingMovement={editingTransferMovement}
           isOpen={isTransferDrawerOpen}
-          onClose={() => { setIsTransferDrawerOpen(false); setEditingTransferMovement(null); }}
-          onSave={payload => submit(() => saveTransferForm(payload))}
+          onClose={() => {
+            setIsTransferDrawerOpen(false);
+            setEditingTransferMovement(null);
+          }}
+          onSave={(payload) =>
+            submit(() => saveTransferMutation.mutateAsync(payload))
+          }
         />
 
         <ExchangeFormDrawer
           currencies={currencies}
           editingExchange={editingExchange}
           isOpen={isExchangeDrawerOpen}
-          onClose={() => { setIsExchangeDrawerOpen(false); setEditingExchange(null); }}
-          onSubmit={payload => submit(() => createCurrencyExchange(payload))}
-          onUpdate={(id, payload) => submit(() => updateCurrencyExchange(id, payload))}
+          onClose={() => {
+            setIsExchangeDrawerOpen(false);
+            setEditingExchange(null);
+          }}
+          onSubmit={(payload) =>
+            submit(() => createCurrencyExchangeMutation.mutateAsync(payload))
+          }
+          onUpdate={(id, payload) =>
+            submit(() =>
+              updateCurrencyExchangeMutation.mutateAsync({ id, payload }),
+            )
+          }
         />
         <TransactionsFilterDrawer
           initialValues={filters}
           isOpen={isFilterDrawerOpen}
-          onApply={values => {
+          onApply={(values) => {
             setFilters(values);
             setIsFilterDrawerOpen(false);
           }}
@@ -396,120 +534,237 @@ export function TransactionsPage() {
                 ) : pagedTransactions.length === 0 ? (
                   <Paper elevation={0} sx={layoutStyles.emptyStatePanel}>
                     <Stack spacing={1}>
-                      <BodyText sx={{ fontWeight: 700 }}>{t("transactions.emptyTitle")}</BodyText>
+                      <BodyText sx={{ fontWeight: 700 }}>
+                        {t("transactions.emptyTitle")}
+                      </BodyText>
                       <BodyText sx={{ color: "text.secondary" }}>
                         {t("transactions.emptySubtitle")}
                       </BodyText>
                     </Stack>
                   </Paper>
                 ) : (
-                  pagedTransactions.map(item => {
-                    const bankMovementTypeLabel = item.bankAccountTransactionType === 1
-                      ? t("transactions.initialDeposit")
-                      : item.bankAccountTransactionType === 2
-                        ? t("transactions.interestPayment")
-                        : item.bankAccountTransactionType === 3
-                          ? t("transactions.principalReturn")
-                          : null;
-                    const bankStatusLabel = item.bankAccountStatus === 1
-                      ? t("transactions.statusType.active")
-                      : item.bankAccountStatus === 2
-                        ? t("transactions.statusType.matured")
-                        : item.bankAccountStatus === 3
-                          ? t("transactions.statusType.closedEarly")
-                          : null;
-                    const transferStatusLabel = item.transferStatus === 1
-                      ? t("transactions.statusType.active")
-                      : item.transferStatus === 2
-                        ? t("transactions.statusType.completed")
-                        : item.transferStatus === 3
-                          ? t("transactions.statusType.cancelled")
-                          : null;
-                    const transferTypeLabel = item.transferType === 1
-                      ? t("transactions.transferType.lend")
-                      : item.transferType === 2
-                        ? t("transactions.transferType.borrow")
-                        : item.transferType === 3
-                          ? t("transactions.transferType.give")
-                          : item.transferType === 4
-                            ? t("transactions.transferType.receive")
+                  pagedTransactions.map((item) => {
+                    const bankMovementTypeLabel =
+                      item.bankAccountTransactionType === 1
+                        ? t("transactions.initialDeposit")
+                        : item.bankAccountTransactionType === 2
+                          ? t("transactions.interestPayment")
+                          : item.bankAccountTransactionType === 3
+                            ? t("transactions.principalReturn")
                             : null;
+                    const bankStatusLabel =
+                      item.bankAccountStatus === 1
+                        ? t("transactions.statusType.active")
+                        : item.bankAccountStatus === 2
+                          ? t("transactions.statusType.matured")
+                          : item.bankAccountStatus === 3
+                            ? t("transactions.statusType.closedEarly")
+                            : null;
+                    const transferStatusLabel =
+                      item.transferStatus === 1
+                        ? t("transactions.statusType.active")
+                        : item.transferStatus === 2
+                          ? t("transactions.statusType.completed")
+                          : item.transferStatus === 3
+                            ? t("transactions.statusType.cancelled")
+                            : null;
+                    const transferTypeLabel =
+                      item.transferType === 1
+                        ? t("transactions.transferType.lend")
+                        : item.transferType === 2
+                          ? t("transactions.transferType.borrow")
+                          : item.transferType === 3
+                            ? t("transactions.transferType.give")
+                            : item.transferType === 4
+                              ? t("transactions.transferType.receive")
+                              : null;
                     const tagSx = getTransactionTypeTagSx(item.type);
 
                     return (
-                    <Paper
-                      key={`${item.type}-${item.id}-${item.transactionDate}-${item.amount}-${item.direction}`}
-                      variant="outlined"
-                      sx={{
-                        p: 1.1,
-                        borderColor: item.type === "BankAccount" && (item.bankAccountTransactionType === 1 || item.bankAccountTransactionType === 3)
-                          ? "success.main"
-                          : undefined
-                      }}
-                    >
-                      <Stack direction="row" justifyContent="space-between" alignItems="stretch" spacing={2}>
-                        <Stack spacing={0.25} sx={{ flex: 1, minHeight: 96 }}>
-                          <Stack direction="row" spacing={1} alignItems="center">
-                            <BodyText sx={{ fontWeight: 700 }}>{formatDate(item.transactionDate)}</BodyText>
-                            {(() => {
-                              const { className, icon: Icon } = getTransactionTypeUi(item.type);
-                              return (
-                                <span className={`tx-type-icon ${className}`} title={item.type}>
-                                  <Icon size={16} />
-                                </span>
-                              );
-                            })()}
+                      <Paper
+                        key={`${item.type}-${item.id}-${item.transactionDate}-${item.amount}-${item.direction}`}
+                        variant="outlined"
+                        sx={{
+                          p: 1.1,
+                          borderColor:
+                            item.type === "BankAccount" &&
+                            (item.bankAccountTransactionType === 1 ||
+                              item.bankAccountTransactionType === 3)
+                              ? "success.main"
+                              : undefined,
+                        }}
+                      >
+                        <Stack
+                          direction="row"
+                          justifyContent="space-between"
+                          alignItems="stretch"
+                          spacing={2}
+                        >
+                          <Stack spacing={0.25} sx={{ flex: 1, minHeight: 96 }}>
+                            <Stack
+                              direction="row"
+                              spacing={1}
+                              alignItems="center"
+                            >
+                              <BodyText sx={{ fontWeight: 700 }}>
+                                {formatDate(item.transactionDate)}
+                              </BodyText>
+                              {(() => {
+                                const { className, icon: Icon } =
+                                  getTransactionTypeUi(item.type);
+                                return (
+                                  <span
+                                    className={`tx-type-icon ${className}`}
+                                    title={item.type}
+                                  >
+                                    <Icon size={16} />
+                                  </span>
+                                );
+                              })()}
+                            </Stack>
+                            <BodyText
+                              sx={{
+                                color: "text.secondary",
+                                fontSize: "0.9rem",
+                                fontWeight: 400,
+                                opacity: 0.8,
+                              }}
+                            >
+                              {item.description ?? "-"}
+                            </BodyText>
+                            {item.type === "BankAccount" ? (
+                              <Stack
+                                direction="row"
+                                spacing={0.75}
+                                sx={{ mt: "auto", pt: 0.75, flexWrap: "wrap" }}
+                              >
+                                {item.bankName ? (
+                                  <Chip
+                                    size="small"
+                                    label={item.bankName}
+                                    variant="outlined"
+                                    sx={tagSx}
+                                  />
+                                ) : null}
+                                {bankStatusLabel ? (
+                                  <Chip
+                                    size="small"
+                                    label={bankStatusLabel}
+                                    variant="outlined"
+                                    sx={tagSx}
+                                  />
+                                ) : null}
+                                {bankMovementTypeLabel ? (
+                                  <Chip
+                                    size="small"
+                                    label={bankMovementTypeLabel}
+                                    variant="outlined"
+                                    sx={tagSx}
+                                  />
+                                ) : null}
+                              </Stack>
+                            ) : null}
+                            {item.type === "Transfer" ? (
+                              <Stack
+                                direction="row"
+                                spacing={0.75}
+                                sx={{ mt: "auto", pt: 0.75, flexWrap: "wrap" }}
+                              >
+                                {item.counterpartyName ? (
+                                  <Chip
+                                    size="small"
+                                    label={item.counterpartyName}
+                                    variant="outlined"
+                                    sx={tagSx}
+                                  />
+                                ) : null}
+                                {transferStatusLabel ? (
+                                  <Chip
+                                    size="small"
+                                    label={transferStatusLabel}
+                                    variant="outlined"
+                                    sx={tagSx}
+                                  />
+                                ) : null}
+                                {transferTypeLabel ? (
+                                  <Chip
+                                    size="small"
+                                    label={transferTypeLabel}
+                                    variant="outlined"
+                                    sx={tagSx}
+                                  />
+                                ) : null}
+                              </Stack>
+                            ) : null}
                           </Stack>
-                          <BodyText sx={{ color: "text.secondary", fontSize: "0.9rem", fontWeight: 400, opacity: 0.8 }}>{item.description ?? "-"}</BodyText>
-                          {item.type === "BankAccount" ? (
-                            <Stack direction="row" spacing={0.75} sx={{ mt: "auto", pt: 0.75, flexWrap: "wrap" }}>
-                              {item.bankName ? <Chip size="small" label={item.bankName} variant="outlined" sx={tagSx} /> : null}
-                              {bankStatusLabel ? <Chip size="small" label={bankStatusLabel} variant="outlined" sx={tagSx} /> : null}
-                              {bankMovementTypeLabel ? <Chip size="small" label={bankMovementTypeLabel} variant="outlined" sx={tagSx} /> : null}
-                            </Stack>
-                          ) : null}
-                          {item.type === "Transfer" ? (
-                            <Stack direction="row" spacing={0.75} sx={{ mt: "auto", pt: 0.75, flexWrap: "wrap" }}>
-                              {item.counterpartyName ? <Chip size="small" label={item.counterpartyName} variant="outlined" sx={tagSx} /> : null}
-                              {transferStatusLabel ? <Chip size="small" label={transferStatusLabel} variant="outlined" sx={tagSx} /> : null}
-                              {transferTypeLabel ? <Chip size="small" label={transferTypeLabel} variant="outlined" sx={tagSx} /> : null}
-                            </Stack>
-                          ) : null}
-                        </Stack>
 
-                        <Stack spacing={0.5} alignItems="flex-end">
-                          <BodyText sx={{ color: item.type === "BankAccount" && (item.bankAccountTransactionType === 1 || item.bankAccountTransactionType === 3) ? "success.main" : item.direction === 1 ? "primary.main" : "error.main", fontSize: 22, fontWeight: 800, lineHeight: 1.1 }}>{amountFormatter.format(item.amount)}</BodyText>
-                          <BodyText sx={{ fontWeight: 700 }}>{item.currencyCode}</BodyText>
-                          <Stack direction="row" spacing={1}>
-                            <ActionButton
-                              aria-label={t("transactions.edit")}
-                              noWrap={false}
-                              onClick={() => { void handleEdit(item.type, item.id, item.transferId); }}
-                              size="small"
-                              sx={{ borderRadius: "999px", minWidth: 34, p: 0.5 }}
-                              variant="outlined"
+                          <Stack spacing={0.5} alignItems="flex-end">
+                            <BodyText
+                              sx={{
+                                color:
+                                  item.type === "BankAccount" &&
+                                  (item.bankAccountTransactionType === 1 ||
+                                    item.bankAccountTransactionType === 3)
+                                    ? "success.main"
+                                    : item.direction === 1
+                                      ? "primary.main"
+                                      : "error.main",
+                                fontSize: 22,
+                                fontWeight: 800,
+                                lineHeight: 1.1,
+                              }}
                             >
-                              <Pencil size={16} />
-                            </ActionButton>
-                            <ActionButton
-                              aria-label={t("transactions.delete")}
-                              color="error"
-                              noWrap={false}
-                              onClick={() => setDeletingTransaction({
-                                description: item.description,
-                                id: item.id,
-                                type: item.type
-                              })}
-                              size="small"
-                              sx={{ borderRadius: "999px", minWidth: 34, p: 0.5 }}
-                              variant="outlined"
-                            >
-                              <Trash2 size={16} />
-                            </ActionButton>
+                              {amountFormatter.format(item.amount)}
+                            </BodyText>
+                            <BodyText sx={{ fontWeight: 700 }}>
+                              {item.currencyCode}
+                            </BodyText>
+                            <Stack direction="row" spacing={1}>
+                              <ActionButton
+                                aria-label={t("transactions.edit")}
+                                noWrap={false}
+                                onClick={() => {
+                                  void handleEdit(
+                                    item.type,
+                                    item.id,
+                                    item.transferId,
+                                  );
+                                }}
+                                size="small"
+                                sx={{
+                                  borderRadius: "999px",
+                                  minWidth: 34,
+                                  p: 0.5,
+                                }}
+                                variant="outlined"
+                              >
+                                <Pencil size={16} />
+                              </ActionButton>
+                              <ActionButton
+                                aria-label={t("transactions.delete")}
+                                color="error"
+                                noWrap={false}
+                                onClick={() =>
+                                  setDeletingTransaction({
+                                    description: item.description,
+                                    id: item.id,
+                                    type: item.type,
+                                  })
+                                }
+                                size="small"
+                                sx={{
+                                  borderRadius: "999px",
+                                  minWidth: 34,
+                                  p: 0.5,
+                                }}
+                                variant="outlined"
+                              >
+                                <Trash2 size={16} />
+                              </ActionButton>
+                            </Stack>
                           </Stack>
                         </Stack>
-                      </Stack>
-                    </Paper>
+                      </Paper>
                     );
                   })
                 )}
@@ -539,18 +794,18 @@ export function TransactionsPage() {
                   </>
                 ) : (
                   <>
-                  <TotalAmountByCurrencyCard
-                    items={dashboardQuery.data?.currencyBalances ?? []}
-                    title={t("transactions.totalByCurrency")}
-                  />
-                  <TotalActiveBankAccountCard
-                    items={dashboardQuery.data?.activeBankBalances ?? []}
-                    title={t("transactions.totalByBank")}
-                  />
-                  <IncomeOutcomeCard
-                    items={isCurrenciesLoading ? [] : incomeOutcomeItems}
-                    title={incomeOutcomeTitle}
-                  />
+                    <TotalAmountByCurrencyCard
+                      items={dashboardQuery.data?.currencyBalances ?? []}
+                      title={t("transactions.totalByCurrency")}
+                    />
+                    <TotalActiveBankAccountCard
+                      items={dashboardQuery.data?.activeBankBalances ?? []}
+                      title={t("transactions.totalByBank")}
+                    />
+                    <IncomeOutcomeCard
+                      items={isCurrenciesLoading ? [] : incomeOutcomeItems}
+                      title={incomeOutcomeTitle}
+                    />
                   </>
                 )}
               </Stack>

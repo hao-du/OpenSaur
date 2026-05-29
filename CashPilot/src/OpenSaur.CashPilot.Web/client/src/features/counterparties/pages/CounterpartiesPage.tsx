@@ -6,20 +6,26 @@ import { ActionButton } from "../../../components/atoms/ActionButton";
 import { DefaultLayout } from "../../../components/layouts/DefaultLayout";
 import { ConfirmModal } from "../../../components/atoms/ConfirmModal";
 import { useSettings } from "../../settings/provider/SettingProvider";
-import { createCounterparty, deleteCounterparty, updateCounterparty } from "../api/counterpartiesApi";
 import { CounterpartiesFilterDrawer } from "../components/CounterpartiesFilterDrawer";
 import { CounterpartiesList } from "../components/CounterpartiesList";
 import { CounterpartyFormDrawer } from "../components/CounterpartyFormDrawer";
 import type { CounterpartyFormValues } from "../components/CounterpartyForm";
-import type { CounterpartyDto, CreateCounterpartyRequestDto, UpdateCounterpartyRequestDto } from "../dtos/CounterpartyDto";
+import type {
+  CounterpartyDto,
+  CreateCounterpartyRequestDto,
+  UpdateCounterpartyRequestDto,
+} from "../dtos/CounterpartyDto";
+import { useCreateCounterpartyMutation } from "../hooks/useCreateCounterpartyMutation";
+import { useDeleteCounterpartyMutation } from "../hooks/useDeleteCounterpartyMutation";
 import { useCounterpartiesQuery } from "../hooks/useCounterpartiesQuery";
+import { useUpdateCounterpartyMutation } from "../hooks/useUpdateCounterpartyMutation";
 
 const emptyFormState: CounterpartyFormValues = {
   description: "",
   email: "",
   fullName: "",
   isActive: true,
-  phoneNumber: ""
+  phoneNumber: "",
 };
 
 function getErrorMessage(error: unknown, fallback: string) {
@@ -43,19 +49,28 @@ export function CounterpartiesPage() {
     email: "",
     fullName: "",
     isActive: true,
-    phoneNumber: ""
+    phoneNumber: "",
   });
   const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
-  const { data: counterparties = [], isLoading, refetch } = useCounterpartiesQuery(filters);
-  const [editingCounterparty, setEditingCounterparty] = useState<CounterpartyDto | null>(null);
-  const [deletingCounterparty, setDeletingCounterparty] = useState<CounterpartyDto | null>(null);
+  const { data: counterparties = [], isLoading } =
+    useCounterpartiesQuery(filters);
+  const createCounterpartyMutation = useCreateCounterpartyMutation();
+  const updateCounterpartyMutation = useUpdateCounterpartyMutation();
+  const deleteCounterpartyMutation = useDeleteCounterpartyMutation();
+  const [editingCounterparty, setEditingCounterparty] =
+    useState<CounterpartyDto | null>(null);
+  const [deletingCounterparty, setDeletingCounterparty] =
+    useState<CounterpartyDto | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const form = useForm<CounterpartyFormValues>({
-    defaultValues: emptyFormState
+    defaultValues: emptyFormState,
   });
-  const isEditMode = useMemo(() => editingCounterparty != null, [editingCounterparty]);
+  const isEditMode = useMemo(
+    () => editingCounterparty != null,
+    [editingCounterparty],
+  );
 
   async function handleSubmit(values: CounterpartyFormValues) {
     setErrorMessage(null);
@@ -64,29 +79,43 @@ export function CounterpartiesPage() {
     try {
       if (editingCounterparty == null) {
         const payload: CreateCounterpartyRequestDto = {
-          description: values.description.trim().length === 0 ? null : values.description.trim(),
+          description:
+            values.description.trim().length === 0
+              ? null
+              : values.description.trim(),
           email: values.email.trim().length === 0 ? null : values.email.trim(),
           fullName: values.fullName.trim(),
-          phoneNumber: values.phoneNumber.trim().length === 0 ? null : values.phoneNumber.trim()
+          phoneNumber:
+            values.phoneNumber.trim().length === 0
+              ? null
+              : values.phoneNumber.trim(),
         };
 
-        await createCounterparty(payload);
+        await createCounterpartyMutation.mutateAsync(payload);
       } else {
         const payload: UpdateCounterpartyRequestDto = {
-          description: values.description.trim().length === 0 ? null : values.description.trim(),
+          description:
+            values.description.trim().length === 0
+              ? null
+              : values.description.trim(),
           email: values.email.trim().length === 0 ? null : values.email.trim(),
           fullName: values.fullName.trim(),
           isActive: values.isActive,
-          phoneNumber: values.phoneNumber.trim().length === 0 ? null : values.phoneNumber.trim()
+          phoneNumber:
+            values.phoneNumber.trim().length === 0
+              ? null
+              : values.phoneNumber.trim(),
         };
 
-        await updateCounterparty(editingCounterparty.id, payload);
+        await updateCounterpartyMutation.mutateAsync({
+          id: editingCounterparty.id,
+          payload,
+        });
       }
 
       form.reset(emptyFormState);
       setEditingCounterparty(null);
       setIsFormOpen(false);
-      await refetch();
     } catch (error) {
       setErrorMessage(getErrorMessage(error, t("counterparties.errorSave")));
     } finally {
@@ -107,7 +136,7 @@ export function CounterpartiesPage() {
       email: counterparty.email ?? "",
       fullName: counterparty.fullName,
       isActive: counterparty.isActive,
-      phoneNumber: counterparty.phoneNumber ?? ""
+      phoneNumber: counterparty.phoneNumber ?? "",
     });
     setIsFormOpen(true);
   }
@@ -121,13 +150,12 @@ export function CounterpartiesPage() {
     setIsSubmitting(true);
 
     try {
-      await deleteCounterparty(deletingCounterparty.id);
+      await deleteCounterpartyMutation.mutateAsync(deletingCounterparty.id);
       if (editingCounterparty?.id === deletingCounterparty.id) {
         setEditingCounterparty(null);
         form.reset(emptyFormState);
         setIsFormOpen(false);
       }
-      await refetch();
       setDeletingCounterparty(null);
     } catch (error) {
       setErrorMessage(getErrorMessage(error, t("counterparties.errorDelete")));
@@ -158,12 +186,14 @@ export function CounterpartiesPage() {
       title={t("counterparties.title")}
     >
       <Stack spacing={3}>
-        {errorMessage != null ? <Alert severity="error">{errorMessage}</Alert> : null}
+        {errorMessage != null ? (
+          <Alert severity="error">{errorMessage}</Alert>
+        ) : null}
         <CounterpartiesList
           counterparties={counterparties}
           isLoading={isLoading}
           isSubmitting={isSubmitting}
-          onDelete={counterparty => {
+          onDelete={(counterparty) => {
             setDeletingCounterparty(counterparty);
           }}
           onEdit={openEditForm}
@@ -188,9 +218,14 @@ export function CounterpartiesPage() {
       <ConfirmModal
         confirmLabel={t("counterparties.delete")}
         isConfirming={isSubmitting}
-        message={deletingCounterparty == null
-          ? ""
-          : t("counterparties.deleteConfirm").replace("{name}", deletingCounterparty.fullName)}
+        message={
+          deletingCounterparty == null
+            ? ""
+            : t("counterparties.deleteConfirm").replace(
+                "{name}",
+                deletingCounterparty.fullName,
+              )
+        }
         onClose={() => {
           if (isSubmitting) {
             return;
@@ -207,7 +242,7 @@ export function CounterpartiesPage() {
       <CounterpartiesFilterDrawer
         initialValues={filters}
         isOpen={isFilterDrawerOpen}
-        onApply={values => {
+        onApply={(values) => {
           setFilters(values);
           setIsFilterDrawerOpen(false);
         }}

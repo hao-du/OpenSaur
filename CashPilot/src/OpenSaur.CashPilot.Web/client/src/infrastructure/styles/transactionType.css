@@ -1,3 +1,18 @@
+:root {
+  --tx-type-cashflow-color: #1565c0;
+  --tx-type-cashflow-bg: #e3f2fd;
+  --tx-type-cashflow-border: #bbdefb;
+  --tx-type-bankaccount-color: #2e7d32;
+  --tx-type-bankaccount-bg: #e8f5e9;
+  --tx-type-bankaccount-border: #c8e6c9;
+  --tx-type-transfer-color: #6a1b9a;
+  --tx-type-transfer-bg: #f3e5f5;
+  --tx-type-transfer-border: #e1bee7;
+  --tx-type-exchange-color: #ef6c00;
+  --tx-type-exchange-bg: #fff3e0;
+  --tx-type-exchange-border: #ffe0b2;
+}
+
 .tx-type-icon {
   width: 28px;
   height: 28px;
@@ -9,27 +24,27 @@
 }
 
 .tx-type-cashflow {
-  color: #1565c0;
-  background: #e3f2fd;
-  border-color: #bbdefb;
+  color: var(--tx-type-cashflow-color);
+  background: var(--tx-type-cashflow-bg);
+  border-color: var(--tx-type-cashflow-border);
 }
 
 .tx-type-bankaccount {
-  color: #2e7d32;
-  background: #e8f5e9;
-  border-color: #c8e6c9;
+  color: var(--tx-type-bankaccount-color);
+  background: var(--tx-type-bankaccount-bg);
+  border-color: var(--tx-type-bankaccount-border);
 }
 
 .tx-type-transfer {
-  color: #6a1b9a;
-  background: #f3e5f5;
-  border-color: #e1bee7;
+  color: var(--tx-type-transfer-color);
+  background: var(--tx-type-transfer-bg);
+  border-color: var(--tx-type-transfer-border);
 }
 
 .tx-type-exchange {
-  color: #ef6c00;
-  background: #fff3e0;
-  border-color: #ffe0b2;
+  color: var(--tx-type-exchange-color);
+  background: var(--tx-type-exchange-bg);
+  border-color: var(--tx-type-exchange-border);
 }
 
 .tx-bank-detail-success {

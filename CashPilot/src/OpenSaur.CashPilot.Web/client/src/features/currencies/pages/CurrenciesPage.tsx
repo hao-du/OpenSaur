@@ -6,19 +6,24 @@ import { ActionButton } from "../../../components/atoms/ActionButton";
 import { DefaultLayout } from "../../../components/layouts/DefaultLayout";
 import { ConfirmModal } from "../../../components/atoms/ConfirmModal";
 import { useSettings } from "../../settings/provider/SettingProvider";
-import { createCurrency, deleteCurrency, updateCurrency } from "../api/currenciesApi";
 import { CurrenciesFilterDrawer } from "../components/CurrenciesFilterDrawer";
 import { CurrenciesList } from "../components/CurrenciesList";
 import { CurrencyFormDrawer } from "../components/CurrencyFormDrawer";
 import type { CurrencyFormValues } from "../components/CurrencyForm";
-import type { CurrencyDto, UpsertCurrencyRequestDto } from "../dtos/CurrencyDto";
+import type {
+  CurrencyDto,
+  UpsertCurrencyRequestDto,
+} from "../dtos/CurrencyDto";
+import { useCreateCurrencyMutation } from "../hooks/useCreateCurrencyMutation";
+import { useDeleteCurrencyMutation } from "../hooks/useDeleteCurrencyMutation";
 import { useCurrenciesQuery } from "../hooks/useCurrenciesQuery";
+import { useUpdateCurrencyMutation } from "../hooks/useUpdateCurrencyMutation";
 
 const emptyFormState: CurrencyFormValues = {
   description: "",
   isDefault: false,
   name: "",
-  shortName: ""
+  shortName: "",
 };
 
 function getErrorMessage(error: unknown, fallback: string) {
@@ -41,17 +46,24 @@ export function CurrenciesPage() {
   const [filters, setFilters] = useState({
     isActive: true,
     name: "",
-    shortName: ""
+    shortName: "",
   });
   const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
-  const { data: currencies = [], isLoading, refetch } = useCurrenciesQuery(filters);
-  const [editingCurrency, setEditingCurrency] = useState<CurrencyDto | null>(null);
-  const [deletingCurrency, setDeletingCurrency] = useState<CurrencyDto | null>(null);
+  const { data: currencies = [], isLoading } = useCurrenciesQuery(filters);
+  const createCurrencyMutation = useCreateCurrencyMutation();
+  const updateCurrencyMutation = useUpdateCurrencyMutation();
+  const deleteCurrencyMutation = useDeleteCurrencyMutation();
+  const [editingCurrency, setEditingCurrency] = useState<CurrencyDto | null>(
+    null,
+  );
+  const [deletingCurrency, setDeletingCurrency] = useState<CurrencyDto | null>(
+    null,
+  );
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const form = useForm<CurrencyFormValues>({
-    defaultValues: emptyFormState
+    defaultValues: emptyFormState,
   });
   const isEditMode = useMemo(() => editingCurrency != null, [editingCurrency]);
 
@@ -61,22 +73,27 @@ export function CurrenciesPage() {
 
     try {
       const payload: UpsertCurrencyRequestDto = {
-        description: values.description.trim().length === 0 ? null : values.description.trim(),
+        description:
+          values.description.trim().length === 0
+            ? null
+            : values.description.trim(),
         isDefault: values.isDefault,
         name: values.name.trim(),
-        shortName: values.shortName.trim().toUpperCase()
+        shortName: values.shortName.trim().toUpperCase(),
       };
 
       if (editingCurrency == null) {
-        await createCurrency(payload);
+        await createCurrencyMutation.mutateAsync(payload);
       } else {
-        await updateCurrency(editingCurrency.id, payload);
+        await updateCurrencyMutation.mutateAsync({
+          id: editingCurrency.id,
+          payload,
+        });
       }
 
       form.reset(emptyFormState);
       setEditingCurrency(null);
       setIsFormOpen(false);
-      await refetch();
     } catch (error) {
       setErrorMessage(getErrorMessage(error, t("currencies.errorSave")));
     } finally {
@@ -96,7 +113,7 @@ export function CurrenciesPage() {
       description: currency.description ?? "",
       isDefault: currency.isDefault,
       name: currency.name,
-      shortName: currency.shortName
+      shortName: currency.shortName,
     });
     setIsFormOpen(true);
   }
@@ -110,13 +127,12 @@ export function CurrenciesPage() {
     setIsSubmitting(true);
 
     try {
-      await deleteCurrency(deletingCurrency.id);
+      await deleteCurrencyMutation.mutateAsync(deletingCurrency.id);
       if (editingCurrency?.id === deletingCurrency.id) {
         setEditingCurrency(null);
         form.reset(emptyFormState);
         setIsFormOpen(false);
       }
-      await refetch();
       setDeletingCurrency(null);
     } catch (error) {
       setErrorMessage(getErrorMessage(error, t("currencies.errorDelete")));
@@ -144,12 +160,14 @@ export function CurrenciesPage() {
   return (
     <DefaultLayout headerActions={headerActions} title={t("currencies.title")}>
       <Stack spacing={3}>
-        {errorMessage != null ? <Alert severity="error">{errorMessage}</Alert> : null}
+        {errorMessage != null ? (
+          <Alert severity="error">{errorMessage}</Alert>
+        ) : null}
         <CurrenciesList
           currencies={currencies}
           isLoading={isLoading}
           isSubmitting={isSubmitting}
-          onDelete={currency => {
+          onDelete={(currency) => {
             setDeletingCurrency(currency);
           }}
           onEdit={openEditForm}
@@ -174,9 +192,14 @@ export function CurrenciesPage() {
       <ConfirmModal
         confirmLabel={t("currencies.delete")}
         isConfirming={isSubmitting}
-        message={deletingCurrency == null
-          ? ""
-          : t("currencies.deleteConfirm").replace("{name}", deletingCurrency.name)}
+        message={
+          deletingCurrency == null
+            ? ""
+            : t("currencies.deleteConfirm").replace(
+                "{name}",
+                deletingCurrency.name,
+              )
+        }
         onClose={() => {
           if (isSubmitting) {
             return;
@@ -193,7 +216,7 @@ export function CurrenciesPage() {
       <CurrenciesFilterDrawer
         initialValues={filters}
         isOpen={isFilterDrawerOpen}
-        onApply={values => {
+        onApply={(values) => {
           setFilters(values);
           setIsFilterDrawerOpen(false);
         }}

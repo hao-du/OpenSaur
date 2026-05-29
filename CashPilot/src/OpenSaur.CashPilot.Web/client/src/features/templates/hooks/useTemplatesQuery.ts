@@ -5,7 +5,6 @@ import type { TemplateFilterParams } from "../dtos/TemplateDto";
 export function useTemplatesQuery(filters: TemplateFilterParams) {
   return useQuery({
     queryFn: () => getTemplates(filters),
-    queryKey: ["templates", filters]
+    queryKey: ["templates", filters],
   });
 }
-

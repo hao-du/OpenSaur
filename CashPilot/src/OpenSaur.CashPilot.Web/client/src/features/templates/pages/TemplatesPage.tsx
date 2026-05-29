@@ -10,20 +10,28 @@ import { useBanksQuery } from "../../banks/hooks/useBanksQuery";
 import { useCounterpartiesQuery } from "../../counterparties/hooks/useCounterpartiesQuery";
 import { useCurrenciesQuery } from "../../currencies/hooks/useCurrenciesQuery";
 import { useSettings } from "../../settings/provider/SettingProvider";
-import { createTemplate, deleteTemplate, getTemplateById, updateTemplate } from "../api/templatesApi";
+import { getTemplateById } from "../api/templatesApi";
 import { TemplateFormDrawer } from "../components/settings/TemplateFormDrawer";
 import { TemplatePopulateDrawer } from "../components/TemplatePopulateDrawer";
-import { buildDefaultTemplateData, safeParseTemplateData, toStoredTemplateData, type TemplateFormValues } from "../components/settings/TemplateForm";
+import {
+  buildDefaultTemplateData,
+  safeParseTemplateData,
+  toStoredTemplateData,
+  type TemplateFormValues,
+} from "../components/settings/TemplateForm";
 import { TemplatesFilterDrawer } from "../components/TemplatesFilterDrawer";
 import { TemplatesList } from "../components/TemplatesList";
 import type { TemplateListItemDto } from "../dtos/TemplateDto";
+import { useCreateTemplateMutation } from "../hooks/useCreateTemplateMutation";
+import { useDeleteTemplateMutation } from "../hooks/useDeleteTemplateMutation";
 import { useTemplatesQuery } from "../hooks/useTemplatesQuery";
+import { useUpdateTemplateMutation } from "../hooks/useUpdateTemplateMutation";
 
 const emptyFormState: TemplateFormValues = {
   description: "",
   name: "",
   templateData: buildDefaultTemplateData("CashFlow"),
-  templateType: "CashFlow"
+  templateType: "CashFlow",
 };
 
 function getErrorMessage(error: unknown, fallback: string) {
@@ -48,7 +56,6 @@ function mapTypeToNumber(type: TemplateFormValues["templateType"]) {
   return 4;
 }
 
-
 function validateAutoPopulateFields(templateData: unknown): string | null {
   const validateNode = (node: unknown, path: string): string | null => {
     if (node == null) return null;
@@ -61,7 +68,11 @@ function validateAutoPopulateFields(templateData: unknown): string | null {
     }
     if (typeof node !== "object") return null;
 
-    const field = node as { autoPopulate?: boolean; showUi?: boolean; value?: unknown };
+    const field = node as {
+      autoPopulate?: boolean;
+      showUi?: boolean;
+      value?: unknown;
+    };
     if (field.autoPopulate === true && field.showUi !== true) {
       if (typeof field.value === "string" && field.value.trim().length === 0) {
         return `Auto populate field '${path}' is required.`;
@@ -71,7 +82,9 @@ function validateAutoPopulateFields(templateData: unknown): string | null {
       }
     }
 
-    for (const [key, child] of Object.entries(node as Record<string, unknown>)) {
+    for (const [key, child] of Object.entries(
+      node as Record<string, unknown>,
+    )) {
       const childPath = path.length > 0 ? `${path}.${key}` : key;
       const error = validateNode(child, childPath);
       if (error != null) return error;
@@ -91,53 +104,88 @@ function mapNumberToType(type: number): TemplateFormValues["templateType"] {
 
 export function TemplatesPage() {
   const { t } = useSettings();
-  const [filters, setFilters] = useState({ isActive: true, name: "", templateType: "" as "" | TemplateFormValues["templateType"] });
+  const [filters, setFilters] = useState({
+    isActive: true,
+    name: "",
+    templateType: "" as "" | TemplateFormValues["templateType"],
+  });
   const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
-  const [editingTemplate, setEditingTemplate] = useState<TemplateListItemDto | null>(null);
-  const [deletingTemplate, setDeletingTemplate] = useState<TemplateListItemDto | null>(null);
+  const [editingTemplate, setEditingTemplate] =
+    useState<TemplateListItemDto | null>(null);
+  const [deletingTemplate, setDeletingTemplate] =
+    useState<TemplateListItemDto | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [createMenuAnchor, setCreateMenuAnchor] = useState<null | HTMLElement>(null);
+  const [createMenuAnchor, setCreateMenuAnchor] = useState<null | HTMLElement>(
+    null,
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isPopulateOpen, setIsPopulateOpen] = useState(false);
-  const [populateTemplateId, setPopulateTemplateId] = useState<string | null>(null);
+  const [populateTemplateId, setPopulateTemplateId] = useState<string | null>(
+    null,
+  );
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const form = useForm<TemplateFormValues>({ defaultValues: emptyFormState });
   const isEditMode = useMemo(() => editingTemplate != null, [editingTemplate]);
 
-  const { data: templates = [], isLoading, refetch } = useTemplatesQuery(filters);
-  const { data: banks = [] } = useBanksQuery({ isActive: true, name: "", shortName: "" });
-  const { data: counterparties = [] } = useCounterpartiesQuery({ email: "", fullName: "", isActive: true, phoneNumber: "" });
-  const { data: currencies = [] } = useCurrenciesQuery({ isActive: true, name: "", shortName: "" });
+  const { data: templates = [], isLoading } = useTemplatesQuery(filters);
+  const createTemplateMutation = useCreateTemplateMutation();
+  const updateTemplateMutation = useUpdateTemplateMutation();
+  const deleteTemplateMutation = useDeleteTemplateMutation();
+  const { data: banks = [] } = useBanksQuery({
+    isActive: true,
+    name: "",
+    shortName: "",
+  });
+  const { data: counterparties = [] } = useCounterpartiesQuery({
+    email: "",
+    fullName: "",
+    isActive: true,
+    phoneNumber: "",
+  });
+  const { data: currencies = [] } = useCurrenciesQuery({
+    isActive: true,
+    name: "",
+    shortName: "",
+  });
 
   async function handleSubmit(values: TemplateFormValues) {
     setErrorMessage(null);
     setIsSubmitting(true);
 
     try {
-      const autoPopulateValidationError = validateAutoPopulateFields(values.templateData);
+      const autoPopulateValidationError = validateAutoPopulateFields(
+        values.templateData,
+      );
       if (autoPopulateValidationError != null) {
         throw new Error(autoPopulateValidationError);
       }
 
       const payload = {
-        description: values.description.trim().length === 0 ? null : values.description.trim(),
+        description:
+          values.description.trim().length === 0
+            ? null
+            : values.description.trim(),
         isActive: editingTemplate?.isActive ?? true,
         name: values.name.trim(),
-        templateDataJson: JSON.stringify(toStoredTemplateData(values.templateData)),
-        templateType: mapTypeToNumber(values.templateType)
+        templateDataJson: JSON.stringify(
+          toStoredTemplateData(values.templateData),
+        ),
+        templateType: mapTypeToNumber(values.templateType),
       };
 
       if (editingTemplate == null) {
-        await createTemplate(payload);
+        await createTemplateMutation.mutateAsync(payload);
       } else {
-        await updateTemplate(editingTemplate.id, payload);
+        await updateTemplateMutation.mutateAsync({
+          id: editingTemplate.id,
+          payload,
+        });
       }
 
       form.reset(emptyFormState);
       setEditingTemplate(null);
       setIsFormOpen(false);
-      await refetch();
     } catch (error) {
       setErrorMessage(getErrorMessage(error, t("templates.errorSave")));
     } finally {
@@ -147,7 +195,11 @@ export function TemplatesPage() {
 
   function openCreateForm(type: TemplateFormValues["templateType"]) {
     setEditingTemplate(null);
-    form.reset({ ...emptyFormState, templateType: type, templateData: buildDefaultTemplateData(type) });
+    form.reset({
+      ...emptyFormState,
+      templateType: type,
+      templateData: buildDefaultTemplateData(type),
+    });
     setIsFormOpen(true);
   }
 
@@ -163,7 +215,7 @@ export function TemplatesPage() {
         description: detail.description ?? "",
         name: detail.name,
         templateData: safeParseTemplateData(detail.templateDataJson, type),
-        templateType: type
+        templateType: type,
       });
       setEditingTemplate(template);
       setIsFormOpen(true);
@@ -183,13 +235,12 @@ export function TemplatesPage() {
     setIsSubmitting(true);
 
     try {
-      await deleteTemplate(deletingTemplate.id);
+      await deleteTemplateMutation.mutateAsync(deletingTemplate.id);
       if (editingTemplate?.id === deletingTemplate.id) {
         setEditingTemplate(null);
         form.reset(emptyFormState);
         setIsFormOpen(false);
       }
-      await refetch();
       setDeletingTemplate(null);
     } catch (error) {
       setErrorMessage(getErrorMessage(error, t("templates.errorDelete")));
@@ -200,13 +251,55 @@ export function TemplatesPage() {
 
   const headerActions = (
     <Stack direction="row" spacing={1.25}>
-      <ActionButton onClick={() => setIsFilterDrawerOpen(true)} variant="outlined">{t("templates.filter")}</ActionButton>
-      <ActionButton endIcon={<ChevronDown size={16} />} onClick={event => setCreateMenuAnchor(event.currentTarget)}>{t("templates.create")}</ActionButton>
-      <Menu anchorEl={createMenuAnchor} onClose={() => setCreateMenuAnchor(null)} open={createMenuAnchor != null}>
-        <MenuItem onClick={() => { setCreateMenuAnchor(null); openCreateForm("CashFlow"); }}>{t("templates.templateType.cashFlow")}</MenuItem>
-        <MenuItem onClick={() => { setCreateMenuAnchor(null); openCreateForm("Transfer"); }}>{t("templates.templateType.transfer")}</MenuItem>
-        <MenuItem onClick={() => { setCreateMenuAnchor(null); openCreateForm("Exchange"); }}>{t("templates.templateType.exchange")}</MenuItem>
-        <MenuItem onClick={() => { setCreateMenuAnchor(null); openCreateForm("BankAccount"); }}>{t("templates.templateType.bankAccount")}</MenuItem>
+      <ActionButton
+        onClick={() => setIsFilterDrawerOpen(true)}
+        variant="outlined"
+      >
+        {t("templates.filter")}
+      </ActionButton>
+      <ActionButton
+        endIcon={<ChevronDown size={16} />}
+        onClick={(event) => setCreateMenuAnchor(event.currentTarget)}
+      >
+        {t("templates.create")}
+      </ActionButton>
+      <Menu
+        anchorEl={createMenuAnchor}
+        onClose={() => setCreateMenuAnchor(null)}
+        open={createMenuAnchor != null}
+      >
+        <MenuItem
+          onClick={() => {
+            setCreateMenuAnchor(null);
+            openCreateForm("CashFlow");
+          }}
+        >
+          {t("templates.templateType.cashFlow")}
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            setCreateMenuAnchor(null);
+            openCreateForm("Transfer");
+          }}
+        >
+          {t("templates.templateType.transfer")}
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            setCreateMenuAnchor(null);
+            openCreateForm("Exchange");
+          }}
+        >
+          {t("templates.templateType.exchange")}
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            setCreateMenuAnchor(null);
+            openCreateForm("BankAccount");
+          }}
+        >
+          {t("templates.templateType.bankAccount")}
+        </MenuItem>
       </Menu>
     </Stack>
   );
@@ -214,13 +307,17 @@ export function TemplatesPage() {
   return (
     <DefaultLayout headerActions={headerActions} title={t("templates.title")}>
       <Stack spacing={3}>
-        {errorMessage != null ? <Alert severity="error">{errorMessage}</Alert> : null}
+        {errorMessage != null ? (
+          <Alert severity="error">{errorMessage}</Alert>
+        ) : null}
         <TemplatesList
           isLoading={isLoading}
           isSubmitting={isSubmitting}
-          onDelete={template => setDeletingTemplate(template)}
-          onEdit={template => { void openEditForm(template); }}
-          onPopulate={template => {
+          onDelete={(template) => setDeletingTemplate(template)}
+          onEdit={(template) => {
+            void openEditForm(template);
+          }}
+          onPopulate={(template) => {
             setPopulateTemplateId(template.id);
             setIsPopulateOpen(true);
           }}
@@ -248,12 +345,21 @@ export function TemplatesPage() {
       <ConfirmModal
         confirmLabel={t("templates.delete")}
         isConfirming={isSubmitting}
-        message={deletingTemplate == null ? "" : t("templates.deleteConfirm").replace("{name}", deletingTemplate.name)}
+        message={
+          deletingTemplate == null
+            ? ""
+            : t("templates.deleteConfirm").replace(
+                "{name}",
+                deletingTemplate.name,
+              )
+        }
         onClose={() => {
           if (isSubmitting) return;
           setDeletingTemplate(null);
         }}
-        onConfirm={() => { void handleDeleteConfirmed(); }}
+        onConfirm={() => {
+          void handleDeleteConfirmed();
+        }}
         open={deletingTemplate !== null}
         title={t("templates.deleteTitle")}
       />
@@ -261,7 +367,7 @@ export function TemplatesPage() {
       <TemplatesFilterDrawer
         initialValues={filters}
         isOpen={isFilterDrawerOpen}
-        onApply={values => {
+        onApply={(values) => {
           setFilters(values);
           setIsFilterDrawerOpen(false);
         }}
@@ -278,11 +384,8 @@ export function TemplatesPage() {
           setIsPopulateOpen(false);
           setPopulateTemplateId(null);
         }}
-        onSaved={async () => { await refetch(); }}
+        onSaved={async () => {}}
       />
     </DefaultLayout>
   );
 }
-
-
-

@@ -1,15 +1,16 @@
 import { useEffect, type ReactNode } from "react";
 import { FormControl, Grid, Stack } from "@mui/material";
-import { Controller, useFormContext, useWatch, type Control } from "react-hook-form";
+import {
+  Controller,
+  useFormContext,
+  useWatch,
+  type Control,
+} from "react-hook-form";
 import { Switch } from "../../../../components/atoms/Switch";
 import { useSettings } from "../../../settings/provider/SettingProvider";
 import type { TemplateFormValues } from "./TemplateForm";
 
 export type ModePath =
-  | `templateData.details.${number}.amount.autoPopulate`
-  | `templateData.details.${number}.direction.autoPopulate`
-  | `templateData.details.${number}.transactionDate.autoPopulate`
-  | `templateData.details.${number}.description.autoPopulate`
   | "templateData.amount.autoPopulate"
   | "templateData.currencyId.autoPopulate"
   | "templateData.direction.autoPopulate"
@@ -31,25 +32,48 @@ export type ModePath =
   | "templateData.startDate.autoPopulate"
   | "templateData.maturityDate.autoPopulate";
 
-function FieldModeSelector({ control, name }: { control: Control<TemplateFormValues>; name: ModePath }) {
+function FieldModeSelector({
+  control,
+  name,
+}: {
+  control: Control<TemplateFormValues>;
+  name: ModePath;
+}) {
   const { t } = useSettings();
-  const { clearErrors, setValue, trigger } = useFormContext<TemplateFormValues>();
+  const { clearErrors, setValue, trigger } =
+    useFormContext<TemplateFormValues>();
   const showUiName = name.replace(".autoPopulate", ".showUi");
   const valuePath = name.replace(".autoPopulate", ".value");
-  const autoPopulateEnabled = Boolean(useWatch({ control, name: name as never }));
-  const showUiEnabled = Boolean(useWatch({ control, name: showUiName as never }));
-
-  useEffect(() => {
+  const autoPopulateEnabled = Boolean(
+    useWatch({ control, name: name as never }),
+  );
+  const showUiEnabled = Boolean(
+    useWatch({ control, name: showUiName as never }),
+  );
+  const clearAndTriggerValue = () => {
     clearErrors(valuePath as never);
-    if (!autoPopulateEnabled) {
-      if (!showUiEnabled) {
-        setValue(showUiName as never, true as never, { shouldDirty: true, shouldValidate: false });
-      }
-    }
     queueMicrotask(() => {
       void trigger(valuePath as never);
     });
-  }, [autoPopulateEnabled, clearErrors, setValue, showUiEnabled, showUiName, trigger, valuePath]);
+  };
+
+  useEffect(() => {
+    clearAndTriggerValue();
+    if (!autoPopulateEnabled && !showUiEnabled) {
+      setValue(showUiName as never, true as never, {
+        shouldDirty: true,
+        shouldValidate: false,
+      });
+    }
+  }, [
+    autoPopulateEnabled,
+    clearErrors,
+    setValue,
+    showUiEnabled,
+    showUiName,
+    trigger,
+    valuePath,
+  ]);
 
   return (
     <Stack spacing={0.25}>
@@ -62,16 +86,15 @@ function FieldModeSelector({ control, name }: { control: Control<TemplateFormVal
               <Switch
                 checked={field.value === true}
                 label={t("templates.autoPopulate")}
-                onChange={checked => {
+                onChange={(checked) => {
                   field.onChange(checked);
-                  clearErrors(valuePath as never);
                   if (!checked) {
-                    clearErrors(valuePath as never);
-                    setValue(showUiName as never, true as never, { shouldDirty: true, shouldValidate: false });
+                    setValue(showUiName as never, true as never, {
+                      shouldDirty: true,
+                      shouldValidate: false,
+                    });
                   }
-                  queueMicrotask(() => {
-                    void trigger(valuePath as never);
-                  });
+                  clearAndTriggerValue();
                 }}
               />
             </Stack>
@@ -88,12 +111,9 @@ function FieldModeSelector({ control, name }: { control: Control<TemplateFormVal
                 checked={field.value === true}
                 label={t("templates.showUi")}
                 disabled={!autoPopulateEnabled}
-                onChange={checked => {
+                onChange={(checked) => {
                   field.onChange(checked);
-                  clearErrors(valuePath as never);
-                  queueMicrotask(() => {
-                    void trigger(valuePath as never);
-                  });
+                  clearAndTriggerValue();
                 }}
               />
             </Stack>
@@ -104,15 +124,27 @@ function FieldModeSelector({ control, name }: { control: Control<TemplateFormVal
   );
 }
 
-export function FieldRow({ children, control, modeName }: { children: ReactNode; control: Control<TemplateFormValues>; modeName: ModePath; }) {
+export function FieldRow({
+  children,
+  control,
+  modeName,
+}: {
+  children: ReactNode;
+  control: Control<TemplateFormValues>;
+  modeName: ModePath;
+}) {
   return (
     <Grid container spacing={1.25}>
       <Grid size={{ xs: 12, md: 8 }}>{children}</Grid>
-      <Grid size={{ xs: 12, md: 4 }} sx={{ display: "flex", justifyContent: { xs: "flex-start", md: "flex-end" } }}>
+      <Grid
+        size={{ xs: 12, md: 4 }}
+        sx={{
+          display: "flex",
+          justifyContent: { xs: "flex-start", md: "flex-end" },
+        }}
+      >
         <FieldModeSelector control={control} name={modeName} />
       </Grid>
     </Grid>
   );
 }
-
-
