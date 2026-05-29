@@ -68,6 +68,8 @@ export function TransactionsFilterDrawer({
     defaultValues: initialValues
   });
   const rangePreset = form.watch("rangePreset");
+  const fromDate = form.watch("fromDate");
+  const toDate = form.watch("toDate");
 
   useEffect(() => {
     if (!isOpen) {
@@ -75,6 +77,16 @@ export function TransactionsFilterDrawer({
     }
     form.reset(initialValues);
   }, [form, initialValues, isOpen]);
+
+  useEffect(() => {
+    if (fromDate.length === 0 || toDate.length === 0) {
+      return;
+    }
+
+    if (toDate < fromDate) {
+      form.setValue("toDate", fromDate);
+    }
+  }, [form, fromDate, toDate]);
 
   useEffect(() => {
     if (rangePreset === "Custom") {
@@ -155,6 +167,7 @@ export function TransactionsFilterDrawer({
           control={form.control}
           disabled={rangePreset === "Today" || rangePreset === "ThisWeek"}
           label={t("transactions.filter.toDate")}
+          minDate={fromDate}
           mode={rangePreset === "Month" ? "month" : rangePreset === "Year" ? "year" : "date"}
           name="toDate"
         />

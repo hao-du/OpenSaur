@@ -137,6 +137,7 @@ export function ExchangeTemplateForm({
   return (
     <Stack spacing={2}>
       <FieldRow
+        allowManualHide
         control={control}
         modeName="templateData.exchangeRate.autoPopulate"
       >
@@ -244,6 +245,7 @@ export function ExchangeTemplateForm({
         />
       </FieldRow>
       <FieldRow
+        allowManualHide
         control={control}
         modeName="templateData.description.autoPopulate"
       >

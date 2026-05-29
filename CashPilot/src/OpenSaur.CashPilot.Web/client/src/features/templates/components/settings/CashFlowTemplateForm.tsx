@@ -181,6 +181,7 @@ export function CashFlowTemplateForm({
         />
       </FieldRow>
       <FieldRow
+        allowManualHide
         control={control}
         modeName="templateData.description.autoPopulate"
       >

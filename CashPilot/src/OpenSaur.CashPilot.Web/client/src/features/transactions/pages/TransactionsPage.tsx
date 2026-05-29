@@ -28,6 +28,7 @@ import { useSettings } from "../../settings/provider/SettingProvider";
 import { useBanksQuery } from "../../banks/hooks/useBanksQuery";
 import { useCurrenciesQuery } from "../../currencies/hooks/useCurrenciesQuery";
 import { useCounterpartiesQuery } from "../../counterparties/hooks/useCounterpartiesQuery";
+import { TemplatePopulateActionCard } from "../../dashboard/components/TemplatePopulateActionCard";
 import {
   getBankAccountFormById,
   getCashFlowById,
@@ -40,6 +41,7 @@ import { useCreateCurrencyExchangeMutation } from "../hooks/useCreateCurrencyExc
 import { useDeleteTransactionMutation } from "../hooks/useDeleteTransactionMutation";
 import { useSaveBankAccountMutation } from "../hooks/useSaveBankAccountMutation";
 import { useSaveTransferMutation } from "../hooks/useSaveTransferMutation";
+import { useTemplatesQuery } from "../../templates/hooks/useTemplatesQuery";
 import { useTransactionsQuery } from "../hooks/useTransactionsQuery";
 import { useTransactionDashboardQuery } from "../hooks/useTransactionDashboardQuery";
 import { useUpdateCashFlowMutation } from "../hooks/useUpdateCashFlowMutation";
@@ -198,6 +200,12 @@ export function TransactionsPage() {
       fullName: "",
       email: "",
       phoneNumber: "",
+    }).data ?? [];
+  const templates =
+    useTemplatesQuery({
+      isActive: true,
+      name: "",
+      templateType: "",
     }).data ?? [];
   const transactionsQuery = useTransactionsQuery();
   const dashboardQuery = useTransactionDashboardQuery();
@@ -786,6 +794,12 @@ export function TransactionsPage() {
           <Grid size={{ xs: 12, md: 6 }}>
             <Paper sx={{ p: 2, height: "100%" }}>
               <Stack spacing={2}>
+                <TemplatePopulateActionCard
+                  templates={templates}
+                  banks={banks}
+                  currencies={currencies}
+                  counterparties={counterparties}
+                />
                 {isDashboardLoading ? (
                   <>
                     <DashboardCardSkeleton rows={4} />

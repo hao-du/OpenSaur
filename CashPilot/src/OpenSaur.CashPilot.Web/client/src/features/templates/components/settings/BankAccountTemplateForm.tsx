@@ -170,6 +170,7 @@ export function BankAccountTemplateForm({
         />
       </FieldRow>
       <FieldRow
+        allowManualHide
         control={control}
         modeName="templateData.accountNumber.autoPopulate"
       >
@@ -222,6 +223,7 @@ export function BankAccountTemplateForm({
         />
       </FieldRow>
       <FieldRow
+        allowManualHide
         control={control}
         modeName="templateData.interestRate.autoPopulate"
       >
@@ -258,6 +260,7 @@ export function BankAccountTemplateForm({
         />
       </FieldRow>
       <FieldRow
+        allowManualHide
         control={control}
         modeName="templateData.maturityDate.autoPopulate"
       >
@@ -276,6 +279,7 @@ export function BankAccountTemplateForm({
         />
       </FieldRow>
       <FieldRow
+        allowManualHide
         control={control}
         modeName="templateData.description.autoPopulate"
       >

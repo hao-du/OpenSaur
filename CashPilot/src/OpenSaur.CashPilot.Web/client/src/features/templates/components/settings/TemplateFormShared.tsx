@@ -33,9 +33,11 @@ export type ModePath =
   | "templateData.maturityDate.autoPopulate";
 
 function FieldModeSelector({
+  allowManualHide = false,
   control,
   name,
 }: {
+  allowManualHide?: boolean;
   control: Control<TemplateFormValues>;
   name: ModePath;
 }) {
@@ -59,7 +61,7 @@ function FieldModeSelector({
 
   useEffect(() => {
     clearAndTriggerValue();
-    if (!autoPopulateEnabled && !showUiEnabled) {
+    if (!allowManualHide && !autoPopulateEnabled && !showUiEnabled) {
       setValue(showUiName as never, true as never, {
         shouldDirty: true,
         shouldValidate: false,
@@ -67,6 +69,7 @@ function FieldModeSelector({
     }
   }, [
     autoPopulateEnabled,
+    allowManualHide,
     clearErrors,
     setValue,
     showUiEnabled,
@@ -88,7 +91,7 @@ function FieldModeSelector({
                 label={t("templates.autoPopulate")}
                 onChange={(checked) => {
                   field.onChange(checked);
-                  if (!checked) {
+                  if (!allowManualHide && !checked) {
                     setValue(showUiName as never, true as never, {
                       shouldDirty: true,
                       shouldValidate: false,
@@ -110,7 +113,7 @@ function FieldModeSelector({
               <Switch
                 checked={field.value === true}
                 label={t("templates.showUi")}
-                disabled={!autoPopulateEnabled}
+                disabled={!allowManualHide && !autoPopulateEnabled}
                 onChange={(checked) => {
                   field.onChange(checked);
                   clearAndTriggerValue();
@@ -125,10 +128,12 @@ function FieldModeSelector({
 }
 
 export function FieldRow({
+  allowManualHide = false,
   children,
   control,
   modeName,
 }: {
+  allowManualHide?: boolean;
   children: ReactNode;
   control: Control<TemplateFormValues>;
   modeName: ModePath;
@@ -143,7 +148,11 @@ export function FieldRow({
           justifyContent: { xs: "flex-start", md: "flex-end" },
         }}
       >
-        <FieldModeSelector control={control} name={modeName} />
+        <FieldModeSelector
+          allowManualHide={allowManualHide}
+          control={control}
+          name={modeName}
+        />
       </Grid>
     </Grid>
   );

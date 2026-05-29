@@ -47,8 +47,8 @@ export function TemplatePopulateActionCard({ templates, banks, currencies, count
       return;
     }
 
-    if (!selectedTemplateId || !templates.some(template => template.id === selectedTemplateId)) {
-      form.setValue("templateId", templates[0].id);
+    if (selectedTemplateId && !templates.some(template => template.id === selectedTemplateId)) {
+      form.setValue("templateId", "");
     }
   }, [form, selectedTemplateId, templates]);
 
@@ -62,6 +62,7 @@ export function TemplatePopulateActionCard({ templates, banks, currencies, count
             filterable
             label=""
             name="templateId"
+            placeholder="Please select"
             options={templates.map(template => ({
               icon: typeIcon(template.templateType),
               label: template.name,

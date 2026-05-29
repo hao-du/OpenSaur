@@ -66,7 +66,11 @@ export const layoutStyles: Record<string, SxProps<Theme>> = {
     backgroundColor: "background.paper",
     borderRight: `1px solid ${borderSubtle}`,
     flexShrink: 0,
+    height: "100vh",
+    overflowY: "auto",
+    position: "sticky",
     pt: 0,
+    top: 0,
     width: 280
   },
   drawer: {

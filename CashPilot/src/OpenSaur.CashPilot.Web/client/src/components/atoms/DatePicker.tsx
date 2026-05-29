@@ -11,6 +11,8 @@ type RhfDatePickerProps<TFieldValues extends FieldValues> = {
   disabled?: boolean;
   helperText?: string;
   label: string;
+  maxDate?: string;
+  minDate?: string;
   name: FieldPath<TFieldValues>;
   mode?: "date" | "month" | "year";
   required?: boolean;
@@ -22,6 +24,8 @@ type ControlledDatePickerProps = {
   error?: boolean;
   helperText?: string;
   label: string;
+  maxDate?: string;
+  minDate?: string;
   mode?: "date" | "month" | "year";
   onChange: (value: string) => void;
   required?: boolean;
@@ -45,6 +49,8 @@ export function DatePicker<TFieldValues extends FieldValues>(props: DatePickerPr
       disabled = false,
       helperText,
       label,
+      maxDate,
+      minDate,
       mode = "date",
       name,
       required = false,
@@ -60,6 +66,8 @@ export function DatePicker<TFieldValues extends FieldValues>(props: DatePickerPr
             disabled={disabled}
             format={displayFormat}
             label={required ? `${label} *` : label}
+            maxDate={typeof maxDate === "string" && maxDate.trim().length > 0 ? dayjs(maxDate) : undefined}
+            minDate={typeof minDate === "string" && minDate.trim().length > 0 ? dayjs(minDate) : undefined}
             onChange={value => {
               if (value == null) {
                 field.onChange("");
@@ -89,6 +97,8 @@ export function DatePicker<TFieldValues extends FieldValues>(props: DatePickerPr
     error = false,
     helperText,
     label,
+    maxDate,
+    minDate,
     mode = "date",
     onChange,
     required = false,
@@ -100,6 +110,8 @@ export function DatePicker<TFieldValues extends FieldValues>(props: DatePickerPr
       disabled={disabled}
       format={displayFormat}
       label={required ? `${label} *` : label}
+      maxDate={typeof maxDate === "string" && maxDate.trim().length > 0 ? dayjs(maxDate) : undefined}
+      minDate={typeof minDate === "string" && minDate.trim().length > 0 ? dayjs(minDate) : undefined}
       onChange={nextValue => {
         if (nextValue == null) {
           onChange("");

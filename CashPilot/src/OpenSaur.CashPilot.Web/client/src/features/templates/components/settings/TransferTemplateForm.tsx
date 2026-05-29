@@ -307,7 +307,11 @@ export function TransferTemplateForm({
           }}
         />
       </FieldRow>
-      <FieldRow control={control} modeName="templateData.dueDate.autoPopulate">
+      <FieldRow
+        allowManualHide
+        control={control}
+        modeName="templateData.dueDate.autoPopulate"
+      >
         <DatePicker
           control={control}
           label={t("transactions.dueDate")}
@@ -323,6 +327,7 @@ export function TransferTemplateForm({
         />
       </FieldRow>
       <FieldRow
+        allowManualHide
         control={control}
         modeName="templateData.description.autoPopulate"
       >
