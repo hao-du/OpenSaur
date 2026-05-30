@@ -242,18 +242,21 @@ export function TemplateFormDrawer({
           ? t("templates.templateType.exchange")
           : t("templates.templateType.bankAccount");
 
-  const title = (
-    <Stack alignItems="center" direction="row">
-      <span>{`${isEditMode ? t("templates.editTitle") : t("templates.createTitle")} ${typeTitle}`}</span>
-      <FormTitleHelpIcon
-        ariaLabel={t("common.showDetails")}
-        message={t("templates.formulaHint")}
-      />
-    </Stack>
-  );
+  const title = `${isEditMode ? t("templates.editTitle") : t("templates.createTitle")} ${typeTitle}`;
 
   return (
-    <DrawerPanel isOpen={isOpen} onClose={onClose} title={title} width="wide">
+    <DrawerPanel
+      isOpen={isOpen}
+      onClose={onClose}
+      title={title}
+      titleAction={(
+        <FormTitleHelpIcon
+          ariaLabel={t("common.showDetails")}
+          message={t("templates.formulaHint")}
+        />
+      )}
+      width="wide"
+    >
       <FormProvider {...form}>
         <Stack
           component="form"

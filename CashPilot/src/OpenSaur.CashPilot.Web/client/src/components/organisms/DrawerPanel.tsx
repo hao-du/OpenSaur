@@ -11,6 +11,7 @@ type DrawerPanelProps = {
   isOpen: boolean;
   onClose: () => void;
   subtitle?: ReactNode;
+  titleAction?: ReactNode;
   title: ReactNode;
   width?: "narrow" | "wide";
 };
@@ -20,6 +21,7 @@ export function DrawerPanel({
   isOpen,
   onClose,
   subtitle,
+  titleAction,
   title,
   width = "narrow"
 }: DrawerPanelProps) {
@@ -33,12 +35,19 @@ export function DrawerPanel({
           alignItems="center"
           direction="row"
           justifyContent="space-between"
-          sx={{ height: "64px", px: 2 }}
+          sx={{ height: "64px", minHeight: "64px", px: 2 }}
         >
-          <Stack spacing={0.5}>
-            <PageTitleText as="h2" variant="h5">
-              {title}
-            </PageTitleText>
+          <Stack spacing={0.5} sx={{ flex: 1, minWidth: 0, pr: 1 }}>
+            <Stack direction="row" spacing={1} alignItems="center" sx={{ minWidth: 0 }}>
+              <PageTitleText
+                as="h2"
+                variant="h5"
+                sx={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+              >
+                {title}
+              </PageTitleText>
+              {titleAction}
+            </Stack>
             {subtitle ? <BodyText>{subtitle}</BodyText> : null}
           </Stack>
           <IconButton aria-label={t("action.cancel")} onClick={onClose}>
