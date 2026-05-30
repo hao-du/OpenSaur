@@ -27,6 +27,7 @@ public static class GetCounterpartyByIdHandler
                 counterparty.Email,
                 counterparty.PhoneNumber,
                 counterparty.Description,
+                counterparty.IsDefault,
                 counterparty.IsActive
             ))
             .SingleOrDefaultAsync(cancellationToken);

@@ -13,6 +13,7 @@ const borderDefault = "rgba(0,204,255,0.12)";
 const borderStrong = "rgba(0,204,255,0.24)";
 const navSelected = "rgba(0,204,255,0.10)";
 const navSelectedHover = "rgba(0,204,255,0.14)";
+export const tabSelectedBg = "rgba(0,204,255,0.14)";
 const headerSurface = "rgba(237,243,248,0.92)";
 
 export const theme = createTheme({

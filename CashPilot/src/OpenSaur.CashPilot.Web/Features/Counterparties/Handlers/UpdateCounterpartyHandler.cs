@@ -38,6 +38,13 @@ public static class UpdateCounterpartyHandler
         counterparty.Description = request.Description?.Trim();
         counterparty.Email = string.IsNullOrWhiteSpace(request.Email) ? null : request.Email.Trim();
         counterparty.FullName = request.FullName.Trim();
+        if (request.IsDefault && !counterparty.IsDefault)
+        {
+            await dbContext.Counterparties
+                .Where(candidate => candidate.OwnerId == currentUserId && candidate.Id != id && candidate.IsDefault)
+                .ExecuteUpdateAsync(updates => updates.SetProperty(candidate => candidate.IsDefault, false), cancellationToken);
+        }
+        counterparty.IsDefault = request.IsDefault;
         counterparty.PhoneNumber = string.IsNullOrWhiteSpace(request.PhoneNumber) ? null : request.PhoneNumber.Trim();
         counterparty.IsActive = request.IsActive;
 
@@ -49,6 +56,7 @@ public static class UpdateCounterpartyHandler
             counterparty.Email,
             counterparty.PhoneNumber,
             counterparty.Description,
+            counterparty.IsDefault,
             counterparty.IsActive));
     }
 }

@@ -1,6 +1,7 @@
 using FluentValidation;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using OpenSaur.CashPilot.Web.Domain;
 using OpenSaur.CashPilot.Web.Features.Counterparties.Dtos;
 using OpenSaur.CashPilot.Web.Features.Counterparties.Validations;
@@ -28,17 +29,28 @@ public static class CreateCounterpartyHandler
             return AppHttpResults.ValidationProblem(validationResult);
         }
 
+        await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
+
+        if (request.IsDefault)
+        {
+            await dbContext.Counterparties
+                .Where(candidate => candidate.OwnerId == currentUserId && candidate.IsDefault)
+                .ExecuteUpdateAsync(updates => updates.SetProperty(candidate => candidate.IsDefault, false), cancellationToken);
+        }
+
         var counterparty = new Counterparty
         {
             OwnerId = currentUserId,
             Description = request.Description?.Trim(),
             Email = string.IsNullOrWhiteSpace(request.Email) ? null : request.Email.Trim(),
             FullName = request.FullName.Trim(),
+            IsDefault = request.IsDefault,
             PhoneNumber = string.IsNullOrWhiteSpace(request.PhoneNumber) ? null : request.PhoneNumber.Trim()
         };
 
         dbContext.Counterparties.Add(counterparty);
         await dbContext.SaveChangesAsync(cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
 
         return TypedResults.Created($"/api/counterparties/{counterparty.Id}", new CounterpartyResponse(
             counterparty.Id,
@@ -46,6 +58,7 @@ public static class CreateCounterpartyHandler
             counterparty.Email,
             counterparty.PhoneNumber,
             counterparty.Description,
+            counterparty.IsDefault,
             counterparty.IsActive));
     }
 }

@@ -12,6 +12,7 @@ export type CounterpartyFormValues = {
   email: string;
   phoneNumber: string;
   description: string;
+  isDefault: boolean;
   isActive: boolean;
 };
 
@@ -68,9 +69,15 @@ export function CounterpartyForm({
       <TextArea
         control={control}
         disabled={isSubmitting}
-        label={t("counterparties.description")}
+        label={t("common.description")}
         minRows={3}
         name="description"
+      />
+      <CheckBox
+        control={control}
+        disabled={isSubmitting}
+        label={t("common.isDefault")}
+        name="isDefault"
       />
       {isEditMode ? (
         <CheckBox
@@ -82,9 +89,10 @@ export function CounterpartyForm({
       ) : null}
       <Stack direction="row" justifyContent="flex-end" spacing={1} sx={layoutStyles.formFooterRow}>
         <ActionButton disabled={isSubmitting} type="submit">
-          {isSubmitting ? t("action.working") : isEditMode ? t("counterparties.save") : t("counterparties.create")}
+          {isSubmitting ? t("action.working") : isEditMode ? t("common.save") : t("common.create")}
         </ActionButton>
       </Stack>
     </Stack>
   );
 }
+

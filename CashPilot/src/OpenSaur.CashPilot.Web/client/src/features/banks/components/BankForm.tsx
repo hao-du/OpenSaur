@@ -54,14 +54,14 @@ export function BankForm({
       <TextArea
         control={control}
         disabled={isSubmitting}
-        label={t("currencies.description")}
+        label={t("common.description")}
         minRows={3}
         name="description"
       />
       <CheckBox
         control={control}
         disabled={isSubmitting}
-        label={t("currencies.isDefault")}
+        label={t("common.isDefault")}
         name="isDefault"
       />
       <Stack direction="row" justifyContent="flex-end" spacing={1} sx={layoutStyles.formFooterRow}>
@@ -72,3 +72,4 @@ export function BankForm({
     </Stack>
   );
 }
+

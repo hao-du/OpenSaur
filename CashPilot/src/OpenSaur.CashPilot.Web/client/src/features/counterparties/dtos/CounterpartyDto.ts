@@ -4,6 +4,7 @@ export type CounterpartyDto = {
   email: string | null;
   phoneNumber: string | null;
   description: string | null;
+  isDefault: boolean;
   isActive: boolean;
 };
 
@@ -12,6 +13,7 @@ export type CreateCounterpartyRequestDto = {
   email: string | null;
   phoneNumber: string | null;
   description: string | null;
+  isDefault: boolean;
 };
 
 export type UpdateCounterpartyRequestDto = {
@@ -19,5 +21,6 @@ export type UpdateCounterpartyRequestDto = {
   email: string | null;
   phoneNumber: string | null;
   description: string | null;
+  isDefault: boolean;
   isActive: boolean;
 };

@@ -46,7 +46,7 @@ export function DrawerPanel({
           </IconButton>
         </Stack>
         <Divider />
-        <Stack sx={{ px: 3, pb: 3, pt: 0 }}>
+        <Stack sx={{ p: 3 }}>
           {children}
         </Stack>
       </Stack>

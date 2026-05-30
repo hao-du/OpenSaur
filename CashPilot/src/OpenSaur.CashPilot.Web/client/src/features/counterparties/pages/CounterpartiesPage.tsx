@@ -1,4 +1,4 @@
-﻿import { Alert, Stack } from "@mui/material";
+import { Alert, Stack } from "@mui/material";
 import { AxiosError } from "axios";
 import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -24,6 +24,7 @@ const emptyFormState: CounterpartyFormValues = {
   description: "",
   email: "",
   fullName: "",
+  isDefault: false,
   isActive: true,
   phoneNumber: "",
 };
@@ -85,6 +86,7 @@ export function CounterpartiesPage() {
               : values.description.trim(),
           email: values.email.trim().length === 0 ? null : values.email.trim(),
           fullName: values.fullName.trim(),
+          isDefault: values.isDefault,
           phoneNumber:
             values.phoneNumber.trim().length === 0
               ? null
@@ -100,6 +102,7 @@ export function CounterpartiesPage() {
               : values.description.trim(),
           email: values.email.trim().length === 0 ? null : values.email.trim(),
           fullName: values.fullName.trim(),
+          isDefault: values.isDefault,
           isActive: values.isActive,
           phoneNumber:
             values.phoneNumber.trim().length === 0
@@ -135,6 +138,7 @@ export function CounterpartiesPage() {
       description: counterparty.description ?? "",
       email: counterparty.email ?? "",
       fullName: counterparty.fullName,
+      isDefault: counterparty.isDefault,
       isActive: counterparty.isActive,
       phoneNumber: counterparty.phoneNumber ?? "",
     });
@@ -172,10 +176,10 @@ export function CounterpartiesPage() {
         }}
         variant="outlined"
       >
-        {t("counterparties.filter")}
+        {t("common.filter")}
       </ActionButton>
       <ActionButton onClick={openCreateForm}>
-        {t("counterparties.create")}
+        {t("common.create")}
       </ActionButton>
     </Stack>
   );
@@ -253,3 +257,4 @@ export function CounterpartiesPage() {
     </DefaultLayout>
   );
 }
+

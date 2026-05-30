@@ -6,17 +6,20 @@ public sealed record CounterpartyResponse(
     string? Email,
     string? PhoneNumber,
     string? Description,
+    bool IsDefault,
     bool IsActive);
 
 public sealed record CreateCounterpartyRequest(
     string FullName,
     string? Email,
     string? PhoneNumber,
-    string? Description);
+    string? Description,
+    bool IsDefault);
 
 public sealed record UpdateCounterpartyRequest(
     string FullName,
     string? Email,
     string? PhoneNumber,
     string? Description,
+    bool IsDefault,
     bool IsActive);

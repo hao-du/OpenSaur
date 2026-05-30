@@ -51,9 +51,9 @@ export function BanksList({
           <TableRow>
             <TableCell sx={{ py: 1 }}>{t("currencies.name")}</TableCell>
             <TableCell sx={{ py: 1 }}>{t("banks.shortName")}</TableCell>
-            <TableCell sx={{ py: 1 }}>{t("currencies.description")}</TableCell>
-            <TableCell sx={{ py: 1 }}>{t("currencies.isDefault")}</TableCell>
-            <TableCell align="right" sx={{ py: 1 }}>{t("counterparties.actions")}</TableCell>
+            <TableCell sx={{ py: 1 }}>{t("common.description")}</TableCell>
+            <TableCell sx={{ py: 1 }}>{t("common.isDefault")}</TableCell>
+            <TableCell align="right" sx={{ py: 1 }}>{t("common.actions")}</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
@@ -88,7 +88,7 @@ export function BanksList({
                       onEdit(bank);
                     }}
                   >
-                    {t("counterparties.edit")}
+                    {t("common.edit")}
                   </LinkButton>
                   <LinkButton
                     color="error"
@@ -97,7 +97,7 @@ export function BanksList({
                       onDelete(bank);
                     }}
                   >
-                    {t("counterparties.delete")}
+                    {t("common.delete")}
                   </LinkButton>
                 </Stack>
               </TableCell>
@@ -108,3 +108,4 @@ export function BanksList({
     </Paper>
   );
 }
+

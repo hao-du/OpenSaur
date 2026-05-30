@@ -52,7 +52,7 @@ export function TransferPopulateForm({
   const saveTransferMutation = useSaveTransferMutation();
   const defaults = useMemo<TransferFormValues>(
     () => ({
-      counterpartyId: initialValue(templateData.counterpartyId, todayIsoDate),
+      counterpartyId: initialValue(templateData.counterpartyId, todayIsoDate) || counterpartyOptions[0]?.value || "",
       transferType: initialValue(templateData.transferType, todayIsoDate),
       status: initialValue(templateData.status, todayIsoDate),
       amount: initialValue(templateData.amount, todayIsoDate),
@@ -66,7 +66,7 @@ export function TransferPopulateForm({
       description: initialValue(templateData.description, todayIsoDate),
       transactionItems: [],
     }),
-    [templateData, todayIsoDate],
+    [counterpartyOptions, templateData, todayIsoDate],
   );
   const form = useForm<TransferFormValues>({ defaultValues: defaults });
   const currencyId = useWatch({ control: form.control, name: "currencyId" });

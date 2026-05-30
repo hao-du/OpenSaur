@@ -62,21 +62,22 @@ export function CurrencyForm({
       <TextArea
         control={control}
         disabled={isSubmitting}
-        label={t("currencies.description")}
+        label={t("common.description")}
         minRows={3}
         name="description"
       />
       <CheckBox
         control={control}
         disabled={isSubmitting}
-        label={t("currencies.isDefault")}
+        label={t("common.isDefault")}
         name="isDefault"
       />
       <Stack direction="row" justifyContent="flex-end" spacing={1} sx={layoutStyles.formFooterRow}>
         <ActionButton disabled={isSubmitting} type="submit">
-          {isSubmitting ? t("action.working") : isEditMode ? t("currencies.save") : t("currencies.create")}
+          {isSubmitting ? t("action.working") : isEditMode ? t("common.save") : t("common.create")}
         </ActionButton>
       </Stack>
     </Stack>
   );
 }
+

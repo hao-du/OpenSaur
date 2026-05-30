@@ -54,9 +54,9 @@ export function TemplatesList({ isLoading, isSubmitting, onDelete, onEdit, onPop
           <TableRow>
             <TableCell sx={{ py: 1 }}>{t("currencies.name")}</TableCell>
             <TableCell sx={{ py: 1 }}>{t("templates.templateType")}</TableCell>
-            <TableCell sx={{ py: 1 }}>{t("currencies.description")}</TableCell>
+            <TableCell sx={{ py: 1 }}>{t("common.description")}</TableCell>
             <TableCell sx={{ py: 1 }}>{t("counterparties.active")}</TableCell>
-            <TableCell align="right" sx={{ py: 1 }}>{t("counterparties.actions")}</TableCell>
+            <TableCell align="right" sx={{ py: 1 }}>{t("common.actions")}</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
@@ -70,9 +70,9 @@ export function TemplatesList({ isLoading, isSubmitting, onDelete, onEdit, onPop
               </TableCell>
               <TableCell align="right" sx={{ py: 0.8 }}>
                 <Stack direction="row" justifyContent="flex-end" spacing={1}>
-                  <LinkButton disabled={isSubmitting} onClick={() => onEdit(item)}>{t("counterparties.edit")}</LinkButton>
+                  <LinkButton disabled={isSubmitting} onClick={() => onEdit(item)}>{t("common.edit")}</LinkButton>
                   <LinkButton disabled={isSubmitting} onClick={() => onPopulate(item)}>{t("templates.populate")}</LinkButton>
-                  <LinkButton color="error" disabled={isSubmitting} onClick={() => onDelete(item)}>{t("counterparties.delete")}</LinkButton>
+                  <LinkButton color="error" disabled={isSubmitting} onClick={() => onDelete(item)}>{t("common.delete")}</LinkButton>
                 </Stack>
               </TableCell>
             </TableRow>
@@ -82,3 +82,4 @@ export function TemplatesList({ isLoading, isSubmitting, onDelete, onEdit, onPop
     </Paper>
   );
 }
+

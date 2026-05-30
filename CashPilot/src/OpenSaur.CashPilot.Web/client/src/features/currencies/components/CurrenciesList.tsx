@@ -52,9 +52,9 @@ export function CurrenciesList({
           <TableRow>
             <TableCell sx={{ py: 1 }}>{t("currencies.name")}</TableCell>
             <TableCell sx={{ py: 1 }}>{t("currencies.shortCode")}</TableCell>
-            <TableCell sx={{ py: 1 }}>{t("currencies.description")}</TableCell>
-            <TableCell sx={{ py: 1 }}>{t("currencies.isDefault")}</TableCell>
-            <TableCell align="right" sx={{ py: 1 }}>{t("currencies.actions")}</TableCell>
+            <TableCell sx={{ py: 1 }}>{t("common.description")}</TableCell>
+            <TableCell sx={{ py: 1 }}>{t("common.isDefault")}</TableCell>
+            <TableCell align="right" sx={{ py: 1 }}>{t("common.actions")}</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
@@ -66,7 +66,7 @@ export function CurrenciesList({
               <TableCell sx={{ py: 0.8 }}>
                 {currency.isDefault ? (
                   <Chip
-                    label="Yes"
+                    label={t("common.yes")}
                     size="small"
                     sx={{
                       bgcolor: "primary.main",
@@ -75,7 +75,7 @@ export function CurrenciesList({
                   />
                 ) : (
                   <Chip
-                    label="No"
+                    label={t("common.no")}
                     size="small"
                     variant="outlined"
                   />
@@ -109,3 +109,4 @@ export function CurrenciesList({
     </Paper>
   );
 }
+

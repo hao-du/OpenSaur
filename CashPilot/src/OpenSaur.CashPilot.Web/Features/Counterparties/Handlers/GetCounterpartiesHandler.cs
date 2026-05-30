@@ -45,13 +45,15 @@ public static class GetCounterpartiesHandler
         }
 
         var result = await query
-            .OrderBy(counterparty => counterparty.FullName)
+            .OrderByDescending(counterparty => counterparty.IsDefault)
+            .ThenBy(counterparty => counterparty.FullName)
             .Select(counterparty => new CounterpartyResponse(
                 counterparty.Id,
                 counterparty.FullName,
                 counterparty.Email,
                 counterparty.PhoneNumber,
                 counterparty.Description,
+                counterparty.IsDefault,
                 counterparty.IsActive
             ))
             .ToListAsync(cancellationToken);

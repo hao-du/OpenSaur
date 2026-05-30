@@ -267,7 +267,7 @@ export function TemplateFormDrawer({
             currencies={currencies}
             isSubmitting={isSubmitting}
             submitLabel={
-              isEditMode ? t("counterparties.save") : t("templates.create")
+              isEditMode ? t("common.save") : t("templates.create")
             }
           />
         </Stack>
@@ -275,3 +275,4 @@ export function TemplateFormDrawer({
     </DrawerPanel>
   );
 }
+

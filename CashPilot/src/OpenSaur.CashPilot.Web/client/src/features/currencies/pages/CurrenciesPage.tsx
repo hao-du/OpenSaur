@@ -1,4 +1,4 @@
-﻿import { Alert, Stack } from "@mui/material";
+import { Alert, Stack } from "@mui/material";
 import { AxiosError } from "axios";
 import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -149,10 +149,10 @@ export function CurrenciesPage() {
         }}
         variant="outlined"
       >
-        {t("currencies.filter")}
+        {t("common.filter")}
       </ActionButton>
       <ActionButton onClick={openCreateForm}>
-        {t("currencies.create")}
+        {t("common.create")}
       </ActionButton>
     </Stack>
   );
@@ -227,3 +227,4 @@ export function CurrenciesPage() {
     </DefaultLayout>
   );
 }
+

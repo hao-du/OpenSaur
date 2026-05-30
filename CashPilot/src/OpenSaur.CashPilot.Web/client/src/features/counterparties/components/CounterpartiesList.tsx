@@ -1,4 +1,4 @@
-import { CircularProgress, Paper, Stack, Table, TableBody, TableCell, TableHead, TableRow } from "@mui/material";
+import { Chip, CircularProgress, Paper, Stack, Table, TableBody, TableCell, TableHead, TableRow } from "@mui/material";
 import { BodyText } from "../../../components/atoms/BodyText";
 import { LinkButton } from "../../../components/atoms/LinkButton";
 import { PageTitleText } from "../../../components/atoms/PageTitleText";
@@ -50,16 +50,35 @@ export function CounterpartiesList({
         <TableHead>
           <TableRow>
             <TableCell sx={{ py: 1 }}>{t("counterparties.fullName")}</TableCell>
+            <TableCell sx={{ py: 1 }}>{t("common.isDefault")}</TableCell>
             <TableCell sx={{ py: 1 }}>{t("counterparties.email")}</TableCell>
             <TableCell sx={{ py: 1 }}>{t("counterparties.phoneNumber")}</TableCell>
-            <TableCell sx={{ py: 1 }}>{t("counterparties.description")}</TableCell>
-            <TableCell align="right" sx={{ py: 1 }}>{t("counterparties.actions")}</TableCell>
+            <TableCell sx={{ py: 1 }}>{t("common.description")}</TableCell>
+            <TableCell align="right" sx={{ py: 1 }}>{t("common.actions")}</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
           {counterparties.map(counterparty => (
             <TableRow hover key={counterparty.id}>
               <TableCell sx={{ py: 0.8 }}>{counterparty.fullName}</TableCell>
+              <TableCell sx={{ py: 0.8 }}>
+                {counterparty.isDefault ? (
+                  <Chip
+                    label={t("common.yes")}
+                    size="small"
+                    sx={{
+                      bgcolor: "primary.main",
+                      color: "white"
+                    }}
+                  />
+                ) : (
+                  <Chip
+                    label={t("common.no")}
+                    size="small"
+                    variant="outlined"
+                  />
+                )}
+              </TableCell>
               <TableCell sx={{ py: 0.8 }}>{counterparty.email ?? t("common.none")}</TableCell>
               <TableCell sx={{ py: 0.8 }}>{counterparty.phoneNumber ?? t("common.none")}</TableCell>
               <TableCell sx={{ py: 0.8 }}>{counterparty.description ?? t("common.none")}</TableCell>
@@ -71,7 +90,7 @@ export function CounterpartiesList({
                       onEdit(counterparty);
                     }}
                   >
-                    {t("counterparties.edit")}
+                    {t("common.edit")}
                   </LinkButton>
                   <LinkButton
                     color="error"
@@ -80,7 +99,7 @@ export function CounterpartiesList({
                       onDelete(counterparty);
                     }}
                   >
-                    {t("counterparties.delete")}
+                    {t("common.delete")}
                   </LinkButton>
                 </Stack>
               </TableCell>
@@ -91,3 +110,4 @@ export function CounterpartiesList({
     </Paper>
   );
 }
+

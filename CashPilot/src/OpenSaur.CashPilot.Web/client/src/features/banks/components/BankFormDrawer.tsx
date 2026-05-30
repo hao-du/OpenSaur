@@ -38,10 +38,11 @@ export function BankFormDrawer({
         <BankForm
           control={form.control}
           isSubmitting={isSubmitting}
-          submitLabel={isEditMode ? t("counterparties.save") : t("banks.create")}
+          submitLabel={isEditMode ? t("common.save") : t("common.create")}
         />
       </Stack>
     </DrawerPanel>
   );
 }
+
 
