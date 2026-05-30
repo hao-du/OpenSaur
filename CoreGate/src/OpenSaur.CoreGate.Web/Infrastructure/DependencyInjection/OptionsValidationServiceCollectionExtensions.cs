@@ -24,6 +24,15 @@ public static class OptionsValidationServiceCollectionExtensions
                 "AuthCookies:Domain must be empty, a domain, or start with '*.' (for example '*.example.com').")
             .ValidateOnStart();
 
+        services.AddOptions<TurnstileOptions>()
+            .Bind(configuration.GetSection(TurnstileOptions.SectionName))
+            .Validate(
+                static options =>
+                    string.IsNullOrWhiteSpace(options.SiteKey)
+                    || !string.IsNullOrWhiteSpace(options.SecretKey),
+                "Turnstile:SecretKey is required when Turnstile:SiteKey is set.")
+            .ValidateOnStart();
+
         return services;
     }
 }

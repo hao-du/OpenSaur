@@ -25,6 +25,7 @@ public static class AuthFeatureServiceCollectionExtensions
         services.AddScoped<ClaimService>();
         services.AddScoped<EndSessionRevocationService>();
         services.AddScoped<TokenService>();
+        services.AddScoped<TurnstileVerificationService>();
         return services;
     }
 }

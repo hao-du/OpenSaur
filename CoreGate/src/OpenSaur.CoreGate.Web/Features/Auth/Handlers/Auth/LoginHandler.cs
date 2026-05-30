@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Identity;
 using OpenSaur.CoreGate.Web.Domain.Identity;
 using OpenSaur.CoreGate.Web.Features.Auth.Dtos;
+using OpenSaur.CoreGate.Web.Features.Auth.Services;
 using OpenSaur.CoreGate.Web.Infrastructure.Database;
 
 namespace OpenSaur.CoreGate.Web.Features.Auth.Handlers.Auth;
@@ -9,7 +10,8 @@ namespace OpenSaur.CoreGate.Web.Features.Auth.Handlers.Auth;
 public class LoginHandler(
     IHttpContextAccessor httpContextAccessor,
     UserManager<ApplicationUser> userManager,
-    SignInManager<ApplicationUser> signInManager)
+    SignInManager<ApplicationUser> signInManager,
+    TurnstileVerificationService turnstileVerificationService)
 {
     public async Task<LoginResponse> HandleLoginAsync(LoginRequest request)
     {
@@ -21,6 +23,16 @@ public class LoginHandler(
         if (string.IsNullOrWhiteSpace(request.UserName) || string.IsNullOrWhiteSpace(request.Password))
         {
             return new LoginResponse(false, null, "Username and password are required.");
+        }
+
+        var turnstileValid = await turnstileVerificationService.VerifyAsync(
+            request.TurnstileToken ?? string.Empty,
+            httpContextAccessor.HttpContext.Connection.RemoteIpAddress?.ToString(),
+            httpContextAccessor.HttpContext.RequestAborted);
+
+        if (!turnstileValid)
+        {
+            return new LoginResponse(false, null, "Captcha verification failed.");
         }
 
         var user = await userManager.FindByNameAsync(request.UserName)
