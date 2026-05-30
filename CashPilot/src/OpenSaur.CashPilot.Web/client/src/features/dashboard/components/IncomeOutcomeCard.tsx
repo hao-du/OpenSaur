@@ -6,6 +6,7 @@ import type { IncomeOutcomeDto } from "../../transactions/dtos/TransactionDto";
 type Props = {
   items: IncomeOutcomeDto[];
   title: string;
+  currencyCode?: string;
 };
 
 const amountFormatter = new Intl.NumberFormat("en-US", {
@@ -13,7 +14,7 @@ const amountFormatter = new Intl.NumberFormat("en-US", {
   maximumFractionDigits: 2
 });
 
-export function IncomeOutcomeCard({ items, title }: Props) {
+export function IncomeOutcomeCard({ items, title, currencyCode }: Props) {
   const latestThreeMonths = [...items]
     .sort((a, b) => {
       if (a.year !== b.year) {
@@ -25,7 +26,12 @@ export function IncomeOutcomeCard({ items, title }: Props) {
 
   return (
     <Paper variant="outlined" sx={{ p: 1.5, height: "100%", display: "flex", flexDirection: "column" }}>
-      <PageTitleText variant="h6">{title}</PageTitleText>
+      <Stack direction="row" spacing={1} alignItems="center">
+        <PageTitleText variant="h6">{title}</PageTitleText>
+        {currencyCode != null && currencyCode.trim().length > 0 ? (
+          <BodyText>{`(${currencyCode})`}</BodyText>
+        ) : null}
+      </Stack>
       <Stack spacing={0.5} sx={{ mt: 0.5, flex: 1 }}>
         {latestThreeMonths.map(item => (
           <Stack key={`${item.year}-${item.month}-${item.currencyCode}`} direction="row" justifyContent="space-between" spacing={2} alignItems="flex-start">

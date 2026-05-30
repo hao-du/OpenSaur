@@ -31,9 +31,7 @@ export function DashboardPage() {
   const isLoading = transactionDashboard.isLoading || transactionDashboard.isFetching || !transactionDashboard.data;
   const isCurrenciesLoading = currencies.length === 0 && transactionDashboard.isLoading;
   const defaultCurrencyCode = currencies.find(x => x.isDefault)?.shortName;
-  const incomeOutcomeTitle = defaultCurrencyCode == null
-    ? t("transactions.incomeOutcome")
-    : `${t("transactions.incomeOutcome")} (${defaultCurrencyCode})`;
+  const incomeOutcomeTitle = t("transactions.incomeOutcome");
   const incomeOutcomeItems = defaultCurrencyCode == null
     ? (transactionDashboard.data?.incomeOutcomes ?? [])
     : (transactionDashboard.data?.incomeOutcomes ?? []).filter(x => x.currencyCode === defaultCurrencyCode);
@@ -81,6 +79,7 @@ export function DashboardPage() {
                   <DashboardCardSkeleton rows={4} />
                 ) : (
                   <IncomeOutcomeCard
+                    currencyCode={defaultCurrencyCode}
                     items={incomeOutcomeItems}
                     title={incomeOutcomeTitle}
                   />

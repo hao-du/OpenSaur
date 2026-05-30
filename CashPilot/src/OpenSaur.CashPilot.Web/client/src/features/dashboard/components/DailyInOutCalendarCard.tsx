@@ -71,7 +71,12 @@ export function DailyInOutCalendarCard({
   return (
     <Paper variant="outlined" sx={{ p: 1.5, height: "100%", display: "flex", flexDirection: "column" }}>
       <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
-        <PageTitleText variant="h6">{title}</PageTitleText>
+        <Stack direction="row" spacing={1} alignItems="center">
+          <PageTitleText variant="h6">{title}</PageTitleText>
+          {defaultCurrencyCode != null && defaultCurrencyCode.trim().length > 0 ? (
+            <BodyText>{`(${defaultCurrencyCode})`}</BodyText>
+          ) : null}
+        </Stack>
         <Stack direction="row" spacing={1}>
           <Select size="small" value={month.toString()} onChange={e => onMonthChange(Number(e.target.value))}>
             {monthNames.map((month, index) => (
@@ -157,9 +162,6 @@ export function DailyInOutCalendarCard({
           </Grid>
         </Stack>
       )}
-      {defaultCurrencyCode != null && defaultCurrencyCode.trim().length > 0 ? (
-        <BodyText sx={{ mt: 1 }}>{defaultCurrencyCode}</BodyText>
-      ) : null}
     </Paper>
   );
 }
