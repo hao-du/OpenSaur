@@ -6,6 +6,7 @@ import type {
   CreateCashFlowRequestDto,
   CurrencyExchangeDetailDto,
   CreateCurrencyExchangeRequestDto,
+  DailyInOutCalendarDto,
   UpdateCashFlowRequestDto,
   TransactionDashboardDto,
   TransactionListItemDto,
@@ -19,6 +20,10 @@ export async function getTransactions() {
 
 export async function getTransactionDashboard() {
   return client.get<TransactionDashboardDto>("/api/transactions/dashboard");
+}
+
+export async function getDailyInOutCalendar(year: number, month: number) {
+  return client.get<DailyInOutCalendarDto>(`/api/transactions/dashboard/daily-in-out?year=${year}&month=${month}`);
 }
 
 export async function getBankAccountFormById(id: string) {

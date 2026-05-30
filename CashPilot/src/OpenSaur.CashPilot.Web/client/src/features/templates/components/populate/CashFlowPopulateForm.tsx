@@ -1,6 +1,6 @@
 import { Alert, Grid, Stack } from "@mui/material";
 import { useEffect, useMemo, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { ActionButton } from "../../../../components/atoms/ActionButton";
 import { DatePicker } from "../../../../components/atoms/DatePicker";
 import { DropDown } from "../../../../components/atoms/DropDown";
@@ -8,6 +8,8 @@ import { Number as NumberInput } from "../../../../components/atoms/Number";
 import { TextArea } from "../../../../components/atoms/TextArea";
 import type { TranslationKey } from "../../../settings/provider/translations";
 import { useCreateCashFlowMutation } from "../../../transactions/hooks/useCreateCashFlowMutation";
+import { TransactionItemsEditor } from "../../../transactions/components/TransactionItemsEditor";
+import { TransactionFormTabs } from "../../../transactions/components/TransactionFormTabs";
 import type {
   CashFlowFormValues,
   CashFlowTemplateDataShape,
@@ -46,6 +48,7 @@ export function CashFlowPopulateForm({
 }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [tab, setTab] = useState<"form" | "items">("form");
   const createCashFlowMutation = useCreateCashFlowMutation();
   const defaults = useMemo<CashFlowFormValues>(
     () => ({
@@ -57,10 +60,13 @@ export function CashFlowPopulateForm({
         todayIsoDate,
       ),
       description: initialValue(templateData.description, todayIsoDate),
+      transactionItems: [],
     }),
     [templateData, todayIsoDate],
   );
   const form = useForm<CashFlowFormValues>({ defaultValues: defaults });
+  const currencyId = useWatch({ control: form.control, name: "currencyId" });
+  const selectedCurrencyCode = currencyOptions.find(x => x.value === currencyId)?.label;
 
   useEffect(() => {
     form.reset(defaults);
@@ -87,6 +93,7 @@ export function CashFlowPopulateForm({
           v.transactionDate,
           todayIsoDate,
         ),
+        transactionItems: v.transactionItems.filter(x => x.name.trim().length > 0).map(x => ({ name: x.name.trim(), amount: Number(x.amount || "0") })),
         description: resolveOptionalDescription(
           templateData.description,
           v.description,
@@ -107,7 +114,11 @@ export function CashFlowPopulateForm({
   return (
     <Stack spacing={2} component="form" onSubmit={form.handleSubmit(submit)}>
       {error != null ? <Alert severity="error">{error}</Alert> : null}
-      <Grid container spacing={2}>
+      <TransactionFormTabs
+        value={tab}
+        onChange={setTab}
+        itemsContent={<TransactionItemsEditor control={form.control} name="transactionItems" disabled={isSubmitting} currencyCode={selectedCurrencyCode} />}
+        formContent={<Grid container spacing={2}>
         {shown(templateData.amount) ? (
           <Grid size={{ xs: 12 }}>
             <NumberInput
@@ -183,12 +194,15 @@ export function CashFlowPopulateForm({
             />
           </Grid>
         ) : null}
-      </Grid>
+      </Grid>}
+      />
+      {tab === "form" ? (
       <Stack direction="row" justifyContent="flex-end">
         <ActionButton type="submit" disabled={isSubmitting}>
           {isSubmitting ? t("action.working") : t("transactions.create")}
         </ActionButton>
       </Stack>
+      ) : null}
     </Stack>
   );
 }

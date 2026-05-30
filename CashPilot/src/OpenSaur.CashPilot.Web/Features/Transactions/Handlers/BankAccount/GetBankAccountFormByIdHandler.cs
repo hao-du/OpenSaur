@@ -23,6 +23,7 @@ public static class GetBankAccountFormByIdHandler
             .AsNoTracking()
             .Include(x => x.BankAccountTransactions)
                 .ThenInclude(x => x.Transaction)
+            .Include(x => x.TransactionItems)
             .SingleOrDefaultAsync(x => x.Id == id && (!x.BankAccountTransactions.Any() || x.BankAccountTransactions.All(y => y.Transaction.OwnerId == currentUserId)), cancellationToken);
 
         if (entity is null)
@@ -55,6 +56,7 @@ public static class GetBankAccountFormByIdHandler
             entity.AccountNumber,
             entity.Description,
             entity.IsActive,
-            details));
+            details,
+            entity.TransactionItems.Select(x => new TransactionItemRequest(x.Name, x.Amount)).ToList()));
     }
 }

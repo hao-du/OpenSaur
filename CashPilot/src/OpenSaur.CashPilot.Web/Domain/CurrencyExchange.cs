@@ -9,4 +9,6 @@ public sealed class CurrencyExchange : EntityBase
     public DateOnly ExchangeDate { get; set; }
 
     public ICollection<CurrencyExchangeTransaction> CurrencyExchangeTransactions { get; set; } = [];
+
+    public ICollection<TransactionItem> TransactionItems { get; set; } = [];
 }

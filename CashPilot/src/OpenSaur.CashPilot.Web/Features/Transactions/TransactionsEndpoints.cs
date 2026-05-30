@@ -13,6 +13,7 @@ public static class TransactionsEndpoints
         // Summary / list
         transactions.MapGet("/get", GetTransactionsHandler.HandleAsync);
         transactions.MapGet("/dashboard", GetTransactionDashboardHandler.HandleAsync);
+        transactions.MapGet("/dashboard/daily-in-out", GetDailyInOutCalendarHandler.HandleAsync);
 
         // CashFlow
         transactions.MapGet("/cashflows/getById/{id:guid}", GetCashFlowByIdHandler.HandleAsync);

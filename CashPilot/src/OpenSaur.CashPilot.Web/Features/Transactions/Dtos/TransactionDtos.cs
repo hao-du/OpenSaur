@@ -40,7 +40,8 @@ public sealed record CreateCashFlowRequest(
     decimal Amount,
     byte Direction,
     DateOnly TransactionDate,
-    string? Description);
+    string? Description,
+    IReadOnlyList<TransactionItemRequest> TransactionItems);
 public sealed record UpdateCashFlowRequest(
     Guid Id,
     Guid CurrencyId,
@@ -48,7 +49,8 @@ public sealed record UpdateCashFlowRequest(
     byte Direction,
     DateOnly TransactionDate,
     string? Description,
-    bool IsActive);
+    bool IsActive,
+    IReadOnlyList<TransactionItemRequest> TransactionItems);
 
 public sealed record SaveBankAccountFormRequest(
     Guid? Id,
@@ -62,7 +64,8 @@ public sealed record SaveBankAccountFormRequest(
     string? AccountNumber,
     string? Description,
     bool IsActive,
-    IReadOnlyList<SaveBankAccountDetailRequest> Details);
+    IReadOnlyList<SaveBankAccountDetailRequest> Details,
+    IReadOnlyList<TransactionItemRequest> TransactionItems);
 
 public sealed record SaveBankAccountDetailRequest(
     Guid? Id,
@@ -84,7 +87,8 @@ public sealed record SaveTransferFormRequest(
     DateOnly? DueDate,
     string? Description,
     bool IsActive,
-    IReadOnlyList<SaveTransferDetailRequest> Details);
+    IReadOnlyList<SaveTransferDetailRequest> Details,
+    IReadOnlyList<TransactionItemRequest> TransactionItems);
 
 public sealed record SaveTransferDetailRequest(
     Guid? Id,
@@ -100,7 +104,8 @@ public sealed record CreateCurrencyExchangeRequest(
     DateOnly ExchangeDate,
     ExchangeLegRequest OutLeg,
     ExchangeLegRequest InLeg,
-    string? Description);
+    string? Description,
+    IReadOnlyList<TransactionItemRequest> TransactionItems);
 public sealed record UpdateCurrencyExchangeRequest(
     Guid Id,
     decimal? ExchangeRate,
@@ -108,7 +113,8 @@ public sealed record UpdateCurrencyExchangeRequest(
     ExchangeLegRequest OutLeg,
     ExchangeLegRequest InLeg,
     string? Description,
-    bool IsActive);
+    bool IsActive,
+    IReadOnlyList<TransactionItemRequest> TransactionItems);
 
 public sealed record ExchangeLegRequest(
     Guid CurrencyId,
@@ -121,7 +127,8 @@ public sealed record CashFlowDetailResponse(
     byte Direction,
     DateOnly TransactionDate,
     string? Description,
-    bool IsActive);
+    bool IsActive,
+    IReadOnlyList<TransactionItemResponse> TransactionItems);
 
 public sealed record BankAccountTransactionDetailResponse(
     Guid Id,
@@ -164,7 +171,8 @@ public sealed record TransferFormResponse(
     DateOnly? DueDate,
     string? Description,
     bool IsActive,
-    IReadOnlyList<TransferFormDetailResponse> Details);
+    IReadOnlyList<TransferFormDetailResponse> Details,
+    IReadOnlyList<TransactionItemResponse> TransactionItems);
 
 public sealed record CurrencyExchangeDetailResponse(
     Guid Id,
@@ -173,7 +181,17 @@ public sealed record CurrencyExchangeDetailResponse(
     ExchangeLegResponse OutLeg,
     ExchangeLegResponse InLeg,
     string? Description,
-    bool IsActive);
+    bool IsActive,
+    IReadOnlyList<TransactionItemResponse> TransactionItems);
+
+public sealed record TransactionItemRequest(
+    string Name,
+    decimal Amount);
+
+public sealed record TransactionItemResponse(
+    Guid Id,
+    string Name,
+    decimal Amount);
 
 public sealed record ExchangeLegResponse(
     Guid CurrencyId,
@@ -190,3 +208,13 @@ public sealed record TransactionDashboardResponse(
     IReadOnlyList<CurrencyBalanceItemResponse> CurrencyBalances,
     IReadOnlyList<BankBalanceItemResponse> ActiveBankBalances,
     IReadOnlyList<IncomeOutcomeItemResponse> IncomeOutcomes);
+
+public sealed record DailyInOutCalendarQueryRequest(int? Year, int? Month);
+
+public sealed record DailyInOutCalendarItemResponse(int Day, decimal Income, decimal Outcome);
+
+public sealed record DailyInOutCalendarResponse(
+    int Year,
+    int Month,
+    string? CurrencyCode,
+    IReadOnlyList<DailyInOutCalendarItemResponse> Items);

@@ -1,5 +1,6 @@
 import { Stack } from "@mui/material";
 import { useEffect, useMemo, useState } from "react";
+import { useForm } from "react-hook-form";
 import type { CounterpartyDto } from "../../counterparties/dtos/CounterpartyDto";
 import type { CurrencyDto } from "../../currencies/dtos/CurrencyDto";
 import type { SaveTransferFormRequestDto } from "../dtos/TransactionDto";
@@ -7,6 +8,8 @@ import { TransferHeaderForm } from "./TransferHeaderForm";
 import { TransferFormTransaction, type TransferDetailEditor } from "./TransferFormTransaction";
 import { ActionButton } from "../../../components/atoms/ActionButton";
 import { useSettings } from "../../settings/provider/SettingProvider";
+import { TransactionItemsEditor } from "./TransactionItemsEditor";
+import { TransactionFormTabs } from "./TransactionFormTabs";
 
 type Props = {
   counterparties: CounterpartyDto[];
@@ -32,6 +35,7 @@ type Props = {
     description?: string | null;
     isActive: boolean;
   }>;
+  movementInitialTransactionItems?: Array<{ id?: string; name: string; amount: number }>;
   movementSubmitLabel?: string;
   isSubmitting?: boolean;
   submitLabel?: string;
@@ -50,9 +54,14 @@ type TransferHeaderValues = {
   description: string;
 };
 
-export function TransferForm({ counterparties, currencies, onSave, movementInitialValue, movementInitialDetails = [], movementSubmitLabel = "Create", isSubmitting = false, submitLabel = "Create", headerSubmitLabel = "Apply Header", onCompleted }: Props) {
+type TransferItemsFormValues = {
+  transactionItems: Array<{ id?: string; name: string; amount: string }>;
+};
+
+export function TransferForm({ counterparties, currencies, onSave, movementInitialValue, movementInitialDetails = [], movementInitialTransactionItems = [], movementSubmitLabel = "Create", isSubmitting = false, submitLabel = "Create", headerSubmitLabel = "Apply Header", onCompleted }: Props) {
   const { t, todayIsoDate } = useSettings();
   const today = todayIsoDate;
+  const [tab, setTab] = useState<"form" | "items">("form");
   const defaultHeaderValues = useMemo<TransferHeaderValues>(() => ({
     amount: "0",
     counterpartyId: counterparties[0]?.id ?? "",
@@ -65,9 +74,7 @@ export function TransferForm({ counterparties, currencies, onSave, movementIniti
   }), [counterparties, currencies, today]);
 
   const initialHeaderValues = useMemo<TransferHeaderValues>(() => {
-    if (movementInitialValue == null) {
-      return defaultHeaderValues;
-    }
+    if (movementInitialValue == null) return defaultHeaderValues;
     return {
       amount: movementInitialValue.amount.toString(),
       counterpartyId: movementInitialValue.counterpartyId,
@@ -82,140 +89,88 @@ export function TransferForm({ counterparties, currencies, onSave, movementIniti
 
   const [headerDraft, setHeaderDraft] = useState<TransferHeaderValues>(defaultHeaderValues);
   const [details, setDetails] = useState<TransferDetailEditor[]>([]);
+  const transactionItemsForm = useForm<TransferItemsFormValues>({
+    defaultValues: { transactionItems: [] }
+  });
 
-  const calculatedAmount = useMemo(
-    () => details.reduce((sum, x) => sum + (Number.isFinite(Number(x.amount)) ? Number(x.amount) : 0), 0),
-    [details]
-  );
+  const calculatedAmount = useMemo(() => details.reduce((sum, x) => sum + (Number.isFinite(Number(x.amount)) ? Number(x.amount) : 0), 0), [details]);
+  const selectedCurrencyCode = currencies.find(x => x.id === headerDraft.currencyId)?.shortName;
 
   useEffect(() => {
     if (movementInitialValue == null) {
       setDetails([]);
-      setHeaderDraft(prev => {
-        if (prev.counterpartyId.trim().length > 0 && prev.currencyId.trim().length > 0) {
-          return prev;
-        }
-        return defaultHeaderValues;
-      });
+      transactionItemsForm.reset({ transactionItems: [] });
+      setHeaderDraft(prev => prev.counterpartyId.trim().length > 0 && prev.currencyId.trim().length > 0 ? prev : defaultHeaderValues);
       return;
     }
     setHeaderDraft(initialHeaderValues);
-    setDetails(movementInitialDetails.map(x => ({
-      amount: x.amount.toString(),
-      clientKey: crypto.randomUUID(),
-      description: x.description ?? "",
-      direction: x.direction.toString(),
-      id: x.id,
-      isActive: x.isActive,
-      transactionDate: x.transactionDate
-    })));
-  }, [defaultHeaderValues, initialHeaderValues, movementInitialDetails, movementInitialValue]);
+    setDetails(movementInitialDetails.map(x => ({ amount: x.amount.toString(), clientKey: crypto.randomUUID(), description: x.description ?? "", direction: x.direction.toString(), id: x.id, isActive: x.isActive, transactionDate: x.transactionDate })));
+    transactionItemsForm.reset({
+      transactionItems: (movementInitialTransactionItems ?? []).map(x => ({
+        id: x.id,
+        name: x.name,
+        amount: x.amount.toString()
+      }))
+    });
+  }, [defaultHeaderValues, initialHeaderValues, movementInitialDetails, movementInitialValue, movementInitialTransactionItems, transactionItemsForm]);
 
-  const visibleDetails = details;
-
-  const addNewDetail = () => {
-    setDetails(prev => [...prev, {
-      amount: "",
-      clientKey: crypto.randomUUID(),
-      description: "",
-      direction: "1",
-      isNew: true,
-      transactionDate: (headerDraft?.transactionDate ?? today)
-    }]);
-  };
-
-  const updateDetail = (clientKey: string, updated: TransferDetailEditor) => {
-    setDetails(prev => prev.map(x => x.clientKey === clientKey ? updated : x));
-  };
-
-  const removeDetail = (clientKey: string) => {
-    setDetails(prev => prev.filter(x => x.clientKey !== clientKey));
-  };
-
-  const handleHeaderSubmit = (values: TransferHeaderValues) => {
-    setHeaderDraft(values);
-  };
+  const addNewDetail = () => setDetails(prev => [...prev, { amount: "", clientKey: crypto.randomUUID(), description: "", direction: "1", isNew: true, transactionDate: headerDraft?.transactionDate ?? today }]);
 
   const handleSave = async () => {
-    if (headerDraft.counterpartyId.trim().length === 0 || headerDraft.currencyId.trim().length === 0 || headerDraft.transactionDate.trim().length === 0) {
-      return;
-    }
+    if (headerDraft.counterpartyId.trim().length === 0 || headerDraft.currencyId.trim().length === 0 || headerDraft.transactionDate.trim().length === 0) return;
 
+    const transactionItems = transactionItemsForm.getValues("transactionItems");
     await onSave({
       amount: calculatedAmount,
       counterpartyId: headerDraft.counterpartyId,
       currencyId: headerDraft.currencyId,
       description: headerDraft.description.trim().length === 0 ? undefined : headerDraft.description.trim(),
-      details: visibleDetails.map(detail => ({
-        amount: Number(detail.amount),
-        currencyId: headerDraft.currencyId,
-        description: detail.description.trim().length === 0 ? undefined : detail.description.trim(),
-        direction: Number(detail.direction),
-        id: detail.id,
-        isActive: detail.isActive ?? true,
-        transactionDate: detail.transactionDate
-      })),
+      details: details.map(detail => ({ amount: Number(detail.amount), currencyId: headerDraft.currencyId, description: detail.description.trim().length === 0 ? undefined : detail.description.trim(), direction: Number(detail.direction), id: detail.id, isActive: detail.isActive ?? true, transactionDate: detail.transactionDate })),
       dueDate: headerDraft.dueDate.trim().length === 0 ? undefined : headerDraft.dueDate,
       id: movementInitialValue?.id,
       isActive: true,
       transactionDate: headerDraft.transactionDate,
-      transferType: Number(headerDraft.transferType)
-      ,
-      status: Number(headerDraft.status)
+      transferType: Number(headerDraft.transferType),
+      status: Number(headerDraft.status),
+      transactionItems: transactionItems.filter(x => x.name.trim().length > 0).map(x => ({ id: x.id, name: x.name.trim(), amount: Number(x.amount || "0") }))
     });
     onCompleted?.();
   };
 
   return (
-    <Stack spacing={3}>
-      <h3 style={{ margin: 0 }}>{t("transactions.transferHeader")}</h3>
-      <TransferHeaderForm
-        calculatedAmount={calculatedAmount}
-        counterparties={counterparties}
-        currencies={currencies}
-        initialValues={movementInitialValue == null ? undefined : initialHeaderValues}
-        isSubmitting={isSubmitting}
-        onChange={payload => {
-          handleHeaderSubmit({
-            amount: payload.amount.toString(),
-            counterpartyId: payload.counterpartyId,
-            currencyId: payload.currencyId,
-            description: payload.description ?? "",
-            dueDate: payload.dueDate ?? "",
-            transactionDate: payload.transactionDate,
-            transferType: payload.transferType.toString(),
-            status: payload.status.toString()
-          });
-        }}
-        onSubmit={async () => {}}
-        showSubmit={false}
-        submitLabel={headerSubmitLabel}
+    <Stack spacing={2}>
+      <TransactionFormTabs
+        value={tab}
+        onChange={setTab}
+        formContent={(
+          <>
+            <TransferHeaderForm
+              calculatedAmount={calculatedAmount}
+              counterparties={counterparties}
+              currencies={currencies}
+              initialValues={movementInitialValue == null ? undefined : initialHeaderValues}
+              isSubmitting={isSubmitting}
+              onChange={payload => setHeaderDraft({ amount: payload.amount.toString(), counterpartyId: payload.counterpartyId, currencyId: payload.currencyId, description: payload.description ?? "", dueDate: payload.dueDate ?? "", transactionDate: payload.transactionDate, transferType: payload.transferType.toString(), status: payload.status.toString() })}
+              onSubmit={async () => {}}
+              showSubmit={false}
+              submitLabel={headerSubmitLabel}
+            />
+            <Stack direction="row" justifyContent="space-between" alignItems="center">
+              <h3 style={{ margin: 0 }}>{t("transactions.transactionDetails")}</h3>
+              <ActionButton onClick={addNewDetail} color="secondary" size="small" disabled={isSubmitting}>{t("transactions.addTransaction")}</ActionButton>
+            </Stack>
+            <Stack spacing={2}>
+              {details.map(detail => (
+                <TransferFormTransaction key={detail.clientKey} detail={detail} isSubmitting={isSubmitting} onAccept={updated => setDetails(prev => prev.map(x => x.clientKey === detail.clientKey ? updated : x))} onDelete={() => setDetails(prev => prev.filter(x => x.clientKey !== detail.clientKey))} onCancelNew={() => setDetails(prev => prev.filter(x => x.clientKey !== detail.clientKey))} />
+              ))}
+            </Stack>
+            <Stack direction="row" justifyContent="flex-end">
+              <ActionButton disabled={isSubmitting || calculatedAmount <= 0} onClick={() => { void handleSave(); }}>{isSubmitting ? t("action.working") : movementSubmitLabel ?? submitLabel}</ActionButton>
+            </Stack>
+          </>
+        )}
+        itemsContent={<TransactionItemsEditor control={transactionItemsForm.control} name="transactionItems" disabled={isSubmitting} currencyCode={selectedCurrencyCode} />}
       />
-      <Stack direction="row" justifyContent="space-between" alignItems="center">
-        <h3 style={{ margin: 0 }}>{t("transactions.transactionDetails")}</h3>
-        <ActionButton onClick={addNewDetail} color="secondary" size="small" disabled={isSubmitting}>
-          {t("transactions.addTransaction")}
-        </ActionButton>
-      </Stack>
-
-      <Stack spacing={2}>
-        {visibleDetails.map(detail => (
-          <TransferFormTransaction
-            key={detail.clientKey}
-            detail={detail}
-            isSubmitting={isSubmitting}
-            onAccept={updated => updateDetail(detail.clientKey, updated)}
-            onDelete={() => removeDetail(detail.clientKey)}
-            onCancelNew={() => removeDetail(detail.clientKey)}
-          />
-        ))}
-      </Stack>
-
-      <Stack direction="row" justifyContent="flex-end">
-        <ActionButton disabled={isSubmitting || calculatedAmount <= 0} onClick={() => { void handleSave(); }}>
-          {isSubmitting ? t("action.working") : movementSubmitLabel ?? submitLabel}
-        </ActionButton>
-      </Stack>
     </Stack>
   );
 }

@@ -58,7 +58,15 @@ public static class CreateTransferFormHandler
             TransactionDate = request.TransactionDate,
             TransferType = (TransferType)request.TransferType,
             Status = (TransferStatus)request.Status,
-            IsActive = request.IsActive
+            IsActive = request.IsActive,
+            TransactionItems = request.TransactionItems
+                .Where(x => !string.IsNullOrWhiteSpace(x.Name))
+                .Select(x => new TransactionItem
+                {
+                    Name = x.Name.Trim(),
+                    Amount = x.Amount
+                })
+                .ToList()
         };
         dbContext.Transfers.Add(transfer);
 

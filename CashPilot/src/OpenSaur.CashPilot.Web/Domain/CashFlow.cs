@@ -7,4 +7,6 @@ public sealed class CashFlow : EntityBase
     public Guid TransactionId { get; set; }
 
     public Transaction Transaction { get; set; } = null!;
+
+    public ICollection<TransactionItem> TransactionItems { get; set; } = [];
 }

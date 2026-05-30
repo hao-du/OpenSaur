@@ -44,6 +44,7 @@ public static class UpdateCurrencyExchangeHandler
         var entity = await dbContext.CurrencyExchanges
             .Include(x => x.CurrencyExchangeTransactions)
                 .ThenInclude(x => x.Transaction)
+            .Include(x => x.TransactionItems)
             .SingleOrDefaultAsync(x => x.Id == request.Id && x.CurrencyExchangeTransactions.Any(y => y.Transaction.OwnerId == currentUserId), cancellationToken);
 
         if (entity is null)
@@ -63,6 +64,15 @@ public static class UpdateCurrencyExchangeHandler
         entity.ExchangeDate = request.ExchangeDate;
         entity.Description = request.Description?.Trim() ?? string.Empty;
         entity.IsActive = request.IsActive;
+        dbContext.TransactionItems.RemoveRange(entity.TransactionItems);
+        entity.TransactionItems = request.TransactionItems
+            .Where(x => !string.IsNullOrWhiteSpace(x.Name))
+            .Select(x => new TransactionItem
+            {
+                Name = x.Name.Trim(),
+                Amount = x.Amount
+            })
+            .ToList();
 
         outLeg.Description = request.OutLeg.Description?.Trim() ?? string.Empty;
         outLeg.IsActive = request.IsActive;

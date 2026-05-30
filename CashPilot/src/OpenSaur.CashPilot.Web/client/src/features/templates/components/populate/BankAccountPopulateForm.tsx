@@ -1,6 +1,6 @@
 import { Alert, Grid, Stack } from "@mui/material";
 import { useEffect, useMemo, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { ActionButton } from "../../../../components/atoms/ActionButton";
 import { DatePicker } from "../../../../components/atoms/DatePicker";
 import { DropDown } from "../../../../components/atoms/DropDown";
@@ -9,6 +9,8 @@ import { Text } from "../../../../components/atoms/Text";
 import { TextArea } from "../../../../components/atoms/TextArea";
 import type { TranslationKey } from "../../../settings/provider/translations";
 import { useSaveBankAccountMutation } from "../../../transactions/hooks/useSaveBankAccountMutation";
+import { TransactionItemsEditor } from "../../../transactions/components/TransactionItemsEditor";
+import { TransactionFormTabs } from "../../../transactions/components/TransactionFormTabs";
 import type {
   BankAccountFormValues,
   BankAccountTemplateDataShape,
@@ -47,6 +49,7 @@ export function BankAccountPopulateForm({
 }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [tab, setTab] = useState<"form" | "items">("form");
   const saveBankAccountMutation = useSaveBankAccountMutation();
   const defaults = useMemo<BankAccountFormValues>(
     () => ({
@@ -58,10 +61,13 @@ export function BankAccountPopulateForm({
       startDate: initialDateValue(templateData.startDate, todayIsoDate),
       maturityDate: initialDateValue(templateData.maturityDate, todayIsoDate),
       description: initialValue(templateData.description, todayIsoDate),
+      transactionItems: [],
     }),
     [templateData, todayIsoDate],
   );
   const form = useForm<BankAccountFormValues>({ defaultValues: defaults });
+  const currencyId = useWatch({ control: form.control, name: "currencyId" });
+  const selectedCurrencyCode = currencyOptions.find(x => x.value === currencyId)?.label;
   useEffect(() => {
     form.reset(defaults);
   }, [defaults, form]);
@@ -108,6 +114,7 @@ export function BankAccountPopulateForm({
         ),
         isActive: true,
         details: [],
+        transactionItems: v.transactionItems.filter(x => x.name.trim().length > 0).map(x => ({ name: x.name.trim(), amount: Number(x.amount || "0") })),
       });
       await onSaved?.();
       onClose();
@@ -123,7 +130,11 @@ export function BankAccountPopulateForm({
   return (
     <Stack spacing={2} component="form" onSubmit={form.handleSubmit(submit)}>
       {error ? <Alert severity="error">{error}</Alert> : null}
-      <Grid container spacing={2}>
+      <TransactionFormTabs
+        value={tab}
+        onChange={setTab}
+        itemsContent={<TransactionItemsEditor control={form.control} name="transactionItems" disabled={isSubmitting} currencyCode={selectedCurrencyCode} />}
+        formContent={<Grid container spacing={2}>
         {shown(templateData.accountNumber) ? (
           <Grid size={{ xs: 12 }}>
             <Text
@@ -223,12 +234,15 @@ export function BankAccountPopulateForm({
             />
           </Grid>
         ) : null}
-      </Grid>
-      <Stack direction="row" justifyContent="flex-end">
-        <ActionButton type="submit" disabled={isSubmitting}>
-          {isSubmitting ? t("action.working") : t("transactions.create")}
-        </ActionButton>
-      </Stack>
+      </Grid>}
+      />
+      {tab === "form" ? (
+        <Stack direction="row" justifyContent="flex-end">
+          <ActionButton type="submit" disabled={isSubmitting}>
+            {isSubmitting ? t("action.working") : t("transactions.create")}
+          </ActionButton>
+        </Stack>
+      ) : null}
     </Stack>
   );
 }

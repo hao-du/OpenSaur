@@ -23,6 +23,7 @@ public static class GetTransferFormByIdHandler
             .AsNoTracking()
             .Include(x => x.TransferTransactions)
                 .ThenInclude(x => x.Transaction)
+            .Include(x => x.TransactionItems)
             .SingleOrDefaultAsync(
                 x => x.Id == id && x.TransferTransactions.Any(y => y.Transaction.OwnerId == currentUserId),
                 cancellationToken);
@@ -56,6 +57,7 @@ public static class GetTransferFormByIdHandler
             entity.DueDate,
             entity.Description,
             entity.IsActive,
-            details));
+            details,
+            entity.TransactionItems.Select(x => new TransactionItemResponse(x.Id, x.Name, x.Amount)).ToList()));
     }
 }

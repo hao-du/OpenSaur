@@ -51,6 +51,7 @@ public static class UpdateBankAccountFormHandler
         var existingBankAccount = await dbContext.BankAccounts
             .Include(x => x.BankAccountTransactions)
                 .ThenInclude(x => x.Transaction)
+            .Include(x => x.TransactionItems)
             .Where(x => !x.BankAccountTransactions.Any() || x.BankAccountTransactions.All(y => y.Transaction.OwnerId == currentUserId))
             .SingleOrDefaultAsync(x => x.Id == request.Id.Value, cancellationToken);
         if (existingBankAccount is null)
@@ -69,6 +70,15 @@ public static class UpdateBankAccountFormHandler
         bankAccount.StartDate = request.StartDate;
         bankAccount.Status = (BankAccountStatus)request.Status;
         bankAccount.IsActive = request.IsActive;
+        dbContext.TransactionItems.RemoveRange(bankAccount.TransactionItems);
+        bankAccount.TransactionItems = request.TransactionItems
+            .Where(x => !string.IsNullOrWhiteSpace(x.Name))
+            .Select(x => new TransactionItem
+            {
+                Name = x.Name.Trim(),
+                Amount = x.Amount
+            })
+            .ToList();
 
         var requestInterestDetails = request.Details
             .Where(x => x.TransactionType == (byte)BankAccountMovementType.InterestPayment)

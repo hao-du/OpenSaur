@@ -23,4 +23,6 @@ public sealed class Transfer : EntityBase
     public TransferStatus Status { get; set; } = TransferStatus.Active;
 
     public ICollection<TransferTransaction> TransferTransactions { get; set; } = [];
+
+    public ICollection<TransactionItem> TransactionItems { get; set; } = [];
 }

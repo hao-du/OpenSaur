@@ -51,6 +51,7 @@ public static class UpdateTransferFormHandler
         var existingTransfer = await dbContext.Transfers
             .Include(x => x.TransferTransactions)
                 .ThenInclude(x => x.Transaction)
+            .Include(x => x.TransactionItems)
             .SingleOrDefaultAsync(
                 x => x.Id == request.Id.Value && x.TransferTransactions.All(y => y.Transaction.OwnerId == currentUserId),
                 cancellationToken);
@@ -69,6 +70,15 @@ public static class UpdateTransferFormHandler
         transfer.TransferType = (TransferType)request.TransferType;
         transfer.Status = (TransferStatus)request.Status;
         transfer.IsActive = request.IsActive;
+        dbContext.TransactionItems.RemoveRange(transfer.TransactionItems);
+        transfer.TransactionItems = request.TransactionItems
+            .Where(x => !string.IsNullOrWhiteSpace(x.Name))
+            .Select(x => new TransactionItem
+            {
+                Name = x.Name.Trim(),
+                Amount = x.Amount
+            })
+            .ToList();
 
         var requestedIds = request.Details.Where(x => x.Id.HasValue).Select(x => x.Id!.Value).ToHashSet();
         var removedRows = transfer.TransferTransactions.Where(x => !requestedIds.Contains(x.Id)).ToList();

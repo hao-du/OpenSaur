@@ -30,6 +30,7 @@ export type BankAccountFormValues = {
   startDate: string;
   maturityDate: string;
   description: string;
+  transactionItems: Array<{ id?: string; name: string; amount: string }>;
 };
 
 export type CashFlowTemplateDataShape = {
@@ -46,6 +47,7 @@ export type CashFlowFormValues = {
   direction: string;
   transactionDate: string;
   description: string;
+  transactionItems: Array<{ id?: string; name: string; amount: string }>;
 };
 
 export type ExchangeTemplateDataShape = {
@@ -66,6 +68,7 @@ export type ExchangeFormValues = {
   inAmount: string;
   inCurrencyId: string;
   description: string;
+  transactionItems: Array<{ id?: string; name: string; amount: string }>;
 };
 
 export type TransferTemplateDataShape = {
@@ -90,4 +93,5 @@ export type TransferFormValues = {
   transactionDate: string;
   dueDate: string;
   description: string;
+  transactionItems: Array<{ id?: string; name: string; amount: string }>;
 };

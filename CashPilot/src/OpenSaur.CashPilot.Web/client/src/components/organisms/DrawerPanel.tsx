@@ -28,8 +28,13 @@ export function DrawerPanel({
 
   return (
     <Drawer anchor="right" open={isOpen} sx={drawerStyle}>
-      <Stack spacing={3} sx={layoutStyles.drawerContent}>
-        <Stack alignItems="center" direction="row" justifyContent="space-between">
+      <Stack sx={layoutStyles.drawerContent}>
+        <Stack
+          alignItems="center"
+          direction="row"
+          justifyContent="space-between"
+          sx={{ height: "64px", px: 2 }}
+        >
           <Stack spacing={0.5}>
             <PageTitleText as="h2" variant="h5">
               {title}
@@ -41,7 +46,9 @@ export function DrawerPanel({
           </IconButton>
         </Stack>
         <Divider />
-        {children}
+        <Stack sx={{ px: 3, pb: 3, pt: 0 }}>
+          {children}
+        </Stack>
       </Stack>
     </Drawer>
   );

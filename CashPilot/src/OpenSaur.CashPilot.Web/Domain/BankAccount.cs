@@ -25,4 +25,6 @@ public sealed class BankAccount : EntityBase
     public BankAccountStatus Status { get; set; } = BankAccountStatus.Active;
 
     public ICollection<BankAccountTransaction> BankAccountTransactions { get; set; } = [];
+
+    public ICollection<TransactionItem> TransactionItems { get; set; } = [];
 }

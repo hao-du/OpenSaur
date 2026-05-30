@@ -61,6 +61,14 @@ public static class CreateBankAccountFormHandler
         bankAccount.StartDate = request.StartDate;
         bankAccount.Status = (BankAccountStatus)request.Status;
         bankAccount.IsActive = request.IsActive;
+        bankAccount.TransactionItems = request.TransactionItems
+            .Where(x => !string.IsNullOrWhiteSpace(x.Name))
+            .Select(x => new TransactionItem
+            {
+                Name = x.Name.Trim(),
+                Amount = x.Amount
+            })
+            .ToList();
 
         foreach (var detail in request.Details.Where(x => x.TransactionType == (byte)BankAccountMovementType.InterestPayment))
         {

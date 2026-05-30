@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
   Alert,
   Chip,
@@ -112,6 +113,7 @@ function getTransactionTypeTagSx(
 }
 
 export function TransactionsPage() {
+  const [searchParams] = useSearchParams();
   const [isCashFlowDrawerOpen, setIsCashFlowDrawerOpen] = useState(false);
   const [isBankAccountDrawerOpen, setIsBankAccountDrawerOpen] = useState(false);
   const [isTransferDrawerOpen, setIsTransferDrawerOpen] = useState(false);
@@ -128,6 +130,7 @@ export function TransactionsPage() {
     direction: number;
     transactionDate: string;
     isActive: boolean;
+    transactionItems: Array<{ id?: string; name: string; amount: number }>;
   } | null>(null);
   const [editingBankAccount, setEditingBankAccount] =
     useState<SaveBankAccountFormRequestDto | null>(null);
@@ -151,6 +154,7 @@ export function TransactionsPage() {
       description?: string | null;
       isActive: boolean;
     }>;
+    transactionItems: Array<{ id?: string; name: string; amount: number }>;
   } | null>(null);
   const [editingExchange, setEditingExchange] = useState<{
     id: string;
@@ -162,6 +166,7 @@ export function TransactionsPage() {
     inAmount: number;
     description?: string | null;
     isActive: boolean;
+    transactionItems?: Array<{ id?: string; name: string; amount: number }>;
   } | null>(null);
   const [deletingTransaction, setDeletingTransaction] = useState<{
     id: string;
@@ -189,6 +194,20 @@ export function TransactionsPage() {
     toDate: endOfMonth,
     types: ["CashFlow", "BankAccount", "Transfer", "Exchange"],
   });
+  const selectedDate = searchParams.get("date") ?? "";
+
+  useEffect(() => {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(selectedDate)) {
+      return;
+    }
+
+    setFilters((prev) => ({
+      ...prev,
+      fromDate: selectedDate,
+      toDate: selectedDate,
+      rangePreset: "Custom",
+    }));
+  }, [selectedDate]);
 
   const banks =
     useBanksQuery({ isActive: true, name: "", shortName: "" }).data ?? [];
@@ -350,6 +369,7 @@ export function TransactionsPage() {
           status: transferForm.status,
           transactionDate: transferForm.transactionDate,
           transferType: transferForm.transferType,
+          transactionItems: transferForm.transactionItems ?? []
         });
         setIsTransferDrawerOpen(true);
         return;
@@ -366,6 +386,7 @@ export function TransactionsPage() {
         isActive: detail.isActive,
         outAmount: detail.outLeg.amount,
         outCurrencyId: detail.outLeg.currencyId,
+        transactionItems: detail.transactionItems ?? []
       });
       setIsExchangeDrawerOpen(true);
     } catch (e) {

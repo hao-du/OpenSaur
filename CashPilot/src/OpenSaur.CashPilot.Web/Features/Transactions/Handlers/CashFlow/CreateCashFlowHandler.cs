@@ -53,7 +53,15 @@ public static class CreateCashFlowHandler
         var cashFlow = new CashFlow
         {
             Description = request.Description?.Trim() ?? string.Empty,
-            Transaction = transaction
+            Transaction = transaction,
+            TransactionItems = request.TransactionItems
+                .Where(x => !string.IsNullOrWhiteSpace(x.Name))
+                .Select(x => new TransactionItem
+                {
+                    Name = x.Name.Trim(),
+                    Amount = x.Amount
+                })
+                .ToList()
         };
 
         dbContext.CashFlows.Add(cashFlow);

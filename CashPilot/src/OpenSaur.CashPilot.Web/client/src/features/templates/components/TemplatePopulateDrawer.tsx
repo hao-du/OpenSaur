@@ -72,7 +72,7 @@ export function TemplatePopulateDrawer({ isOpen, onClose, banks, currencies, cou
 
   return (
     <DrawerPanel isOpen={isOpen} onClose={onClose} title={drawerTitle} width="wide">
-      <Stack spacing={2}>
+      <Stack spacing={1}>
         {error != null ? <Alert severity="error">{error}</Alert> : null}
 
         {selectedType === "CashFlow" && templateData != null ? (

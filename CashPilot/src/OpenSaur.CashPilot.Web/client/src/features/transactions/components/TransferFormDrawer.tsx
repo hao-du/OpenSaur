@@ -27,6 +27,7 @@ type Props = {
       description?: string | null;
       isActive: boolean;
     }>;
+    transactionItems: Array<{ id?: string; name: string; amount: number }>;
   } | null;
   isOpen: boolean;
   onClose: () => void;
@@ -59,6 +60,7 @@ export function TransferFormDrawer({ editingMovement, isOpen, onClose, counterpa
           transferType: editingMovement.transferType
         }}
         movementInitialDetails={editingMovement?.details ?? []}
+        movementInitialTransactionItems={editingMovement?.transactionItems ?? []}
         movementSubmitLabel={t("transactions.save")}
         onSave={async payload => {
           setIsSubmitting(true);

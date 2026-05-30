@@ -24,6 +24,7 @@ public static class GetCurrencyExchangeByIdHandler
             .AsNoTracking()
             .Include(x => x.CurrencyExchangeTransactions)
                 .ThenInclude(x => x.Transaction)
+            .Include(x => x.TransactionItems)
             .SingleOrDefaultAsync(x => x.Id == id && x.CurrencyExchangeTransactions.Any(y => y.Transaction.OwnerId == currentUserId), cancellationToken);
 
         if (entity is null)
@@ -46,6 +47,7 @@ public static class GetCurrencyExchangeByIdHandler
             new ExchangeLegResponse(outLeg.Transaction.CurrencyId, outLeg.Transaction.Amount, outLeg.Description),
             new ExchangeLegResponse(inLeg.Transaction.CurrencyId, inLeg.Transaction.Amount, inLeg.Description),
             entity.Description,
-            entity.IsActive));
+            entity.IsActive,
+            entity.TransactionItems.Select(x => new TransactionItemResponse(x.Id, x.Name, x.Amount)).ToList()));
     }
 }

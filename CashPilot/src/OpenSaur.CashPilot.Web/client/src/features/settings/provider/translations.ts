@@ -123,6 +123,8 @@ export const translations = {
     "dashboard.oidcRuntimeConfig": "OIDC runtime config loaded from",
     "dashboard.subtitle": "Protected dashboard backed by frontend auth state from the CoreGate code exchange.",
     "dashboard.title": "Dashboard",
+    "dashboard.dailyInOutCalendar": "Daily In/Out Calendar",
+    "dashboard.defaultCurrencyRequired": "Please set a default currency to view this calendar.",
     "forbidden.body": "This area is restricted to super administrators in Zentry.",
     "forbidden.help": "If you believe you should have access, contact an administrator or return to the dashboard.",
     "forbidden.subtitle": "Your account is signed in, but it does not have permission to use this area.",
@@ -246,7 +248,6 @@ export const translations = {
     "transactions.exchangeDate": "Exchange Date",
     "transactions.exchangeLegs": "Exchange Legs",
     "transactions.transactionDetails": "Transaction Details",
-    "transactions.transferHeader": "Transfer Header",
     "transactions.applyHeader": "Apply Header",
     "transactions.saveExchange": "Save Exchange",
     "transactions.recentTransactions": "Recent Transactions",
@@ -257,6 +258,13 @@ export const translations = {
     "transactions.transfer": "Transfer",
     "transactions.transferId": "Transfer Id",
     "transactions.type": "Type",
+    "transactions.formTab": "Form",
+    "transactions.transactionItems.tab": "Transaction Items",
+    "transactions.transactionItems.add": "Add Item",
+    "transactions.transactionItems.remove": "Remove",
+    "transactions.transactionItems.name": "Name",
+    "transactions.transactionItems.amount": "Amount",
+    "transactions.transactionItems.totalAmount": "Total Amount",
     "transactions.save": "Save",
     "transactions.validation.amountRequired": "Amount is required.",
     "transactions.validation.currencyRequired": "Currency is required.",
@@ -417,6 +425,8 @@ export const translations = {
     "dashboard.oidcRuntimeConfig": "Cấu hình OIDC runtime được tải từ",
     "dashboard.subtitle": "Bảng điều khiển được bảo vệ bằng trạng thái xác thực frontend từ CoreGate.",
     "dashboard.title": "Bảng điều khiển",
+    "dashboard.dailyInOutCalendar": "Lịch thu/chi theo ngày",
+    "dashboard.defaultCurrencyRequired": "Vui long dat tien te mac dinh de xem lich nay.",
     "forbidden.body": "Khu vực này chỉ dành cho super administrator trong Zentry.",
     "forbidden.help": "Nếu bạn cho rằng mình cần quyền truy cập, hãy liên hệ quản trị viên hoặc quay lại bảng điều khiển.",
     "forbidden.subtitle": "Tài khoản của bạn đã đăng nhập nhưng không có quyền dùng khu vực này.",
@@ -540,7 +550,6 @@ export const translations = {
     "transactions.exchangeDate": "Ngày quy đổi",
     "transactions.exchangeLegs": "Chi tiết quy đổi",
     "transactions.transactionDetails": "Chi tiết giao dịch",
-    "transactions.transferHeader": "Thông tin chuyển khoản",
     "transactions.applyHeader": "Áp dụng thông tin",
     "transactions.saveExchange": "Lưu quy đổi",
     "transactions.recentTransactions": "Giao dịch gần đây",
@@ -551,6 +560,13 @@ export const translations = {
     "transactions.transfer": "Chuyển khoản",
     "transactions.transferId": "Mã chuyển khoản",
     "transactions.type": "Loại",
+    "transactions.formTab": "Biểu mẫu",
+    "transactions.transactionItems.tab": "Khoản mục giao dịch",
+    "transactions.transactionItems.add": "Thêm mục",
+    "transactions.transactionItems.remove": "Xóa",
+    "transactions.transactionItems.name": "Tên",
+    "transactions.transactionItems.amount": "Số tiền",
+    "transactions.transactionItems.totalAmount": "Tổng số tiền",
     "transactions.save": "Lưu",
     "transactions.validation.amountRequired": "Số tiền là bắt buộc.",
     "transactions.validation.currencyRequired": "Tiền tệ là bắt buộc.",
@@ -592,6 +608,7 @@ export const translations = {
 
 export type AppLocale = keyof typeof translations;
 export type TranslationKey = keyof typeof translations.en;
+
 
 
 

@@ -14,6 +14,7 @@ export type CashFlowFormValues = {
   description: string;
   direction: string;
   transactionDate: string;
+  transactionItems: Array<{ id?: string; name: string; amount: string }>;
 };
 
 type CashFlowFormProps = {

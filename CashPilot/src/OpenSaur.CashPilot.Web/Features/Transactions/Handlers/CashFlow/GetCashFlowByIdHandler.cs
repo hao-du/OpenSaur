@@ -22,6 +22,7 @@ public static class GetCashFlowByIdHandler
         var entity = await dbContext.CashFlows
             .AsNoTracking()
             .Include(x => x.Transaction)
+            .Include(x => x.TransactionItems)
             .SingleOrDefaultAsync(x => x.Id == id && x.Transaction.OwnerId == currentUserId, cancellationToken);
 
         if (entity is null)
@@ -36,6 +37,7 @@ public static class GetCashFlowByIdHandler
             (byte)entity.Transaction.Direction,
             entity.Transaction.TransactionDate,
             entity.Description,
-            entity.IsActive));
+            entity.IsActive,
+            entity.TransactionItems.Select(x => new TransactionItemResponse(x.Id, x.Name, x.Amount)).ToList()));
     }
 }

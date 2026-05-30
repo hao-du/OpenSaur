@@ -24,6 +24,7 @@ export type CreateCashFlowRequestDto = {
   direction: number;
   transactionDate: string;
   description?: string;
+  transactionItems: TransactionItemDto[];
 };
 
 export type SaveBankAccountDetailRequestDto = {
@@ -50,6 +51,7 @@ export type SaveBankAccountFormRequestDto = {
   description?: string;
   isActive: boolean;
   details: SaveBankAccountDetailRequestDto[];
+  transactionItems: TransactionItemDto[];
 };
 
 export type SaveTransferDetailRequestDto = {
@@ -74,6 +76,7 @@ export type SaveTransferFormRequestDto = {
   description?: string;
   isActive: boolean;
   details: SaveTransferDetailRequestDto[];
+  transactionItems: TransactionItemDto[];
 };
 
 export type CreateCurrencyExchangeRequestDto = {
@@ -82,6 +85,7 @@ export type CreateCurrencyExchangeRequestDto = {
   outLeg: { currencyId: string; amount: number; description?: string };
   inLeg: { currencyId: string; amount: number; description?: string };
   description?: string;
+  transactionItems: TransactionItemDto[];
 };
 export type UpdateCurrencyExchangeRequestDto = CreateCurrencyExchangeRequestDto & { isActive: boolean };
 export type UpdateCashFlowRequestDto = CreateCashFlowRequestDto & { id: string; isActive: boolean };
@@ -111,6 +115,19 @@ export type TransactionDashboardDto = {
   incomeOutcomes: IncomeOutcomeDto[];
 };
 
+export type DailyInOutCalendarItemDto = {
+  day: number;
+  income: number;
+  outcome: number;
+};
+
+export type DailyInOutCalendarDto = {
+  year: number;
+  month: number;
+  currencyCode: string | null;
+  items: DailyInOutCalendarItemDto[];
+};
+
 export type BankAccountLookupDto = {
   id: string;
   bankShortName: string;
@@ -138,6 +155,13 @@ export type CashFlowDetailDto = {
   transactionDate: string;
   description: string | null;
   isActive: boolean;
+  transactionItems: TransactionItemDto[];
+};
+
+export type TransactionItemDto = {
+  id?: string;
+  name: string;
+  amount: number;
 };
 
 export type BankAccountTransactionDetailDto = {
@@ -174,6 +198,7 @@ export type TransferFormDto = {
   description: string | null;
   isActive: boolean;
   details: TransferFormDetailDto[];
+  transactionItems: TransactionItemDto[];
 };
 
 export type CurrencyExchangeDetailDto = {
@@ -184,4 +209,5 @@ export type CurrencyExchangeDetailDto = {
   inLeg: { currencyId: string; amount: number; description: string | null };
   description: string | null;
   isActive: boolean;
+  transactionItems: TransactionItemDto[];
 };

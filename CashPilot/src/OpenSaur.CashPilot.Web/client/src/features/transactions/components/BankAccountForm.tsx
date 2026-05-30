@@ -7,11 +7,16 @@ import { DropDown } from "../../../components/atoms/DropDown";
 import { Number as NumberField } from "../../../components/atoms/Number";
 import { Text } from "../../../components/atoms/Text";
 import { TextArea } from "../../../components/atoms/TextArea";
+import { useSettings } from "../../settings/provider/SettingProvider";
 import type { BankDto } from "../../banks/dtos/BankDto";
 import type { CurrencyDto } from "../../currencies/dtos/CurrencyDto";
-import type { SaveBankAccountDetailRequestDto, SaveBankAccountFormRequestDto } from "../dtos/TransactionDto";
+import type {
+  SaveBankAccountDetailRequestDto,
+  SaveBankAccountFormRequestDto
+} from "../dtos/TransactionDto";
 import { BankAccountTransactionForm, type DetailEditor } from "./BankAccountTransactionForm";
-import { useSettings } from "../../settings/provider/SettingProvider";
+import { TransactionItemsEditor } from "./TransactionItemsEditor";
+import { TransactionFormTabs } from "./TransactionFormTabs";
 
 type Props = {
   banks: BankDto[];
@@ -32,6 +37,7 @@ type HeaderValues = {
   status: string;
   accountNumber: string;
   description: string;
+  transactionItems: Array<{ id?: string; name: string; amount: string }>;
 };
 
 function toDetailRequest(detail: DetailEditor): SaveBankAccountDetailRequestDto {
@@ -47,9 +53,19 @@ function toDetailRequest(detail: DetailEditor): SaveBankAccountDetailRequestDto 
   };
 }
 
-export function BankAccountForm({ banks, currencies, initialValue, onSubmit, submitLabel = "Create", isSubmitting = false }: Props) {
+export function BankAccountForm({
+  banks,
+  currencies,
+  initialValue,
+  onSubmit,
+  submitLabel = "Create",
+  isSubmitting = false
+}: Props) {
   const { t, todayIsoDate } = useSettings();
   const today = todayIsoDate;
+
+  const [tab, setTab] = useState<"form" | "items">("form");
+
   const form = useForm<HeaderValues>({
     defaultValues: {
       accountNumber: initialValue?.accountNumber ?? "",
@@ -60,7 +76,12 @@ export function BankAccountForm({ banks, currencies, initialValue, onSubmit, sub
       interestRate: initialValue?.interestRate?.toString() ?? "",
       maturityDate: initialValue?.maturityDate ?? today,
       startDate: initialValue?.startDate ?? today,
-      status: (initialValue?.status ?? 1).toString()
+      status: (initialValue?.status ?? 1).toString(),
+      transactionItems: (initialValue?.transactionItems ?? []).map(x => ({
+        id: x.id,
+        name: x.name,
+        amount: x.amount.toString()
+      }))
     }
   });
 
@@ -78,9 +99,12 @@ export function BankAccountForm({ banks, currencies, initialValue, onSubmit, sub
       isNew: false
     }))
   );
+
   const startDate = useWatch({ control: form.control, name: "startDate" });
   const maturityDate = useWatch({ control: form.control, name: "maturityDate" });
   const status = useWatch({ control: form.control, name: "status" });
+  const currencyId = useWatch({ control: form.control, name: "currencyId" });
+  const selectedCurrencyCode = currencies.find(x => x.id === currencyId)?.shortName;
 
   useEffect(() => {
     form.reset({
@@ -92,7 +116,12 @@ export function BankAccountForm({ banks, currencies, initialValue, onSubmit, sub
       interestRate: initialValue?.interestRate?.toString() ?? "",
       maturityDate: initialValue?.maturityDate ?? today,
       startDate: initialValue?.startDate ?? today,
-      status: (initialValue?.status ?? 1).toString()
+      status: (initialValue?.status ?? 1).toString(),
+      transactionItems: (initialValue?.transactionItems ?? []).map(x => ({
+        id: x.id,
+        name: x.name,
+        amount: x.amount.toString()
+      }))
     });
 
     setDetails(
@@ -109,33 +138,12 @@ export function BankAccountForm({ banks, currencies, initialValue, onSubmit, sub
         isNew: false
       }))
     );
+
   }, [banks, currencies, form, initialValue, today]);
 
   useEffect(() => {
     void form.trigger(["startDate", "maturityDate"]);
   }, [form, maturityDate, startDate]);
-
-  const addNewDetail = () => {
-    setDetails(prev => [...prev, {
-      clientKey: crypto.randomUUID(),
-      currencyId: currencies[0]?.id ?? "",
-      amount: "",
-      direction: "1",
-      transactionType: "2",
-      transactionDate: today,
-      description: "",
-      isActive: true,
-      isNew: true
-    }]);
-  };
-
-  const updateDetail = (clientKey: string, updated: DetailEditor) => {
-    setDetails(prev => prev.map(x => x.clientKey === clientKey ? updated : x));
-  };
-
-  const removeDetail = (clientKey: string) => {
-    setDetails(prev => prev.filter(x => x.clientKey !== clientKey));
-  };
 
   const submitHandler = async (values: HeaderValues) => {
     const headerIsActive = initialValue?.isActive ?? true;
@@ -149,15 +157,15 @@ export function BankAccountForm({ banks, currencies, initialValue, onSubmit, sub
       initialDeposit.currencyId = values.currencyId;
       initialDeposit.direction = 2;
     } else {
-        finalDetails.push({
-          currencyId: values.currencyId,
-          amount: Number(values.amount),
-          direction: 2,
-          transactionDate: values.startDate,
-          transactionType: 1,
-          description: values.description.trim().length === 0 ? undefined : values.description.trim(),
-          isActive: headerIsActive
-        });
+      finalDetails.push({
+        currencyId: values.currencyId,
+        amount: Number(values.amount),
+        direction: 2,
+        transactionDate: values.startDate,
+        transactionType: 1,
+        description: values.description.trim().length === 0 ? undefined : values.description.trim(),
+        isActive: headerIsActive
+      });
     }
 
     const matured = finalDetails.find(x => x.transactionType === 3);
@@ -196,145 +204,208 @@ export function BankAccountForm({ banks, currencies, initialValue, onSubmit, sub
       accountNumber: values.accountNumber.trim().length === 0 ? undefined : values.accountNumber.trim(),
       description: values.description.trim().length === 0 ? undefined : values.description.trim(),
       isActive: headerIsActive,
-      details: finalDetails
+      details: finalDetails,
+      transactionItems: values.transactionItems
+        .filter(x => x.name.trim().length > 0)
+        .map(x => ({
+          id: x.id,
+          name: x.name.trim(),
+          amount: Number(x.amount || "0")
+        }))
     });
   };
 
   return (
-    <Stack spacing={3}>
-      <Grid container spacing={2}>
-        <Grid size={{ xs: 12 }}>
-          <Text
+    <Stack spacing={2}>
+      <TransactionFormTabs
+        value={tab}
+        onChange={setTab}
+        itemsContent={
+          <TransactionItemsEditor
             control={form.control}
-            label={t("transactions.accountNumber")}
-            name="accountNumber"
+            name="transactionItems"
+            disabled={isSubmitting}
+            currencyCode={selectedCurrencyCode}
           />
-        </Grid>
+        }
+        formContent={
+          <>
+            <Grid container spacing={2}>
+              <Grid size={{ xs: 12 }}>
+                <Text control={form.control} label={t("transactions.accountNumber")} name="accountNumber" />
+              </Grid>
 
-        <Grid size={{ xs: 12, md: 6 }}>
-          <DropDown
-            control={form.control}
-            label={t("transactions.bank")}
-            name="bankId"
-            options={banks.map(x => ({ label: x.shortName, value: x.id }))}
-            required
-            rules={{ required: t("transactions.validation.bankRequired") }}
-          />
-        </Grid>
-        <Grid size={{ xs: 12, md: 6 }}>
-          <NumberField
-            control={form.control}
-            label={t("transactions.interestRate")}
-            name="interestRate"
-            rules={{
-              validate: value => {
-                if (typeof value === "string" && value.trim().length === 0) return true;
-                if (!Number.isFinite(Number(value))) return t("transactions.validation.interestRateInvalid");
-                return Number(value) <= 100 ? true : t("transactions.validation.interestRateMax");
-              }
-            }}
-          />
-        </Grid>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <DropDown
+                  control={form.control}
+                  label={t("transactions.bank")}
+                  name="bankId"
+                  options={banks.map(x => ({ label: x.shortName, value: x.id }))}
+                  required
+                  rules={{ required: t("transactions.validation.bankRequired") }}
+                />
+              </Grid>
 
-        <Grid size={{ xs: 12, md: 6 }}>
-          <NumberField
-            control={form.control}
-            label={t("transactions.amount")}
-            name="amount"
-            required
-            rules={{
-              required: t("transactions.validation.amountRequired"),
-              validate: value => Number.isFinite(Number(value)) ? true : t("transactions.validation.amountInvalid")
-            }}
-          />
-        </Grid>
-        <Grid size={{ xs: 12, md: 6 }}>
-          <DropDown
-            control={form.control}
-            label={t("transactions.currency")}
-            name="currencyId"
-            options={currencies.map(x => ({ label: x.shortName, value: x.id }))}
-            required
-            rules={{ required: t("transactions.validation.currencyRequired") }}
-          />
-        </Grid>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <NumberField
+                  control={form.control}
+                  label={t("transactions.interestRate")}
+                  name="interestRate"
+                  rules={{
+                    validate: value => {
+                      if (typeof value === "string" && value.trim().length === 0) {
+                        return true;
+                      }
+                      if (!Number.isFinite(Number(value))) {
+                        return t("transactions.validation.interestRateInvalid");
+                      }
+                      return Number(value) <= 100 ? true : t("transactions.validation.interestRateMax");
+                    }
+                  }}
+                />
+              </Grid>
 
-        <Grid size={{ xs: 12, md: 6 }}>
-          <DatePicker
-            control={form.control}
-            label={t("transactions.startDate")}
-            name="startDate"
-            required
-            rules={{ required: t("transactions.validation.startDateRequired") }}
-          />
-        </Grid>
-        <Grid size={{ xs: 12, md: 6 }}>
-          <DatePicker
-            control={form.control}
-            label={t("transactions.maturityDate")}
-            name="maturityDate"
-            required={status === "2"}
-            rules={{
-              validate: value => {
-                if (status === "2" && (!value || value.trim().length === 0)) {
-                  return t("transactions.validation.maturityDateRequired");
-                }
-                if (!value || value.trim().length === 0) {
-                  return true;
-                }
-                return value >= form.getValues("startDate") ? true : t("transactions.validation.maturityDateAfterStartDate");
-              }
-            }}
-          />
-        </Grid>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <NumberField
+                  control={form.control}
+                  label={t("transactions.amount")}
+                  name="amount"
+                  required
+                  rules={{
+                    required: t("transactions.validation.amountRequired"),
+                    validate: value => Number.isFinite(Number(value)) ? true : t("transactions.validation.amountInvalid")
+                  }}
+                />
+              </Grid>
 
-        <Grid size={{ xs: 12, md: 6 }}>
-          <DropDown
-            control={form.control}
-            label={t("transactions.status")}
-            name="status"
-            options={[
-              { label: t("transactions.statusType.active"), value: "1" },
-              { label: t("transactions.statusType.matured"), value: "2" },
-              { label: t("transactions.statusType.closedEarly"), value: "3" }
-            ]}
-            required
-            rules={{ required: t("transactions.validation.statusRequired") }}
-          />
-        </Grid>
-        <Grid size={{ xs: 12 }}>
-          <TextArea control={form.control} label={t("transactions.description")} name="description" minRows={3} />
-        </Grid>
-      </Grid>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <DropDown
+                  control={form.control}
+                  label={t("transactions.currency")}
+                  name="currencyId"
+                  options={currencies.map(x => ({ label: x.shortName, value: x.id }))}
+                  required
+                  rules={{ required: t("transactions.validation.currencyRequired") }}
+                />
+              </Grid>
 
-      <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mt: 2 }}>
-        <h3 style={{ margin: 0 }}>{t("transactions.transactionDetails")}</h3>
-        <ActionButton onClick={addNewDetail} color="secondary" size="small">
-          {t("transactions.addTransaction")}
-        </ActionButton>
-      </Stack>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <DatePicker
+                  control={form.control}
+                  label={t("transactions.startDate")}
+                  name="startDate"
+                  required
+                  rules={{ required: t("transactions.validation.startDateRequired") }}
+                />
+              </Grid>
 
-      <Stack spacing={2}>
-        {details.filter(d => d.transactionType === "2").map(detail => (
-          <BankAccountTransactionForm
-            key={detail.clientKey}
-            detail={detail}
-            onAccept={updated => updateDetail(detail.clientKey, updated)}
-            onDelete={() => removeDetail(detail.clientKey)}
-            onCancelNew={() => removeDetail(detail.clientKey)}
-          />
-        ))}
-      </Stack>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <DatePicker
+                  control={form.control}
+                  label={t("transactions.maturityDate")}
+                  name="maturityDate"
+                  required={status === "2"}
+                  rules={{
+                    validate: value => {
+                      const dateValue = typeof value === "string" ? value : "";
+                      if (status === "2" && dateValue.trim().length === 0) {
+                        return t("transactions.validation.maturityDateRequired");
+                      }
+                      if (dateValue.trim().length === 0) {
+                        return true;
+                      }
+                      return dateValue >= form.getValues("startDate")
+                        ? true
+                        : t("transactions.validation.maturityDateAfterStartDate");
+                    }
+                  }}
+                />
+              </Grid>
 
-      <Stack direction="row" justifyContent="flex-end">
-        <ActionButton
-          onClick={() => { void form.handleSubmit(submitHandler)(); }}
-          disabled={isSubmitting}
-        >
-          {isSubmitting ? t("action.working") : submitLabel}
-        </ActionButton>
-      </Stack>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <DropDown
+                  control={form.control}
+                  label={t("transactions.status")}
+                  name="status"
+                  options={[
+                    { label: t("transactions.statusType.active"), value: "1" },
+                    { label: t("transactions.statusType.matured"), value: "2" },
+                    { label: t("transactions.statusType.closedEarly"), value: "3" }
+                  ]}
+                  required
+                  rules={{ required: t("transactions.validation.statusRequired") }}
+                />
+              </Grid>
+
+              <Grid size={{ xs: 12 }}>
+                <TextArea
+                  control={form.control}
+                  label={t("transactions.description")}
+                  name="description"
+                  minRows={3}
+                />
+              </Grid>
+            </Grid>
+
+            <Stack direction="row" justifyContent="space-between" alignItems="center">
+              <h3 style={{ margin: 0 }}>{t("transactions.transactionDetails")}</h3>
+              <ActionButton
+                onClick={() => {
+                  setDetails(prev => [
+                    ...prev,
+                    {
+                      clientKey: crypto.randomUUID(),
+                      currencyId: currencies[0]?.id ?? "",
+                      amount: "",
+                      direction: "1",
+                      transactionType: "2",
+                      transactionDate: today,
+                      description: "",
+                      isActive: true,
+                      isNew: true
+                    }
+                  ]);
+                }}
+                color="secondary"
+                size="small"
+              >
+                {t("transactions.addTransaction")}
+              </ActionButton>
+            </Stack>
+
+            <Stack spacing={2}>
+              {details
+                .filter(d => d.transactionType === "2")
+                .map(detail => (
+                  <BankAccountTransactionForm
+                    key={detail.clientKey}
+                    detail={detail}
+                    onAccept={updated =>
+                      setDetails(prev => prev.map(x => x.clientKey === detail.clientKey ? updated : x))
+                    }
+                    onDelete={() =>
+                      setDetails(prev => prev.filter(x => x.clientKey !== detail.clientKey))
+                    }
+                    onCancelNew={() =>
+                      setDetails(prev => prev.filter(x => x.clientKey !== detail.clientKey))
+                    }
+                  />
+                ))}
+            </Stack>
+
+            <Stack direction="row" justifyContent="flex-end">
+              <ActionButton
+                onClick={() => {
+                  void form.handleSubmit(submitHandler)();
+                }}
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? t("action.working") : submitLabel}
+              </ActionButton>
+            </Stack>
+          </>
+        }
+      />
     </Stack>
   );
 }
-

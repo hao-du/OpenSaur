@@ -183,13 +183,13 @@ export const layoutStyles: Record<string, SxProps<Theme>> = {
   },
   drawerPaperWide: {
     "& .MuiDrawer-paper": {
-      p: 3,
+      p: 0,
       width: { sm: 620, xs: "100%" }
     }
   },
   drawerPaperNarrow: {
     "& .MuiDrawer-paper": {
-      p: 3,
+      p: 0,
       width: { sm: 480, xs: "100%" }
     }
   },

@@ -42,6 +42,7 @@ public static class UpdateCashFlowHandler
 
         var entity = await dbContext.CashFlows
             .Include(x => x.Transaction)
+            .Include(x => x.TransactionItems)
             .SingleOrDefaultAsync(x => x.Id == request.Id && x.Transaction.OwnerId == currentUserId, cancellationToken);
 
         if (entity is null)
@@ -56,6 +57,16 @@ public static class UpdateCashFlowHandler
         entity.Transaction.Direction = (TransactionDirection)request.Direction;
         entity.Transaction.TransactionDate = request.TransactionDate;
         entity.Transaction.Description = request.Description?.Trim() ?? string.Empty;
+
+        dbContext.TransactionItems.RemoveRange(entity.TransactionItems);
+        entity.TransactionItems = request.TransactionItems
+            .Where(x => !string.IsNullOrWhiteSpace(x.Name))
+            .Select(x => new TransactionItem
+            {
+                Name = x.Name.Trim(),
+                Amount = x.Amount
+            })
+            .ToList();
 
         await dbContext.SaveChangesAsync(cancellationToken);
 

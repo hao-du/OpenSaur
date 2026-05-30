@@ -45,7 +45,15 @@ public static class CreateCurrencyExchangeHandler
         {
             Description = request.Description?.Trim() ?? string.Empty,
             ExchangeDate = request.ExchangeDate,
-            ExchangeRate = request.ExchangeRate
+            ExchangeRate = request.ExchangeRate,
+            TransactionItems = request.TransactionItems
+                .Where(x => !string.IsNullOrWhiteSpace(x.Name))
+                .Select(x => new TransactionItem
+                {
+                    Name = x.Name.Trim(),
+                    Amount = x.Amount
+                })
+                .ToList()
         };
 
         var outTransaction = new Transaction

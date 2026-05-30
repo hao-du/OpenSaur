@@ -1,6 +1,9 @@
 import { DefaultLayout } from "../../../components/layouts/DefaultLayout";
 import { Grid, Paper, Stack } from "@mui/material";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useTransactionDashboardQuery } from "../../transactions/hooks/useTransactionDashboardQuery";
+import { useDailyInOutCalendarQuery } from "../../transactions/hooks/useDailyInOutCalendarQuery";
 import { useSettings } from "../../settings/provider/SettingProvider";
 import { useCurrenciesQuery } from "../../currencies/hooks/useCurrenciesQuery";
 import { useBanksQuery } from "../../banks/hooks/useBanksQuery";
@@ -11,10 +14,16 @@ import { TotalAmountByCurrencyCard } from "../components/TotalAmountByCurrencyCa
 import { TotalActiveBankAccountCard } from "../components/TotalActiveBankAccountCard";
 import { IncomeOutcomeCard } from "../components/IncomeOutcomeCard";
 import { DashboardCardSkeleton } from "../components/DashboardCardSkeleton";
+import { DailyInOutCalendarCard } from "../components/DailyInOutCalendarCard";
 
 export function DashboardPage() {
-  const { t } = useSettings();
+  const { t, todayIsoDate } = useSettings();
+  const navigate = useNavigate();
   const transactionDashboard = useTransactionDashboardQuery();
+  const now = new Date(todayIsoDate);
+  const [calendarYear, setCalendarYear] = useState(now.getUTCFullYear());
+  const [calendarMonth, setCalendarMonth] = useState(now.getUTCMonth() + 1);
+  const calendarQuery = useDailyInOutCalendarQuery(calendarYear, calendarMonth);
   const currencies = useCurrenciesQuery({ isActive: true, name: "", shortName: "" }).data ?? [];
   const banks = useBanksQuery({ isActive: true, name: "", shortName: "" }).data ?? [];
   const counterparties = useCounterpartiesQuery({ email: "", fullName: "", isActive: true, phoneNumber: "" }).data ?? [];
@@ -74,6 +83,31 @@ export function DashboardPage() {
                   <IncomeOutcomeCard
                     items={incomeOutcomeItems}
                     title={incomeOutcomeTitle}
+                  />
+                )}
+              </Grid>
+              <Grid size={{ lg: 8, xs: 12 }}>
+                {calendarQuery.isLoading || calendarQuery.isFetching ? (
+                  <DashboardCardSkeleton rows={8} />
+                ) : (
+                  <DailyInOutCalendarCard
+                    defaultCurrencyCode={calendarQuery.data?.currencyCode ?? undefined}
+                    isLoading={calendarQuery.isLoading || calendarQuery.isFetching}
+                    inLabel={t("transactions.directionIn")}
+                    items={calendarQuery.data?.items ?? []}
+                    month={calendarMonth}
+                    monthLabel={t("transactions.filter.month")}
+                    noDefaultCurrencyLabel={t("dashboard.defaultCurrencyRequired")}
+                    onDayClick={(day) => {
+                      const date = `${calendarYear}-${String(calendarMonth).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+                      navigate(`/transactions?date=${date}`);
+                    }}
+                    onMonthChange={setCalendarMonth}
+                    onYearChange={setCalendarYear}
+                    outLabel={t("transactions.directionOut")}
+                    title={t("dashboard.dailyInOutCalendar")}
+                    year={calendarYear}
+                    yearLabel={t("transactions.filter.year")}
                   />
                 )}
               </Grid>
