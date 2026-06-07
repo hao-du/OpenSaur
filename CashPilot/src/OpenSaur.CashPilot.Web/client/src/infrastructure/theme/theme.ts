@@ -12,6 +12,7 @@ const textSecondary = "#5f6c65";
 const borderSubtle = "rgba(0,204,255,0.10)";
 const borderDefault = "rgba(0,204,255,0.12)";
 const borderStrong = "rgba(0,204,255,0.24)";
+const surfaceSubtle = "#fafafa";
 const navSelected = "rgba(0,204,255,0.10)";
 const navSelectedHover = "rgba(0,204,255,0.14)";
 export const tabSelectedBg = "rgba(0,204,255,0.14)";
@@ -228,5 +229,17 @@ export const layoutStyles: Record<string, SxProps<Theme>> = {
   loadingPanel: {
     border: `1px solid ${borderDefault}`,
     p: 4
+  },
+  formSection: {
+    backgroundColor: surfaceSubtle,
+    border: `1px solid ${borderDefault}`,
+    borderRadius: 1,
+    p: 2
+  },
+  tableHeaderCell: {
+    py: 1
+  },
+  tableBodyCell: {
+    py: 0.8
   }
 };

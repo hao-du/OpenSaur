@@ -1,15 +1,21 @@
 import { Stack } from "@mui/material";
-import { useEffect, useMemo, useState } from "react";
+import { useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
+import { ActionButton } from "../../../components/atoms/ActionButton";
 import type { CounterpartyDto } from "../../counterparties/dtos/CounterpartyDto";
 import type { CurrencyDto } from "../../currencies/dtos/CurrencyDto";
-import type { SaveTransferFormRequestDto } from "../dtos/TransactionDto";
-import { TransferHeaderForm, type TransferHeaderValues } from "./TransferHeaderForm";
-import { TransferFormTransaction, type TransferDetailEditor } from "./TransferFormTransaction";
-import { ActionButton } from "../../../components/atoms/ActionButton";
+import {
+  transactionDirectionValues,
+  transactionFormTabs,
+  transferStatuses,
+  transferTypes,
+} from "../../../infrastructure/constants/transactionEnums";
 import { useSettings } from "../../settings/provider/SettingProvider";
+import type { SaveTransferFormRequestDto } from "../dtos/TransactionDto";
 import { TransactionItemsEditor } from "./TransactionItemsEditor";
 import { TransactionFormTabs } from "./TransactionFormTabs";
+import { TransferFormTransaction, type TransferDetailEditor } from "./TransferFormTransaction";
+import { TransferHeaderForm, type TransferHeaderValues } from "./TransferHeaderForm";
 
 type Props = {
   counterparties: CounterpartyDto[];
@@ -47,6 +53,74 @@ type TransferItemsFormValues = {
   transactionItems: Array<{ id?: string; name: string; amount: string }>;
 };
 
+function getDefaultHeaderValues(counterparties: CounterpartyDto[], currencies: CurrencyDto[], today: string): TransferHeaderValues {
+  return {
+    amount: "0",
+    counterpartyId: counterparties[0]?.id ?? "",
+    currencyId: currencies[0]?.id ?? "",
+    description: "",
+    dueDate: "",
+    transactionDate: today,
+    transferType: String(transferTypes.lend),
+    status: String(transferStatuses.active),
+    tags: [],
+  };
+}
+
+function getInitialHeaderValues(
+  movementInitialValue: Props["movementInitialValue"],
+  counterparties: CounterpartyDto[],
+  currencies: CurrencyDto[],
+  today: string,
+): TransferHeaderValues {
+  if (movementInitialValue == null) {
+    return getDefaultHeaderValues(counterparties, currencies, today);
+  }
+
+  return {
+    amount: movementInitialValue.amount.toString(),
+    counterpartyId: movementInitialValue.counterpartyId,
+    currencyId: movementInitialValue.currencyId,
+    description: movementInitialValue.description ?? "",
+    dueDate: movementInitialValue.dueDate ?? "",
+    transactionDate: movementInitialValue.transactionDate,
+    transferType: movementInitialValue.transferType.toString(),
+    status: movementInitialValue.status.toString(),
+    tags: movementInitialValue.tags ?? [],
+  };
+}
+
+function getInitialDetails(movementInitialValue: Props["movementInitialValue"], movementInitialDetails: Props["movementInitialDetails"]) {
+  if (movementInitialValue == null) {
+    return [] as TransferDetailEditor[];
+  }
+
+  return (movementInitialDetails ?? []).map((x) => ({
+    amount: x.amount.toString(),
+    clientKey: crypto.randomUUID(),
+    description: x.description ?? "",
+    direction: x.direction.toString(),
+    id: x.id,
+    isActive: x.isActive,
+    transactionDate: x.transactionDate,
+  }));
+}
+
+function getInitialTransactionItems(
+  movementInitialValue: Props["movementInitialValue"],
+  movementInitialTransactionItems: Props["movementInitialTransactionItems"],
+) {
+  if (movementInitialValue == null) {
+    return [];
+  }
+
+  return (movementInitialTransactionItems ?? []).map((x) => ({
+    id: x.id,
+    name: x.name,
+    amount: x.amount.toString(),
+  }));
+}
+
 export function TransferForm({
   counterparties,
   currencies,
@@ -61,107 +135,29 @@ export function TransferForm({
 }: Props) {
   const { t, todayIsoDate } = useSettings();
   const today = todayIsoDate;
-  const [tab, setTab] = useState<"form" | "items">("form");
+  const [tab, setTab] = useState<(typeof transactionFormTabs)[keyof typeof transactionFormTabs]>(transactionFormTabs.form);
 
-  const defaultHeaderValues = useMemo<TransferHeaderValues>(
-    () => ({
-      amount: "0",
-      counterpartyId: counterparties[0]?.id ?? "",
-      currencyId: currencies[0]?.id ?? "",
-      description: "",
-      dueDate: "",
-      transactionDate: today,
-      transferType: "1",
-      status: "1",
-      tags: [],
-    }),
-    [counterparties, currencies, today],
-  );
-
-  const initialHeaderValues = useMemo<TransferHeaderValues>(() => {
-    if (movementInitialValue == null) {
-      return defaultHeaderValues;
-    }
-
-    return {
-      amount: movementInitialValue.amount.toString(),
-      counterpartyId: movementInitialValue.counterpartyId,
-      currencyId: movementInitialValue.currencyId,
-      description: movementInitialValue.description ?? "",
-      dueDate: movementInitialValue.dueDate ?? "",
-      transactionDate: movementInitialValue.transactionDate,
-      transferType: movementInitialValue.transferType.toString(),
-      status: movementInitialValue.status.toString(),
-      tags: movementInitialValue.tags ?? [],
-    };
-  }, [defaultHeaderValues, movementInitialValue]);
+  const initialHeaderValues = getInitialHeaderValues(movementInitialValue, counterparties, currencies, today);
+  const initialDetails = getInitialDetails(movementInitialValue, movementInitialDetails);
+  const initialTransactionItems = getInitialTransactionItems(movementInitialValue, movementInitialTransactionItems);
 
   const headerForm = useForm<TransferHeaderValues>({
-    defaultValues: defaultHeaderValues,
+    defaultValues: initialHeaderValues,
   });
-  const [details, setDetails] = useState<TransferDetailEditor[]>([]);
+  const [details, setDetails] = useState<TransferDetailEditor[]>(() => initialDetails);
   const transactionItemsForm = useForm<TransferItemsFormValues>({
-    defaultValues: { transactionItems: [] },
+    defaultValues: { transactionItems: initialTransactionItems },
   });
 
-  const calculatedAmount = useMemo(
-    () =>
-      details.reduce(
-        (sum, x) =>
-          sum + (Number.isFinite(Number(x.amount)) ? Number(x.amount) : 0),
-        0,
-      ),
-    [details],
+  const calculatedAmount = details.reduce(
+    (sum, x) => sum + (Number.isFinite(Number(x.amount)) ? Number(x.amount) : 0),
+    0,
   );
   const selectedCurrencyId = useWatch({
     control: headerForm.control,
     name: "currencyId",
   });
-  const selectedCurrencyCode = currencies.find((x) => x.id === selectedCurrencyId)
-    ?.shortName;
-
-  useEffect(() => {
-    headerForm.reset(initialHeaderValues);
-  }, [headerForm, initialHeaderValues]);
-
-  useEffect(() => {
-    headerForm.setValue("amount", calculatedAmount.toString(), {
-      shouldDirty: false,
-      shouldValidate: false,
-    });
-  }, [calculatedAmount, headerForm]);
-
-  useEffect(() => {
-    if (movementInitialValue == null) {
-      setDetails([]);
-      transactionItemsForm.reset({ transactionItems: [] });
-      return;
-    }
-
-    setDetails(
-      movementInitialDetails.map((x) => ({
-        amount: x.amount.toString(),
-        clientKey: crypto.randomUUID(),
-        description: x.description ?? "",
-        direction: x.direction.toString(),
-        id: x.id,
-        isActive: x.isActive,
-        transactionDate: x.transactionDate,
-      })),
-    );
-    transactionItemsForm.reset({
-      transactionItems: (movementInitialTransactionItems ?? []).map((x) => ({
-        id: x.id,
-        name: x.name,
-        amount: x.amount.toString(),
-      })),
-    });
-  }, [
-    movementInitialDetails,
-    movementInitialTransactionItems,
-    movementInitialValue,
-    transactionItemsForm,
-  ]);
+  const selectedCurrencyCode = currencies.find((x) => x.id === selectedCurrencyId)?.shortName;
 
   const addNewDetail = () =>
     setDetails((prev) => [
@@ -170,7 +166,7 @@ export function TransferForm({
         amount: "",
         clientKey: crypto.randomUUID(),
         description: "",
-        direction: "1",
+        direction: String(transactionDirectionValues.inflow),
         isNew: true,
         transactionDate: headerForm.getValues("transactionDate") ?? today,
       },
@@ -191,26 +187,17 @@ export function TransferForm({
       amount: calculatedAmount,
       counterpartyId: headerValues.counterpartyId,
       currencyId: headerValues.currencyId,
-      description:
-        headerValues.description.trim().length === 0
-          ? undefined
-          : headerValues.description.trim(),
+      description: headerValues.description.trim().length === 0 ? undefined : headerValues.description.trim(),
       details: details.map((detail) => ({
         amount: Number(detail.amount),
         currencyId: headerValues.currencyId,
-        description:
-          detail.description.trim().length === 0
-            ? undefined
-            : detail.description.trim(),
+        description: detail.description.trim().length === 0 ? undefined : detail.description.trim(),
         direction: Number(detail.direction),
         id: detail.id,
         isActive: detail.isActive ?? true,
         transactionDate: detail.transactionDate,
       })),
-      dueDate:
-        headerValues.dueDate.trim().length === 0
-          ? undefined
-          : headerValues.dueDate,
+      dueDate: headerValues.dueDate.trim().length === 0 ? undefined : headerValues.dueDate,
       id: movementInitialValue?.id,
       isActive: true,
       transactionDate: headerValues.transactionDate,

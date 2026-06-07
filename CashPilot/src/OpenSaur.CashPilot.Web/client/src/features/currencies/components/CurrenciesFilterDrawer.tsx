@@ -56,9 +56,9 @@ export function CurrenciesFilterDrawer({
       >
         <Text control={form.control} label={t("currencies.name")} name="name" />
         <Text control={form.control} label={t("currencies.shortCode")} name="shortName" />
-        <CheckBox control={form.control} label={t("currencies.activeOnly")} name="isActive" />
+        <CheckBox control={form.control} label={t("common.activeOnly")} name="isActive" />
         <Stack direction="row" spacing={1} sx={layoutStyles.formFooterRow}>
-          <ActionButton type="submit">{t("currencies.apply")}</ActionButton>
+          <ActionButton type="submit">{t("common.apply")}</ActionButton>
           <ActionButton
             onClick={() => {
               form.reset({
@@ -69,7 +69,7 @@ export function CurrenciesFilterDrawer({
             }}
             variant="outlined"
           >
-            {t("currencies.reset")}
+            {t("common.reset")}
           </ActionButton>
         </Stack>
       </Stack>

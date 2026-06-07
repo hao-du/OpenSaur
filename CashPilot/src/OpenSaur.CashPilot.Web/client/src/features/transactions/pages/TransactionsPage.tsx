@@ -1,35 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import {
-  Alert,
-  Chip,
-  CircularProgress,
-  Grid,
-  Menu,
-  MenuItem,
-  Pagination,
-  Paper,
-  Stack,
-} from "@mui/material";
-import {
-  Banknote,
-  ChevronDown,
-  Landmark,
-  Pencil,
-  Repeat,
-  Trash2,
-  Users,
-} from "lucide-react";
+import { Alert, Grid, Menu, MenuItem, Stack } from "@mui/material";
+import { ChevronDown } from "lucide-react";
 import { ActionButton } from "../../../components/atoms/ActionButton";
 import { ConfirmModal } from "../../../components/atoms/ConfirmModal";
 import { DefaultLayout } from "../../../components/layouts/DefaultLayout";
-import { BodyText } from "../../../components/atoms/BodyText";
-import { layoutStyles } from "../../../infrastructure/theme/theme";
 import { useSettings } from "../../settings/provider/SettingProvider";
 import { useBanksQuery } from "../../banks/hooks/useBanksQuery";
 import { useCurrenciesQuery } from "../../currencies/hooks/useCurrenciesQuery";
 import { useCounterpartiesQuery } from "../../counterparties/hooks/useCounterpartiesQuery";
-import { TemplatePopulateActionCard } from "../../dashboard/components/TemplatePopulateActionCard";
 import {
   getBankAccountFormById,
   getCashFlowById,
@@ -37,6 +16,7 @@ import {
   getTransferFormById,
 } from "../api/transactionsApi";
 import type { CashFlowDetailDto, SaveBankAccountFormRequestDto } from "../dtos/TransactionDto";
+import type { ExchangeDraft, TransactionDeleteTarget, TransactionType, TransferMovementDraft } from "../dtos/TransactionPageState";
 import { useCreateCashFlowMutation } from "../hooks/useCreateCashFlowMutation";
 import { useCreateCurrencyExchangeMutation } from "../hooks/useCreateCurrencyExchangeMutation";
 import { useDeleteTransactionMutation } from "../hooks/useDeleteTransactionMutation";
@@ -51,75 +31,14 @@ import { CashFlowFormDrawer } from "../components/CashFlowFormDrawer";
 import { BankAccountFormDrawer } from "../components/BankAccountFormDrawer";
 import { TransferFormDrawer } from "../components/TransferFormDrawer";
 import { ExchangeFormDrawer } from "../components/ExchangeFormDrawer";
-import { TotalAmountByCurrencyCard } from "../../dashboard/components/TotalAmountByCurrencyCard";
-import { TotalActiveBankAccountCard } from "../../dashboard/components/TotalActiveBankAccountCard";
-import { IncomeOutcomeCard } from "../../dashboard/components/IncomeOutcomeCard";
-import { DashboardCardSkeleton } from "../../dashboard/components/DashboardCardSkeleton";
+import { TransactionDashboardPanel } from "../components/TransactionDashboardPanel";
+import { TransactionListPanel } from "../components/TransactionListPanel";
 import {
   TransactionsFilterDrawer,
   type TransactionFilterValues,
 } from "../components/TransactionsFilterDrawer";
 
-const amountFormatter = new Intl.NumberFormat("en-US", {
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-});
 const ITEMS_PER_PAGE = 30;
-
-function getTransactionTypeUi(
-  type: "CashFlow" | "BankAccount" | "Transfer" | "Exchange",
-) {
-  if (type === "CashFlow") {
-    return { className: "tx-type-cashflow", icon: Banknote };
-  }
-  if (type === "BankAccount") {
-    return { className: "tx-type-bankaccount", icon: Landmark };
-  }
-  if (type === "Transfer") {
-    return { className: "tx-type-transfer", icon: Users };
-  }
-  return { className: "tx-type-exchange", icon: Repeat };
-}
-
-function getTransactionTypeTagSx(
-  type: "CashFlow" | "BankAccount" | "Transfer" | "Exchange",
-) {
-  if (type === "CashFlow") {
-    return {
-      color: "#1565c0",
-      borderColor: "#bbdefb",
-      backgroundColor: "#e3f2fd",
-    };
-  }
-  if (type === "BankAccount") {
-    return {
-      color: "#2e7d32",
-      borderColor: "#c8e6c9",
-      backgroundColor: "#e8f5e9",
-    };
-  }
-  if (type === "Transfer") {
-    return {
-      color: "#6a1b9a",
-      borderColor: "#e1bee7",
-      backgroundColor: "#f3e5f5",
-    };
-  }
-  return {
-    color: "#ef6c00",
-    borderColor: "#ffe0b2",
-    backgroundColor: "#fff3e0",
-  };
-}
-
-function getTagSx() {
-  return {
-    color: "secondary.main",
-    borderColor: "rgba(255,138,76,0.28)",
-    backgroundColor: "rgba(255,138,76,0.10)",
-    fontWeight: 600,
-  };
-}
 
 export function TransactionsPage() {
   const [searchParams] = useSearchParams();
@@ -134,51 +53,13 @@ export function TransactionsPage() {
   const [editingCashFlow, setEditingCashFlow] = useState<CashFlowDetailDto | null>(null);
   const [editingBankAccount, setEditingBankAccount] =
     useState<SaveBankAccountFormRequestDto | null>(null);
-  const [editingTransferMovement, setEditingTransferMovement] = useState<{
-    id: string;
-    counterpartyId: string;
-    transferType: number;
-    status: number;
-    currencyId: string;
-    amount: number;
-    transactionDate: string;
-    dueDate?: string | null;
-    description?: string | null;
-    tags?: string[] | null;
-    isActive: boolean;
-    details: Array<{
-      id: string;
-      currencyId: string;
-      amount: number;
-      direction: number;
-      transactionDate: string;
-      description?: string | null;
-      isActive: boolean;
-    }>;
-    transactionItems: Array<{ id?: string; name: string; amount: number }>;
-  } | null>(null);
-  const [editingExchange, setEditingExchange] = useState<{
-    id: string;
-    exchangeRate: number | null;
-    exchangeDate: string;
-    outCurrencyId: string;
-    outAmount: number;
-    inCurrencyId: string;
-    inAmount: number;
-    description?: string | null;
-    tags?: string[] | null;
-    isActive: boolean;
-    transactionItems?: Array<{ id?: string; name: string; amount: number }>;
-  } | null>(null);
-  const [deletingTransaction, setDeletingTransaction] = useState<{
-    id: string;
-    type: "CashFlow" | "BankAccount" | "Transfer" | "Exchange";
-    description: string | null;
-  } | null>(null);
+  const [editingTransferMovement, setEditingTransferMovement] = useState<TransferMovementDraft | null>(null);
+  const [editingExchange, setEditingExchange] = useState<ExchangeDraft | null>(null);
+  const [deletingTransaction, setDeletingTransaction] = useState<TransactionDeleteTarget | null>(null);
   const [isDeleteConfirming, setIsDeleteConfirming] = useState(false);
   const [page, setPage] = useState(1);
   const [error, setError] = useState<string | null>(null);
-  const { formatDate, t } = useSettings();
+  const { formatAmount, formatDate, t } = useSettings();
   const createCashFlowMutation = useCreateCashFlowMutation();
   const updateCashFlowMutation = useUpdateCashFlowMutation();
   const saveBankAccountMutation = useSaveBankAccountMutation();
@@ -329,7 +210,7 @@ export function TransactionsPage() {
   };
 
   const handleEdit = async (
-    type: "CashFlow" | "BankAccount" | "Transfer" | "Exchange",
+    type: TransactionType,
     id: string,
     transferId?: string | null,
   ) => {
@@ -555,323 +436,41 @@ export function TransactionsPage() {
 
         <Grid container spacing={2} alignItems="stretch">
           <Grid size={{ xs: 12, md: 6 }}>
-            <Paper sx={{ p: 2, height: "100%" }}>
-              <Stack spacing={1.25}>
-                {isTransactionsLoading ? (
-                  <Paper elevation={0} sx={layoutStyles.loadingPanel}>
-                    <Stack alignItems="center" spacing={2}>
-                      <CircularProgress size={28} />
-                      <BodyText>{t("transactions.loading")}</BodyText>
-                    </Stack>
-                  </Paper>
-                ) : pagedTransactions.length === 0 ? (
-                  <Paper elevation={0} sx={layoutStyles.emptyStatePanel}>
-                    <Stack spacing={1}>
-                      <BodyText sx={{ fontWeight: 700 }}>
-                        {t("transactions.emptyTitle")}
-                      </BodyText>
-                      <BodyText sx={{ color: "text.secondary" }}>
-                        {t("transactions.emptySubtitle")}
-                      </BodyText>
-                    </Stack>
-                  </Paper>
-                ) : (
-                  pagedTransactions.map((item) => {
-                    const bankMovementTypeLabel =
-                      item.bankAccountTransactionType === 1
-                        ? t("transactions.initialDeposit")
-                        : item.bankAccountTransactionType === 2
-                          ? t("transactions.interestPayment")
-                          : item.bankAccountTransactionType === 3
-                            ? t("transactions.principalReturn")
-                            : null;
-                    const bankStatusLabel =
-                      item.bankAccountStatus === 1
-                        ? t("transactions.statusType.active")
-                        : item.bankAccountStatus === 2
-                          ? t("transactions.statusType.matured")
-                          : item.bankAccountStatus === 3
-                            ? t("transactions.statusType.closedEarly")
-                            : null;
-                    const transferStatusLabel =
-                      item.transferStatus === 1
-                        ? t("transactions.statusType.active")
-                        : item.transferStatus === 2
-                          ? t("transactions.statusType.completed")
-                          : item.transferStatus === 3
-                            ? t("transactions.statusType.cancelled")
-                            : null;
-                    const transferTypeLabel =
-                      item.transferType === 1
-                        ? t("transactions.transferType.lend")
-                        : item.transferType === 2
-                          ? t("transactions.transferType.borrow")
-                          : item.transferType === 3
-                            ? t("transactions.transferType.give")
-                            : item.transferType === 4
-                              ? t("transactions.transferType.receive")
-                              : null;
-                    const tagSx = getTransactionTypeTagSx(item.type);
-
-                    return (
-                      <Paper
-                        key={`${item.type}-${item.id}-${item.transactionDate}-${item.amount}-${item.direction}`}
-                        variant="outlined"
-                        sx={{
-                          p: 1.1,
-                          borderColor:
-                            item.type === "BankAccount" &&
-                            (item.bankAccountTransactionType === 1 ||
-                              item.bankAccountTransactionType === 3)
-                              ? "success.main"
-                              : undefined,
-                        }}
-                      >
-                        <Stack
-                          direction="row"
-                          justifyContent="space-between"
-                          alignItems="stretch"
-                          spacing={2}
-                        >
-                          <Stack spacing={0.25} sx={{ flex: 1, minHeight: 96 }}>
-                            <Stack
-                              direction="row"
-                              spacing={1}
-                              alignItems="center"
-                            >
-                              <BodyText sx={{ fontWeight: 700 }}>
-                                {formatDate(item.transactionDate)}
-                              </BodyText>
-                              {(() => {
-                                const { className, icon: Icon } =
-                                  getTransactionTypeUi(item.type);
-                                return (
-                                  <span
-                                    className={`tx-type-icon ${className}`}
-                                    title={item.type}
-                                  >
-                                    <Icon size={16} />
-                                  </span>
-                                );
-                              })()}
-                            </Stack>
-                            <BodyText
-                              sx={{
-                                color: "text.secondary",
-                                fontSize: "0.9rem",
-                                fontWeight: 400,
-                                opacity: 0.8,
-                              }}
-                            >
-                              {item.description ?? "-"}
-                            </BodyText>
-                            {item.type === "BankAccount" ||
-                            item.type === "Transfer" ||
-                            (item.tags != null && item.tags.length > 0) ? (
-                              <Stack spacing={0.75} sx={{ mt: "auto", pt: 0.75 }}>
-                                {item.type === "BankAccount" ? (
-                                  <Stack
-                                    direction="row"
-                                    spacing={0.75}
-                                    sx={{ flexWrap: "wrap" }}
-                                  >
-                                    {item.bankName ? (
-                                      <Chip
-                                        size="small"
-                                        label={item.bankName}
-                                        variant="outlined"
-                                        sx={tagSx}
-                                      />
-                                    ) : null}
-                                    {bankStatusLabel ? (
-                                      <Chip
-                                        size="small"
-                                        label={bankStatusLabel}
-                                        variant="outlined"
-                                        sx={tagSx}
-                                      />
-                                    ) : null}
-                                    {bankMovementTypeLabel ? (
-                                      <Chip
-                                        size="small"
-                                        label={bankMovementTypeLabel}
-                                        variant="outlined"
-                                        sx={tagSx}
-                                      />
-                                    ) : null}
-                                  </Stack>
-                                ) : null}
-                                {item.type === "Transfer" ? (
-                                  <Stack
-                                    direction="row"
-                                    spacing={0.75}
-                                    sx={{ flexWrap: "wrap" }}
-                                  >
-                                    {item.counterpartyName ? (
-                                      <Chip
-                                        size="small"
-                                        label={item.counterpartyName}
-                                        variant="outlined"
-                                        sx={tagSx}
-                                      />
-                                    ) : null}
-                                    {transferStatusLabel ? (
-                                      <Chip
-                                        size="small"
-                                        label={transferStatusLabel}
-                                        variant="outlined"
-                                        sx={tagSx}
-                                      />
-                                    ) : null}
-                                    {transferTypeLabel ? (
-                                      <Chip
-                                        size="small"
-                                        label={transferTypeLabel}
-                                        variant="outlined"
-                                        sx={tagSx}
-                                      />
-                                    ) : null}
-                                  </Stack>
-                                ) : null}
-                                {item.tags != null && item.tags.length > 0 ? (
-                                  <Stack
-                                    direction="row"
-                                    spacing={0.75}
-                                    sx={{ flexWrap: "wrap" }}
-                                  >
-                                    {item.tags.map((tag) => (
-                                      <Chip
-                                        key={`${item.type}-${item.id}-${tag}`}
-                                        label={tag}
-                                        size="small"
-                                        variant="outlined"
-                                        sx={getTagSx()}
-                                      />
-                                    ))}
-                                  </Stack>
-                                ) : null}
-                              </Stack>
-                            ) : null}
-                          </Stack>
-
-                          <Stack spacing={0.5} alignItems="flex-end">
-                            <BodyText
-                              sx={{
-                                color:
-                                  item.type === "BankAccount" &&
-                                  (item.bankAccountTransactionType === 1 ||
-                                    item.bankAccountTransactionType === 3)
-                                    ? "success.main"
-                                    : item.direction === 1
-                                      ? "primary.main"
-                                      : "error.main",
-                                fontSize: 22,
-                                fontWeight: 800,
-                                lineHeight: 1.1,
-                              }}
-                            >
-                              {amountFormatter.format(item.amount)}
-                            </BodyText>
-                            <BodyText sx={{ fontWeight: 700 }}>
-                              {item.currencyCode}
-                            </BodyText>
-                            <Stack direction="row" spacing={1}>
-                              <ActionButton
-                                aria-label={t("transactions.edit")}
-                                noWrap={false}
-                                onClick={() => {
-                                  void handleEdit(
-                                    item.type,
-                                    item.id,
-                                    item.transferId,
-                                  );
-                                }}
-                                size="small"
-                                sx={{
-                                  borderRadius: "999px",
-                                  minWidth: 34,
-                                  p: 0.5,
-                                }}
-                                variant="outlined"
-                              >
-                                <Pencil size={16} />
-                              </ActionButton>
-                              <ActionButton
-                                aria-label={t("transactions.delete")}
-                                color="error"
-                                noWrap={false}
-                                onClick={() =>
-                                  setDeletingTransaction({
-                                    description: item.description,
-                                    id: item.id,
-                                    type: item.type,
-                                  })
-                                }
-                                size="small"
-                                sx={{
-                                  borderRadius: "999px",
-                                  minWidth: 34,
-                                  p: 0.5,
-                                }}
-                                variant="outlined"
-                              >
-                                <Trash2 size={16} />
-                              </ActionButton>
-                            </Stack>
-                          </Stack>
-                        </Stack>
-                      </Paper>
-                    );
-                  })
-                )}
-                {!isTransactionsLoading ? (
-                  <Stack alignItems="center" sx={{ pt: 0.5 }}>
-                    <Pagination
-                      count={pageCount}
-                      onChange={(_, value) => setPage(value)}
-                      page={page}
-                      shape="rounded"
-                      size="small"
-                    />
-                  </Stack>
-                ) : null}
-              </Stack>
-            </Paper>
+            <TransactionListPanel
+              formatAmount={formatAmount}
+              formatDate={formatDate}
+              isLoading={isTransactionsLoading}
+              onDelete={(item) => {
+                setDeletingTransaction({
+                  description: item.description,
+                  id: item.id,
+                  type: item.type,
+                });
+              }}
+              onEdit={(type, id, transferId) => {
+                void handleEdit(type, id, transferId);
+              }}
+              page={page}
+              pageCount={pageCount}
+              pagedTransactions={pagedTransactions}
+              onPageChange={setPage}
+              t={t}
+            />
           </Grid>
 
           <Grid size={{ xs: 12, md: 6 }}>
-            <Paper sx={{ p: 2, height: "100%" }}>
-              <Stack spacing={2}>
-                <TemplatePopulateActionCard
-                  templates={templates}
-                  banks={banks}
-                  currencies={currencies}
-                  counterparties={counterparties}
-                />
-                {isDashboardLoading ? (
-                  <>
-                    <DashboardCardSkeleton rows={4} />
-                    <DashboardCardSkeleton rows={3} />
-                    <DashboardCardSkeleton rows={4} />
-                  </>
-                ) : (
-                  <>
-                    <TotalAmountByCurrencyCard
-                      items={dashboardQuery.data?.currencyBalances ?? []}
-                      title={t("transactions.totalByCurrency")}
-                    />
-                    <TotalActiveBankAccountCard
-                      items={dashboardQuery.data?.activeBankBalances ?? []}
-                      title={t("transactions.totalByBank")}
-                    />
-                    <IncomeOutcomeCard
-                      items={isCurrenciesLoading ? [] : incomeOutcomeItems}
-                      title={incomeOutcomeTitle}
-                    />
-                  </>
-                )}
-              </Stack>
-            </Paper>
+            <TransactionDashboardPanel
+              banks={banks}
+              counterparties={counterparties}
+              currencies={currencies}
+              dashboard={dashboardQuery.data}
+              incomeOutcomeItems={incomeOutcomeItems}
+              incomeOutcomeTitle={incomeOutcomeTitle}
+              isCurrenciesLoading={isCurrenciesLoading}
+              isDashboardLoading={isDashboardLoading}
+              templates={templates}
+              t={t}
+            />
           </Grid>
         </Grid>
       </Stack>

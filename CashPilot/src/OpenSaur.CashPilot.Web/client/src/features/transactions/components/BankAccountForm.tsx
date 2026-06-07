@@ -18,6 +18,7 @@ import type {
 import { BankAccountTransactionForm, type DetailEditor } from "./BankAccountTransactionForm";
 import { TransactionItemsEditor } from "./TransactionItemsEditor";
 import { TransactionFormTabs } from "./TransactionFormTabs";
+import { bankAccountStatuses, bankAccountTransactionTypes, transactionDirectionValues, transactionDirections, transactionFormTabs } from "../../../infrastructure/constants/transactionEnums";
 
 type Props = {
   banks: BankDto[];
@@ -55,6 +56,48 @@ function toDetailRequest(detail: DetailEditor): SaveBankAccountDetailRequestDto 
   };
 }
 
+function getInitialHeaderValues(
+  initialValue: SaveBankAccountFormRequestDto | null | undefined,
+  banks: BankDto[],
+  currencies: CurrencyDto[],
+  today: string,
+): HeaderValues {
+  return {
+    accountNumber: initialValue?.accountNumber ?? "",
+    amount: initialValue?.amount?.toString() ?? "",
+    bankId: initialValue?.bankId ?? banks[0]?.id ?? "",
+    currencyId: initialValue?.currencyId ?? currencies[0]?.id ?? "",
+    description: initialValue?.description ?? "",
+    interestRate: initialValue?.interestRate?.toString() ?? "",
+    maturityDate: initialValue?.maturityDate ?? today,
+    startDate: initialValue?.startDate ?? today,
+    status: String(initialValue?.status ?? bankAccountStatuses.active),
+    tags: initialValue?.tags ?? [],
+    transactionItems: (initialValue?.transactionItems ?? []).map((x) => ({
+      id: x.id,
+      name: x.name,
+      amount: x.amount.toString(),
+    })),
+  };
+}
+
+function getInitialDetails(
+  initialValue: SaveBankAccountFormRequestDto | null | undefined,
+): DetailEditor[] {
+  return (initialValue?.details ?? []).map((x) => ({
+    clientKey: crypto.randomUUID(),
+    id: x.id,
+    currencyId: x.currencyId,
+    amount: x.amount.toString(),
+    direction: x.direction.toString(),
+    transactionType: x.transactionType.toString(),
+    transactionDate: x.transactionDate,
+    description: x.description ?? "",
+    isActive: x.isActive,
+    isNew: false,
+  }));
+}
+
 export function BankAccountForm({
   banks,
   currencies,
@@ -66,84 +109,19 @@ export function BankAccountForm({
   const { t, todayIsoDate } = useSettings();
   const today = todayIsoDate;
 
-  const [tab, setTab] = useState<"form" | "items">("form");
+  const [tab, setTab] = useState<(typeof transactionFormTabs)[keyof typeof transactionFormTabs]>(transactionFormTabs.form);
 
   const form = useForm<HeaderValues>({
-    defaultValues: {
-      accountNumber: initialValue?.accountNumber ?? "",
-      amount: initialValue?.amount?.toString() ?? "",
-      bankId: initialValue?.bankId ?? banks[0]?.id ?? "",
-      currencyId: initialValue?.currencyId ?? currencies[0]?.id ?? "",
-      description: initialValue?.description ?? "",
-      interestRate: initialValue?.interestRate?.toString() ?? "",
-      maturityDate: initialValue?.maturityDate ?? today,
-      startDate: initialValue?.startDate ?? today,
-      status: (initialValue?.status ?? 1).toString(),
-      tags: initialValue?.tags ?? [],
-      transactionItems: (initialValue?.transactionItems ?? []).map(x => ({
-        id: x.id,
-        name: x.name,
-        amount: x.amount.toString()
-      }))
-    }
+    defaultValues: getInitialHeaderValues(initialValue, banks, currencies, today)
   });
 
-  const [details, setDetails] = useState<DetailEditor[]>(
-    (initialValue?.details ?? []).map(x => ({
-      clientKey: crypto.randomUUID(),
-      id: x.id,
-      currencyId: x.currencyId,
-      amount: x.amount.toString(),
-      direction: x.direction.toString(),
-      transactionType: x.transactionType.toString(),
-      transactionDate: x.transactionDate,
-      description: x.description ?? "",
-      isActive: x.isActive,
-      isNew: false
-    }))
-  );
+  const [details, setDetails] = useState<DetailEditor[]>(() => getInitialDetails(initialValue));
 
   const startDate = useWatch({ control: form.control, name: "startDate" });
   const maturityDate = useWatch({ control: form.control, name: "maturityDate" });
   const status = useWatch({ control: form.control, name: "status" });
   const currencyId = useWatch({ control: form.control, name: "currencyId" });
   const selectedCurrencyCode = currencies.find(x => x.id === currencyId)?.shortName;
-
-  useEffect(() => {
-    form.reset({
-      accountNumber: initialValue?.accountNumber ?? "",
-      amount: initialValue?.amount?.toString() ?? "",
-      bankId: initialValue?.bankId ?? banks[0]?.id ?? "",
-      currencyId: initialValue?.currencyId ?? currencies[0]?.id ?? "",
-      description: initialValue?.description ?? "",
-      interestRate: initialValue?.interestRate?.toString() ?? "",
-      maturityDate: initialValue?.maturityDate ?? today,
-      startDate: initialValue?.startDate ?? today,
-      status: (initialValue?.status ?? 1).toString(),
-      tags: initialValue?.tags ?? [],
-      transactionItems: (initialValue?.transactionItems ?? []).map(x => ({
-        id: x.id,
-        name: x.name,
-        amount: x.amount.toString()
-      }))
-    });
-
-    setDetails(
-      (initialValue?.details ?? []).map(x => ({
-        clientKey: crypto.randomUUID(),
-        id: x.id,
-        currencyId: x.currencyId,
-        amount: x.amount.toString(),
-        direction: x.direction.toString(),
-        transactionType: x.transactionType.toString(),
-        transactionDate: x.transactionDate,
-        description: x.description ?? "",
-        isActive: x.isActive,
-        isNew: false
-      }))
-    );
-
-  }, [banks, currencies, form, initialValue, today]);
 
   useEffect(() => {
     void form.trigger(["startDate", "maturityDate"]);
@@ -153,41 +131,41 @@ export function BankAccountForm({
     const headerIsActive = initialValue?.isActive ?? true;
     const finalDetails = details.map(toDetailRequest);
 
-    const initialDeposit = finalDetails.find(x => x.transactionType === 1);
+    const initialDeposit = finalDetails.find((x) => x.transactionType === bankAccountTransactionTypes.initialDeposit);
     if (initialDeposit) {
       initialDeposit.amount = Number(values.amount);
       initialDeposit.transactionDate = values.startDate;
       initialDeposit.description = values.description.trim().length === 0 ? undefined : values.description.trim();
       initialDeposit.currencyId = values.currencyId;
-      initialDeposit.direction = 2;
+      initialDeposit.direction = Number(transactionDirections.outflow);
     } else {
       finalDetails.push({
         currencyId: values.currencyId,
         amount: Number(values.amount),
-        direction: 2,
+        direction: Number(transactionDirections.inflow),
         transactionDate: values.startDate,
-        transactionType: 1,
+        transactionType: bankAccountTransactionTypes.initialDeposit,
         description: values.description.trim().length === 0 ? undefined : values.description.trim(),
         isActive: headerIsActive
       });
     }
 
-    const matured = finalDetails.find(x => x.transactionType === 3);
-    if (values.status === "2" || values.status === "3") {
+    const matured = finalDetails.find((x) => x.transactionType === bankAccountTransactionTypes.principalReturn);
+    if (values.status === String(bankAccountStatuses.matured) || values.status === String(bankAccountStatuses.closedEarly)) {
       if (matured) {
         matured.amount = Number(values.amount);
         matured.transactionDate = values.maturityDate || values.startDate;
         matured.description = values.description.trim().length === 0 ? undefined : values.description.trim();
         matured.currencyId = values.currencyId;
-        matured.direction = 1;
+        matured.direction = transactionDirectionValues.inflow;
         matured.isActive = true;
       } else {
         finalDetails.push({
           currencyId: values.currencyId,
           amount: Number(values.amount),
-          direction: 1,
+          direction: transactionDirectionValues.inflow,
           transactionDate: values.maturityDate || values.startDate,
-          transactionType: 3,
+          transactionType: bankAccountTransactionTypes.principalReturn,
           description: values.description.trim().length === 0 ? undefined : values.description.trim(),
           isActive: headerIsActive
         });
@@ -309,11 +287,11 @@ export function BankAccountForm({
                   control={form.control}
                   label={t("transactions.maturityDate")}
                   name="maturityDate"
-                  required={status === "2"}
+                  required={status === String(bankAccountStatuses.matured)}
                   rules={{
                     validate: value => {
                       const dateValue = typeof value === "string" ? value : "";
-                      if (status === "2" && dateValue.trim().length === 0) {
+                      if (status === String(bankAccountStatuses.matured) && dateValue.trim().length === 0) {
                         return t("transactions.validation.maturityDateRequired");
                       }
                       if (dateValue.trim().length === 0) {
@@ -333,9 +311,9 @@ export function BankAccountForm({
                   label={t("transactions.status")}
                   name="status"
                   options={[
-                    { label: t("transactions.statusType.active"), value: "1" },
-                    { label: t("transactions.statusType.matured"), value: "2" },
-                    { label: t("transactions.statusType.closedEarly"), value: "3" }
+                    { label: t("transactions.statusType.active"), value: String(bankAccountStatuses.active) },
+                    { label: t("transactions.statusType.matured"), value: String(bankAccountStatuses.matured) },
+                    { label: t("transactions.statusType.closedEarly"), value: String(bankAccountStatuses.closedEarly) }
                   ]}
                   required
                   rules={{ required: t("transactions.validation.statusRequired") }}
@@ -370,8 +348,8 @@ export function BankAccountForm({
                       clientKey: crypto.randomUUID(),
                       currencyId: currencies[0]?.id ?? "",
                       amount: "",
-                      direction: "1",
-                      transactionType: "2",
+                      direction: String(transactionDirectionValues.inflow),
+                      transactionType: String(bankAccountTransactionTypes.interestPayment),
                       transactionDate: today,
                       description: "",
                       isActive: true,
@@ -388,7 +366,7 @@ export function BankAccountForm({
 
             <Stack spacing={2}>
               {details
-                .filter(d => d.transactionType === "2")
+                .filter(d => d.transactionType === String(bankAccountTransactionTypes.interestPayment))
                 .map(detail => (
                   <BankAccountTransactionForm
                     key={detail.clientKey}

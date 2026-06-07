@@ -31,12 +31,12 @@ export function BankForm({
       <Text
         control={control}
         disabled={isSubmitting}
-        label={t("currencies.name")}
+        label={t("common.name")}
         name="name"
         required
         rules={{
-          required: t("currencies.validation.nameRequired"),
-          validate: value => typeof value === "string" && value.trim().length > 0 ? true : t("currencies.validation.nameRequired")
+          required: t("banks.validation.nameRequired"),
+          validate: value => typeof value === "string" && value.trim().length > 0 ? true : t("banks.validation.nameRequired")
         }}
       />
       <Text

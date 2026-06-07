@@ -1,10 +1,11 @@
 import { Alert, Stack } from "@mui/material";
-import { AxiosError } from "axios";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { ActionButton } from "../../../components/atoms/ActionButton";
 import { DefaultLayout } from "../../../components/layouts/DefaultLayout";
 import { ConfirmModal } from "../../../components/atoms/ConfirmModal";
+import { useCrudPageState } from "../../../components/hooks/useCrudPageState";
+import { getApiErrorMessage } from "../../../infrastructure/http/apiErrorHelpers";
 import { useSettings } from "../../settings/provider/SettingProvider";
 import { CounterpartiesFilterDrawer } from "../components/CounterpartiesFilterDrawer";
 import { CounterpartiesList } from "../components/CounterpartiesList";
@@ -29,21 +30,6 @@ const emptyFormState: CounterpartyFormValues = {
   phoneNumber: "",
 };
 
-function getErrorMessage(error: unknown, fallback: string) {
-  if (error instanceof AxiosError) {
-    const detail = error.response?.data;
-    if (typeof detail === "string" && detail.trim().length > 0) {
-      return detail;
-    }
-  }
-
-  if (error instanceof Error && error.message.trim().length > 0) {
-    return error.message;
-  }
-
-  return fallback;
-}
-
 export function CounterpartiesPage() {
   const { t } = useSettings();
   const [filters, setFilters] = useState({
@@ -58,20 +44,26 @@ export function CounterpartiesPage() {
   const createCounterpartyMutation = useCreateCounterpartyMutation();
   const updateCounterpartyMutation = useUpdateCounterpartyMutation();
   const deleteCounterpartyMutation = useDeleteCounterpartyMutation();
-  const [editingCounterparty, setEditingCounterparty] =
-    useState<CounterpartyDto | null>(null);
-  const [deletingCounterparty, setDeletingCounterparty] =
-    useState<CounterpartyDto | null>(null);
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const {
+    closeDeleteConfirm,
+    closeForm,
+    deletingItem: deletingCounterparty,
+    editingItem: editingCounterparty,
+    errorMessage,
+    isEditMode,
+    isFormOpen,
+    isSubmitting,
+    openCreateForm: openCrudCreateForm,
+    openDeleteConfirm,
+    openEditForm: openCrudEditForm,
+    setEditingItem,
+    setErrorMessage,
+    setIsFormOpen,
+    setIsSubmitting,
+  } = useCrudPageState<CounterpartyDto>();
   const form = useForm<CounterpartyFormValues>({
     defaultValues: emptyFormState,
   });
-  const isEditMode = useMemo(
-    () => editingCounterparty != null,
-    [editingCounterparty],
-  );
 
   async function handleSubmit(values: CounterpartyFormValues) {
     setErrorMessage(null);
@@ -117,32 +109,13 @@ export function CounterpartiesPage() {
       }
 
       form.reset(emptyFormState);
-      setEditingCounterparty(null);
+      setEditingItem(null);
       setIsFormOpen(false);
     } catch (error) {
-      setErrorMessage(getErrorMessage(error, t("counterparties.errorSave")));
+      setErrorMessage(getApiErrorMessage(error, t("counterparties.errorSave")));
     } finally {
       setIsSubmitting(false);
     }
-  }
-
-  function openCreateForm() {
-    setEditingCounterparty(null);
-    form.reset(emptyFormState);
-    setIsFormOpen(true);
-  }
-
-  function openEditForm(counterparty: CounterpartyDto) {
-    setEditingCounterparty(counterparty);
-    form.reset({
-      description: counterparty.description ?? "",
-      email: counterparty.email ?? "",
-      fullName: counterparty.fullName,
-      isDefault: counterparty.isDefault,
-      isActive: counterparty.isActive,
-      phoneNumber: counterparty.phoneNumber ?? "",
-    });
-    setIsFormOpen(true);
   }
 
   async function handleDeleteConfirmed() {
@@ -156,13 +129,12 @@ export function CounterpartiesPage() {
     try {
       await deleteCounterpartyMutation.mutateAsync(deletingCounterparty.id);
       if (editingCounterparty?.id === deletingCounterparty.id) {
-        setEditingCounterparty(null);
+        closeForm();
         form.reset(emptyFormState);
-        setIsFormOpen(false);
       }
-      setDeletingCounterparty(null);
+      closeDeleteConfirm();
     } catch (error) {
-      setErrorMessage(getErrorMessage(error, t("counterparties.errorDelete")));
+      setErrorMessage(getApiErrorMessage(error, t("counterparties.errorDelete")));
     } finally {
       setIsSubmitting(false);
     }
@@ -178,7 +150,12 @@ export function CounterpartiesPage() {
       >
         {t("common.filter")}
       </ActionButton>
-      <ActionButton onClick={openCreateForm}>
+      <ActionButton
+        onClick={() => {
+          form.reset(emptyFormState);
+          openCrudCreateForm();
+        }}
+      >
         {t("common.create")}
       </ActionButton>
     </Stack>
@@ -198,9 +175,19 @@ export function CounterpartiesPage() {
           isLoading={isLoading}
           isSubmitting={isSubmitting}
           onDelete={(counterparty) => {
-            setDeletingCounterparty(counterparty);
+            openDeleteConfirm(counterparty);
           }}
-          onEdit={openEditForm}
+          onEdit={(counterparty) => {
+            form.reset({
+              description: counterparty.description ?? "",
+              email: counterparty.email ?? "",
+              fullName: counterparty.fullName,
+              isDefault: counterparty.isDefault,
+              isActive: counterparty.isActive,
+              phoneNumber: counterparty.phoneNumber ?? "",
+            });
+            openCrudEditForm(counterparty);
+          }}
         />
       </Stack>
       <CounterpartyFormDrawer
@@ -213,8 +200,7 @@ export function CounterpartiesPage() {
             return;
           }
 
-          setIsFormOpen(false);
-          setEditingCounterparty(null);
+          closeForm();
           form.reset(emptyFormState);
         }}
         onSubmit={handleSubmit}
@@ -235,7 +221,7 @@ export function CounterpartiesPage() {
             return;
           }
 
-          setDeletingCounterparty(null);
+          closeDeleteConfirm();
         }}
         onConfirm={() => {
           void handleDeleteConfirmed();

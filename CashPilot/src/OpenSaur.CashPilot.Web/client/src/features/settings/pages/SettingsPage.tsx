@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { Grid, Paper, Stack, Tab, Tabs } from "@mui/material";
+import { alpha } from "@mui/material/styles";
 import { useLocation } from "react-router-dom";
 import { DefaultLayout } from "../../../components/layouts/DefaultLayout";
 import { BodyText } from "../../../components/atoms/BodyText";
@@ -36,7 +37,7 @@ export function SettingsPage() {
   return (
     <DefaultLayout title={t("settings.title")}>
       <Stack spacing={2}>
-        <Paper elevation={0} sx={{ border: "1px solid rgba(11,110,79,0.12)", p: 1 }}>
+        <Paper elevation={0} sx={(theme) => ({ border: `1px solid ${alpha(theme.palette.primary.main, 0.12)}`, p: 1 })}>
           <Tabs onChange={(_, value: TabValue) => setTab(value)} value={tab}>
             <Tab label={t("settings.profileTab")} value="profile" />
             <Tab label={t("settings.oidcTab")} value="oidc" />
@@ -44,7 +45,7 @@ export function SettingsPage() {
         </Paper>
 
         {tab === "profile" ? (
-          <Paper elevation={0} sx={{ border: "1px solid rgba(11,110,79,0.12)", p: 3 }}>
+          <Paper elevation={0} sx={(theme) => ({ border: `1px solid ${alpha(theme.palette.primary.main, 0.12)}`, p: 3 })}>
             <Stack spacing={2}>
               <PageTitleText variant="h6">{t("settings.userProfileTitle")}</PageTitleText>
               <Grid container spacing={2}>
@@ -66,7 +67,7 @@ export function SettingsPage() {
             </Stack>
           </Paper>
         ) : (
-          <Paper elevation={0} sx={{ border: "1px solid rgba(11,110,79,0.12)", p: 3 }}>
+          <Paper elevation={0} sx={(theme) => ({ border: `1px solid ${alpha(theme.palette.primary.main, 0.12)}`, p: 3 })}>
             <Stack spacing={2}>
               <Stack spacing={0.75}>
                 <PageTitleText variant="h6">{t("settings.oidcRuntimeTitle")}</PageTitleText>

@@ -8,6 +8,7 @@ import { Number as NumberField } from "../../../components/atoms/Number";
 import { TextArea } from "../../../components/atoms/TextArea";
 import { TagAutocompleteMultiSelect } from "../../tags/components/TagAutocompleteMultiSelect";
 import { useSettings } from "../../settings/provider/SettingProvider";
+import { transactionFormTabs } from "../../../infrastructure/constants/transactionEnums";
 import type { CurrencyDto } from "../../currencies/dtos/CurrencyDto";
 import { TransactionItemsEditor } from "./TransactionItemsEditor";
 import { TransactionFormTabs } from "./TransactionFormTabs";
@@ -50,6 +51,42 @@ type FormValues = {
   transactionItems: Array<{ id?: string; name: string; amount: string }>;
 };
 
+function getInitialValues(
+  currencies: CurrencyDto[],
+  today: string,
+  initialValue?: Props["initialValue"],
+): FormValues {
+  if (initialValue == null) {
+    return {
+      description: "",
+      exchangeDate: today,
+      exchangeRate: "",
+      inAmount: "",
+      inCurrencyId: currencies[0]?.id ?? "",
+      outAmount: "",
+      outCurrencyId: currencies[0]?.id ?? "",
+      tags: [],
+      transactionItems: [],
+    };
+  }
+
+  return {
+    description: initialValue.description ?? "",
+    exchangeDate: initialValue.exchangeDate,
+    exchangeRate: initialValue.exchangeRate == null ? "" : initialValue.exchangeRate.toString(),
+    inAmount: initialValue.inAmount.toString(),
+    inCurrencyId: initialValue.inCurrencyId,
+    outAmount: initialValue.outAmount.toString(),
+    outCurrencyId: initialValue.outCurrencyId,
+    tags: initialValue.tags ?? [],
+    transactionItems: (initialValue.transactionItems ?? []).map((x) => ({
+      id: x.id,
+      name: x.name,
+      amount: x.amount.toString(),
+    })),
+  };
+}
+
 export function ExchangeForm({
   currencies,
   initialValue,
@@ -60,53 +97,14 @@ export function ExchangeForm({
   const { t, todayIsoDate } = useSettings();
   const today = todayIsoDate;
 
-  const [tab, setTab] = useState<"form" | "items">("form");
+  const [tab, setTab] = useState<(typeof transactionFormTabs)[keyof typeof transactionFormTabs]>(transactionFormTabs.form);
 
   const form = useForm<FormValues>({
-    defaultValues: {
-      description: "",
-      exchangeDate: today,
-      exchangeRate: "",
-      inAmount: "",
-      inCurrencyId: currencies[0]?.id ?? "",
-      outAmount: "",
-      outCurrencyId: currencies[0]?.id ?? "",
-      tags: [],
-      transactionItems: []
-    }
+    defaultValues: getInitialValues(currencies, today, initialValue)
   });
 
   useEffect(() => {
-    if (initialValue == null) {
-      form.reset({
-        description: "",
-        exchangeDate: today,
-        exchangeRate: "",
-        inAmount: "",
-        inCurrencyId: currencies[0]?.id ?? "",
-        outAmount: "",
-        outCurrencyId: currencies[0]?.id ?? "",
-        tags: [],
-        transactionItems: []
-      });
-      return;
-    }
-
-    form.reset({
-      description: initialValue.description ?? "",
-      exchangeDate: initialValue.exchangeDate,
-      exchangeRate: initialValue.exchangeRate == null ? "" : initialValue.exchangeRate.toString(),
-      inAmount: initialValue.inAmount.toString(),
-      inCurrencyId: initialValue.inCurrencyId,
-      outAmount: initialValue.outAmount.toString(),
-      outCurrencyId: initialValue.outCurrencyId,
-      tags: initialValue.tags ?? [],
-      transactionItems: (initialValue.transactionItems ?? []).map(x => ({
-        id: x.id,
-        name: x.name,
-        amount: x.amount.toString()
-      }))
-    });
+    form.reset(getInitialValues(currencies, today, initialValue));
   }, [currencies, form, initialValue, today]);
 
   const currencyOptions = currencies.map(x => ({ label: x.shortName, value: x.id }));

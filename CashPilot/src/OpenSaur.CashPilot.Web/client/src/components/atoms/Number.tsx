@@ -1,5 +1,6 @@
 import { TextField } from "@mui/material";
 import { Controller, type Control, type FieldPath, type FieldValues, type RegisterOptions } from "react-hook-form";
+import { formatInputNumberValue } from "../../infrastructure/constants/numberFormatters";
 
 type NumberProps<TFieldValues extends FieldValues> = {
   control: Control<TFieldValues>;
@@ -20,32 +21,6 @@ export function Number<TFieldValues extends FieldValues>({
   required = false,
   rules
 }: NumberProps<TFieldValues>) {
-  const formatter = new Intl.NumberFormat("en-US", {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 2
-  });
-
-  const formatDisplayValue = (value: string | number) => {
-    if (value === "" || value === undefined || value === null) return "";
-    
-    const stringValue = value.toString();
-    const rawValue = stringValue.replace(/,/g, "");
-    const num = parseFloat(rawValue);
-    
-    if (isNaN(num)) return stringValue;
-
-    // Preserve decimal point and trailing zeros while typing
-    const parts = rawValue.split(".");
-    const formattedInt = formatter.format(parseInt(parts[0] || "0"));
-    
-    if (parts.length > 1) {
-      return `${formattedInt}.${parts[1]}`;
-    }
-    
-    // If it's just a number, format it
-    return formattedInt;
-  };
-
   return (
     <Controller
       control={control}
@@ -73,7 +48,7 @@ export function Number<TFieldValues extends FieldValues>({
           slotProps={{
             formHelperText: { sx: { ml: 0 } }
           }}
-          value={formatDisplayValue(field.value)}
+          value={formatInputNumberValue(field.value)}
         />
       )}
       rules={rules}

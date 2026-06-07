@@ -1,10 +1,11 @@
 import { Alert, Stack } from "@mui/material";
-import { AxiosError } from "axios";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { ActionButton } from "../../../components/atoms/ActionButton";
 import { DefaultLayout } from "../../../components/layouts/DefaultLayout";
 import { ConfirmModal } from "../../../components/atoms/ConfirmModal";
+import { useCrudPageState } from "../../../components/hooks/useCrudPageState";
+import { getApiErrorMessage } from "../../../infrastructure/http/apiErrorHelpers";
 import { useSettings } from "../../settings/provider/SettingProvider";
 import { CurrenciesFilterDrawer } from "../components/CurrenciesFilterDrawer";
 import { CurrenciesList } from "../components/CurrenciesList";
@@ -26,21 +27,6 @@ const emptyFormState: CurrencyFormValues = {
   shortName: "",
 };
 
-function getErrorMessage(error: unknown, fallback: string) {
-  if (error instanceof AxiosError) {
-    const detail = error.response?.data;
-    if (typeof detail === "string" && detail.trim().length > 0) {
-      return detail;
-    }
-  }
-
-  if (error instanceof Error && error.message.trim().length > 0) {
-    return error.message;
-  }
-
-  return fallback;
-}
-
 export function CurrenciesPage() {
   const { t } = useSettings();
   const [filters, setFilters] = useState({
@@ -53,19 +39,26 @@ export function CurrenciesPage() {
   const createCurrencyMutation = useCreateCurrencyMutation();
   const updateCurrencyMutation = useUpdateCurrencyMutation();
   const deleteCurrencyMutation = useDeleteCurrencyMutation();
-  const [editingCurrency, setEditingCurrency] = useState<CurrencyDto | null>(
-    null,
-  );
-  const [deletingCurrency, setDeletingCurrency] = useState<CurrencyDto | null>(
-    null,
-  );
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const {
+    closeDeleteConfirm,
+    closeForm,
+    deletingItem: deletingCurrency,
+    editingItem: editingCurrency,
+    errorMessage,
+    isEditMode,
+    isFormOpen,
+    isSubmitting,
+    openCreateForm: openCrudCreateForm,
+    openDeleteConfirm,
+    openEditForm: openCrudEditForm,
+    setEditingItem,
+    setErrorMessage,
+    setIsFormOpen,
+    setIsSubmitting,
+  } = useCrudPageState<CurrencyDto>();
   const form = useForm<CurrencyFormValues>({
     defaultValues: emptyFormState,
   });
-  const isEditMode = useMemo(() => editingCurrency != null, [editingCurrency]);
 
   async function handleSubmit(values: CurrencyFormValues) {
     setErrorMessage(null);
@@ -92,30 +85,13 @@ export function CurrenciesPage() {
       }
 
       form.reset(emptyFormState);
-      setEditingCurrency(null);
+      setEditingItem(null);
       setIsFormOpen(false);
     } catch (error) {
-      setErrorMessage(getErrorMessage(error, t("currencies.errorSave")));
+      setErrorMessage(getApiErrorMessage(error, t("currencies.errorSave")));
     } finally {
       setIsSubmitting(false);
     }
-  }
-
-  function openCreateForm() {
-    setEditingCurrency(null);
-    form.reset(emptyFormState);
-    setIsFormOpen(true);
-  }
-
-  function openEditForm(currency: CurrencyDto) {
-    setEditingCurrency(currency);
-    form.reset({
-      description: currency.description ?? "",
-      isDefault: currency.isDefault,
-      name: currency.name,
-      shortName: currency.shortName,
-    });
-    setIsFormOpen(true);
   }
 
   async function handleDeleteConfirmed() {
@@ -129,13 +105,12 @@ export function CurrenciesPage() {
     try {
       await deleteCurrencyMutation.mutateAsync(deletingCurrency.id);
       if (editingCurrency?.id === deletingCurrency.id) {
-        setEditingCurrency(null);
+        closeForm();
         form.reset(emptyFormState);
-        setIsFormOpen(false);
       }
-      setDeletingCurrency(null);
+      closeDeleteConfirm();
     } catch (error) {
-      setErrorMessage(getErrorMessage(error, t("currencies.errorDelete")));
+      setErrorMessage(getApiErrorMessage(error, t("currencies.errorDelete")));
     } finally {
       setIsSubmitting(false);
     }
@@ -151,7 +126,12 @@ export function CurrenciesPage() {
       >
         {t("common.filter")}
       </ActionButton>
-      <ActionButton onClick={openCreateForm}>
+      <ActionButton
+        onClick={() => {
+          form.reset(emptyFormState);
+          openCrudCreateForm();
+        }}
+      >
         {t("common.create")}
       </ActionButton>
     </Stack>
@@ -168,9 +148,17 @@ export function CurrenciesPage() {
           isLoading={isLoading}
           isSubmitting={isSubmitting}
           onDelete={(currency) => {
-            setDeletingCurrency(currency);
+            openDeleteConfirm(currency);
           }}
-          onEdit={openEditForm}
+          onEdit={(currency) => {
+            form.reset({
+              description: currency.description ?? "",
+              isDefault: currency.isDefault,
+              name: currency.name,
+              shortName: currency.shortName,
+            });
+            openCrudEditForm(currency);
+          }}
         />
       </Stack>
       <CurrencyFormDrawer
@@ -183,8 +171,7 @@ export function CurrenciesPage() {
             return;
           }
 
-          setIsFormOpen(false);
-          setEditingCurrency(null);
+          closeForm();
           form.reset(emptyFormState);
         }}
         onSubmit={handleSubmit}
@@ -205,7 +192,7 @@ export function CurrenciesPage() {
             return;
           }
 
-          setDeletingCurrency(null);
+          closeDeleteConfirm();
         }}
         onConfirm={() => {
           void handleDeleteConfirmed();

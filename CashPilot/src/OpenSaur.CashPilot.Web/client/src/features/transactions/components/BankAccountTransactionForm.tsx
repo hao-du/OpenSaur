@@ -1,7 +1,11 @@
-import { Button, Stack, TextField } from "@mui/material";
+import { Stack, TextField } from "@mui/material";
 import { DatePicker } from "../../../components/atoms/DatePicker";
+import { FormSection } from "../../../components/atoms/FormSection";
+import { ActionButton } from "../../../components/atoms/ActionButton";
 import { useState } from "react";
 import { useSettings } from "../../settings/provider/SettingProvider";
+import { formatInputNumberValue } from "../../../infrastructure/constants/numberFormatters";
+import { bankAccountTransactionTypes } from "../../../infrastructure/constants/transactionEnums";
 
 export type DetailEditor = {
   clientKey: string;
@@ -16,23 +20,7 @@ export type DetailEditor = {
   isNew?: boolean;
 };
 
-export const formatDisplayValue = (value: string | number) => {
-  if (value === "" || value === undefined || value === null) return "";
-  const stringValue = value.toString();
-  const rawValue = stringValue.replace(/,/g, "");
-  const num = parseFloat(rawValue);
-  if (isNaN(num)) return stringValue;
-
-  const parts = rawValue.split(".");
-  const formatter = new Intl.NumberFormat("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 2 });
-  const formattedInt = formatter.format(parseInt(parts[0] || "0"));
-  if (parts.length > 1) {
-    return `${formattedInt}.${parts[1]}`;
-  }
-  return formattedInt;
-};
-
-export const handleNumberChange = (val: string, onChange: (v: string) => void) => {
+const handleNumberChange = (val: string, onChange: (v: string) => void) => {
   const rawValue = val.replace(/,/g, "");
   if (/^\d*\.?\d*$/.test(rawValue)) {
     onChange(rawValue);
@@ -79,31 +67,35 @@ export function BankAccountTransactionForm({
     }
   };
 
-  const typeText = draft.transactionType === "1" ? t("transactions.initialDeposit") : draft.transactionType === "2" ? t("transactions.interestPayment") : t("transactions.principalReturn");
+  const typeText = draft.transactionType === String(bankAccountTransactionTypes.initialDeposit)
+    ? t("transactions.initialDeposit")
+    : draft.transactionType === String(bankAccountTransactionTypes.interestPayment)
+      ? t("transactions.interestPayment")
+      : t("transactions.principalReturn");
 
   if (!isEditing) {
     return (
-      <Stack spacing={2} sx={{ p: 2, border: "1px solid #eee", borderRadius: 1 }}>
+      <FormSection>
         <Stack spacing={1}>
           <span><strong>{t("transactions.date")}:</strong> {formatDate(draft.transactionDate)}</span>
-          <span><strong>{t("transactions.amount")}:</strong> {formatDisplayValue(draft.amount)}</span>
+          <span><strong>{t("transactions.amount")}:</strong> {formatInputNumberValue(draft.amount)}</span>
           <span><strong>{t("transactions.type")}:</strong> {typeText}</span>
           {draft.description && <span><strong>{t("transactions.description")}:</strong> {draft.description}</span>}
         </Stack>
         <Stack direction="row" justifyContent="flex-end" spacing={1}>
-          <Button onClick={() => setIsEditing(true)} size="small" variant="outlined">{t("transactions.edit")}</Button>
-          <Button color="error" onClick={onDelete} size="small" variant="outlined">{t("transactions.delete")}</Button>
+          <ActionButton onClick={() => setIsEditing(true)} size="small" variant="outlined">{t("transactions.edit")}</ActionButton>
+          <ActionButton color="error" onClick={onDelete} size="small" variant="outlined">{t("transactions.delete")}</ActionButton>
         </Stack>
-      </Stack>
+      </FormSection>
     );
   }
 
   return (
-    <Stack spacing={2} sx={{ p: 2, border: '1px solid #e0e0e0', borderRadius: 1, bgcolor: '#fafafa' }}>
+    <FormSection>
       <TextField 
         required
         label={t("transactions.amount")}
-        value={formatDisplayValue(draft.amount)} 
+        value={formatInputNumberValue(draft.amount)} 
         onChange={e => handleNumberChange(e.target.value, val => setDraft({ ...draft, amount: val }))} 
         error={errors.amount != null}
         helperText={errors.amount}
@@ -115,10 +107,10 @@ export function BankAccountTransactionForm({
       <TextField label={t("transactions.description")} value={draft.description} onChange={e => setDraft({ ...draft, description: e.target.value })} multiline minRows={3} fullWidth />
       
       <Stack direction="row" justifyContent="flex-end" spacing={1} sx={{ mt: 1 }}>
-        <Button onClick={handleCancel} variant="outlined">{t("action.cancel")}</Button>
-        <Button onClick={handleAccept} variant="contained" color="primary">{t("action.confirm")}</Button>
+        <ActionButton onClick={handleCancel} variant="outlined">{t("action.cancel")}</ActionButton>
+        <ActionButton onClick={handleAccept} variant="contained" color="primary">{t("action.confirm")}</ActionButton>
       </Stack>
-    </Stack>
+    </FormSection>
   );
 }
 

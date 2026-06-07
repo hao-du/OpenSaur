@@ -22,6 +22,7 @@ export function BankAccountFormDrawer({ editingBankAccount, isOpen, onClose, ban
   return (
     <DrawerPanel isOpen={isOpen} onClose={onClose} title={editingBankAccount == null ? t("transactions.createBankAccount") : t("transactions.editBankAccount")} width="wide">
       <BankAccountForm
+        key={`${isOpen ? "open" : "closed"}-${editingBankAccount?.id ?? "new"}`}
         banks={banks}
         currencies={currencies}
         initialValue={editingBankAccount}

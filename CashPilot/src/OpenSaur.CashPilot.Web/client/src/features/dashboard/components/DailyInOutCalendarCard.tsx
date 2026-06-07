@@ -1,8 +1,11 @@
 import { Grid, MenuItem, Paper, Select, Stack, Tooltip } from "@mui/material";
+import { alpha } from "@mui/material/styles";
 import { useMemo } from "react";
 import { BodyText } from "../../../components/atoms/BodyText";
 import { PageTitleText } from "../../../components/atoms/PageTitleText";
+import { formatAmount } from "../../../infrastructure/constants/numberFormatters";
 import type { DailyInOutCalendarItemDto } from "../../transactions/dtos/TransactionDto";
+import { useSettings } from "../../settings/provider/SettingProvider";
 
 type Props = {
   title: string;
@@ -20,11 +23,6 @@ type Props = {
   items: DailyInOutCalendarItemDto[];
   onDayClick?: (day: number) => void;
 };
-
-const amountFormatter = new Intl.NumberFormat("en-US", {
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2
-});
 
 const monthNames = [
   "01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"
@@ -46,6 +44,7 @@ export function DailyInOutCalendarCard({
   items,
   onDayClick
 }: Props) {
+  const { locale } = useSettings();
   const yearOptions = useMemo(() => {
     const years = new Set<number>([year - 1, year, year + 1]);
     return Array.from(years).sort((a, b) => b - a);
@@ -113,20 +112,20 @@ export function DailyInOutCalendarCard({
 
               return (
                 <Grid key={cellIndex} size={1}>
-                  <Stack
-                    onClick={isInCurrentMonth ? () => onDayClick?.(dayNumber) : undefined}
-                    sx={{
-                      border: "1px solid rgba(11,110,79,0.16)",
+                <Stack
+                  onClick={isInCurrentMonth ? () => onDayClick?.(dayNumber) : undefined}
+                    sx={(theme) => ({
+                      border: `1px solid ${alpha(theme.palette.primary.main, 0.16)}`,
                       borderRadius: 1,
                       minHeight: 78,
                       p: 0.5,
                       opacity: isInCurrentMonth ? 1 : 0.35,
                       cursor: isInCurrentMonth ? "pointer" : "default"
-                    }}
+                    })}
                   >
                     <BodyText sx={{ fontWeight: 600 }}>{isInCurrentMonth ? dayNumber : ""}</BodyText>
                     {isInCurrentMonth ? (
-                      <Tooltip title={`${inLabel}: ${amountFormatter.format(income)} | ${outLabel}: ${amountFormatter.format(outcome)}`}>
+                        <Tooltip title={`${inLabel}: ${formatAmount(income, locale)} | ${outLabel}: ${formatAmount(outcome, locale)}`}>
                         <Stack spacing={0}>
                           <BodyText
                             sx={{
@@ -138,7 +137,7 @@ export function DailyInOutCalendarCard({
                               maxWidth: "100%"
                             }}
                           >
-                            {amountFormatter.format(income)}
+                            {formatAmount(income, locale)}
                           </BodyText>
                           <BodyText
                             sx={{
@@ -150,7 +149,7 @@ export function DailyInOutCalendarCard({
                               maxWidth: "100%"
                             }}
                           >
-                            {amountFormatter.format(outcome)}
+                            {formatAmount(outcome, locale)}
                           </BodyText>
                         </Stack>
                       </Tooltip>

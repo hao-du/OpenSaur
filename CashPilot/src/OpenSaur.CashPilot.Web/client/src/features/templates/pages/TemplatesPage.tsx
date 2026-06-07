@@ -1,22 +1,25 @@
 ﻿import { Alert, Menu, MenuItem, Stack } from "@mui/material";
-import { AxiosError } from "axios";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { ChevronDown } from "lucide-react";
 import { ActionButton } from "../../../components/atoms/ActionButton";
 import { ConfirmModal } from "../../../components/atoms/ConfirmModal";
 import { DefaultLayout } from "../../../components/layouts/DefaultLayout";
+import { getApiErrorMessage } from "../../../infrastructure/http/apiErrorHelpers";
 import { useBanksQuery } from "../../banks/hooks/useBanksQuery";
 import { useCounterpartiesQuery } from "../../counterparties/hooks/useCounterpartiesQuery";
 import { useCurrenciesQuery } from "../../currencies/hooks/useCurrenciesQuery";
 import { useSettings } from "../../settings/provider/SettingProvider";
+import { useCrudPageState } from "../../../components/hooks/useCrudPageState";
 import { getTemplateById } from "../api/templatesApi";
 import { TemplateFormDrawer } from "../components/settings/TemplateFormDrawer";
-import { TemplatePopulateDrawer } from "../components/TemplatePopulateDrawer";
 import {
   buildDefaultTemplateData,
   safeParseTemplateData,
   toStoredTemplateData,
+} from "../components/settings/TemplateDataCodec";
+import { TemplatePopulateDrawer } from "../components/TemplatePopulateDrawer";
+import {
   type TemplateFormValues,
 } from "../components/settings/TemplateForm";
 import { TemplatesFilterDrawer } from "../components/TemplatesFilterDrawer";
@@ -33,21 +36,6 @@ const emptyFormState: TemplateFormValues = {
   templateData: buildDefaultTemplateData("CashFlow"),
   templateType: "CashFlow",
 };
-
-function getErrorMessage(error: unknown, fallback: string) {
-  if (error instanceof AxiosError) {
-    const detail = error.response?.data;
-    if (typeof detail === "string" && detail.trim().length > 0) {
-      return detail;
-    }
-  }
-
-  if (error instanceof Error && error.message.trim().length > 0) {
-    return error.message;
-  }
-
-  return fallback;
-}
 
 function mapTypeToNumber(type: TemplateFormValues["templateType"]) {
   if (type === "CashFlow") return 1;
@@ -113,23 +101,32 @@ export function TemplatesPage() {
     templateType: "" as "" | TemplateFormValues["templateType"],
   });
   const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
-  const [editingTemplate, setEditingTemplate] =
-    useState<TemplateListItemDto | null>(null);
-  const [deletingTemplate, setDeletingTemplate] =
-    useState<TemplateListItemDto | null>(null);
-  const [isFormOpen, setIsFormOpen] = useState(false);
   const [createMenuAnchor, setCreateMenuAnchor] = useState<null | HTMLElement>(
     null,
   );
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isPopulateOpen, setIsPopulateOpen] = useState(false);
   const [populateTemplateId, setPopulateTemplateId] = useState<string | null>(
     null,
   );
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const form = useForm<TemplateFormValues>({ defaultValues: emptyFormState });
-  const isEditMode = useMemo(() => editingTemplate != null, [editingTemplate]);
+  const {
+    closeDeleteConfirm,
+    closeForm,
+    deletingItem: deletingTemplate,
+    editingItem: editingTemplate,
+    errorMessage,
+    isEditMode,
+    isFormOpen,
+    isSubmitting,
+    openCreateForm: openCrudCreateForm,
+    openDeleteConfirm,
+    openEditForm: openCrudEditForm,
+    setEditingItem,
+    setErrorMessage,
+    setIsFormOpen,
+    setIsSubmitting,
+  } = useCrudPageState<TemplateListItemDto>();
 
   const { data: templates = [], isLoading } = useTemplatesQuery(filters);
   const createTemplateMutation = useCreateTemplateMutation();
@@ -187,23 +184,22 @@ export function TemplatesPage() {
       }
 
       form.reset(emptyFormState);
-      setEditingTemplate(null);
+      setEditingItem(null);
       setIsFormOpen(false);
     } catch (error) {
-      setErrorMessage(getErrorMessage(error, t("templates.errorSave")));
+      setErrorMessage(getApiErrorMessage(error, t("templates.errorSave")));
     } finally {
       setIsSubmitting(false);
     }
   }
 
   function openCreateForm(type: TemplateFormValues["templateType"]) {
-    setEditingTemplate(null);
     form.reset({
       ...emptyFormState,
       templateType: type,
       templateData: buildDefaultTemplateData(type),
     });
-    setIsFormOpen(true);
+    openCrudCreateForm();
   }
 
   async function openEditForm(template: TemplateListItemDto) {
@@ -220,10 +216,9 @@ export function TemplatesPage() {
         templateData: safeParseTemplateData(detail.templateDataJson, type),
         templateType: type,
       });
-      setEditingTemplate(template);
-      setIsFormOpen(true);
+      openCrudEditForm(template);
     } catch (error) {
-      setErrorMessage(getErrorMessage(error, t("templates.errorLoad")));
+      setErrorMessage(getApiErrorMessage(error, t("templates.errorLoad")));
     } finally {
       setIsSubmitting(false);
     }
@@ -240,13 +235,12 @@ export function TemplatesPage() {
     try {
       await deleteTemplateMutation.mutateAsync(deletingTemplate.id);
       if (editingTemplate?.id === deletingTemplate.id) {
-        setEditingTemplate(null);
+        closeForm();
         form.reset(emptyFormState);
-        setIsFormOpen(false);
       }
-      setDeletingTemplate(null);
+      closeDeleteConfirm();
     } catch (error) {
-      setErrorMessage(getErrorMessage(error, t("templates.errorDelete")));
+      setErrorMessage(getApiErrorMessage(error, t("templates.errorDelete")));
     } finally {
       setIsSubmitting(false);
     }
@@ -316,7 +310,7 @@ export function TemplatesPage() {
         <TemplatesList
           isLoading={isLoading}
           isSubmitting={isSubmitting}
-          onDelete={(template) => setDeletingTemplate(template)}
+          onDelete={(template) => openDeleteConfirm(template)}
           onEdit={(template) => {
             void openEditForm(template);
           }}
@@ -338,8 +332,7 @@ export function TemplatesPage() {
         isSubmitting={isSubmitting}
         onClose={() => {
           if (isSubmitting) return;
-          setIsFormOpen(false);
-          setEditingTemplate(null);
+          closeForm();
           form.reset(emptyFormState);
         }}
         onSubmit={handleSubmit}
@@ -358,7 +351,7 @@ export function TemplatesPage() {
         }
         onClose={() => {
           if (isSubmitting) return;
-          setDeletingTemplate(null);
+          closeDeleteConfirm();
         }}
         onConfirm={() => {
           void handleDeleteConfirmed();

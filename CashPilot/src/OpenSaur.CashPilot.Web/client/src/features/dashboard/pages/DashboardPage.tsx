@@ -1,5 +1,6 @@
 import { DefaultLayout } from "../../../components/layouts/DefaultLayout";
 import { Grid, Paper, Stack } from "@mui/material";
+import { alpha } from "@mui/material/styles";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTransactionDashboardQuery } from "../../transactions/hooks/useTransactionDashboardQuery";
@@ -39,7 +40,7 @@ export function DashboardPage() {
   return (
     <DefaultLayout title={t("dashboard.title")}>
       <Stack spacing={3}>
-        <Paper elevation={0} sx={{ border: "1px solid rgba(11,110,79,0.12)", p: 3 }}>
+        <Paper elevation={0} sx={(theme) => ({ border: `1px solid ${alpha(theme.palette.primary.main, 0.12)}`, p: 3 })}>
           <Stack spacing={2}>
             <Grid container spacing={2} alignItems="stretch">
               <Grid size={{ lg: 4, sm: 6, xs: 12 }}>

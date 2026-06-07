@@ -1,8 +1,10 @@
-import { Button, Stack } from "@mui/material";
+import { Stack } from "@mui/material";
 import { type FieldArrayPath, type FieldValues, type Path, type Control, useFieldArray, useWatch } from "react-hook-form";
+import { ActionButton } from "../../../components/atoms/ActionButton";
 import { Number as NumberInput } from "../../../components/atoms/Number";
 import { Text } from "../../../components/atoms/Text";
 import { BodyText } from "../../../components/atoms/BodyText";
+import { formatAmount } from "../../../infrastructure/constants/numberFormatters";
 import { useSettings } from "../../settings/provider/SettingProvider";
 
 type Props<TFieldValues extends FieldValues> = {
@@ -18,7 +20,7 @@ export function TransactionItemsEditor<TFieldValues extends FieldValues>({
   disabled = false,
   currencyCode
 }: Props<TFieldValues>) {
-  const { t } = useSettings();
+  const { locale, t } = useSettings();
   const { fields, append, remove } = useFieldArray({
     control,
     name,
@@ -26,11 +28,6 @@ export function TransactionItemsEditor<TFieldValues extends FieldValues>({
   });
 
   const items = useWatch({ control, name: name as Path<TFieldValues> }) as Array<{ amount?: string }> | undefined;
-
-  const amountFormatter = new Intl.NumberFormat("en-US", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
-  });
 
   const totalAmount = (items ?? []).reduce((sum, item) => {
     const amount = Number((item?.amount ?? "").replace(/,/g, ""));
@@ -41,16 +38,16 @@ export function TransactionItemsEditor<TFieldValues extends FieldValues>({
     <Stack spacing={2}>
       <Stack direction="row" justifyContent="space-between" alignItems="center">
         <BodyText sx={{ fontWeight: 600 }}>
-          {`${t("transactions.transactionItems.totalAmount")}: ${amountFormatter.format(totalAmount)}${currencyCode ? ` ${currencyCode}` : ""}`}
+          {`${t("transactions.transactionItems.totalAmount")}: ${formatAmount(totalAmount, locale)}${currencyCode ? ` ${currencyCode}` : ""}`}
         </BodyText>
-        <Button
+        <ActionButton
           type="button"
           variant="outlined"
           onClick={() => append({ id: undefined, name: "", amount: "" } as never)}
           disabled={disabled}
         >
           {t("transactions.transactionItems.add")}
-        </Button>
+        </ActionButton>
       </Stack>
 
       {fields.map((field, index) => (
@@ -67,14 +64,14 @@ export function TransactionItemsEditor<TFieldValues extends FieldValues>({
             label={t("transactions.transactionItems.amount")}
             disabled={disabled}
           />
-          <Button
+          <ActionButton
             type="button"
             color="inherit"
             onClick={() => remove(index)}
             disabled={disabled}
           >
             {t("transactions.transactionItems.remove")}
-          </Button>
+          </ActionButton>
         </Stack>
       ))}
     </Stack>

@@ -6,7 +6,7 @@ import type { CounterpartyDto } from "../../counterparties/dtos/CounterpartyDto"
 import type { CurrencyDto } from "../../currencies/dtos/CurrencyDto";
 import { useSettings } from "../../settings/provider/SettingProvider";
 import { getTemplateById } from "../api/templatesApi";
-import { safeParseTemplateData } from "./settings/TemplateForm";
+import { safeParseTemplateData } from "./settings/TemplateDataCodec";
 import type { TemplateData, TemplateType } from "../dtos/TemplateDto";
 import { BankAccountPopulateForm } from "./populate/BankAccountPopulateForm";
 import { CashFlowPopulateForm } from "./populate/CashFlowPopulateForm";

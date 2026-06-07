@@ -1,10 +1,14 @@
-import { Button, Stack } from "@mui/material";
+import { Stack } from "@mui/material";
 import { DatePicker } from "../../../components/atoms/DatePicker";
 import { DropDown } from "../../../components/atoms/DropDown";
+import { ActionButton } from "../../../components/atoms/ActionButton";
+import { FormSection } from "../../../components/atoms/FormSection";
 import { Number as NumberField } from "../../../components/atoms/Number";
 import { TextArea } from "../../../components/atoms/TextArea";
 import { useForm } from "react-hook-form";
 import { useState } from "react";
+import { formatAmount } from "../../../infrastructure/constants/numberFormatters";
+import { transactionDirections } from "../../../infrastructure/constants/transactionEnums";
 import { useSettings } from "../../settings/provider/SettingProvider";
 
 export type TransferDetailEditor = {
@@ -33,13 +37,8 @@ type FormValues = {
   description: string;
 };
 
-const amountFormatter = new Intl.NumberFormat("en-US", {
-  minimumFractionDigits: 0,
-  maximumFractionDigits: 2
-});
-
 export function TransferFormTransaction({ detail, isSubmitting = false, onAccept, onDelete, onCancelNew }: Props) {
-  const { formatDate, t } = useSettings();
+  const { formatDate, locale, t } = useSettings();
   const [isEditing, setIsEditing] = useState(detail.isNew || false);
   const form = useForm<FormValues>({
     defaultValues: {
@@ -70,25 +69,25 @@ export function TransferFormTransaction({ detail, isSubmitting = false, onAccept
 
   const directionText = detail.direction === "1" ? t("transactions.directionIn") : t("transactions.directionOut");
   const formattedAmount = Number.isFinite(Number(detail.amount))
-    ? amountFormatter.format(Number(detail.amount))
+    ? formatAmount(Number(detail.amount), locale)
     : detail.amount;
   if (!isEditing) {
     return (
-      <Stack spacing={1.25} sx={{ p: 2, border: "1px solid #eee", borderRadius: 1 }}>
+      <FormSection>
         <span><strong>{t("transactions.date")}:</strong> {formatDate(detail.transactionDate)}</span>
         <span><strong>{t("transactions.amount")}:</strong> {formattedAmount}</span>
         <span><strong>{t("transactions.direction")}:</strong> {directionText}</span>
         {detail.description.length > 0 ? <span><strong>{t("transactions.description")}:</strong> {detail.description}</span> : null}
         <Stack direction="row" justifyContent="flex-end" spacing={1}>
-          <Button size="small" variant="outlined" onClick={startEdit}>{t("transactions.edit")}</Button>
-          <Button size="small" variant="outlined" color="error" onClick={onDelete}>{t("transactions.delete")}</Button>
+          <ActionButton size="small" variant="outlined" onClick={startEdit}>{t("transactions.edit")}</ActionButton>
+          <ActionButton size="small" variant="outlined" color="error" onClick={onDelete}>{t("transactions.delete")}</ActionButton>
         </Stack>
-      </Stack>
+      </FormSection>
     );
   }
 
   return (
-    <Stack spacing={2} sx={{ p: 2, border: "1px solid #e0e0e0", borderRadius: 1, bgcolor: "#fafafa" }}>
+    <FormSection>
       <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
         <Stack sx={{ flex: 2 }}>
           <NumberField
@@ -107,8 +106,8 @@ export function TransferFormTransaction({ detail, isSubmitting = false, onAccept
             label={t("transactions.direction")}
             name="direction"
             options={[
-              { label: t("transactions.directionIn"), value: "1" },
-              { label: t("transactions.directionOut"), value: "2" }
+              { label: t("transactions.directionIn"), value: transactionDirections.inflow },
+              { label: t("transactions.directionOut"), value: transactionDirections.outflow }
             ]}
             required
             rules={{ required: t("transactions.validation.directionRequired") }}
@@ -125,8 +124,8 @@ export function TransferFormTransaction({ detail, isSubmitting = false, onAccept
       />
       <TextArea control={form.control} disabled={isSubmitting} label={t("transactions.description")} name="description" minRows={3} />
       <Stack direction="row" justifyContent="flex-end" spacing={1}>
-        <Button variant="outlined" onClick={cancelEdit} disabled={isSubmitting}>{t("action.cancel")}</Button>
-        <Button variant="contained" disabled={isSubmitting} onClick={() => {
+        <ActionButton variant="outlined" onClick={cancelEdit} disabled={isSubmitting}>{t("action.cancel")}</ActionButton>
+        <ActionButton variant="contained" disabled={isSubmitting} onClick={() => {
           void form.handleSubmit(values => {
             onAccept({
               ...detail,
@@ -138,8 +137,8 @@ export function TransferFormTransaction({ detail, isSubmitting = false, onAccept
             });
             setIsEditing(false);
           })();
-        }}>{t("action.confirm")}</Button>
+        }}>{t("action.confirm")}</ActionButton>
       </Stack>
-    </Stack>
+    </FormSection>
   );
 }

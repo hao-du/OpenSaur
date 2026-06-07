@@ -7,6 +7,7 @@ import { TextArea } from "../../../components/atoms/TextArea";
 import { TagAutocompleteMultiSelect } from "../../tags/components/TagAutocompleteMultiSelect";
 import type { CounterpartyDto } from "../../counterparties/dtos/CounterpartyDto";
 import type { CurrencyDto } from "../../currencies/dtos/CurrencyDto";
+import { transferStatuses, transferTypes } from "../../../infrastructure/constants/transactionEnums";
 import { useSettings } from "../../settings/provider/SettingProvider";
 
 export type TransferHeaderValues = {
@@ -56,10 +57,10 @@ export function TransferHeaderForm({
           label={t("transactions.type")}
           name="transferType"
           options={[
-            { label: t("transactions.transferType.lend"), value: "1" },
-            { label: t("transactions.transferType.borrow"), value: "2" },
-            { label: t("transactions.transferType.give"), value: "3" },
-            { label: t("transactions.transferType.receive"), value: "4" },
+            { label: t("transactions.transferType.lend"), value: String(transferTypes.lend) },
+            { label: t("transactions.transferType.borrow"), value: String(transferTypes.borrow) },
+            { label: t("transactions.transferType.give"), value: String(transferTypes.give) },
+            { label: t("transactions.transferType.receive"), value: String(transferTypes.receive) },
           ]}
           required
           rules={{ required: t("transactions.validation.typeRequired") }}
@@ -72,9 +73,9 @@ export function TransferHeaderForm({
           label={t("transactions.status")}
           name="status"
           options={[
-            { label: t("transactions.statusType.active"), value: "1" },
-            { label: t("transactions.statusType.completed"), value: "2" },
-            { label: t("transactions.statusType.cancelled"), value: "3" },
+            { label: t("transactions.statusType.active"), value: String(transferStatuses.active) },
+            { label: t("transactions.statusType.completed"), value: String(transferStatuses.completed) },
+            { label: t("transactions.statusType.cancelled"), value: String(transferStatuses.cancelled) },
           ]}
           required
           rules={{ required: t("transactions.validation.statusRequired") }}

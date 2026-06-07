@@ -1,23 +1,12 @@
 import { useState } from "react";
 import { DrawerPanel } from "../../../components/organisms/DrawerPanel";
 import type { CurrencyDto } from "../../currencies/dtos/CurrencyDto";
+import type { ExchangeDraft } from "../dtos/TransactionPageState";
 import { ExchangeForm } from "./ExchangeForm";
 import { useSettings } from "../../settings/provider/SettingProvider";
 
 type Props = {
-  editingExchange?: {
-    id: string;
-    exchangeRate: number | null;
-    exchangeDate: string;
-    outCurrencyId: string;
-    outAmount: number;
-    inCurrencyId: string;
-    inAmount: number;
-    description?: string | null;
-    tags?: string[] | null;
-    isActive: boolean;
-    transactionItems?: Array<{ id?: string; name: string; amount: number }>;
-  } | null;
+  editingExchange?: ExchangeDraft | null;
   isOpen: boolean;
   onClose: () => void;
   currencies: CurrencyDto[];

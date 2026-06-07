@@ -30,7 +30,7 @@ export function TemplatesFilterDrawer({ initialValues, isOpen, onApply, onClose 
   return (
     <DrawerPanel isOpen={isOpen} onClose={onClose} title={t("templates.filterTitle")}>
       <Stack component="form" onSubmit={form.handleSubmit(onApply)} spacing={2} sx={layoutStyles.drawerBody}>
-        <Text control={form.control} label={t("currencies.name")} name="name" />
+        <Text control={form.control} label={t("common.name")} name="name" />
         <DropDown
           control={form.control}
           label={t("templates.templateType")}
@@ -43,12 +43,12 @@ export function TemplatesFilterDrawer({ initialValues, isOpen, onApply, onClose 
             { label: t("templates.templateType.bankAccount"), value: "BankAccount" }
           ]}
         />
-        <CheckBox control={form.control} label={t("counterparties.activeOnly")} name="isActive" />
+        <CheckBox control={form.control} label={t("common.activeOnly")} name="isActive" />
         <Stack direction="row" spacing={1} sx={layoutStyles.formFooterRow}>
-          <ActionButton type="submit">{t("counterparties.apply")}</ActionButton>
+          <ActionButton type="submit">{t("common.apply")}</ActionButton>
           <ActionButton onClick={() => {
             form.reset({ isActive: true, name: "", templateType: "" });
-          }} type="button" variant="outlined">{t("counterparties.reset")}</ActionButton>
+          }} type="button" variant="outlined">{t("common.reset")}</ActionButton>
         </Stack>
       </Stack>
     </DrawerPanel>

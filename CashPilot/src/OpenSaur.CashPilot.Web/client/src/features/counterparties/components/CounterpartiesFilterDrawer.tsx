@@ -58,9 +58,9 @@ export function CounterpartiesFilterDrawer({
         <Text control={form.control} label={t("counterparties.fullName")} name="fullName" />
         <Text control={form.control} label={t("counterparties.email")} name="email" />
         <Text control={form.control} label={t("counterparties.phoneNumber")} name="phoneNumber" />
-        <CheckBox control={form.control} label={t("counterparties.activeOnly")} name="isActive" />
+        <CheckBox control={form.control} label={t("common.activeOnly")} name="isActive" />
         <Stack direction="row" spacing={1} sx={layoutStyles.formFooterRow}>
-          <ActionButton type="submit">{t("counterparties.apply")}</ActionButton>
+          <ActionButton type="submit">{t("common.apply")}</ActionButton>
           <ActionButton
             onClick={() => {
               form.reset({
@@ -72,7 +72,7 @@ export function CounterpartiesFilterDrawer({
             }}
             variant="outlined"
           >
-            {t("counterparties.reset")}
+            {t("common.reset")}
           </ActionButton>
         </Stack>
       </Stack>

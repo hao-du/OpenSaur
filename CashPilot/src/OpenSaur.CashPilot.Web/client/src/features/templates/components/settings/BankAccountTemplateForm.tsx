@@ -119,6 +119,24 @@ export function BankAccountTemplateForm({
     | "description";
   const requiredWhenHidden = (valuePath: BankFieldKey, message: string) =>
     requiredWhenAutoHidden(getValues, valuePath, message);
+  const validateInterestRate = (value: unknown) => {
+    if (interestRateMode !== true) {
+      return true;
+    }
+
+    if (value == null || String(value).trim().length === 0) {
+      return t("transactions.validation.interestRateRequired");
+    }
+
+    const parsed = globalThis.Number(value);
+    if (!globalThis.Number.isFinite(parsed)) {
+      return t("transactions.validation.interestRateInvalid");
+    }
+
+    return parsed >= 0 && parsed <= 100
+      ? true
+      : t("transactions.validation.interestRateRange");
+  };
   useEffect(() => {
     clearErrorsWhenNotRequired(clearErrors, [
       { path: "templateData.bankId.value", required: bankRequired },
@@ -234,10 +252,16 @@ export function BankAccountTemplateForm({
           name="templateData.interestRate.value"
           required={interestRateRequired}
           rules={{
-            validate: requiredWhenHidden(
-              "interestRate",
-              t("transactions.validation.interestRateRequired"),
-            ),
+            validate: (value) => {
+              const requiredResult = requiredWhenHidden(
+                "interestRate",
+                t("transactions.validation.interestRateRequired"),
+              )(value);
+              if (requiredResult !== true) {
+                return requiredResult;
+              }
+              return validateInterestRate(value);
+            },
           }}
         />
       </FieldRow>

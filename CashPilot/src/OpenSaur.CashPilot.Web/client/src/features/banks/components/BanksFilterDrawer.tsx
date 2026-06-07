@@ -54,25 +54,15 @@ export function BanksFilterDrawer({
         spacing={2}
         sx={layoutStyles.drawerBody}
       >
-        <Text
-          control={form.control}
-          label={t("currencies.name")}
-          name="name"
-        />
+        <Text control={form.control} label={t("common.name")} name="name" />
         <Text
           control={form.control}
           label={t("banks.shortName")}
           name="shortName"
         />
-        <CheckBox
-          control={form.control}
-          label={t("counterparties.activeOnly")}
-          name="isActive"
-        />
+        <CheckBox control={form.control} label={t("common.activeOnly")} name="isActive" />
         <Stack direction="row" spacing={1} sx={layoutStyles.formFooterRow}>
-          <ActionButton type="submit">
-            {t("counterparties.apply")}
-          </ActionButton>
+          <ActionButton type="submit">{t("common.apply")}</ActionButton>
           <ActionButton
             onClick={() => {
               form.reset({
@@ -83,7 +73,7 @@ export function BanksFilterDrawer({
             }}
             variant="outlined"
           >
-            {t("counterparties.reset")}
+            {t("common.reset")}
           </ActionButton>
         </Stack>
       </Stack>

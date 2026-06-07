@@ -1,6 +1,7 @@
 import { Paper, Stack } from "@mui/material";
 import { BodyText } from "../../../components/atoms/BodyText";
 import { PageTitleText } from "../../../components/atoms/PageTitleText";
+import { useSettings } from "../../settings/provider/SettingProvider";
 import type { IncomeOutcomeDto } from "../../transactions/dtos/TransactionDto";
 
 type Props = {
@@ -9,12 +10,8 @@ type Props = {
   currencyCode?: string;
 };
 
-const amountFormatter = new Intl.NumberFormat("en-US", {
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2
-});
-
 export function IncomeOutcomeCard({ items, title, currencyCode }: Props) {
+  const { formatAmount } = useSettings();
   const latestThreeMonths = [...items]
     .sort((a, b) => {
       if (a.year !== b.year) {
@@ -37,8 +34,8 @@ export function IncomeOutcomeCard({ items, title, currencyCode }: Props) {
           <Stack key={`${item.year}-${item.month}-${item.currencyCode}`} direction="row" justifyContent="space-between" spacing={2} alignItems="flex-start">
             <BodyText>{`${item.year}-${String(item.month).padStart(2, "0")} ${item.currencyCode}`}</BodyText>
             <Stack spacing={0.25} sx={{ fontVariantNumeric: "tabular-nums" }}>
-              <BodyText sx={{ color: "success.main", minWidth: 160, textAlign: "right" }}>{`+${amountFormatter.format(item.income)}`}</BodyText>
-              <BodyText sx={{ color: "error.main", minWidth: 160, textAlign: "right" }}>{`-${amountFormatter.format(item.outcome)}`}</BodyText>
+              <BodyText sx={{ color: "success.main", minWidth: 160, textAlign: "right" }}>{`+${formatAmount(item.income)}`}</BodyText>
+              <BodyText sx={{ color: "error.main", minWidth: 160, textAlign: "right" }}>{`-${formatAmount(item.outcome)}`}</BodyText>
             </Stack>
           </Stack>
         ))}

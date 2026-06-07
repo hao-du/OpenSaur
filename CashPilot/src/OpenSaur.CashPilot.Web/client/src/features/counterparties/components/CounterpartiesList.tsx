@@ -1,8 +1,7 @@
-import { Chip, CircularProgress, Paper, Stack, Table, TableBody, TableCell, TableHead, TableRow } from "@mui/material";
-import { BodyText } from "../../../components/atoms/BodyText";
+import { Stack, TableCell, TableRow } from "@mui/material";
+import { BooleanChip } from "../../../components/atoms/BooleanChip";
 import { LinkButton } from "../../../components/atoms/LinkButton";
-import { PageTitleText } from "../../../components/atoms/PageTitleText";
-import { layoutStyles } from "../../../infrastructure/theme/theme";
+import { DataTable } from "../../../components/organisms/DataTable";
 import type { CounterpartyDto } from "../dtos/CounterpartyDto";
 import { useSettings } from "../../settings/provider/SettingProvider";
 
@@ -19,95 +18,61 @@ export function CounterpartiesList({
   isLoading,
   isSubmitting,
   onDelete,
-  onEdit
+  onEdit,
 }: CounterpartiesListProps) {
   const { t } = useSettings();
-  if (isLoading) {
-    return (
-      <Paper elevation={0} sx={layoutStyles.loadingPanel}>
-        <Stack alignItems="center" spacing={2}>
-          <CircularProgress size={28} />
-          <BodyText>{t("counterparties.loading")}</BodyText>
-        </Stack>
-      </Paper>
-    );
-  }
-
-  if (counterparties.length === 0) {
-    return (
-      <Paper elevation={0} sx={layoutStyles.emptyStatePanel}>
-        <Stack spacing={1.5}>
-          <PageTitleText variant="h6">{t("counterparties.emptyTitle")}</PageTitleText>
-          <BodyText>{t("counterparties.emptySubtitle")}</BodyText>
-        </Stack>
-      </Paper>
-    );
-  }
 
   return (
-    <Paper elevation={0} sx={layoutStyles.borderedPanelScrollable}>
-      <Table size="small">
-        <TableHead>
-          <TableRow>
-            <TableCell sx={{ py: 1 }}>{t("counterparties.fullName")}</TableCell>
-            <TableCell sx={{ py: 1 }}>{t("common.isDefault")}</TableCell>
-            <TableCell sx={{ py: 1 }}>{t("counterparties.email")}</TableCell>
-            <TableCell sx={{ py: 1 }}>{t("counterparties.phoneNumber")}</TableCell>
-            <TableCell sx={{ py: 1 }}>{t("common.description")}</TableCell>
-            <TableCell align="right" sx={{ py: 1 }}>{t("common.actions")}</TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {counterparties.map(counterparty => (
-            <TableRow hover key={counterparty.id}>
-              <TableCell sx={{ py: 0.8 }}>{counterparty.fullName}</TableCell>
-              <TableCell sx={{ py: 0.8 }}>
-                {counterparty.isDefault ? (
-                  <Chip
-                    label={t("common.yes")}
-                    size="small"
-                    sx={{
-                      bgcolor: "primary.main",
-                      color: "white"
-                    }}
-                  />
-                ) : (
-                  <Chip
-                    label={t("common.no")}
-                    size="small"
-                    variant="outlined"
-                  />
-                )}
-              </TableCell>
-              <TableCell sx={{ py: 0.8 }}>{counterparty.email ?? t("common.none")}</TableCell>
-              <TableCell sx={{ py: 0.8 }}>{counterparty.phoneNumber ?? t("common.none")}</TableCell>
-              <TableCell sx={{ py: 0.8 }}>{counterparty.description ?? t("common.none")}</TableCell>
-              <TableCell align="right" sx={{ py: 0.8 }}>
-                <Stack direction="row" justifyContent="flex-end" spacing={1}>
-                  <LinkButton
-                    disabled={isSubmitting}
-                    onClick={() => {
-                      onEdit(counterparty);
-                    }}
-                  >
-                    {t("common.edit")}
-                  </LinkButton>
-                  <LinkButton
-                    color="error"
-                    disabled={isSubmitting}
-                    onClick={() => {
-                      onDelete(counterparty);
-                    }}
-                  >
-                    {t("common.delete")}
-                  </LinkButton>
-                </Stack>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </Paper>
+    <DataTable
+      columns={[
+        { key: "fullName", label: t("counterparties.fullName") },
+        { key: "isDefault", label: t("common.isDefault") },
+        { key: "email", label: t("counterparties.email") },
+        { key: "phoneNumber", label: t("counterparties.phoneNumber") },
+        { key: "description", label: t("common.description") },
+        { key: "actions", label: t("common.actions"), align: "right" },
+      ]}
+      emptySubtitle={t("counterparties.emptySubtitle")}
+      emptyTitle={t("counterparties.emptyTitle")}
+      isLoading={isLoading}
+      items={counterparties}
+      loadingLabel={t("counterparties.loading")}
+      renderRow={(counterparty) => (
+        <TableRow hover key={counterparty.id}>
+          <TableCell>{counterparty.fullName}</TableCell>
+          <TableCell>
+            <BooleanChip
+              falseLabel={t("common.no")}
+              trueLabel={t("common.yes")}
+              value={counterparty.isDefault}
+            />
+          </TableCell>
+          <TableCell>{counterparty.email ?? t("common.none")}</TableCell>
+          <TableCell>{counterparty.phoneNumber ?? t("common.none")}</TableCell>
+          <TableCell>{counterparty.description ?? t("common.none")}</TableCell>
+          <TableCell align="right">
+            <Stack direction="row" justifyContent="flex-end" spacing={1}>
+              <LinkButton
+                disabled={isSubmitting}
+                onClick={() => {
+                  onEdit(counterparty);
+                }}
+              >
+                {t("common.edit")}
+              </LinkButton>
+              <LinkButton
+                color="error"
+                disabled={isSubmitting}
+                onClick={() => {
+                  onDelete(counterparty);
+                }}
+              >
+                {t("common.delete")}
+              </LinkButton>
+            </Stack>
+          </TableCell>
+        </TableRow>
+      )}
+    />
   );
 }
-
