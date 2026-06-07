@@ -4,8 +4,10 @@ using Microsoft.EntityFrameworkCore;
 using OpenSaur.CashPilot.Web.Domain;
 using OpenSaur.CashPilot.Web.Features.Tags;
 using OpenSaur.CashPilot.Web.Features.Tags.Services;
+using OpenSaur.CashPilot.Web.Features.Transactions.Helpers;
 using OpenSaur.CashPilot.Web.Features.Transactions.Dtos;
 using OpenSaur.CashPilot.Web.Features.Transactions.Validations;
+using OpenSaur.CashPilot.Web.Infrastructure.Validation;
 using OpenSaur.CashPilot.Web.Infrastructure.Database;
 using OpenSaur.CashPilot.Web.Infrastructure.Helpers;
 using System.Security.Claims;
@@ -27,7 +29,9 @@ public static class UpdateTransferFormHandler
         var currentUserId = ClaimHelper.GetCurrentUserId(user);
         if (currentUserId == Guid.Empty)
         {
-            return AppHttpResults.BadRequest("User is required.", "Transactions require an authenticated user identifier.");
+            return AppHttpResults.BadRequest(
+                TransactionValidationMessages.UserRequiredTitle,
+                TransactionValidationMessages.UserRequiredDetail);
         }
 
         var validationResult = await Validator.ValidateAsync(request, cancellationToken);
@@ -36,31 +40,40 @@ public static class UpdateTransferFormHandler
             return AppHttpResults.ValidationProblem(validationResult);
         }
 
-        var hasCounterparty = await dbContext.Counterparties
-            .AnyAsync(x => x.Id == request.CounterpartyId && x.OwnerId == currentUserId && x.IsActive, cancellationToken);
-        if (!hasCounterparty)
+        var counterpartyValidation = await TransactionEntityValidationHelper.EnsureCounterpartyExistsAsync(
+            dbContext,
+            currentUserId,
+            request.CounterpartyId,
+            cancellationToken);
+        if (counterpartyValidation is not null)
         {
-            return AppHttpResults.BadRequest("Counterparty is invalid.", "The selected counterparty does not exist for the current user.");
+            return counterpartyValidation;
         }
 
         var currencyIds = request.Details.Select(x => x.CurrencyId).Append(request.CurrencyId).Distinct().ToList();
-        var currencyCount = await dbContext.Currencies
-            .CountAsync(x => currencyIds.Contains(x.Id) && x.OwnerId == currentUserId && x.IsActive, cancellationToken);
-        if (currencyCount != currencyIds.Count)
+        var currenciesValidation = await TransactionEntityValidationHelper.EnsureCurrenciesExistAsync(
+            dbContext,
+            currentUserId,
+            currencyIds,
+            cancellationToken);
+        if (currenciesValidation is not null)
         {
-            return AppHttpResults.BadRequest("Currency is invalid.", "One or more selected currencies do not exist for the current user.");
+            return currenciesValidation;
         }
 
+        var id = request.Id.GetValueOrDefault();
         var existingTransfer = await dbContext.Transfers
             .Include(x => x.TransferTransactions)
                 .ThenInclude(x => x.Transaction)
             .Include(x => x.TransactionItems)
             .SingleOrDefaultAsync(
-                x => x.Id == request.Id.Value && x.TransferTransactions.All(y => y.Transaction.OwnerId == currentUserId),
+                x => x.Id == id && x.TransferTransactions.All(y => y.Transaction.OwnerId == currentUserId),
                 cancellationToken);
         if (existingTransfer is null)
         {
-            return AppHttpResults.NotFound("Transfer not found.", "No Transfer matched the specified identifier.");
+            return AppHttpResults.NotFound(
+                TransactionValidationMessages.TransferNotFoundTitle,
+                TransactionValidationMessages.TransferNotFoundDetail);
         }
 
         var transfer = existingTransfer;
@@ -74,14 +87,7 @@ public static class UpdateTransferFormHandler
         transfer.Status = (TransferStatus)request.Status;
         transfer.IsActive = request.IsActive;
         dbContext.TransactionItems.RemoveRange(transfer.TransactionItems);
-        transfer.TransactionItems = request.TransactionItems
-            .Where(x => !string.IsNullOrWhiteSpace(x.Name))
-            .Select(x => new TransactionItem
-            {
-                Name = x.Name.Trim(),
-                Amount = x.Amount
-            })
-            .ToList();
+        transfer.TransactionItems = request.TransactionItems.ToTransactionItems();
         transfer.Tags = TagTermCodec.Encode(request.Tags ?? []);
         await tagService.EnsureTagDefinitionsExistAsync(currentUserId, request.Tags ?? [], cancellationToken);
 
@@ -113,7 +119,9 @@ public static class UpdateTransferFormHandler
                 var existingMovement = transfer.TransferTransactions.SingleOrDefault(x => x.Id == detail.Id.Value);
                 if (existingMovement is null)
                 {
-                    return AppHttpResults.NotFound("TransferTransaction not found.", "A detail row did not match the specified identifier.");
+                    return AppHttpResults.NotFound(
+                        TransactionValidationMessages.TransferTransactionNotFoundTitle,
+                        TransactionValidationMessages.TransferTransactionNotFoundDetail);
                 }
                 movement = existingMovement;
             }
@@ -133,3 +141,7 @@ public static class UpdateTransferFormHandler
         return TypedResults.Ok(transfer.Id);
     }
 }
+
+
+
+

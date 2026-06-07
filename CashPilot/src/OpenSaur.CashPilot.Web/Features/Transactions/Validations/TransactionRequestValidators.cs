@@ -1,46 +1,50 @@
 using FluentValidation;
 using OpenSaur.CashPilot.Web.Domain;
 using OpenSaur.CashPilot.Web.Features.Transactions.Dtos;
+using OpenSaur.CashPilot.Web.Infrastructure.Validation;
 
 namespace OpenSaur.CashPilot.Web.Features.Transactions.Validations;
 
-public sealed class CreateCashFlowRequestValidator : AbstractValidator<CreateCashFlowRequest>
+internal abstract class CashFlowRequestValidatorBase<TRequest> : AbstractValidator<TRequest>
+    where TRequest : ICashFlowFormRequest
 {
-    public CreateCashFlowRequestValidator()
+    protected CashFlowRequestValidatorBase()
     {
         RuleFor(x => x.CurrencyId).NotEmpty();
         RuleFor(x => x.Amount).GreaterThan(0);
-        RuleFor(x => x.Direction).InclusiveBetween((byte)1, (byte)2);
+        RuleFor(x => x.Direction).InclusiveBetween((byte)TransactionDirection.In, (byte)TransactionDirection.Out);
     }
 }
 
-public sealed class UpdateCashFlowRequestValidator : AbstractValidator<UpdateCashFlowRequest>
+internal sealed class CreateCashFlowRequestValidator : CashFlowRequestValidatorBase<CreateCashFlowRequest>
+{
+}
+
+internal sealed class UpdateCashFlowRequestValidator : CashFlowRequestValidatorBase<UpdateCashFlowRequest>
 {
     public UpdateCashFlowRequestValidator()
     {
         RuleFor(x => x.Id).NotEmpty();
-        RuleFor(x => x.CurrencyId).NotEmpty();
-        RuleFor(x => x.Amount).GreaterThan(0);
-        RuleFor(x => x.Direction).InclusiveBetween((byte)1, (byte)2);
     }
 }
 
-public sealed class SaveBankAccountDetailRequestValidator : AbstractValidator<SaveBankAccountDetailRequest>
+internal sealed class SaveBankAccountDetailRequestValidator : AbstractValidator<SaveBankAccountDetailRequest>
 {
     public SaveBankAccountDetailRequestValidator()
     {
         RuleFor(x => x.CurrencyId).NotEmpty();
         RuleFor(x => x.Amount).GreaterThan(0);
-        RuleFor(x => x.Direction).InclusiveBetween((byte)1, (byte)2);
-        RuleFor(x => x.TransactionType).InclusiveBetween((byte)1, (byte)3);
+        RuleFor(x => x.Direction).InclusiveBetween((byte)TransactionDirection.In, (byte)TransactionDirection.Out);
+        RuleFor(x => x.TransactionType).InclusiveBetween(
+            (byte)BankAccountMovementType.InitialDeposit,
+            (byte)BankAccountMovementType.PrincipalReturn);
     }
 }
 
-public sealed class CreateBankAccountFormRequestValidator : AbstractValidator<SaveBankAccountFormRequest>
+internal abstract class BankAccountFormRequestValidatorBase : AbstractValidator<SaveBankAccountFormRequest>
 {
-    public CreateBankAccountFormRequestValidator()
+    protected BankAccountFormRequestValidatorBase()
     {
-        RuleFor(x => x.Id).Null();
         ApplyCommonRules();
     }
 
@@ -58,52 +62,45 @@ public sealed class CreateBankAccountFormRequestValidator : AbstractValidator<Sa
         RuleFor(x => x.MaturityDate)
             .NotNull()
             .When(x => x.Status == (byte)BankAccountStatus.Matured)
-            .WithMessage("MaturityDate is required when status is Matured.");
-        RuleFor(x => x.Status).InclusiveBetween((byte)1, (byte)3);
+            .WithMessage(TransactionValidationMessages.MaturityDateRequiredWhenMatured);
+        RuleFor(x => x.Status).InclusiveBetween(
+            (byte)BankAccountStatus.Active,
+            (byte)BankAccountStatus.ClosedEarly);
         RuleForEach(x => x.Details).SetValidator(new SaveBankAccountDetailRequestValidator());
     }
 }
 
-public sealed class UpdateBankAccountFormRequestValidator : AbstractValidator<SaveBankAccountFormRequest>
+internal sealed class CreateBankAccountFormRequestValidator : BankAccountFormRequestValidatorBase
+{
+    public CreateBankAccountFormRequestValidator()
+    {
+        RuleFor(x => x.Id).Null();
+    }
+}
+
+internal sealed class UpdateBankAccountFormRequestValidator : BankAccountFormRequestValidatorBase
 {
     public UpdateBankAccountFormRequestValidator()
     {
         RuleFor(x => x.Id).NotNull();
         RuleFor(x => x.Id!.Value).NotEmpty();
-
-        RuleFor(x => x.BankId).NotEmpty();
-        RuleFor(x => x.CurrencyId).NotEmpty();
-        RuleFor(x => x.Amount).GreaterThan(0);
-        RuleFor(x => x.InterestRate)
-            .InclusiveBetween(0, 100)
-            .When(x => x.InterestRate.HasValue);
-        RuleFor(x => x.MaturityDate)
-            .GreaterThanOrEqualTo(x => x.StartDate)
-            .When(x => x.MaturityDate.HasValue);
-        RuleFor(x => x.MaturityDate)
-            .NotNull()
-            .When(x => x.Status == (byte)BankAccountStatus.Matured)
-            .WithMessage("MaturityDate is required when status is Matured.");
-        RuleFor(x => x.Status).InclusiveBetween((byte)1, (byte)3);
-        RuleForEach(x => x.Details).SetValidator(new SaveBankAccountDetailRequestValidator());
     }
 }
 
-public sealed class SaveTransferDetailRequestValidator : AbstractValidator<SaveTransferDetailRequest>
+internal sealed class SaveTransferDetailRequestValidator : AbstractValidator<SaveTransferDetailRequest>
 {
     public SaveTransferDetailRequestValidator()
     {
         RuleFor(x => x.CurrencyId).NotEmpty();
         RuleFor(x => x.Amount).GreaterThan(0);
-        RuleFor(x => x.Direction).InclusiveBetween((byte)1, (byte)2);
+        RuleFor(x => x.Direction).InclusiveBetween((byte)TransactionDirection.In, (byte)TransactionDirection.Out);
     }
 }
 
-public sealed class CreateTransferFormRequestValidator : AbstractValidator<SaveTransferFormRequest>
+internal abstract class TransferFormRequestValidatorBase : AbstractValidator<SaveTransferFormRequest>
 {
-    public CreateTransferFormRequestValidator()
+    protected TransferFormRequestValidatorBase()
     {
-        RuleFor(x => x.Id).Null();
         ApplyCommonRules();
     }
 
@@ -112,34 +109,33 @@ public sealed class CreateTransferFormRequestValidator : AbstractValidator<SaveT
         RuleFor(x => x.CounterpartyId).NotEmpty();
         RuleFor(x => x.CurrencyId).NotEmpty();
         RuleFor(x => x.Amount).GreaterThanOrEqualTo(0);
-        RuleFor(x => x.TransferType).InclusiveBetween((byte)1, (byte)4);
-        RuleFor(x => x.Status).InclusiveBetween((byte)1, (byte)3);
+        RuleFor(x => x.TransferType).InclusiveBetween((byte)TransferType.Lend, (byte)TransferType.Receive);
+        RuleFor(x => x.Status).InclusiveBetween((byte)TransferStatus.Active, (byte)TransferStatus.Cancelled);
         RuleForEach(x => x.Details).SetValidator(new SaveTransferDetailRequestValidator());
         RuleFor(x => x.Amount)
             .Equal(x => x.Details.Sum(y => y.Amount))
-            .WithMessage("Transfer amount must equal sum of detail amounts.");
+            .WithMessage(TransactionValidationMessages.TransferAmountMustEqualDetailSum);
     }
 }
 
-public sealed class UpdateTransferFormRequestValidator : AbstractValidator<SaveTransferFormRequest>
+internal sealed class CreateTransferFormRequestValidator : TransferFormRequestValidatorBase
+{
+    public CreateTransferFormRequestValidator()
+    {
+        RuleFor(x => x.Id).Null();
+    }
+}
+
+internal sealed class UpdateTransferFormRequestValidator : TransferFormRequestValidatorBase
 {
     public UpdateTransferFormRequestValidator()
     {
         RuleFor(x => x.Id).NotNull();
         RuleFor(x => x.Id!.Value).NotEmpty();
-        RuleFor(x => x.CounterpartyId).NotEmpty();
-        RuleFor(x => x.CurrencyId).NotEmpty();
-        RuleFor(x => x.Amount).GreaterThanOrEqualTo(0);
-        RuleFor(x => x.TransferType).InclusiveBetween((byte)1, (byte)4);
-        RuleFor(x => x.Status).InclusiveBetween((byte)1, (byte)3);
-        RuleForEach(x => x.Details).SetValidator(new SaveTransferDetailRequestValidator());
-        RuleFor(x => x.Amount)
-            .Equal(x => x.Details.Sum(y => y.Amount))
-            .WithMessage("Transfer amount must equal sum of detail amounts.");
     }
 }
 
-public sealed class ExchangeLegRequestValidator : AbstractValidator<ExchangeLegRequest>
+internal sealed class ExchangeLegRequestValidator : AbstractValidator<ExchangeLegRequest>
 {
     public ExchangeLegRequestValidator()
     {
@@ -148,7 +144,7 @@ public sealed class ExchangeLegRequestValidator : AbstractValidator<ExchangeLegR
     }
 }
 
-public sealed class CreateCurrencyExchangeRequestValidator : AbstractValidator<CreateCurrencyExchangeRequest>
+internal sealed class CreateCurrencyExchangeRequestValidator : AbstractValidator<CreateCurrencyExchangeRequest>
 {
     public CreateCurrencyExchangeRequestValidator()
     {
@@ -160,7 +156,7 @@ public sealed class CreateCurrencyExchangeRequestValidator : AbstractValidator<C
     }
 }
 
-public sealed class UpdateCurrencyExchangeRequestValidator : AbstractValidator<UpdateCurrencyExchangeRequest>
+internal sealed class UpdateCurrencyExchangeRequestValidator : AbstractValidator<UpdateCurrencyExchangeRequest>
 {
     public UpdateCurrencyExchangeRequestValidator()
     {
@@ -172,3 +168,4 @@ public sealed class UpdateCurrencyExchangeRequestValidator : AbstractValidator<U
         RuleFor(x => x.InLeg).SetValidator(new ExchangeLegRequestValidator());
     }
 }
+

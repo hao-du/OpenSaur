@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using OpenSaur.CashPilot.Web.Domain;
 using OpenSaur.CashPilot.Web.Features.Transactions.Dtos;
+using OpenSaur.CashPilot.Web.Features.Transactions.Queries;
 using OpenSaur.CashPilot.Web.Infrastructure.Database;
 using OpenSaur.CashPilot.Web.Infrastructure.Helpers;
 using System.Security.Claims;
@@ -12,64 +13,15 @@ public static class GetTransactionDashboardHandler
 {
     public static async Task<Ok<TransactionDashboardResponse>> HandleAsync(
         ClaimsPrincipal user,
+        IEnumerable<ITransactionQueryProvider> transactionQueryProviders,
         CashPilotDbContext dbContext,
         CancellationToken cancellationToken)
     {
         var currentUserId = ClaimHelper.GetCurrentUserId(user);
-
-        var cashFlowRows = await dbContext.CashFlows
-            .AsNoTracking()
-            .Where(x => x.IsActive && x.Transaction.IsActive && x.Transaction.OwnerId == currentUserId)
-            .Select(x => new
-            {
-                x.Transaction.TransactionDate,
-                Code = x.Transaction.Currency.ShortName,
-                SignedAmount = x.Transaction.Direction == TransactionDirection.In ? x.Transaction.Amount : -x.Transaction.Amount
-            })
-            .ToListAsync(cancellationToken);
-
-        var bankMovementRows = await dbContext.BankAccountTransactions
-            .AsNoTracking()
-            .Where(x => x.IsActive && x.Transaction.IsActive && x.Transaction.OwnerId == currentUserId)
-            .Where(x => x.TransactionType != BankAccountMovementType.InitialDeposit && x.TransactionType != BankAccountMovementType.PrincipalReturn)
-            .Select(x => new
-            {
-                x.Transaction.TransactionDate,
-                Code = x.Transaction.Currency.ShortName,
-                SignedAmount = x.Transaction.Direction == TransactionDirection.In ? x.Transaction.Amount : -x.Transaction.Amount
-            })
-            .ToListAsync(cancellationToken);
-
-        var transferRows = await dbContext.TransferTransactions
-            .AsNoTracking()
-            .Where(x => x.IsActive && x.Transfer.IsActive && x.Transaction.IsActive && x.Transaction.OwnerId == currentUserId)
-            .Select(x => new
-            {
-                x.Transaction.TransactionDate,
-                Code = x.Transaction.Currency.ShortName,
-                SignedAmount = x.Transaction.Direction == TransactionDirection.In ? x.Transaction.Amount : -x.Transaction.Amount
-            })
-            .ToListAsync(cancellationToken);
-
-        var exchangeRows = await dbContext.CurrencyExchangeTransactions
-            .AsNoTracking()
-            .Where(x => x.IsActive && x.CurrencyExchange.IsActive && x.Transaction.IsActive && x.Transaction.OwnerId == currentUserId)
-            .Select(x => new
-            {
-                x.Transaction.TransactionDate,
-                Code = x.Transaction.Currency.ShortName,
-                SignedAmount = x.Transaction.Direction == TransactionDirection.In ? x.Transaction.Amount : -x.Transaction.Amount
-            })
-            .ToListAsync(cancellationToken);
-
-        var transactionRows = cashFlowRows
-            .Concat(bankMovementRows)
-            .Concat(transferRows)
-            .Concat(exchangeRows)
-            .ToList();
+        var transactionRows = await transactionQueryProviders.GetDashboardRowsAsync(currentUserId, cancellationToken);
 
         var currencyBalances = transactionRows
-            .GroupBy(x => x.Code)
+            .GroupBy(x => x.CurrencyCode)
             .Select(g => new CurrencyBalanceItemResponse(g.Key, g.Sum(x => x.SignedAmount)))
             .OrderBy(x => x.CurrencyCode)
             .ToList();
@@ -103,11 +55,11 @@ public static class GetTransactionDashboardHandler
                 var monthIndex = (x.TransactionDate.Year * 12) + x.TransactionDate.Month;
                 return monthIndex >= minMonthIndex && monthIndex <= currentMonthIndex;
             })
-            .GroupBy(x => new { x.TransactionDate.Year, x.TransactionDate.Month, x.Code })
+            .GroupBy(x => new { x.TransactionDate.Year, x.TransactionDate.Month, x.CurrencyCode })
             .Select(g => new IncomeOutcomeItemResponse(
                 g.Key.Year,
                 g.Key.Month,
-                g.Key.Code,
+                g.Key.CurrencyCode,
                 g.Where(x => x.SignedAmount > 0).Sum(x => x.SignedAmount),
                 g.Where(x => x.SignedAmount < 0).Sum(x => -x.SignedAmount)))
             .OrderByDescending(x => x.Year)
@@ -118,3 +70,5 @@ public static class GetTransactionDashboardHandler
         return TypedResults.Ok(new TransactionDashboardResponse(currencyBalances, activeBankBalances, incomeOutcomes));
     }
 }
+
+

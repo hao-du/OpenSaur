@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using OpenSaur.CashPilot.Web.Features.Transactions.Dtos;
 using OpenSaur.CashPilot.Web.Infrastructure.Database;
+using OpenSaur.CashPilot.Web.Infrastructure.Validation;
 using OpenSaur.CashPilot.Web.Infrastructure.Helpers;
 using OpenSaur.CashPilot.Web.Features.Tags;
 using System.Security.Claims;
@@ -29,7 +30,9 @@ public static class GetBankAccountFormByIdHandler
 
         if (entity is null)
         {
-            return AppHttpResults.NotFound("BankAccount not found.", "No BankAccount matched the specified identifier.");
+            return AppHttpResults.NotFound(
+                TransactionValidationMessages.BankAccountNotFoundTitle,
+                TransactionValidationMessages.BankAccountNotFoundDetail);
         }
 
         var details = entity.BankAccountTransactions
@@ -62,3 +65,7 @@ public static class GetBankAccountFormByIdHandler
             entity.TransactionItems.Select(x => new TransactionItemRequest(x.Name, x.Amount)).ToList()));
     }
 }
+
+
+
+

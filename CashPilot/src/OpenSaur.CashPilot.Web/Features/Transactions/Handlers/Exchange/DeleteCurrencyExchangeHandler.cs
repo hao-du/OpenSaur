@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using OpenSaur.CashPilot.Web.Infrastructure.Database;
+using OpenSaur.CashPilot.Web.Infrastructure.Validation;
 using OpenSaur.CashPilot.Web.Infrastructure.Helpers;
 using System.Security.Claims;
 using AppHttpResults = OpenSaur.CashPilot.Web.Infrastructure.Http.HttpResults;
@@ -27,7 +28,9 @@ public static class DeleteCurrencyExchangeHandler
 
         if (entity is null)
         {
-            return AppHttpResults.NotFound("CurrencyExchange not found.", "No CurrencyExchange matched the specified identifier.");
+            return AppHttpResults.NotFound(
+                TransactionValidationMessages.CurrencyExchangeNotFoundTitle,
+                TransactionValidationMessages.CurrencyExchangeNotFoundDetail);
         }
 
         entity.IsActive = false;
@@ -41,3 +44,7 @@ public static class DeleteCurrencyExchangeHandler
         return TypedResults.NoContent();
     }
 }
+
+
+
+

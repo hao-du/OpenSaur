@@ -4,8 +4,10 @@ using Microsoft.EntityFrameworkCore;
 using OpenSaur.CashPilot.Web.Domain;
 using OpenSaur.CashPilot.Web.Features.Tags;
 using OpenSaur.CashPilot.Web.Features.Tags.Services;
+using OpenSaur.CashPilot.Web.Features.Transactions.Helpers;
 using OpenSaur.CashPilot.Web.Features.Transactions.Dtos;
 using OpenSaur.CashPilot.Web.Features.Transactions.Validations;
+using OpenSaur.CashPilot.Web.Infrastructure.Validation;
 using OpenSaur.CashPilot.Web.Infrastructure.Database;
 using OpenSaur.CashPilot.Web.Infrastructure.Helpers;
 using System.Security.Claims;
@@ -27,7 +29,9 @@ public static class CreateCurrencyExchangeHandler
         var currentUserId = ClaimHelper.GetCurrentUserId(user);
         if (currentUserId == Guid.Empty)
         {
-            return AppHttpResults.BadRequest("User is required.", "Transactions require an authenticated user identifier.");
+            return AppHttpResults.BadRequest(
+                TransactionValidationMessages.UserRequiredTitle,
+                TransactionValidationMessages.UserRequiredDetail);
         }
 
         var validationResult = await Validator.ValidateAsync(request, cancellationToken);
@@ -36,12 +40,14 @@ public static class CreateCurrencyExchangeHandler
             return AppHttpResults.ValidationProblem(validationResult);
         }
 
-        var currencyIds = new[] { request.OutLeg.CurrencyId, request.InLeg.CurrencyId }.Distinct().ToList();
-        var currencyCount = await dbContext.Currencies
-            .CountAsync(x => currencyIds.Contains(x.Id) && x.OwnerId == currentUserId && x.IsActive, cancellationToken);
-        if (currencyCount != currencyIds.Count)
+        var currenciesValidation = await TransactionEntityValidationHelper.EnsureCurrenciesExistAsync(
+            dbContext,
+            currentUserId,
+            new[] { request.OutLeg.CurrencyId, request.InLeg.CurrencyId },
+            cancellationToken);
+        if (currenciesValidation is not null)
         {
-            return AppHttpResults.BadRequest("Currency is invalid.", "One or more selected currencies do not exist for the current user.");
+            return currenciesValidation;
         }
 
         var exchange = new CurrencyExchange
@@ -49,14 +55,7 @@ public static class CreateCurrencyExchangeHandler
             Description = request.Description?.Trim() ?? string.Empty,
             ExchangeDate = request.ExchangeDate,
             ExchangeRate = request.ExchangeRate,
-            TransactionItems = request.TransactionItems
-                .Where(x => !string.IsNullOrWhiteSpace(x.Name))
-                .Select(x => new TransactionItem
-                {
-                    Name = x.Name.Trim(),
-                    Amount = x.Amount
-                })
-            .ToList()
+            TransactionItems = request.TransactionItems.ToTransactionItems()
         };
         exchange.Tags = TagTermCodec.Encode(request.Tags ?? []);
         await tagService.EnsureTagDefinitionsExistAsync(currentUserId, request.Tags ?? [], cancellationToken);
@@ -99,3 +98,6 @@ public static class CreateCurrencyExchangeHandler
         return TypedResults.Created($"/api/transactions/exchanges/{exchange.Id}", exchange.Id);
     }
 }
+
+
+

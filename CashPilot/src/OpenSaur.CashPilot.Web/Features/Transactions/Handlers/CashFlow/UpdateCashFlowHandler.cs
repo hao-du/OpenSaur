@@ -4,8 +4,10 @@ using Microsoft.EntityFrameworkCore;
 using OpenSaur.CashPilot.Web.Domain;
 using OpenSaur.CashPilot.Web.Features.Tags;
 using OpenSaur.CashPilot.Web.Features.Tags.Services;
+using OpenSaur.CashPilot.Web.Features.Transactions.Helpers;
 using OpenSaur.CashPilot.Web.Features.Transactions.Dtos;
 using OpenSaur.CashPilot.Web.Features.Transactions.Validations;
+using OpenSaur.CashPilot.Web.Infrastructure.Validation;
 using OpenSaur.CashPilot.Web.Infrastructure.Database;
 using OpenSaur.CashPilot.Web.Infrastructure.Helpers;
 using System.Security.Claims;
@@ -27,7 +29,9 @@ public static class UpdateCashFlowHandler
         var currentUserId = ClaimHelper.GetCurrentUserId(user);
         if (currentUserId == Guid.Empty)
         {
-            return AppHttpResults.BadRequest("User is required.", "Transactions require an authenticated user identifier.");
+            return AppHttpResults.BadRequest(
+                TransactionValidationMessages.UserRequiredTitle,
+                TransactionValidationMessages.UserRequiredDetail);
         }
 
         var validationResult = await Validator.ValidateAsync(request, cancellationToken);
@@ -36,11 +40,14 @@ public static class UpdateCashFlowHandler
             return AppHttpResults.ValidationProblem(validationResult);
         }
 
-        var hasCurrency = await dbContext.Currencies
-            .AnyAsync(x => x.Id == request.CurrencyId && x.OwnerId == currentUserId && x.IsActive, cancellationToken);
-        if (!hasCurrency)
+        var currencyValidation = await TransactionEntityValidationHelper.EnsureCurrencyExistsAsync(
+            dbContext,
+            currentUserId,
+            request.CurrencyId,
+            cancellationToken);
+        if (currencyValidation is not null)
         {
-            return AppHttpResults.BadRequest("Currency is invalid.", "The selected currency does not exist for the current user.");
+            return currencyValidation;
         }
 
         var entity = await dbContext.CashFlows
@@ -50,7 +57,9 @@ public static class UpdateCashFlowHandler
 
         if (entity is null)
         {
-            return AppHttpResults.NotFound("CashFlow not found.", "No CashFlow matched the specified identifier.");
+            return AppHttpResults.NotFound(
+                TransactionValidationMessages.CashFlowNotFoundTitle,
+                TransactionValidationMessages.CashFlowNotFoundDetail);
         }
 
         entity.Description = request.Description?.Trim() ?? string.Empty;
@@ -64,17 +73,14 @@ public static class UpdateCashFlowHandler
         await tagService.EnsureTagDefinitionsExistAsync(currentUserId, request.Tags ?? [], cancellationToken);
 
         dbContext.TransactionItems.RemoveRange(entity.TransactionItems);
-        entity.TransactionItems = request.TransactionItems
-            .Where(x => !string.IsNullOrWhiteSpace(x.Name))
-            .Select(x => new TransactionItem
-            {
-                Name = x.Name.Trim(),
-                Amount = x.Amount
-            })
-            .ToList();
+        entity.TransactionItems = request.TransactionItems.ToTransactionItems();
 
         await dbContext.SaveChangesAsync(cancellationToken);
 
         return TypedResults.Ok(request.Id);
     }
 }
+
+
+
+

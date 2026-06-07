@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using OpenSaur.CashPilot.Web.Domain;
 using OpenSaur.CashPilot.Web.Features.Transactions.Dtos;
 using OpenSaur.CashPilot.Web.Infrastructure.Database;
+using OpenSaur.CashPilot.Web.Infrastructure.Validation;
 using OpenSaur.CashPilot.Web.Infrastructure.Helpers;
 using OpenSaur.CashPilot.Web.Features.Tags;
 using System.Security.Claims;
@@ -30,7 +31,9 @@ public static class GetCurrencyExchangeByIdHandler
 
         if (entity is null)
         {
-            return AppHttpResults.NotFound("CurrencyExchange not found.", "No CurrencyExchange matched the specified identifier.");
+            return AppHttpResults.NotFound(
+                TransactionValidationMessages.CurrencyExchangeNotFoundTitle,
+                TransactionValidationMessages.CurrencyExchangeNotFoundDetail);
         }
 
         var outLeg = entity.CurrencyExchangeTransactions.FirstOrDefault(x => x.IsActive && x.Transaction.IsActive && x.Transaction.Direction == TransactionDirection.Out);
@@ -38,7 +41,9 @@ public static class GetCurrencyExchangeByIdHandler
 
         if (outLeg is null || inLeg is null)
         {
-            return AppHttpResults.BadRequest("Invalid exchange data.", "Exchange requires one In and one Out leg.");
+            return AppHttpResults.BadRequest(
+                TransactionValidationMessages.InvalidExchangeDataTitle,
+                TransactionValidationMessages.InvalidExchangeDataDetail);
         }
 
         return TypedResults.Ok(new CurrencyExchangeDetailResponse(
@@ -53,3 +58,7 @@ public static class GetCurrencyExchangeByIdHandler
             entity.TransactionItems.Select(x => new TransactionItemResponse(x.Id, x.Name, x.Amount)).ToList()));
     }
 }
+
+
+
+

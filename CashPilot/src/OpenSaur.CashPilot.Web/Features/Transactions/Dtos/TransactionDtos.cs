@@ -1,5 +1,12 @@
 namespace OpenSaur.CashPilot.Web.Features.Transactions.Dtos;
 
+internal interface ICashFlowFormRequest
+{
+    Guid CurrencyId { get; }
+    decimal Amount { get; }
+    byte Direction { get; }
+}
+
 public sealed record TransactionListItemResponse(
     Guid Id,
     Guid? BankAccountId,
@@ -43,7 +50,7 @@ public sealed record CreateCashFlowRequest(
     DateOnly TransactionDate,
     string? Description,
     string[] Tags,
-    IReadOnlyList<TransactionItemRequest> TransactionItems);
+    IReadOnlyList<TransactionItemRequest> TransactionItems) : ICashFlowFormRequest;
 public sealed record UpdateCashFlowRequest(
     Guid Id,
     Guid CurrencyId,
@@ -53,7 +60,7 @@ public sealed record UpdateCashFlowRequest(
     string? Description,
     bool IsActive,
     string[] Tags,
-    IReadOnlyList<TransactionItemRequest> TransactionItems);
+    IReadOnlyList<TransactionItemRequest> TransactionItems) : ICashFlowFormRequest;
 
 public sealed record SaveBankAccountFormRequest(
     Guid? Id,

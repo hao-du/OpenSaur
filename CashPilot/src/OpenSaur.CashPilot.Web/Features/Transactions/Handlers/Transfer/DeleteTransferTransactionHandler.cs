@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using OpenSaur.CashPilot.Web.Infrastructure.Database;
+using OpenSaur.CashPilot.Web.Infrastructure.Validation;
 using OpenSaur.CashPilot.Web.Infrastructure.Helpers;
 using System.Security.Claims;
 using AppHttpResults = OpenSaur.CashPilot.Web.Infrastructure.Http.HttpResults;
@@ -27,7 +28,9 @@ public static class DeleteTransferTransactionHandler
 
         if (transfer is null)
         {
-            return AppHttpResults.NotFound("Transfer not found.", "No Transfer matched the specified identifier.");
+            return AppHttpResults.NotFound(
+                TransactionValidationMessages.TransferNotFoundTitle,
+                TransactionValidationMessages.TransferNotFoundDetail);
         }
 
         transfer.IsActive = false;
@@ -46,3 +49,7 @@ public static class DeleteTransferTransactionHandler
         return TypedResults.NoContent();
     }
 }
+
+
+
+

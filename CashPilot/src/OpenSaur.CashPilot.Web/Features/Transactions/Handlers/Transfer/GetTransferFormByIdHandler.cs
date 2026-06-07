@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using OpenSaur.CashPilot.Web.Features.Transactions.Dtos;
 using OpenSaur.CashPilot.Web.Infrastructure.Database;
+using OpenSaur.CashPilot.Web.Infrastructure.Validation;
 using OpenSaur.CashPilot.Web.Infrastructure.Helpers;
 using OpenSaur.CashPilot.Web.Features.Tags;
 using System.Security.Claims;
@@ -31,7 +32,9 @@ public static class GetTransferFormByIdHandler
 
         if (entity is null)
         {
-            return AppHttpResults.NotFound("Transfer not found.", "No Transfer matched the specified identifier.");
+            return AppHttpResults.NotFound(
+                TransactionValidationMessages.TransferNotFoundTitle,
+                TransactionValidationMessages.TransferNotFoundDetail);
         }
 
         var details = entity.TransferTransactions
@@ -63,3 +66,7 @@ public static class GetTransferFormByIdHandler
             entity.TransactionItems.Select(x => new TransactionItemResponse(x.Id, x.Name, x.Amount)).ToList()));
     }
 }
+
+
+
+

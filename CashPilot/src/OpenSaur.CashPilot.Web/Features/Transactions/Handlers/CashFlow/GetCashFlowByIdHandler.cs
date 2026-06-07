@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using OpenSaur.CashPilot.Web.Features.Transactions.Dtos;
 using OpenSaur.CashPilot.Web.Infrastructure.Database;
+using OpenSaur.CashPilot.Web.Infrastructure.Validation;
 using OpenSaur.CashPilot.Web.Infrastructure.Helpers;
 using OpenSaur.CashPilot.Web.Features.Tags;
 using System.Security.Claims;
@@ -28,7 +29,9 @@ public static class GetCashFlowByIdHandler
 
         if (entity is null)
         {
-            return AppHttpResults.NotFound("CashFlow not found.", "No CashFlow matched the specified identifier.");
+            return AppHttpResults.NotFound(
+                TransactionValidationMessages.CashFlowNotFoundTitle,
+                TransactionValidationMessages.CashFlowNotFoundDetail);
         }
 
         return TypedResults.Ok(new CashFlowDetailResponse(
@@ -43,3 +46,7 @@ public static class GetCashFlowByIdHandler
             entity.TransactionItems.Select(x => new TransactionItemResponse(x.Id, x.Name, x.Amount)).ToList()));
     }
 }
+
+
+
+

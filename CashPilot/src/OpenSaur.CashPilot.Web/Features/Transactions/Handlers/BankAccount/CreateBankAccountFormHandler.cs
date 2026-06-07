@@ -4,8 +4,11 @@ using Microsoft.EntityFrameworkCore;
 using OpenSaur.CashPilot.Web.Domain;
 using OpenSaur.CashPilot.Web.Features.Tags;
 using OpenSaur.CashPilot.Web.Features.Tags.Services;
+using OpenSaur.CashPilot.Web.Features.Transactions.Helpers;
+using OpenSaur.CashPilot.Web.Features.Transactions.Services;
 using OpenSaur.CashPilot.Web.Features.Transactions.Dtos;
 using OpenSaur.CashPilot.Web.Features.Transactions.Validations;
+using OpenSaur.CashPilot.Web.Infrastructure.Validation;
 using OpenSaur.CashPilot.Web.Infrastructure.Database;
 using OpenSaur.CashPilot.Web.Infrastructure.Helpers;
 using System.Security.Claims;
@@ -17,9 +20,10 @@ public static class CreateBankAccountFormHandler
 {
     private static readonly CreateBankAccountFormRequestValidator Validator = new();
 
-    public static async Task<Results<Ok<Guid>, BadRequest<ProblemDetails>, ValidationProblem>> HandleAsync(
+    public static async Task<Results<Ok<Guid>, BadRequest<ProblemDetails>, ValidationProblem, NotFound<ProblemDetails>>> HandleAsync(
         SaveBankAccountFormRequest request,
         ClaimsPrincipal user,
+        BankAccountMovementManager bankAccountMovementManager,
         ITagService tagService,
         CashPilotDbContext dbContext,
         CancellationToken cancellationToken)
@@ -27,7 +31,9 @@ public static class CreateBankAccountFormHandler
         var currentUserId = ClaimHelper.GetCurrentUserId(user);
         if (currentUserId == Guid.Empty)
         {
-            return AppHttpResults.BadRequest("User is required.", "Transactions require an authenticated user identifier.");
+            return AppHttpResults.BadRequest(
+                TransactionValidationMessages.UserRequiredTitle,
+                TransactionValidationMessages.UserRequiredDetail);
         }
 
         var validationResult = await Validator.ValidateAsync(request, cancellationToken);
@@ -36,19 +42,25 @@ public static class CreateBankAccountFormHandler
             return AppHttpResults.ValidationProblem(validationResult);
         }
 
-        var hasBank = await dbContext.Banks
-            .AnyAsync(x => x.Id == request.BankId && x.OwnerId == currentUserId && x.IsActive, cancellationToken);
-        if (!hasBank)
+        var bankValidation = await TransactionEntityValidationHelper.EnsureBankExistsAsync(
+            dbContext,
+            currentUserId,
+            request.BankId,
+            cancellationToken);
+        if (bankValidation is not null)
         {
-            return AppHttpResults.BadRequest("Bank is invalid.", "The selected bank does not exist for the current user.");
+            return bankValidation;
         }
 
         var currencyIds = request.Details.Select(x => x.CurrencyId).Append(request.CurrencyId).Distinct().ToList();
-        var currencyCount = await dbContext.Currencies
-            .CountAsync(x => currencyIds.Contains(x.Id) && x.OwnerId == currentUserId && x.IsActive, cancellationToken);
-        if (currencyCount != currencyIds.Count)
+        var currenciesValidation = await TransactionEntityValidationHelper.EnsureCurrenciesExistAsync(
+            dbContext,
+            currentUserId,
+            currencyIds,
+            cancellationToken);
+        if (currenciesValidation is not null)
         {
-            return AppHttpResults.BadRequest("Currency is invalid.", "One or more selected currencies do not exist for the current user.");
+            return currenciesValidation;
         }
 
         var bankAccount = new BankAccount();
@@ -64,81 +76,21 @@ public static class CreateBankAccountFormHandler
         bankAccount.StartDate = request.StartDate;
         bankAccount.Status = (BankAccountStatus)request.Status;
         bankAccount.IsActive = request.IsActive;
-        bankAccount.TransactionItems = request.TransactionItems
-            .Where(x => !string.IsNullOrWhiteSpace(x.Name))
-            .Select(x => new TransactionItem
-            {
-                Name = x.Name.Trim(),
-                Amount = x.Amount
-            })
-            .ToList();
+        bankAccount.TransactionItems = request.TransactionItems.ToTransactionItems();
         bankAccount.Tags = TagTermCodec.Encode(request.Tags ?? []);
         await tagService.EnsureTagDefinitionsExistAsync(currentUserId, request.Tags ?? [], cancellationToken);
-
-        foreach (var detail in request.Details.Where(x => x.TransactionType == (byte)BankAccountMovementType.InterestPayment))
+        var syncResult = bankAccountMovementManager.SyncMovements(bankAccount, request, currentUserId, dbContext);
+        if (!syncResult.Success)
         {
-            var movement = new BankAccountTransaction
-            {
-                BankAccount = bankAccount,
-                Description = detail.Description?.Trim() ?? string.Empty,
-                IsActive = detail.IsActive,
-                TransactionType = (BankAccountMovementType)detail.TransactionType,
-                Transaction = new Transaction
-                {
-                    OwnerId = currentUserId,
-                    Amount = detail.Amount,
-                    CurrencyId = detail.CurrencyId,
-                    Direction = (TransactionDirection)detail.Direction,
-                    TransactionDate = detail.TransactionDate,
-                    Description = detail.Description?.Trim() ?? string.Empty,
-                    IsActive = detail.IsActive
-                }
-            };
-            dbContext.BankAccountTransactions.Add(movement);
-        }
-
-        // System-managed movement: InitialDeposit always exists and mirrors header amount/start date.
-        dbContext.BankAccountTransactions.Add(new BankAccountTransaction
-        {
-            BankAccount = bankAccount,
-            Description = request.Description?.Trim() ?? string.Empty,
-            IsActive = request.IsActive,
-            TransactionType = BankAccountMovementType.InitialDeposit,
-            Transaction = new Transaction
-            {
-                OwnerId = currentUserId,
-                Amount = request.Amount,
-                CurrencyId = request.CurrencyId,
-                Direction = TransactionDirection.Out,
-                TransactionDate = request.StartDate,
-                Description = request.Description?.Trim() ?? string.Empty,
-                IsActive = request.IsActive
-            }
-        });
-
-        // System-managed movement: PrincipalReturn exists only when status is Matured/ClosedEarly.
-        if (request.Status is (byte)BankAccountStatus.Matured or (byte)BankAccountStatus.ClosedEarly)
-        {
-            dbContext.BankAccountTransactions.Add(new BankAccountTransaction
-            {
-                BankAccount = bankAccount,
-                Description = request.Description?.Trim() ?? string.Empty,
-                IsActive = request.IsActive,
-                TransactionType = BankAccountMovementType.PrincipalReturn,
-                Transaction = new Transaction
-                {
-                    OwnerId = currentUserId,
-                    Amount = request.Amount,
-                    CurrencyId = request.CurrencyId,
-                    Direction = TransactionDirection.In,
-                    TransactionDate = request.MaturityDate ?? request.StartDate,
-                    Description = request.Description?.Trim() ?? string.Empty,
-                    IsActive = request.IsActive
-                }
-            });
+            return AppHttpResults.NotFound(
+                TransactionValidationMessages.BankAccountTransactionNotFoundTitle,
+                TransactionValidationMessages.BankAccountTransactionNotFoundDetail);
         }
 
         await dbContext.SaveChangesAsync(cancellationToken);
         return TypedResults.Ok(bankAccount.Id);
     }
 }
+
+
+

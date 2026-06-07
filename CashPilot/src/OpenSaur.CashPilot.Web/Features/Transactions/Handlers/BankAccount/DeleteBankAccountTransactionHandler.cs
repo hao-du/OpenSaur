@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using OpenSaur.CashPilot.Web.Infrastructure.Database;
+using OpenSaur.CashPilot.Web.Infrastructure.Validation;
 using OpenSaur.CashPilot.Web.Infrastructure.Helpers;
 using System.Security.Claims;
 using AppHttpResults = OpenSaur.CashPilot.Web.Infrastructure.Http.HttpResults;
@@ -27,7 +28,9 @@ public static class DeleteBankAccountTransactionHandler
 
         if (bankAccount is null)
         {
-            return AppHttpResults.NotFound("BankAccount not found.", "No BankAccount matched the specified identifier.");
+            return AppHttpResults.NotFound(
+                TransactionValidationMessages.BankAccountNotFoundTitle,
+                TransactionValidationMessages.BankAccountNotFoundDetail);
         }
 
         bankAccount.IsActive = false;
@@ -46,3 +49,7 @@ public static class DeleteBankAccountTransactionHandler
         return TypedResults.NoContent();
     }
 }
+
+
+
+

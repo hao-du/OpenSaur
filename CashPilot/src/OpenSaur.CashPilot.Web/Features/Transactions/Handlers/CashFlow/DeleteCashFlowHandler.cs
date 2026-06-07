@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using OpenSaur.CashPilot.Web.Infrastructure.Database;
+using OpenSaur.CashPilot.Web.Infrastructure.Validation;
 using OpenSaur.CashPilot.Web.Infrastructure.Helpers;
 using System.Security.Claims;
 using AppHttpResults = OpenSaur.CashPilot.Web.Infrastructure.Http.HttpResults;
@@ -20,7 +21,9 @@ public static class DeleteCashFlowHandler
         var entity = await dbContext.CashFlows.SingleOrDefaultAsync(x => x.Id == id && x.IsActive && x.Transaction.OwnerId == currentUserId, cancellationToken);
         if (entity is null)
         {
-            return AppHttpResults.NotFound("CashFlow not found.", "No CashFlow matched the specified identifier.");
+            return AppHttpResults.NotFound(
+                TransactionValidationMessages.CashFlowNotFoundTitle,
+                TransactionValidationMessages.CashFlowNotFoundDetail);
         }
 
         entity.IsActive = false;
@@ -28,3 +31,7 @@ public static class DeleteCashFlowHandler
         return TypedResults.NoContent();
     }
 }
+
+
+
+

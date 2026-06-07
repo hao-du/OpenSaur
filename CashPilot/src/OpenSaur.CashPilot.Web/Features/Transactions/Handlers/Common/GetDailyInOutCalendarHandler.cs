@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using OpenSaur.CashPilot.Web.Domain;
 using OpenSaur.CashPilot.Web.Features.Transactions.Dtos;
+using OpenSaur.CashPilot.Web.Features.Transactions.Queries;
 using OpenSaur.CashPilot.Web.Infrastructure.Database;
 using OpenSaur.CashPilot.Web.Infrastructure.Helpers;
 using System.Security.Claims;
@@ -14,6 +14,7 @@ public static class GetDailyInOutCalendarHandler
     public static async Task<Ok<DailyInOutCalendarResponse>> HandleAsync(
         [AsParameters] DailyInOutCalendarQueryRequest request,
         ClaimsPrincipal user,
+        IEnumerable<ITransactionQueryProvider> transactionQueryProviders,
         CashPilotDbContext dbContext,
         CancellationToken cancellationToken)
     {
@@ -38,59 +39,12 @@ public static class GetDailyInOutCalendarHandler
             return TypedResults.Ok(new DailyInOutCalendarResponse(year, month, null, []));
         }
 
-        var cashFlowRows = await dbContext.CashFlows
-            .AsNoTracking()
-            .Where(x => x.IsActive && x.Transaction.IsActive && x.Transaction.OwnerId == currentUserId)
-            .Where(x => x.Transaction.CurrencyId == defaultCurrency.Id)
-            .Where(x => x.Transaction.TransactionDate.Year == year && x.Transaction.TransactionDate.Month == month)
-            .Select(x => new
-            {
-                Day = x.Transaction.TransactionDate.Day,
-                SignedAmount = x.Transaction.Direction == TransactionDirection.In ? x.Transaction.Amount : -x.Transaction.Amount
-            })
-            .ToListAsync(cancellationToken);
-
-        var bankMovementRows = await dbContext.BankAccountTransactions
-            .AsNoTracking()
-            .Where(x => x.IsActive && x.Transaction.IsActive && x.Transaction.OwnerId == currentUserId)
-            .Where(x => x.TransactionType != BankAccountMovementType.InitialDeposit && x.TransactionType != BankAccountMovementType.PrincipalReturn)
-            .Where(x => x.Transaction.CurrencyId == defaultCurrency.Id)
-            .Where(x => x.Transaction.TransactionDate.Year == year && x.Transaction.TransactionDate.Month == month)
-            .Select(x => new
-            {
-                Day = x.Transaction.TransactionDate.Day,
-                SignedAmount = x.Transaction.Direction == TransactionDirection.In ? x.Transaction.Amount : -x.Transaction.Amount
-            })
-            .ToListAsync(cancellationToken);
-
-        var transferRows = await dbContext.TransferTransactions
-            .AsNoTracking()
-            .Where(x => x.IsActive && x.Transfer.IsActive && x.Transaction.IsActive && x.Transaction.OwnerId == currentUserId)
-            .Where(x => x.Transaction.CurrencyId == defaultCurrency.Id)
-            .Where(x => x.Transaction.TransactionDate.Year == year && x.Transaction.TransactionDate.Month == month)
-            .Select(x => new
-            {
-                Day = x.Transaction.TransactionDate.Day,
-                SignedAmount = x.Transaction.Direction == TransactionDirection.In ? x.Transaction.Amount : -x.Transaction.Amount
-            })
-            .ToListAsync(cancellationToken);
-
-        var exchangeRows = await dbContext.CurrencyExchangeTransactions
-            .AsNoTracking()
-            .Where(x => x.IsActive && x.CurrencyExchange.IsActive && x.Transaction.IsActive && x.Transaction.OwnerId == currentUserId)
-            .Where(x => x.Transaction.CurrencyId == defaultCurrency.Id)
-            .Where(x => x.Transaction.TransactionDate.Year == year && x.Transaction.TransactionDate.Month == month)
-            .Select(x => new
-            {
-                Day = x.Transaction.TransactionDate.Day,
-                SignedAmount = x.Transaction.Direction == TransactionDirection.In ? x.Transaction.Amount : -x.Transaction.Amount
-            })
-            .ToListAsync(cancellationToken);
-
-        var items = cashFlowRows
-            .Concat(bankMovementRows)
-            .Concat(transferRows)
-            .Concat(exchangeRows)
+        var items = (await transactionQueryProviders.GetCalendarRowsAsync(
+                currentUserId,
+                year,
+                month,
+                defaultCurrency.Id,
+                cancellationToken))
             .GroupBy(x => x.Day)
             .Select(g => new DailyInOutCalendarItemResponse(
                 g.Key,
@@ -102,3 +56,5 @@ public static class GetDailyInOutCalendarHandler
         return TypedResults.Ok(new DailyInOutCalendarResponse(year, month, defaultCurrency.ShortName, items));
     }
 }
+
+
