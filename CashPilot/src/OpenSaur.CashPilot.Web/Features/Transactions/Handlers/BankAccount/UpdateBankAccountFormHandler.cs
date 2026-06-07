@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using OpenSaur.CashPilot.Web.Domain;
+using OpenSaur.CashPilot.Web.Features.Tags;
+using OpenSaur.CashPilot.Web.Features.Tags.Services;
 using OpenSaur.CashPilot.Web.Features.Transactions.Dtos;
 using OpenSaur.CashPilot.Web.Features.Transactions.Validations;
 using OpenSaur.CashPilot.Web.Infrastructure.Database;
@@ -18,6 +20,7 @@ public static class UpdateBankAccountFormHandler
     public static async Task<Results<Ok<Guid>, BadRequest<ProblemDetails>, ValidationProblem, NotFound<ProblemDetails>>> HandleAsync(
         SaveBankAccountFormRequest request,
         ClaimsPrincipal user,
+        ITagService tagService,
         CashPilotDbContext dbContext,
         CancellationToken cancellationToken)
     {
@@ -32,7 +35,7 @@ public static class UpdateBankAccountFormHandler
         {
             return AppHttpResults.ValidationProblem(validationResult);
         }
-        
+
         var hasBank = await dbContext.Banks
             .AnyAsync(x => x.Id == request.BankId && x.OwnerId == currentUserId && x.IsActive, cancellationToken);
         if (!hasBank)
@@ -79,6 +82,8 @@ public static class UpdateBankAccountFormHandler
                 Amount = x.Amount
             })
             .ToList();
+        bankAccount.Tags = TagTermCodec.Encode(request.Tags ?? []);
+        await tagService.EnsureTagDefinitionsExistAsync(currentUserId, request.Tags ?? [], cancellationToken);
 
         var requestInterestDetails = request.Details
             .Where(x => x.TransactionType == (byte)BankAccountMovementType.InterestPayment)

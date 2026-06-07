@@ -11,6 +11,7 @@ export type TransactionListItemDto = {
   transferType: number | null;
   type: "CashFlow" | "BankAccount" | "Transfer" | "Exchange";
   description: string | null;
+  tags?: string[] | null;
   currencyCode: string;
   amount: number;
   direction: number;
@@ -24,6 +25,7 @@ export type CreateCashFlowRequestDto = {
   direction: number;
   transactionDate: string;
   description?: string;
+  tags: string[];
   transactionItems: TransactionItemDto[];
 };
 
@@ -35,6 +37,7 @@ export type SaveBankAccountDetailRequestDto = {
   transactionType: number;
   transactionDate: string;
   description?: string;
+  tags?: string;
   isActive: boolean;
 };
 
@@ -49,6 +52,7 @@ export type SaveBankAccountFormRequestDto = {
   status: number;
   accountNumber?: string;
   description?: string;
+  tags?: string[] | null;
   isActive: boolean;
   details: SaveBankAccountDetailRequestDto[];
   transactionItems: TransactionItemDto[];
@@ -61,6 +65,7 @@ export type SaveTransferDetailRequestDto = {
   direction: number;
   transactionDate: string;
   description?: string;
+  tags?: string;
   isActive: boolean;
 };
 
@@ -74,6 +79,7 @@ export type SaveTransferFormRequestDto = {
   transactionDate: string;
   dueDate?: string;
   description?: string;
+  tags?: string[] | null;
   isActive: boolean;
   details: SaveTransferDetailRequestDto[];
   transactionItems: TransactionItemDto[];
@@ -85,6 +91,7 @@ export type CreateCurrencyExchangeRequestDto = {
   outLeg: { currencyId: string; amount: number; description?: string };
   inLeg: { currencyId: string; amount: number; description?: string };
   description?: string;
+  tags: string[];
   transactionItems: TransactionItemDto[];
 };
 export type UpdateCurrencyExchangeRequestDto = CreateCurrencyExchangeRequestDto & { isActive: boolean };
@@ -155,6 +162,7 @@ export type CashFlowDetailDto = {
   transactionDate: string;
   description: string | null;
   isActive: boolean;
+  tags?: string[] | null;
   transactionItems: TransactionItemDto[];
 };
 
@@ -174,6 +182,7 @@ export type BankAccountTransactionDetailDto = {
   transactionDate: string;
   description: string | null;
   isActive: boolean;
+  tags?: string | null;
 };
 
 export type TransferFormDetailDto = {
@@ -184,6 +193,7 @@ export type TransferFormDetailDto = {
   transactionDate: string;
   description: string | null;
   isActive: boolean;
+  tags?: string | null;
 };
 
 export type TransferFormDto = {
@@ -196,6 +206,7 @@ export type TransferFormDto = {
   transactionDate: string;
   dueDate: string | null;
   description: string | null;
+  tags?: string[] | null;
   isActive: boolean;
   details: TransferFormDetailDto[];
   transactionItems: TransactionItemDto[];
@@ -208,6 +219,7 @@ export type CurrencyExchangeDetailDto = {
   outLeg: { currencyId: string; amount: number; description: string | null };
   inLeg: { currencyId: string; amount: number; description: string | null };
   description: string | null;
+  tags?: string[] | null;
   isActive: boolean;
   transactionItems: TransactionItemDto[];
 };

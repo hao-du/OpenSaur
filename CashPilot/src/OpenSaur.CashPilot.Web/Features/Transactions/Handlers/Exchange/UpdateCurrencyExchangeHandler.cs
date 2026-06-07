@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using OpenSaur.CashPilot.Web.Domain;
+using OpenSaur.CashPilot.Web.Features.Tags;
+using OpenSaur.CashPilot.Web.Features.Tags.Services;
 using OpenSaur.CashPilot.Web.Features.Transactions.Dtos;
 using OpenSaur.CashPilot.Web.Features.Transactions.Validations;
 using OpenSaur.CashPilot.Web.Infrastructure.Database;
@@ -18,6 +20,7 @@ public static class UpdateCurrencyExchangeHandler
     public static async Task<Results<Ok<Guid>, BadRequest<ProblemDetails>, ValidationProblem, NotFound<ProblemDetails>>> HandleAsync(
         UpdateCurrencyExchangeRequest request,
         ClaimsPrincipal user,
+        ITagService tagService,
         CashPilotDbContext dbContext,
         CancellationToken cancellationToken)
     {
@@ -32,7 +35,7 @@ public static class UpdateCurrencyExchangeHandler
         {
             return AppHttpResults.ValidationProblem(validationResult);
         }
-        
+
         var currencyIds = new[] { request.OutLeg.CurrencyId, request.InLeg.CurrencyId }.Distinct().ToList();
         var currencyCount = await dbContext.Currencies
             .CountAsync(x => currencyIds.Contains(x.Id) && x.OwnerId == currentUserId && x.IsActive, cancellationToken);
@@ -73,6 +76,8 @@ public static class UpdateCurrencyExchangeHandler
                 Amount = x.Amount
             })
             .ToList();
+        entity.Tags = TagTermCodec.Encode(request.Tags ?? []);
+        await tagService.EnsureTagDefinitionsExistAsync(currentUserId, request.Tags ?? [], cancellationToken);
 
         outLeg.Description = request.OutLeg.Description?.Trim() ?? string.Empty;
         outLeg.IsActive = request.IsActive;

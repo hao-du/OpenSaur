@@ -19,3 +19,4 @@ This document outlines the rules, guidelines, and behavioral expectations for AI
 - **No Testing**: Do not create unit tests or automation tests for either Backend (BE) or Frontend (FE).
 - **No Verification Required**: Do not run verification steps (build, test, lint, or similar checks) unless explicitly requested.
 - **No Auto-Commit**: Do not automatically commit code; always leave staging and committing to the user.
+- **Migration Immutability**: After generating a database migration, never edit that migration file in place. If a schema adjustment is needed later, create a new migration instead of modifying or deleting the existing one. Existing migrations are assumed to be already applied and must remain intact to avoid DB drift.

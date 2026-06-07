@@ -36,7 +36,7 @@ import {
   getCurrencyExchangeById,
   getTransferFormById,
 } from "../api/transactionsApi";
-import type { SaveBankAccountFormRequestDto } from "../dtos/TransactionDto";
+import type { CashFlowDetailDto, SaveBankAccountFormRequestDto } from "../dtos/TransactionDto";
 import { useCreateCashFlowMutation } from "../hooks/useCreateCashFlowMutation";
 import { useCreateCurrencyExchangeMutation } from "../hooks/useCreateCurrencyExchangeMutation";
 import { useDeleteTransactionMutation } from "../hooks/useDeleteTransactionMutation";
@@ -112,6 +112,15 @@ function getTransactionTypeTagSx(
   };
 }
 
+function getTagSx() {
+  return {
+    color: "secondary.main",
+    borderColor: "rgba(255,138,76,0.28)",
+    backgroundColor: "rgba(255,138,76,0.10)",
+    fontWeight: 600,
+  };
+}
+
 export function TransactionsPage() {
   const [searchParams] = useSearchParams();
   const [isCashFlowDrawerOpen, setIsCashFlowDrawerOpen] = useState(false);
@@ -122,16 +131,7 @@ export function TransactionsPage() {
   const [createMenuAnchor, setCreateMenuAnchor] = useState<null | HTMLElement>(
     null,
   );
-  const [editingCashFlow, setEditingCashFlow] = useState<{
-    id: string;
-    amount: number;
-    currencyId: string;
-    description?: string | null;
-    direction: number;
-    transactionDate: string;
-    isActive: boolean;
-    transactionItems: Array<{ id?: string; name: string; amount: number }>;
-  } | null>(null);
+  const [editingCashFlow, setEditingCashFlow] = useState<CashFlowDetailDto | null>(null);
   const [editingBankAccount, setEditingBankAccount] =
     useState<SaveBankAccountFormRequestDto | null>(null);
   const [editingTransferMovement, setEditingTransferMovement] = useState<{
@@ -144,6 +144,7 @@ export function TransactionsPage() {
     transactionDate: string;
     dueDate?: string | null;
     description?: string | null;
+    tags?: string[] | null;
     isActive: boolean;
     details: Array<{
       id: string;
@@ -165,6 +166,7 @@ export function TransactionsPage() {
     inCurrencyId: string;
     inAmount: number;
     description?: string | null;
+    tags?: string[] | null;
     isActive: boolean;
     transactionItems?: Array<{ id?: string; name: string; amount: number }>;
   } | null>(null);
@@ -369,6 +371,7 @@ export function TransactionsPage() {
           status: transferForm.status,
           transactionDate: transferForm.transactionDate,
           transferType: transferForm.transferType,
+          tags: transferForm.tags,
           transactionItems: transferForm.transactionItems ?? []
         });
         setIsTransferDrawerOpen(true);
@@ -376,18 +379,19 @@ export function TransactionsPage() {
       }
 
       const detail = await getCurrencyExchangeById(id);
-      setEditingExchange({
-        description: detail.description,
-        exchangeDate: detail.exchangeDate,
-        exchangeRate: detail.exchangeRate,
-        id: detail.id,
+        setEditingExchange({
+          description: detail.description,
+          exchangeDate: detail.exchangeDate,
+          exchangeRate: detail.exchangeRate,
+          id: detail.id,
         inAmount: detail.inLeg.amount,
         inCurrencyId: detail.inLeg.currencyId,
-        isActive: detail.isActive,
-        outAmount: detail.outLeg.amount,
-        outCurrencyId: detail.outLeg.currencyId,
-        transactionItems: detail.transactionItems ?? []
-      });
+          isActive: detail.isActive,
+          outAmount: detail.outLeg.amount,
+          outCurrencyId: detail.outLeg.currencyId,
+          tags: detail.tags,
+          transactionItems: detail.transactionItems ?? []
+        });
       setIsExchangeDrawerOpen(true);
     } catch (e) {
       setError(e instanceof Error ? e.message : t("transactions.errorSave"));
@@ -661,67 +665,90 @@ export function TransactionsPage() {
                             >
                               {item.description ?? "-"}
                             </BodyText>
-                            {item.type === "BankAccount" ? (
-                              <Stack
-                                direction="row"
-                                spacing={0.75}
-                                sx={{ mt: "auto", pt: 0.75, flexWrap: "wrap" }}
-                              >
-                                {item.bankName ? (
-                                  <Chip
-                                    size="small"
-                                    label={item.bankName}
-                                    variant="outlined"
-                                    sx={tagSx}
-                                  />
+                            {item.type === "BankAccount" ||
+                            item.type === "Transfer" ||
+                            (item.tags != null && item.tags.length > 0) ? (
+                              <Stack spacing={0.75} sx={{ mt: "auto", pt: 0.75 }}>
+                                {item.type === "BankAccount" ? (
+                                  <Stack
+                                    direction="row"
+                                    spacing={0.75}
+                                    sx={{ flexWrap: "wrap" }}
+                                  >
+                                    {item.bankName ? (
+                                      <Chip
+                                        size="small"
+                                        label={item.bankName}
+                                        variant="outlined"
+                                        sx={tagSx}
+                                      />
+                                    ) : null}
+                                    {bankStatusLabel ? (
+                                      <Chip
+                                        size="small"
+                                        label={bankStatusLabel}
+                                        variant="outlined"
+                                        sx={tagSx}
+                                      />
+                                    ) : null}
+                                    {bankMovementTypeLabel ? (
+                                      <Chip
+                                        size="small"
+                                        label={bankMovementTypeLabel}
+                                        variant="outlined"
+                                        sx={tagSx}
+                                      />
+                                    ) : null}
+                                  </Stack>
                                 ) : null}
-                                {bankStatusLabel ? (
-                                  <Chip
-                                    size="small"
-                                    label={bankStatusLabel}
-                                    variant="outlined"
-                                    sx={tagSx}
-                                  />
+                                {item.type === "Transfer" ? (
+                                  <Stack
+                                    direction="row"
+                                    spacing={0.75}
+                                    sx={{ flexWrap: "wrap" }}
+                                  >
+                                    {item.counterpartyName ? (
+                                      <Chip
+                                        size="small"
+                                        label={item.counterpartyName}
+                                        variant="outlined"
+                                        sx={tagSx}
+                                      />
+                                    ) : null}
+                                    {transferStatusLabel ? (
+                                      <Chip
+                                        size="small"
+                                        label={transferStatusLabel}
+                                        variant="outlined"
+                                        sx={tagSx}
+                                      />
+                                    ) : null}
+                                    {transferTypeLabel ? (
+                                      <Chip
+                                        size="small"
+                                        label={transferTypeLabel}
+                                        variant="outlined"
+                                        sx={tagSx}
+                                      />
+                                    ) : null}
+                                  </Stack>
                                 ) : null}
-                                {bankMovementTypeLabel ? (
-                                  <Chip
-                                    size="small"
-                                    label={bankMovementTypeLabel}
-                                    variant="outlined"
-                                    sx={tagSx}
-                                  />
-                                ) : null}
-                              </Stack>
-                            ) : null}
-                            {item.type === "Transfer" ? (
-                              <Stack
-                                direction="row"
-                                spacing={0.75}
-                                sx={{ mt: "auto", pt: 0.75, flexWrap: "wrap" }}
-                              >
-                                {item.counterpartyName ? (
-                                  <Chip
-                                    size="small"
-                                    label={item.counterpartyName}
-                                    variant="outlined"
-                                    sx={tagSx}
-                                  />
-                                ) : null}
-                                {transferStatusLabel ? (
-                                  <Chip
-                                    size="small"
-                                    label={transferStatusLabel}
-                                    variant="outlined"
-                                    sx={tagSx}
-                                  />
-                                ) : null}
-                                {transferTypeLabel ? (
-                                  <Chip
-                                    size="small"
-                                    label={transferTypeLabel}
-                                    variant="outlined"
-                                    sx={tagSx}
-                                  />
+                                {item.tags != null && item.tags.length > 0 ? (
+                                  <Stack
+                                    direction="row"
+                                    spacing={0.75}
+                                    sx={{ flexWrap: "wrap" }}
+                                  >
+                                    {item.tags.map((tag) => (
+                                      <Chip
+                                        key={`${item.type}-${item.id}-${tag}`}
+                                        label={tag}
+                                        size="small"
+                                        variant="outlined"
+                                        sx={getTagSx()}
+                                      />
+                                    ))}
+                                  </Stack>
                                 ) : null}
                               </Stack>
                             ) : null}

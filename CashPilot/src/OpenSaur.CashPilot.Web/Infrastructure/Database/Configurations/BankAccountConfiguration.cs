@@ -22,6 +22,9 @@ public sealed class BankAccountConfiguration : IEntityTypeConfiguration<BankAcco
 
         builder.Property(x => x.MaturityDate)
             .IsRequired(false);
+        
+        builder.Property(x => x.Tags)
+            .HasColumnType("jsonb");
 
         builder.HasOne(x => x.Bank)
             .WithMany()

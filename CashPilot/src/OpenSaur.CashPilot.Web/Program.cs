@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authentication;
+﻿using Microsoft.AspNetCore.Authentication;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using OpenIddict.Validation.AspNetCore;
@@ -12,6 +12,8 @@ using OpenSaur.CashPilot.Web.Features.Templates;
 using OpenSaur.CashPilot.Web.Features.Profile;
 using OpenSaur.CashPilot.Web.Features.Profile.Profile.Services;
 using OpenSaur.CashPilot.Web.Features.Settings;
+using OpenSaur.CashPilot.Web.Features.Tags;
+using OpenSaur.CashPilot.Web.Features.Tags.Services;
 using OpenSaur.CashPilot.Web.Infrastructure.Auth;
 using OpenSaur.CashPilot.Web.Infrastructure.ConfigurationOptions;
 using OpenSaur.CashPilot.Web.Infrastructure.Database;
@@ -57,6 +59,7 @@ builder.Services.AddAuthorization(AppAuthorization.ConfigurePolicies);
 builder.Services.AddScoped<CreateFrontendRouteHandler>();
 builder.Services.AddScoped<CreateAppConfigJsHandler>();
 builder.Services.AddScoped<SideMenuService>();
+builder.Services.AddScoped<ITagService, TagService>();
 builder.Services.AddProblemDetails();
 
 var app = builder.Build();
@@ -78,8 +81,6 @@ app.MapCounterpartiesEndpoints();
 app.MapCurrenciesEndpoints();
 app.MapTransactionsEndpoints();
 app.MapTemplatesEndpoints();
+app.MapTagsEndpoints();
 
 app.Run();
-
-
-

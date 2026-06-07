@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using OpenSaur.CashPilot.Web.Domain;
+using OpenSaur.CashPilot.Web.Features.Tags.Services;
 using OpenSaur.CashPilot.Web.Features.Templates.Dtos;
 using OpenSaur.CashPilot.Web.Features.Templates.Validations;
 using OpenSaur.CashPilot.Web.Infrastructure.Database;
@@ -19,6 +20,7 @@ public static class CreateTemplateHandler
     public static async Task<Results<Created<TemplateDetailResponse>, ValidationProblem, Conflict<ProblemDetails>>> HandleAsync(
         CreateTemplateRequest request,
         ClaimsPrincipal user,
+        ITagService tagService,
         CashPilotDbContext dbContext,
         CancellationToken cancellationToken)
     {
@@ -48,6 +50,8 @@ public static class CreateTemplateHandler
             TemplateType = request.TemplateType,
             TemplateDataJson = request.TemplateDataJson
         };
+
+        await tagService.EnsureTemplateTagDefinitionsExistAsync(currentUserId, request.TemplateDataJson, cancellationToken);
 
         dbContext.Templates.Add(template);
         await dbContext.SaveChangesAsync(cancellationToken);

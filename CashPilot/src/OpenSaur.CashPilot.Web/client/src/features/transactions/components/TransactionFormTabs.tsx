@@ -47,7 +47,12 @@ export function TransactionFormTabs({
         </Tabs>
       </Box>
       <Stack spacing={2} sx={{ mt: 0, pt: 0 }}>
-        {value === "form" ? formContent : itemsContent}
+        <Box sx={{ display: value === "form" ? "block" : "none" }}>
+          {formContent}
+        </Box>
+        <Box sx={{ display: value === "items" ? "block" : "none" }}>
+          {itemsContent}
+        </Box>
       </Stack>
     </Stack>
   );

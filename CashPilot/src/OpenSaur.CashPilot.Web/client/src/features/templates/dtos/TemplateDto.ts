@@ -12,6 +12,7 @@ export type CashFlowTemplateData = {
   direction: TemplateFieldValue<string>;
   transactionDate: TemplateFieldValue<string>;
   description: TemplateFieldValue<string>;
+  tags: TemplateFieldValue<string[]>;
 };
 
 export type TransferTemplateData = {
@@ -25,6 +26,7 @@ export type TransferTemplateData = {
   dueDate: TemplateFieldValue<string>;
   description: TemplateFieldValue<string>;
   details: TransferTemplateDetailData[];
+  tags: TemplateFieldValue<string[]>;
 };
 
 export type TransferTemplateDetailData = {
@@ -42,6 +44,7 @@ export type ExchangeTemplateData = {
   inAmount: TemplateFieldValue<string>;
   inCurrencyId: TemplateFieldValue<string>;
   description: TemplateFieldValue<string>;
+  tags: TemplateFieldValue<string[]>;
 };
 
 export type BankAccountTemplateData = {
@@ -55,6 +58,7 @@ export type BankAccountTemplateData = {
   maturityDate: TemplateFieldValue<string>;
   description: TemplateFieldValue<string>;
   details: BankAccountTemplateDetailData[];
+  tags: TemplateFieldValue<string[]>;
 };
 
 export type BankAccountTemplateDetailData = {

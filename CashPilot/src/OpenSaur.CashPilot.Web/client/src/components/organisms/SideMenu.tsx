@@ -11,10 +11,10 @@ import { useLocation, useNavigate } from "react-router-dom";
 import {
   Building2,
   Coins,
-  KeyRound,
   LayoutDashboard,
   LayoutTemplate,
   ReceiptText,
+  Tag,
   Shield,
   UserRound,
   Users,
@@ -32,7 +32,7 @@ const navigationIcons: Record<string, LucideIcon> = {
   "building-2": Building2,
   coins: Coins,
   dashboard: LayoutDashboard,
-  "key-round": KeyRound,
+  "key-round": Tag,
   "receipt-text": ReceiptText,
   "layout-template": LayoutTemplate,
   shield: Shield,
@@ -47,6 +47,7 @@ const navigationLabelKeys: Record<string, TranslationKey> = {
   "/currencies": "nav.currencies",
   "/transactions": "nav.transactions",
   "/templates": "nav.templates",
+  "/tags": "nav.tags",
 };
 
 type SideMenuProps = {

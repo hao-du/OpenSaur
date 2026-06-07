@@ -10,6 +10,7 @@ import type { TranslationKey } from "../../../settings/provider/translations";
 import { useSaveTransferMutation } from "../../../transactions/hooks/useSaveTransferMutation";
 import { TransactionItemsEditor } from "../../../transactions/components/TransactionItemsEditor";
 import { TransactionFormTabs } from "../../../transactions/components/TransactionFormTabs";
+import { TagAutocompleteMultiSelect } from "../../../tags/components/TagAutocompleteMultiSelect";
 import type {
   OptionItem,
   TransferFormValues,
@@ -22,10 +23,12 @@ import {
 import {
   initialDateValue,
   initialValue,
+  initialTagsValue,
   isRequired,
   resolve,
   resolveDate,
   resolveOptionalDescription,
+  resolveTags,
   shown,
 } from "./utils";
 type Props = {
@@ -64,6 +67,7 @@ export function TransferPopulateForm({
       ),
       dueDate: initialDateValue(templateData.dueDate, todayIsoDate),
       description: initialValue(templateData.description, todayIsoDate),
+      tags: initialTagsValue(templateData.tags),
       transactionItems: [],
     }),
     [counterpartyOptions, templateData, todayIsoDate],
@@ -117,6 +121,7 @@ export function TransferPopulateForm({
           v.description,
           todayIsoDate,
         ),
+        tags: resolveTags(templateData.tags, v.tags),
         isActive: true,
         details: [
           { amount, currencyId, direction, transactionDate, isActive: true },
@@ -280,6 +285,15 @@ export function TransferPopulateForm({
               name="description"
               label={t("transactions.description")}
               minRows={3}
+            />
+          </Grid>
+        ) : null}
+        {shown(templateData.tags) ? (
+          <Grid size={{ xs: 12 }}>
+            <TagAutocompleteMultiSelect
+              control={form.control}
+              name="tags"
+              label={t("tags.title")}
             />
           </Grid>
         ) : null}

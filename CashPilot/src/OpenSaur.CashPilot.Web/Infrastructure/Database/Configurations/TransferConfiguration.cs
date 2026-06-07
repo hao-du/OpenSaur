@@ -18,6 +18,9 @@ public sealed class TransferConfiguration : IEntityTypeConfiguration<Transfer>
 
         builder.Property(x => x.Status)
             .HasConversion<byte>();
+        
+        builder.Property(x => x.Tags)
+            .HasColumnType("jsonb");
 
         builder.HasOne(x => x.Counterparty)
             .WithMany()

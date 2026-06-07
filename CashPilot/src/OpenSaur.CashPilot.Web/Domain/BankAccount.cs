@@ -17,6 +17,7 @@ public sealed class BankAccount : EntityBase
     public decimal Amount { get; set; }
 
     public decimal? InterestRate { get; set; }
+    public string Tags { get; set; } = "[]";
 
     public DateOnly StartDate { get; set; }
 

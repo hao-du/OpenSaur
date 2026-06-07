@@ -10,6 +10,7 @@ import { CurrenciesPage } from "./features/currencies/pages/CurrenciesPage";
 import { TransactionsPage } from "./features/transactions/pages/TransactionsPage";
 import { TemplatesPage } from "./features/templates/pages/TemplatesPage";
 import { SettingsPage } from "./features/settings/pages/SettingsPage";
+import { TagsPage } from "./features/tags/pages/TagsPage";
 export function App() {
     const { authSession, isRestoring } = useAuthSession();
     const location = useLocation();
@@ -49,6 +50,10 @@ export function App() {
                 <Route
                     element={<TemplatesPage />}
                     path="/templates"
+                />
+                <Route
+                    element={<TagsPage />}
+                    path="/tags"
                 />
                 <Route
                     element={<SettingsPage />}

@@ -6,6 +6,7 @@ import { DatePicker } from "../../../components/atoms/DatePicker";
 import { DropDown } from "../../../components/atoms/DropDown";
 import { Number as NumberField } from "../../../components/atoms/Number";
 import { TextArea } from "../../../components/atoms/TextArea";
+import { TagAutocompleteMultiSelect } from "../../tags/components/TagAutocompleteMultiSelect";
 import { useSettings } from "../../settings/provider/SettingProvider";
 import type { CurrencyDto } from "../../currencies/dtos/CurrencyDto";
 import { TransactionItemsEditor } from "./TransactionItemsEditor";
@@ -21,6 +22,7 @@ type Props = {
     inCurrencyId: string;
     inAmount: number;
     description?: string | null;
+    tags?: string[] | null;
     transactionItems?: Array<{ id?: string; name: string; amount: number }>;
   } | null;
   submitLabel?: string;
@@ -31,6 +33,7 @@ type Props = {
     outLeg: { currencyId: string; amount: number; description?: string };
     inLeg: { currencyId: string; amount: number; description?: string };
     description?: string;
+    tags: string[];
     transactionItems: Array<{ id?: string; name: string; amount: number }>;
   }) => Promise<void>;
 };
@@ -43,6 +46,7 @@ type FormValues = {
   inCurrencyId: string;
   inAmount: string;
   description: string;
+  tags: string[];
   transactionItems: Array<{ id?: string; name: string; amount: string }>;
 };
 
@@ -67,6 +71,7 @@ export function ExchangeForm({
       inCurrencyId: currencies[0]?.id ?? "",
       outAmount: "",
       outCurrencyId: currencies[0]?.id ?? "",
+      tags: [],
       transactionItems: []
     }
   });
@@ -81,6 +86,7 @@ export function ExchangeForm({
         inCurrencyId: currencies[0]?.id ?? "",
         outAmount: "",
         outCurrencyId: currencies[0]?.id ?? "",
+        tags: [],
         transactionItems: []
       });
       return;
@@ -94,6 +100,7 @@ export function ExchangeForm({
       inCurrencyId: initialValue.inCurrencyId,
       outAmount: initialValue.outAmount.toString(),
       outCurrencyId: initialValue.outCurrencyId,
+      tags: initialValue.tags ?? [],
       transactionItems: (initialValue.transactionItems ?? []).map(x => ({
         id: x.id,
         name: x.name,
@@ -138,6 +145,7 @@ export function ExchangeForm({
                   amount: Number(values.outAmount),
                   currencyId: values.outCurrencyId
                 },
+                tags: values.tags,
                 transactionItems: values.transactionItems
                   .filter(x => x.name.trim().length > 0)
                   .map(x => ({
@@ -175,6 +183,15 @@ export function ExchangeForm({
                 label={t("transactions.description")}
                 name="description"
                 minRows={3}
+              />
+            </Grid>
+
+            <Grid size={{ xs: 12 }}>
+              <TagAutocompleteMultiSelect
+                control={form.control}
+                disabled={isSubmitting}
+                label={t("tags.title")}
+                name="tags"
               />
             </Grid>
 

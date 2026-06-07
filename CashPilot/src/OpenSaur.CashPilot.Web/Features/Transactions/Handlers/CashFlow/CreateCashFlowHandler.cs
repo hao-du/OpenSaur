@@ -1,13 +1,15 @@
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
-using OpenSaur.CashPilot.Web.Features.Transactions.Validations;
+using Microsoft.EntityFrameworkCore;
 using OpenSaur.CashPilot.Web.Domain;
+using OpenSaur.CashPilot.Web.Features.Tags;
+using OpenSaur.CashPilot.Web.Features.Tags.Services;
 using OpenSaur.CashPilot.Web.Features.Transactions.Dtos;
+using OpenSaur.CashPilot.Web.Features.Transactions.Validations;
 using OpenSaur.CashPilot.Web.Infrastructure.Database;
 using OpenSaur.CashPilot.Web.Infrastructure.Helpers;
 using System.Security.Claims;
 using AppHttpResults = OpenSaur.CashPilot.Web.Infrastructure.Http.HttpResults;
-using Microsoft.EntityFrameworkCore;
 
 namespace OpenSaur.CashPilot.Web.Features.Transactions.Handlers;
 
@@ -18,6 +20,7 @@ public static class CreateCashFlowHandler
     public static async Task<Results<Created<Guid>, BadRequest<ProblemDetails>, ValidationProblem>> HandleAsync(
         CreateCashFlowRequest request,
         ClaimsPrincipal user,
+        ITagService tagService,
         CashPilotDbContext dbContext,
         CancellationToken cancellationToken)
     {
@@ -32,7 +35,7 @@ public static class CreateCashFlowHandler
         {
             return AppHttpResults.ValidationProblem(validationResult);
         }
-        
+
         var hasCurrency = await dbContext.Currencies
             .AnyAsync(x => x.Id == request.CurrencyId && x.OwnerId == currentUserId && x.IsActive, cancellationToken);
         if (!hasCurrency)
@@ -61,8 +64,10 @@ public static class CreateCashFlowHandler
                     Name = x.Name.Trim(),
                     Amount = x.Amount
                 })
-                .ToList()
+            .ToList()
         };
+        cashFlow.Tags = TagTermCodec.Encode(request.Tags ?? []);
+        await tagService.EnsureTagDefinitionsExistAsync(currentUserId, request.Tags ?? [], cancellationToken);
 
         dbContext.CashFlows.Add(cashFlow);
         await dbContext.SaveChangesAsync(cancellationToken);

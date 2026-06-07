@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using OpenSaur.CashPilot.Web.Features.Transactions.Dtos;
 using OpenSaur.CashPilot.Web.Infrastructure.Database;
 using OpenSaur.CashPilot.Web.Infrastructure.Helpers;
+using OpenSaur.CashPilot.Web.Features.Tags;
 using System.Security.Claims;
 
 namespace OpenSaur.CashPilot.Web.Features.Transactions.Handlers;
@@ -32,6 +33,7 @@ public static class GetTransactionsHandler
                 null,
                 "CashFlow",
                 x.Description,
+                TagTermCodec.Decode(x.Tags),
                 x.Transaction.Currency.ShortName,
                 x.Transaction.Amount,
                 (byte)x.Transaction.Direction,
@@ -55,6 +57,7 @@ public static class GetTransactionsHandler
                 null,
                 "BankAccount",
                 x.Description,
+                TagTermCodec.Decode(x.BankAccount.Tags),
                 x.Transaction.Currency.ShortName,
                 x.Transaction.Amount,
                 (byte)x.Transaction.Direction,
@@ -77,7 +80,8 @@ public static class GetTransactionsHandler
                 (byte)x.Transfer.Status,
                 (byte)x.Transfer.TransferType,
                 "Transfer",
-                x.Description,
+                x.Transfer.Description ?? x.Description ?? x.Transaction.Description,
+                TagTermCodec.Decode(x.Transfer.Tags),
                 x.Transaction.Currency.ShortName,
                 x.Transaction.Amount,
                 (byte)x.Transaction.Direction,
@@ -104,6 +108,7 @@ public static class GetTransactionsHandler
                 null,
                 "Exchange",
                 x.Description,
+                TagTermCodec.Decode(x.CurrencyExchange.Tags),
                 x.Transaction.Currency.ShortName,
                 x.Transaction.Amount,
                 (byte)x.Transaction.Direction,

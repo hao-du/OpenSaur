@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using OpenSaur.CashPilot.Web.Features.Transactions.Dtos;
 using OpenSaur.CashPilot.Web.Infrastructure.Database;
 using OpenSaur.CashPilot.Web.Infrastructure.Helpers;
+using OpenSaur.CashPilot.Web.Features.Tags;
 using System.Security.Claims;
 using AppHttpResults = OpenSaur.CashPilot.Web.Infrastructure.Http.HttpResults;
 
@@ -56,6 +57,7 @@ public static class GetBankAccountFormByIdHandler
             entity.AccountNumber,
             entity.Description,
             entity.IsActive,
+            TagTermCodec.Decode(entity.Tags),
             details,
             entity.TransactionItems.Select(x => new TransactionItemRequest(x.Name, x.Amount)).ToList()));
     }

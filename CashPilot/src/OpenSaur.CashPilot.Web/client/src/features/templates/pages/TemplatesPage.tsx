@@ -77,6 +77,9 @@ function validateAutoPopulateFields(templateData: unknown): string | null {
       if (typeof field.value === "string" && field.value.trim().length === 0) {
         return `Auto populate field '${path}' is required.`;
       }
+      if (Array.isArray(field.value) && field.value.length === 0) {
+        return `Auto populate field '${path}' is required.`;
+      }
       if (field.value == null) {
         return `Auto populate field '${path}' is required.`;
       }

@@ -14,6 +14,7 @@ type Props = {
     inCurrencyId: string;
     inAmount: number;
     description?: string | null;
+    tags?: string[] | null;
     isActive: boolean;
     transactionItems?: Array<{ id?: string; name: string; amount: number }>;
   } | null;
@@ -26,6 +27,7 @@ type Props = {
     outLeg: { currencyId: string; amount: number; description?: string };
     inLeg: { currencyId: string; amount: number; description?: string };
     description?: string;
+    tags: string[];
     transactionItems: Array<{ id?: string; name: string; amount: number }>;
   }) => Promise<void>;
   onUpdate?: (id: string, payload: {
@@ -34,6 +36,7 @@ type Props = {
     outLeg: { currencyId: string; amount: number; description?: string };
     inLeg: { currencyId: string; amount: number; description?: string };
     description?: string;
+    tags: string[];
     isActive: boolean;
     transactionItems: Array<{ id?: string; name: string; amount: number }>;
   }) => Promise<void>;

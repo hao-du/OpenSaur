@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using OpenSaur.CashPilot.Web.Domain;
+using OpenSaur.CashPilot.Web.Features.Tags;
+using OpenSaur.CashPilot.Web.Features.Tags.Services;
 using OpenSaur.CashPilot.Web.Features.Transactions.Dtos;
 using OpenSaur.CashPilot.Web.Features.Transactions.Validations;
 using OpenSaur.CashPilot.Web.Infrastructure.Database;
@@ -18,6 +20,7 @@ public static class UpdateCashFlowHandler
     public static async Task<Results<Ok<Guid>, BadRequest<ProblemDetails>, ValidationProblem, NotFound<ProblemDetails>>> HandleAsync(
         UpdateCashFlowRequest request,
         ClaimsPrincipal user,
+        ITagService tagService,
         CashPilotDbContext dbContext,
         CancellationToken cancellationToken)
     {
@@ -32,7 +35,7 @@ public static class UpdateCashFlowHandler
         {
             return AppHttpResults.ValidationProblem(validationResult);
         }
-        
+
         var hasCurrency = await dbContext.Currencies
             .AnyAsync(x => x.Id == request.CurrencyId && x.OwnerId == currentUserId && x.IsActive, cancellationToken);
         if (!hasCurrency)
@@ -57,6 +60,8 @@ public static class UpdateCashFlowHandler
         entity.Transaction.Direction = (TransactionDirection)request.Direction;
         entity.Transaction.TransactionDate = request.TransactionDate;
         entity.Transaction.Description = request.Description?.Trim() ?? string.Empty;
+        entity.Tags = TagTermCodec.Encode(request.Tags ?? []);
+        await tagService.EnsureTagDefinitionsExistAsync(currentUserId, request.Tags ?? [], cancellationToken);
 
         dbContext.TransactionItems.RemoveRange(entity.TransactionItems);
         entity.TransactionItems = request.TransactionItems

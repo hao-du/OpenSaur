@@ -2,6 +2,7 @@ using FluentValidation;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using OpenSaur.CashPilot.Web.Features.Tags.Services;
 using OpenSaur.CashPilot.Web.Features.Templates.Dtos;
 using OpenSaur.CashPilot.Web.Features.Templates.Validations;
 using OpenSaur.CashPilot.Web.Infrastructure.Database;
@@ -19,6 +20,7 @@ public static class UpdateTemplateHandler
         Guid id,
         UpdateTemplateRequest request,
         ClaimsPrincipal user,
+        ITagService tagService,
         CashPilotDbContext dbContext,
         CancellationToken cancellationToken)
     {
@@ -54,6 +56,8 @@ public static class UpdateTemplateHandler
         template.TemplateType = request.TemplateType;
         template.TemplateDataJson = request.TemplateDataJson;
         template.IsActive = request.IsActive;
+
+        await tagService.EnsureTemplateTagDefinitionsExistAsync(currentUserId, request.TemplateDataJson, cancellationToken);
 
         await dbContext.SaveChangesAsync(cancellationToken);
 

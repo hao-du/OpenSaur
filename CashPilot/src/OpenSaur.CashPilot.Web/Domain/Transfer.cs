@@ -13,6 +13,7 @@ public sealed class Transfer : EntityBase
     public decimal Amount { get; set; }
 
     public Guid CurrencyId { get; set; }
+    public string Tags { get; set; } = "[]";
 
     public Currency Currency { get; set; } = null!;
 

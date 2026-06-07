@@ -22,6 +22,35 @@ function typeLabel(templateType: number, t: (key: any) => string) {
   return t("templates.templateType.bankAccount");
 }
 
+function typeChipSx(templateType: number) {
+  if (templateType === 1) {
+    return {
+      color: "var(--tx-type-cashflow-color)",
+      borderColor: "var(--tx-type-cashflow-color)",
+      backgroundColor: "rgba(21,101,192,0.10)",
+    };
+  }
+  if (templateType === 2) {
+    return {
+      color: "var(--tx-type-transfer-color)",
+      borderColor: "var(--tx-type-transfer-color)",
+      backgroundColor: "rgba(106,27,154,0.10)",
+    };
+  }
+  if (templateType === 3) {
+    return {
+      color: "var(--tx-type-exchange-color)",
+      borderColor: "var(--tx-type-exchange-color)",
+      backgroundColor: "rgba(239,108,0,0.10)",
+    };
+  }
+  return {
+    color: "var(--tx-type-bankaccount-color)",
+    borderColor: "var(--tx-type-bankaccount-color)",
+    backgroundColor: "rgba(46,125,50,0.10)",
+  };
+}
+
 export function TemplatesList({ isLoading, isSubmitting, onDelete, onEdit, onPopulate, templates }: Props) {
   const { t } = useSettings();
 
@@ -55,19 +84,22 @@ export function TemplatesList({ isLoading, isSubmitting, onDelete, onEdit, onPop
             <TableCell sx={{ py: 1 }}>{t("currencies.name")}</TableCell>
             <TableCell sx={{ py: 1 }}>{t("templates.templateType")}</TableCell>
             <TableCell sx={{ py: 1 }}>{t("common.description")}</TableCell>
-            <TableCell sx={{ py: 1 }}>{t("counterparties.active")}</TableCell>
             <TableCell align="right" sx={{ py: 1 }}>{t("common.actions")}</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
           {templates.map(item => (
-            <TableRow hover key={item.id}>
+              <TableRow hover key={item.id}>
               <TableCell sx={{ py: 0.8 }}>{item.name}</TableCell>
-              <TableCell sx={{ py: 0.8 }}>{typeLabel(item.templateType, t)}</TableCell>
-              <TableCell sx={{ py: 0.8 }}>{item.description ?? t("common.none")}</TableCell>
               <TableCell sx={{ py: 0.8 }}>
-                {item.isActive ? <Chip label={t("common.yes")} size="small" sx={{ bgcolor: "primary.main", color: "white" }} /> : <Chip label={t("common.no")} size="small" variant="outlined" />}
+                <Chip
+                  label={typeLabel(item.templateType, t)}
+                  size="small"
+                  variant="outlined"
+                  sx={typeChipSx(item.templateType)}
+                />
               </TableCell>
+              <TableCell sx={{ py: 0.8 }}>{item.description ?? t("common.none")}</TableCell>
               <TableCell align="right" sx={{ py: 0.8 }}>
                 <Stack direction="row" justifyContent="flex-end" spacing={1}>
                   <LinkButton disabled={isSubmitting} onClick={() => onEdit(item)}>{t("common.edit")}</LinkButton>

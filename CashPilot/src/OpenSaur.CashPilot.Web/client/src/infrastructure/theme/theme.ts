@@ -4,6 +4,7 @@ import type { SxProps, Theme } from "@mui/material/styles";
 const headerHeight = 64;
 const shellSpace = 2;
 const brandGreen = "#00ccff";
+const brandSecondary = "#ff8a4c";
 const backgroundDefault = "#edf3f8";
 const backgroundPaper = "#ffffff";
 const textPrimary = "#15211b";
@@ -24,6 +25,9 @@ export const theme = createTheme({
     },
     primary: {
       main: brandGreen
+    },
+    secondary: {
+      main: brandSecondary
     },
     text: {
       primary: textPrimary,

@@ -7,6 +7,7 @@ import { DropDown } from "../../../components/atoms/DropDown";
 import { Number as NumberField } from "../../../components/atoms/Number";
 import { Text } from "../../../components/atoms/Text";
 import { TextArea } from "../../../components/atoms/TextArea";
+import { TagAutocompleteMultiSelect } from "../../tags/components/TagAutocompleteMultiSelect";
 import { useSettings } from "../../settings/provider/SettingProvider";
 import type { BankDto } from "../../banks/dtos/BankDto";
 import type { CurrencyDto } from "../../currencies/dtos/CurrencyDto";
@@ -37,6 +38,7 @@ type HeaderValues = {
   status: string;
   accountNumber: string;
   description: string;
+  tags: string[];
   transactionItems: Array<{ id?: string; name: string; amount: string }>;
 };
 
@@ -77,6 +79,7 @@ export function BankAccountForm({
       maturityDate: initialValue?.maturityDate ?? today,
       startDate: initialValue?.startDate ?? today,
       status: (initialValue?.status ?? 1).toString(),
+      tags: initialValue?.tags ?? [],
       transactionItems: (initialValue?.transactionItems ?? []).map(x => ({
         id: x.id,
         name: x.name,
@@ -117,6 +120,7 @@ export function BankAccountForm({
       maturityDate: initialValue?.maturityDate ?? today,
       startDate: initialValue?.startDate ?? today,
       status: (initialValue?.status ?? 1).toString(),
+      tags: initialValue?.tags ?? [],
       transactionItems: (initialValue?.transactionItems ?? []).map(x => ({
         id: x.id,
         name: x.name,
@@ -203,6 +207,7 @@ export function BankAccountForm({
       status: Number(values.status),
       accountNumber: values.accountNumber.trim().length === 0 ? undefined : values.accountNumber.trim(),
       description: values.description.trim().length === 0 ? undefined : values.description.trim(),
+      tags: values.tags,
       isActive: headerIsActive,
       details: finalDetails,
       transactionItems: values.transactionItems
@@ -229,7 +234,7 @@ export function BankAccountForm({
           />
         }
         formContent={
-          <>
+          <Stack spacing={2}>
             <Grid container spacing={2}>
               <Grid size={{ xs: 12 }}>
                 <Text control={form.control} label={t("transactions.accountNumber")} name="accountNumber" />
@@ -345,6 +350,14 @@ export function BankAccountForm({
                   minRows={3}
                 />
               </Grid>
+
+              <Grid size={{ xs: 12 }}>
+                <TagAutocompleteMultiSelect
+                  control={form.control}
+                  label={t("tags.title")}
+                  name="tags"
+                />
+              </Grid>
             </Grid>
 
             <Stack direction="row" justifyContent="space-between" alignItems="center">
@@ -403,7 +416,7 @@ export function BankAccountForm({
                 {isSubmitting ? t("action.working") : submitLabel}
               </ActionButton>
             </Stack>
-          </>
+          </Stack>
         }
       />
     </Stack>

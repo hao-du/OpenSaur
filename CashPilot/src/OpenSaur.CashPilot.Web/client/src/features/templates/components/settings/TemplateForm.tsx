@@ -5,12 +5,14 @@ import { Text } from "../../../../components/atoms/Text";
 import { TextArea } from "../../../../components/atoms/TextArea";
 import { layoutStyles } from "../../../../infrastructure/theme/theme";
 import { useSettings } from "../../../settings/provider/SettingProvider";
+import { TagAutocompleteMultiSelect } from "../../../tags/components/TagAutocompleteMultiSelect";
 import type { BankDto } from "../../../banks/dtos/BankDto";
 import type { CounterpartyDto } from "../../../counterparties/dtos/CounterpartyDto";
 import type { CurrencyDto } from "../../../currencies/dtos/CurrencyDto";
 import type {
   BankAccountTemplateData,
   CashFlowTemplateData,
+  ExchangeTemplateData,
   TemplateData,
   TemplateType,
   TransferTemplateData,
@@ -18,6 +20,7 @@ import type {
 import { BankAccountTemplateForm } from "./BankAccountTemplateForm";
 import { CashFlowTemplateForm } from "./CashFlowTemplateForm";
 import { ExchangeTemplateForm } from "./ExchangeTemplateForm";
+import { FieldRow } from "./TemplateFormShared";
 import { TransferTemplateForm } from "./TransferTemplateForm";
 
 export type TemplateFormValues = {
@@ -89,7 +92,7 @@ function toStoredTemplateNode(node: unknown): unknown {
 }
 
 export function buildDefaultTemplateData(type: TemplateType): TemplateData {
-  const f = (value: string) => ({ autoPopulate: false, showUi: false, value });
+  const f = <T,>(value: T) => ({ autoPopulate: false, showUi: false, value });
   if (type === "CashFlow")
     return {
       amount: f(""),
@@ -97,6 +100,7 @@ export function buildDefaultTemplateData(type: TemplateType): TemplateData {
       description: f(""),
       direction: f("2"),
       transactionDate: f(""),
+      tags: f<string[]>([]),
     } satisfies CashFlowTemplateData;
   if (type === "Transfer")
     return {
@@ -110,6 +114,7 @@ export function buildDefaultTemplateData(type: TemplateType): TemplateData {
       transactionDate: f(""),
       transferType: f("1"),
       details: [],
+      tags: f<string[]>([]),
     } satisfies TransferTemplateData;
   if (type === "Exchange")
     return {
@@ -120,6 +125,7 @@ export function buildDefaultTemplateData(type: TemplateType): TemplateData {
       inCurrencyId: f(""),
       outAmount: f(""),
       outCurrencyId: f(""),
+      tags: f<string[]>([]),
     };
   return {
     accountNumber: f(""),
@@ -132,6 +138,7 @@ export function buildDefaultTemplateData(type: TemplateType): TemplateData {
     startDate: f(""),
     status: f("1"),
     details: [],
+    tags: f<string[]>([]),
   } satisfies BankAccountTemplateData;
 }
 
@@ -149,6 +156,11 @@ export function safeParseTemplateData(
       return {
         ...transfer,
         details: Array.isArray(transfer.details) ? transfer.details : [],
+        tags: {
+          autoPopulate: transfer.tags?.autoPopulate === true,
+          showUi: transfer.tags?.showUi === true,
+          value: Array.isArray(transfer.tags?.value) ? transfer.tags.value : [],
+        },
       };
     }
     if (type === "BankAccount") {
@@ -156,9 +168,33 @@ export function safeParseTemplateData(
       return {
         ...bank,
         details: Array.isArray(bank.details) ? bank.details : [],
+        tags: {
+          autoPopulate: bank.tags?.autoPopulate === true,
+          showUi: bank.tags?.showUi === true,
+          value: Array.isArray(bank.tags?.value) ? bank.tags.value : [],
+        },
       };
     }
-    return normalized as TemplateData;
+    if (type === "CashFlow") {
+      const cashFlow = normalized as CashFlowTemplateData;
+      return {
+        ...cashFlow,
+        tags: {
+          autoPopulate: cashFlow.tags?.autoPopulate === true,
+          showUi: cashFlow.tags?.showUi === true,
+          value: Array.isArray(cashFlow.tags?.value) ? cashFlow.tags.value : [],
+        },
+      };
+    }
+    const exchange = normalized as ExchangeTemplateData;
+    return {
+      ...exchange,
+      tags: {
+        autoPopulate: exchange.tags?.autoPopulate === true,
+        showUi: exchange.tags?.showUi === true,
+        value: Array.isArray(exchange.tags?.value) ? exchange.tags.value : [],
+      },
+    };
   } catch {
     return buildDefaultTemplateData(type);
   }
@@ -235,6 +271,13 @@ export function TemplateForm({
           );
         }}
       />
+      <FieldRow control={control} modeName="templateData.tags.autoPopulate">
+        <TagAutocompleteMultiSelect
+          control={control}
+          label={t("tags.title")}
+          name="templateData.tags.value"
+        />
+      </FieldRow>
       <Stack
         direction="row"
         justifyContent="flex-end"

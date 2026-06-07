@@ -11,6 +11,7 @@ import type { TranslationKey } from "../../../settings/provider/translations";
 import { useCreateCurrencyExchangeMutation } from "../../../transactions/hooks/useCreateCurrencyExchangeMutation";
 import { TransactionItemsEditor } from "../../../transactions/components/TransactionItemsEditor";
 import { TransactionFormTabs } from "../../../transactions/components/TransactionFormTabs";
+import { TagAutocompleteMultiSelect } from "../../../tags/components/TagAutocompleteMultiSelect";
 import type {
   ExchangeFormValues,
   ExchangeTemplateDataShape,
@@ -23,10 +24,12 @@ import {
 import {
   initialDateValue,
   initialValue,
+  initialTagsValue,
   isRequired,
   resolve,
   resolveDate,
   resolveOptionalDescription,
+  resolveTags,
   shown,
 } from "./utils";
 type Props = {
@@ -58,6 +61,7 @@ export function ExchangePopulateForm({
       inAmount: initialValue(templateData.inAmount, todayIsoDate),
       inCurrencyId: initialValue(templateData.inCurrencyId, todayIsoDate),
       description: initialValue(templateData.description, todayIsoDate),
+      tags: initialTagsValue(templateData.tags),
       transactionItems: [],
     }),
     [templateData, todayIsoDate],
@@ -107,6 +111,7 @@ export function ExchangePopulateForm({
           v.description,
           todayIsoDate,
         ),
+        tags: resolveTags(templateData.tags, v.tags),
         transactionItems: v.transactionItems.filter(x => x.name.trim().length > 0).map(x => ({ name: x.name.trim(), amount: Number(x.amount || "0") })),
       });
       await onSaved?.();
@@ -159,6 +164,15 @@ export function ExchangePopulateForm({
               name="description"
               label={t("transactions.description")}
               minRows={3}
+            />
+          </Grid>
+        ) : null}
+        {shown(templateData.tags) ? (
+          <Grid size={{ xs: 12 }}>
+            <TagAutocompleteMultiSelect
+              control={form.control}
+              name="tags"
+              label={t("tags.title")}
             />
           </Grid>
         ) : null}

@@ -1,6 +1,6 @@
 import type { TemplateField } from "./types";
 
-export const shown = (field?: TemplateField) => field?.showUi === true;
+export const shown = <T = string>(field?: TemplateField<T>) => field?.showUi === true;
 
 export const replaceDateTokens = (value: string, todayIsoDate: string) => {
   const [year, month, day] = todayIsoDate.split("-");
@@ -62,4 +62,18 @@ export const resolveOptionalDescription = (
 ) => {
   const description = resolve(field, value, todayIsoDate).trim();
   return description.length > 0 ? description : undefined;
+};
+
+export const initialTagsValue = (field: TemplateField<string[]> | undefined) =>
+  field?.autoPopulate === true ? [...(field.value ?? [])] : [];
+
+export const resolveTags = (
+  field: TemplateField<string[]> | undefined,
+  value: string[],
+) => {
+  if (field?.autoPopulate === true && field.showUi !== true) {
+    return [...(field.value ?? [])];
+  }
+
+  return [...value];
 };

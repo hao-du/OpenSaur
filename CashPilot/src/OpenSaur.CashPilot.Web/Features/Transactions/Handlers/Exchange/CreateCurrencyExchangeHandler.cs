@@ -1,12 +1,14 @@
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using OpenSaur.CashPilot.Web.Domain;
+using OpenSaur.CashPilot.Web.Features.Tags;
+using OpenSaur.CashPilot.Web.Features.Tags.Services;
 using OpenSaur.CashPilot.Web.Features.Transactions.Dtos;
 using OpenSaur.CashPilot.Web.Features.Transactions.Validations;
 using OpenSaur.CashPilot.Web.Infrastructure.Database;
 using OpenSaur.CashPilot.Web.Infrastructure.Helpers;
 using System.Security.Claims;
-using Microsoft.EntityFrameworkCore;
 using AppHttpResults = OpenSaur.CashPilot.Web.Infrastructure.Http.HttpResults;
 
 namespace OpenSaur.CashPilot.Web.Features.Transactions.Handlers;
@@ -18,6 +20,7 @@ public static class CreateCurrencyExchangeHandler
     public static async Task<Results<Created<Guid>, BadRequest<ProblemDetails>, ValidationProblem>> HandleAsync(
         CreateCurrencyExchangeRequest request,
         ClaimsPrincipal user,
+        ITagService tagService,
         CashPilotDbContext dbContext,
         CancellationToken cancellationToken)
     {
@@ -32,7 +35,7 @@ public static class CreateCurrencyExchangeHandler
         {
             return AppHttpResults.ValidationProblem(validationResult);
         }
-        
+
         var currencyIds = new[] { request.OutLeg.CurrencyId, request.InLeg.CurrencyId }.Distinct().ToList();
         var currencyCount = await dbContext.Currencies
             .CountAsync(x => currencyIds.Contains(x.Id) && x.OwnerId == currentUserId && x.IsActive, cancellationToken);
@@ -53,8 +56,10 @@ public static class CreateCurrencyExchangeHandler
                     Name = x.Name.Trim(),
                     Amount = x.Amount
                 })
-                .ToList()
+            .ToList()
         };
+        exchange.Tags = TagTermCodec.Encode(request.Tags ?? []);
+        await tagService.EnsureTagDefinitionsExistAsync(currentUserId, request.Tags ?? [], cancellationToken);
 
         var outTransaction = new Transaction
         {

@@ -13,5 +13,8 @@ public sealed class CurrencyExchangeConfiguration : IEntityTypeConfiguration<Cur
         builder.Property(x => x.ExchangeRate)
             .HasPrecision(18, 6)
             .IsRequired(false);
+        
+        builder.Property(x => x.Tags)
+            .HasColumnType("jsonb");
     }
 }

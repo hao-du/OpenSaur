@@ -1,7 +1,7 @@
-export type TemplateField = {
+export type TemplateField<T = string> = {
   autoPopulate?: boolean;
   showUi?: boolean;
-  value?: string;
+  value?: T;
 };
 
 export type OptionItem = {
@@ -19,6 +19,7 @@ export type BankAccountTemplateDataShape = {
   startDate?: TemplateField;
   maturityDate?: TemplateField;
   description?: TemplateField;
+  tags?: TemplateField<string[]>;
 };
 
 export type BankAccountFormValues = {
@@ -30,6 +31,7 @@ export type BankAccountFormValues = {
   startDate: string;
   maturityDate: string;
   description: string;
+  tags: string[];
   transactionItems: Array<{ id?: string; name: string; amount: string }>;
 };
 
@@ -39,6 +41,7 @@ export type CashFlowTemplateDataShape = {
   direction?: TemplateField;
   transactionDate?: TemplateField;
   description?: TemplateField;
+  tags?: TemplateField<string[]>;
 };
 
 export type CashFlowFormValues = {
@@ -47,6 +50,7 @@ export type CashFlowFormValues = {
   direction: string;
   transactionDate: string;
   description: string;
+  tags: string[];
   transactionItems: Array<{ id?: string; name: string; amount: string }>;
 };
 
@@ -58,6 +62,7 @@ export type ExchangeTemplateDataShape = {
   inAmount?: TemplateField;
   inCurrencyId?: TemplateField;
   description?: TemplateField;
+  tags?: TemplateField<string[]>;
 };
 
 export type ExchangeFormValues = {
@@ -68,6 +73,7 @@ export type ExchangeFormValues = {
   inAmount: string;
   inCurrencyId: string;
   description: string;
+  tags: string[];
   transactionItems: Array<{ id?: string; name: string; amount: string }>;
 };
 
@@ -81,6 +87,7 @@ export type TransferTemplateDataShape = {
   transactionDate?: TemplateField;
   dueDate?: TemplateField;
   description?: TemplateField;
+  tags?: TemplateField<string[]>;
 };
 
 export type TransferFormValues = {
@@ -93,5 +100,6 @@ export type TransferFormValues = {
   transactionDate: string;
   dueDate: string;
   description: string;
+  tags: string[];
   transactionItems: Array<{ id?: string; name: string; amount: string }>;
 };

@@ -19,6 +19,7 @@ public sealed class SideMenuService
             items.Add(new CurrentProfileNavigationItemResponse("coins", "Currencies", "/currencies"));
             items.Add(new CurrentProfileNavigationItemResponse("receipt-text", "Transactions", "/transactions"));
             items.Add(new CurrentProfileNavigationItemResponse("layout-template", "Templates", "/templates"));
+            items.Add(new CurrentProfileNavigationItemResponse("key-round", "Tags", "/tags"));
         }
 
         return items;

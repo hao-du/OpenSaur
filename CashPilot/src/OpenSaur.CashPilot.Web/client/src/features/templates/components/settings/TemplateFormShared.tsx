@@ -16,6 +16,7 @@ export type ModePath =
   | "templateData.direction.autoPopulate"
   | "templateData.transactionDate.autoPopulate"
   | "templateData.description.autoPopulate"
+  | "templateData.tags.autoPopulate"
   | "templateData.counterpartyId.autoPopulate"
   | "templateData.transferType.autoPopulate"
   | "templateData.status.autoPopulate"

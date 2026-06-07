@@ -9,6 +9,7 @@ public sealed class CashFlowConfiguration : IEntityTypeConfiguration<CashFlow>
     public void Configure(EntityTypeBuilder<CashFlow> builder)
     {
         builder.ToTable("CashFlows");
+        builder.Property(x => x.Tags).HasColumnType("jsonb");
 
         builder.HasOne(x => x.Transaction)
             .WithMany(x => x.CashFlows)

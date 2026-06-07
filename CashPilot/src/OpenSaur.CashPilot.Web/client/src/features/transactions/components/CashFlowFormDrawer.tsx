@@ -4,21 +4,13 @@ import { useForm, useWatch } from "react-hook-form";
 import { DrawerPanel } from "../../../components/organisms/DrawerPanel";
 import { useSettings } from "../../settings/provider/SettingProvider";
 import type { CurrencyDto } from "../../currencies/dtos/CurrencyDto";
+import type { CashFlowDetailDto } from "../dtos/TransactionDto";
 import { CashFlowForm, type CashFlowFormValues } from "./CashFlowForm";
 import { TransactionItemsEditor } from "./TransactionItemsEditor";
 import { TransactionFormTabs } from "./TransactionFormTabs";
 
 type Props = {
-  editingCashFlow?: {
-    id: string;
-    amount: number;
-    currencyId: string;
-    description?: string | null;
-    direction: number;
-    transactionDate: string;
-    isActive: boolean;
-    transactionItems: Array<{ id?: string; name: string; amount: number }>;
-  } | null;
+  editingCashFlow?: CashFlowDetailDto | null;
   isOpen: boolean;
   onClose: () => void;
   currencies: CurrencyDto[];
@@ -28,6 +20,7 @@ type Props = {
     direction: number;
     transactionDate: string;
     description?: string;
+    tags: string[];
     transactionItems: Array<{ id?: string; name: string; amount: number }>;
   }) => Promise<void>;
   onUpdate?: (id: string, payload: {
@@ -36,6 +29,7 @@ type Props = {
     description?: string;
     direction: number;
     transactionDate: string;
+    tags: string[];
     isActive: boolean;
     transactionItems: Array<{ id?: string; name: string; amount: number }>;
   }) => Promise<void>;
@@ -53,6 +47,7 @@ export function CashFlowFormDrawer({ editingCashFlow, isOpen, onClose, currencie
       description: "",
       direction: "2",
       transactionDate: today,
+      tags: [],
       transactionItems: []
     }
   });
@@ -67,6 +62,7 @@ export function CashFlowFormDrawer({ editingCashFlow, isOpen, onClose, currencie
         description: editingCashFlow.description ?? "",
         direction: editingCashFlow.direction.toString(),
         transactionDate: editingCashFlow.transactionDate,
+        tags: editingCashFlow.tags ?? [],
         transactionItems: (editingCashFlow.transactionItems ?? []).map(x => ({
           id: x.id,
           name: x.name,
@@ -82,6 +78,7 @@ export function CashFlowFormDrawer({ editingCashFlow, isOpen, onClose, currencie
       description: "",
       direction: "2",
       transactionDate: today,
+      tags: [],
       transactionItems: []
     });
   }, [currencies, editingCashFlow, form, isOpen, today]);
@@ -106,6 +103,7 @@ export function CashFlowFormDrawer({ editingCashFlow, isOpen, onClose, currencie
             description: values.description.trim().length === 0 ? undefined : values.description.trim(),
             direction: Number(values.direction),
             transactionDate: values.transactionDate,
+            tags: values.tags,
             transactionItems: values.transactionItems.filter(x => x.name.trim().length > 0).map(x => ({
               id: x.id,
               name: x.name.trim(),

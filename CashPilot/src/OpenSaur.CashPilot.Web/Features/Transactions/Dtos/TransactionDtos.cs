@@ -13,6 +13,7 @@ public sealed record TransactionListItemResponse(
     byte? TransferType,
     string Type,
     string? Description,
+    string[] Tags,
     string CurrencyCode,
     decimal Amount,
     byte Direction,
@@ -41,6 +42,7 @@ public sealed record CreateCashFlowRequest(
     byte Direction,
     DateOnly TransactionDate,
     string? Description,
+    string[] Tags,
     IReadOnlyList<TransactionItemRequest> TransactionItems);
 public sealed record UpdateCashFlowRequest(
     Guid Id,
@@ -50,6 +52,7 @@ public sealed record UpdateCashFlowRequest(
     DateOnly TransactionDate,
     string? Description,
     bool IsActive,
+    string[] Tags,
     IReadOnlyList<TransactionItemRequest> TransactionItems);
 
 public sealed record SaveBankAccountFormRequest(
@@ -64,6 +67,7 @@ public sealed record SaveBankAccountFormRequest(
     string? AccountNumber,
     string? Description,
     bool IsActive,
+    string[] Tags,
     IReadOnlyList<SaveBankAccountDetailRequest> Details,
     IReadOnlyList<TransactionItemRequest> TransactionItems);
 
@@ -87,6 +91,7 @@ public sealed record SaveTransferFormRequest(
     DateOnly? DueDate,
     string? Description,
     bool IsActive,
+    string[] Tags,
     IReadOnlyList<SaveTransferDetailRequest> Details,
     IReadOnlyList<TransactionItemRequest> TransactionItems);
 
@@ -105,6 +110,7 @@ public sealed record CreateCurrencyExchangeRequest(
     ExchangeLegRequest OutLeg,
     ExchangeLegRequest InLeg,
     string? Description,
+    string[] Tags,
     IReadOnlyList<TransactionItemRequest> TransactionItems);
 public sealed record UpdateCurrencyExchangeRequest(
     Guid Id,
@@ -114,6 +120,7 @@ public sealed record UpdateCurrencyExchangeRequest(
     ExchangeLegRequest InLeg,
     string? Description,
     bool IsActive,
+    string[] Tags,
     IReadOnlyList<TransactionItemRequest> TransactionItems);
 
 public sealed record ExchangeLegRequest(
@@ -128,6 +135,7 @@ public sealed record CashFlowDetailResponse(
     DateOnly TransactionDate,
     string? Description,
     bool IsActive,
+    string[] Tags,
     IReadOnlyList<TransactionItemResponse> TransactionItems);
 
 public sealed record BankAccountTransactionDetailResponse(
@@ -171,6 +179,7 @@ public sealed record TransferFormResponse(
     DateOnly? DueDate,
     string? Description,
     bool IsActive,
+    string[] Tags,
     IReadOnlyList<TransferFormDetailResponse> Details,
     IReadOnlyList<TransactionItemResponse> TransactionItems);
 
@@ -182,6 +191,7 @@ public sealed record CurrencyExchangeDetailResponse(
     ExchangeLegResponse InLeg,
     string? Description,
     bool IsActive,
+    string[] Tags,
     IReadOnlyList<TransactionItemResponse> TransactionItems);
 
 public sealed record TransactionItemRequest(

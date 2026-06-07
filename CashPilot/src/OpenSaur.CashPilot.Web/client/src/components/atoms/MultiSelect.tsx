@@ -17,6 +17,7 @@ type MultiSelectProps<TFieldValues extends FieldValues> = {
   name: FieldPath<TFieldValues>;
   options: MultiSelectOption[];
   placeholder?: string;
+  freeSolo?: boolean;
   required?: boolean;
   rules?: Omit<RegisterOptions<TFieldValues, FieldPath<TFieldValues>>, "disabled" | "valueAsDate" | "valueAsNumber" | "setValueAs">;
 };
@@ -29,6 +30,7 @@ export function MultiSelect<TFieldValues extends FieldValues>({
   name,
   options,
   placeholder,
+  freeSolo = false,
   required = false,
   rules
 }: MultiSelectProps<TFieldValues>) {
@@ -38,17 +40,23 @@ export function MultiSelect<TFieldValues extends FieldValues>({
       name={name}
       render={({ field, fieldState }) => {
         const selectedValues = new Set<string>(Array.isArray(field.value) ? field.value : []);
-        const selectedOptions = options.filter(option => selectedValues.has(option.value));
+        const optionMap = new Map(options.map(option => [option.value, option] as const));
+        const selectedOptions = Array.from(selectedValues).map(value => optionMap.get(value) ?? { label: value, value });
 
         return (
           <Autocomplete
             disableCloseOnSelect
             disabled={disabled}
-            getOptionLabel={option => option.label}
-            isOptionEqualToValue={(option, value) => option.value === value.value}
+            freeSolo={freeSolo}
+            getOptionLabel={option => typeof option === "string" ? option : option.label}
+            isOptionEqualToValue={(option, value) => {
+              const optionValue = typeof option === "string" ? option : option.value;
+              const selectedValue = typeof value === "string" ? value : value.value;
+              return optionValue === selectedValue;
+            }}
             multiple
             onChange={(_, nextOptions) => {
-              field.onChange(nextOptions.map(option => option.value));
+              field.onChange(nextOptions.map(option => typeof option === "string" ? option : option.value));
             }}
             options={options}
             renderInput={params => (
@@ -69,6 +77,11 @@ export function MultiSelect<TFieldValues extends FieldValues>({
               />
             )}
             renderOption={(props, option, { selected }) => {
+              if (typeof option === "string")
+              {
+                return null;
+              }
+
               const { key, ...optionProps } = props;
 
               return (
@@ -88,12 +101,13 @@ export function MultiSelect<TFieldValues extends FieldValues>({
             renderTags={(selectedTagOptions, getTagProps) => (
               selectedTagOptions.map((option, index) => {
                 const { key, ...tagProps } = getTagProps({ index });
+                const label = typeof option === "string" ? option : option.label;
 
                 return (
                   <Chip
                     {...tagProps}
                     key={key}
-                    label={option.label}
+                    label={label}
                     size="small"
                   />
                 );

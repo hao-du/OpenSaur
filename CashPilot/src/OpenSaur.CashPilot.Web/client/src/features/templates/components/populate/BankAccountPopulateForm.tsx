@@ -8,6 +8,7 @@ import { Number as NumberInput } from "../../../../components/atoms/Number";
 import { Text } from "../../../../components/atoms/Text";
 import { TextArea } from "../../../../components/atoms/TextArea";
 import type { TranslationKey } from "../../../settings/provider/translations";
+import { TagAutocompleteMultiSelect } from "../../../tags/components/TagAutocompleteMultiSelect";
 import { useSaveBankAccountMutation } from "../../../transactions/hooks/useSaveBankAccountMutation";
 import { TransactionItemsEditor } from "../../../transactions/components/TransactionItemsEditor";
 import { TransactionFormTabs } from "../../../transactions/components/TransactionFormTabs";
@@ -23,10 +24,12 @@ import {
 import {
   initialDateValue,
   initialValue,
+  initialTagsValue,
   isRequired,
   resolve,
   resolveDate,
   resolveOptionalDescription,
+  resolveTags,
   shown,
 } from "./utils";
 type Props = {
@@ -61,6 +64,7 @@ export function BankAccountPopulateForm({
       startDate: initialDateValue(templateData.startDate, todayIsoDate),
       maturityDate: initialDateValue(templateData.maturityDate, todayIsoDate),
       description: initialValue(templateData.description, todayIsoDate),
+      tags: initialTagsValue(templateData.tags),
       transactionItems: [],
     }),
     [templateData, todayIsoDate],
@@ -112,6 +116,7 @@ export function BankAccountPopulateForm({
           v.description,
           todayIsoDate,
         ),
+        tags: resolveTags(templateData.tags, v.tags),
         isActive: true,
         details: [],
         transactionItems: v.transactionItems.filter(x => x.name.trim().length > 0).map(x => ({ name: x.name.trim(), amount: Number(x.amount || "0") })),
@@ -231,6 +236,15 @@ export function BankAccountPopulateForm({
               name="description"
               label={t("transactions.description")}
               minRows={3}
+            />
+          </Grid>
+        ) : null}
+        {shown(templateData.tags) ? (
+          <Grid size={{ xs: 12 }}>
+            <TagAutocompleteMultiSelect
+              control={form.control}
+              name="tags"
+              label={t("tags.title")}
             />
           </Grid>
         ) : null}

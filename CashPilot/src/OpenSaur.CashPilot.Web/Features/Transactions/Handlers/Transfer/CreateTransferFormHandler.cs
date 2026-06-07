@@ -1,12 +1,14 @@
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using OpenSaur.CashPilot.Web.Domain;
+using OpenSaur.CashPilot.Web.Features.Tags;
+using OpenSaur.CashPilot.Web.Features.Tags.Services;
 using OpenSaur.CashPilot.Web.Features.Transactions.Dtos;
 using OpenSaur.CashPilot.Web.Features.Transactions.Validations;
 using OpenSaur.CashPilot.Web.Infrastructure.Database;
 using OpenSaur.CashPilot.Web.Infrastructure.Helpers;
 using System.Security.Claims;
-using Microsoft.EntityFrameworkCore;
 using AppHttpResults = OpenSaur.CashPilot.Web.Infrastructure.Http.HttpResults;
 
 namespace OpenSaur.CashPilot.Web.Features.Transactions.Handlers;
@@ -18,6 +20,7 @@ public static class CreateTransferFormHandler
     public static async Task<Results<Ok<Guid>, BadRequest<ProblemDetails>, ValidationProblem>> HandleAsync(
         SaveTransferFormRequest request,
         ClaimsPrincipal user,
+        ITagService tagService,
         CashPilotDbContext dbContext,
         CancellationToken cancellationToken)
     {
@@ -32,7 +35,7 @@ public static class CreateTransferFormHandler
         {
             return AppHttpResults.ValidationProblem(validationResult);
         }
-        
+
         var hasCounterparty = await dbContext.Counterparties
             .AnyAsync(x => x.Id == request.CounterpartyId && x.OwnerId == currentUserId && x.IsActive, cancellationToken);
         if (!hasCounterparty)
@@ -66,8 +69,10 @@ public static class CreateTransferFormHandler
                     Name = x.Name.Trim(),
                     Amount = x.Amount
                 })
-                .ToList()
+            .ToList()
         };
+        transfer.Tags = TagTermCodec.Encode(request.Tags ?? []);
+        await tagService.EnsureTagDefinitionsExistAsync(currentUserId, request.Tags ?? [], cancellationToken);
         dbContext.Transfers.Add(transfer);
 
         foreach (var detail in request.Details)

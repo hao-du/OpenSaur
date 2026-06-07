@@ -5,6 +5,7 @@ import { DatePicker } from "../../../components/atoms/DatePicker";
 import { DropDown } from "../../../components/atoms/DropDown";
 import { Number } from "../../../components/atoms/Number";
 import { TextArea } from "../../../components/atoms/TextArea";
+import { TagAutocompleteMultiSelect } from "../../tags/components/TagAutocompleteMultiSelect";
 import { layoutStyles } from "../../../infrastructure/theme/theme";
 import { useSettings } from "../../settings/provider/SettingProvider";
 
@@ -14,6 +15,7 @@ export type CashFlowFormValues = {
   description: string;
   direction: string;
   transactionDate: string;
+  tags: string[];
   transactionItems: Array<{ id?: string; name: string; amount: string }>;
 };
 
@@ -79,6 +81,12 @@ export function CashFlowForm({ control, currencyOptions, isEditMode, isSubmittin
         label={t("transactions.description")}
         minRows={3}
         name="description"
+      />
+      <TagAutocompleteMultiSelect
+        control={control}
+        disabled={isSubmitting}
+        label={t("tags.title")}
+        name="tags"
       />
       <Stack direction="row" justifyContent="flex-end" spacing={1} sx={layoutStyles.formFooterRow}>
         <ActionButton disabled={isSubmitting} type="submit">
