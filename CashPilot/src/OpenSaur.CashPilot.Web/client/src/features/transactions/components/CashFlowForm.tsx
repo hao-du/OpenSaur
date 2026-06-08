@@ -86,6 +86,7 @@ export function CashFlowForm({
   const { t, todayIsoDate } = useSettings();
   const today = todayIsoDate;
   const [tab, setTab] = useState<(typeof transactionFormTabs)[keyof typeof transactionFormTabs]>(transactionFormTabs.form);
+  const isBusy = isSubmitting || isAutoTagging;
   const form = useForm<CashFlowFormValues>({
     defaultValues: getInitialValues(currencies, today, initialValue),
   });
@@ -140,7 +141,7 @@ export function CashFlowForm({
           <TransactionItemsEditor
             control={form.control}
             name="transactionItems"
-            disabled={isSubmitting}
+            disabled={isBusy}
             currencyCode={selectedCurrencyCode}
           />
         }
@@ -149,7 +150,6 @@ export function CashFlowForm({
             <Stack sx={layoutStyles.drawerBody} spacing={2}>
               <NumberInput
                 control={form.control}
-                disabled={isSubmitting}
                 label={t("transactions.amount")}
                 name="amount"
                 required
@@ -159,7 +159,6 @@ export function CashFlowForm({
               />
               <DropDown
                 control={form.control}
-                disabled={isSubmitting}
                 label={t("transactions.currency")}
                 name="currencyId"
                 options={currencyOptions}
@@ -170,7 +169,6 @@ export function CashFlowForm({
               />
               <DropDown
                 control={form.control}
-                disabled={isSubmitting}
                 label={t("transactions.direction")}
                 name="direction"
                 options={[
@@ -184,7 +182,6 @@ export function CashFlowForm({
               />
               <DatePicker
                 control={form.control}
-                disabled={isSubmitting}
                 label={t("transactions.date")}
                 name="transactionDate"
                 required
@@ -194,31 +191,29 @@ export function CashFlowForm({
               />
               <TextArea
                 control={form.control}
-                disabled={isSubmitting}
                 label={t("transactions.description")}
                 minRows={3}
                 name="description"
               />
               <TagAutocompleteMultiSelect
                 control={form.control}
-                disabled={isSubmitting}
                 label={t("tags.title")}
                 name="tags"
               />
             </Stack>
             <Stack direction="row" justifyContent="flex-end" spacing={1} sx={layoutStyles.formFooterRow}>
               <ActionButton
-                disabled={isSubmitting || isAutoTagging || onAutoTag == null}
+                disabled={isBusy || onAutoTag == null}
                 onClick={() => {
                   void handleAutoTag();
                 }}
                 startIcon={<WandSparkles size={16} />}
                 variant="outlined"
               >
-                {isAutoTagging ? t("action.working") : t("transactions.autoTag")}
+                {isBusy ? t("action.working") : t("transactions.autoTag")}
               </ActionButton>
-              <ActionButton disabled={isSubmitting} type="submit">
-                {isSubmitting ? t("action.working") : initialValue == null ? t("transactions.create") : t("transactions.save")}
+              <ActionButton disabled={isBusy} type="submit">
+                {isBusy ? t("action.working") : initialValue == null ? t("transactions.create") : t("transactions.save")}
               </ActionButton>
             </Stack>
           </Stack>

@@ -12,7 +12,6 @@ import {
   Repeat,
   Trash2,
   Users,
-  WandSparkles,
 } from "lucide-react";
 import { BodyText } from "../../../components/atoms/BodyText";
 import { ActionButton } from "../../../components/atoms/ActionButton";
@@ -72,9 +71,7 @@ const transactionTypeConfig = {
 type Props = {
   formatAmount: (value: number) => string;
   formatDate: (value: string | number | Date | null | undefined) => string;
-  isAutoTagging: boolean;
   isLoading: boolean;
-  onAutoTag: (item: TransactionListItemDto) => void;
   onDelete: (item: TransactionListItemDto) => void;
   onEdit: (type: TransactionType, id: string, transferId?: string | null) => void;
   page: number;
@@ -91,9 +88,7 @@ function getTransactionTypeTagSx(type: TransactionType) {
 export function TransactionListPanel({
   formatAmount,
   formatDate,
-  isAutoTagging,
   isLoading,
-  onAutoTag,
   onDelete,
   onEdit,
   page,
@@ -291,23 +286,6 @@ export function TransactionListPanel({
                     </BodyText>
                     <Stack direction="row" spacing={1}>
                       <ActionButton
-                        aria-label={t("transactions.autoTag")}
-                        disabled={isAutoTagging}
-                        noWrap={false}
-                        onClick={() => {
-                          onAutoTag(item);
-                        }}
-                        size="small"
-                        sx={{
-                          borderRadius: "999px",
-                          minWidth: 34,
-                          p: 0.5,
-                        }}
-                        variant="outlined"
-                      >
-                        <WandSparkles size={16} />
-                      </ActionButton>
-                      <ActionButton
                         aria-label={t("transactions.edit")}
                         noWrap={false}
                         onClick={() => {
@@ -315,9 +293,14 @@ export function TransactionListPanel({
                         }}
                         size="small"
                         sx={{
-                          borderRadius: "999px",
+                          borderRadius: "50%",
                           minWidth: 34,
-                          p: 0.5,
+                          width: 34,
+                          height: 34,
+                          p: 0,
+                          display: "inline-flex",
+                          alignItems: "center",
+                          justifyContent: "center",
                         }}
                         variant="outlined"
                       >
@@ -330,9 +313,14 @@ export function TransactionListPanel({
                         onClick={() => onDelete(item)}
                         size="small"
                         sx={{
-                          borderRadius: "999px",
+                          borderRadius: "50%",
                           minWidth: 34,
-                          p: 0.5,
+                          width: 34,
+                          height: 34,
+                          p: 0,
+                          display: "inline-flex",
+                          alignItems: "center",
+                          justifyContent: "center",
                         }}
                         variant="outlined"
                       >

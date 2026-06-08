@@ -26,14 +26,12 @@ type Props = {
   control: Control<TransferHeaderValues>;
   counterparties: CounterpartyDto[];
   currencies: CurrencyDto[];
-  isSubmitting?: boolean;
 };
 
 export function TransferHeaderForm({
   control,
   counterparties,
   currencies,
-  isSubmitting = false,
 }: Props) {
   const { t } = useSettings();
 
@@ -42,7 +40,6 @@ export function TransferHeaderForm({
       <Grid size={{ xs: 12, md: 6 }}>
         <DropDown
           control={control}
-          disabled={isSubmitting}
           label={t("transactions.counterparty")}
           name="counterpartyId"
           options={counterparties.map((x) => ({ label: x.fullName, value: x.id }))}
@@ -53,7 +50,6 @@ export function TransferHeaderForm({
       <Grid size={{ xs: 12, md: 6 }}>
         <DropDown
           control={control}
-          disabled={isSubmitting}
           label={t("transactions.type")}
           name="transferType"
           options={[
@@ -69,7 +65,6 @@ export function TransferHeaderForm({
       <Grid size={{ xs: 12, md: 6 }}>
         <DropDown
           control={control}
-          disabled={isSubmitting}
           label={t("transactions.status")}
           name="status"
           options={[
@@ -84,7 +79,6 @@ export function TransferHeaderForm({
       <Grid size={{ xs: 12, md: 6 }}>
         <NumberField
           control={control}
-          disabled
           label={t("transactions.amount")}
           name="amount"
           required
@@ -94,7 +88,6 @@ export function TransferHeaderForm({
       <Grid size={{ xs: 12, md: 6 }}>
         <DropDown
           control={control}
-          disabled={isSubmitting}
           label={t("transactions.currency")}
           name="currencyId"
           options={currencies.map((x) => ({ label: x.shortName, value: x.id }))}
@@ -105,7 +98,6 @@ export function TransferHeaderForm({
       <Grid size={{ xs: 12, md: 6 }}>
         <DatePicker
           control={control}
-          disabled={isSubmitting}
           label={t("transactions.transactionDate")}
           name="transactionDate"
           required
@@ -115,7 +107,6 @@ export function TransferHeaderForm({
       <Grid size={{ xs: 12, md: 6 }}>
         <DatePicker
           control={control}
-          disabled={isSubmitting}
           label={t("transactions.dueDate")}
           name="dueDate"
         />
@@ -123,7 +114,6 @@ export function TransferHeaderForm({
       <Grid size={{ xs: 12 }}>
         <TextArea
           control={control}
-          disabled={isSubmitting}
           label={t("transactions.description")}
           name="description"
           minRows={3}
@@ -132,7 +122,6 @@ export function TransferHeaderForm({
       <Grid size={{ xs: 12 }}>
         <TagAutocompleteMultiSelect
           control={control}
-          disabled={isSubmitting}
           label={t("tags.title")}
           name="tags"
         />

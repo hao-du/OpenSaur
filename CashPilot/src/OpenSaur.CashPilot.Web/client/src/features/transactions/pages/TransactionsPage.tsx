@@ -15,7 +15,7 @@ import {
   getCurrencyExchangeById,
   getTransferFormById,
 } from "../api/transactionsApi";
-import type { CashFlowDetailDto, SaveBankAccountFormRequestDto, TransactionListItemDto } from "../dtos/TransactionDto";
+import type { CashFlowDetailDto, SaveBankAccountFormRequestDto } from "../dtos/TransactionDto";
 import type { ExchangeDraft, TransactionDeleteTarget, TransactionType, TransferMovementDraft } from "../dtos/TransactionPageState";
 import { useCreateCashFlowMutation } from "../hooks/useCreateCashFlowMutation";
 import { useCreateCurrencyExchangeMutation } from "../hooks/useCreateCurrencyExchangeMutation";
@@ -302,11 +302,6 @@ export function TransactionsPage() {
     }
   };
 
-  const handleAutoTagListItem = async (item: TransactionListItemDto) => {
-    const tags = await requestAutoTags(item.description, item.tags ?? [], item.type);
-    await handleEdit(item.type, item.id, item.transferId, tags);
-  };
-
   const headerActions = (
     <Stack direction="row" spacing={1.25}>
       <ActionButton
@@ -475,11 +470,7 @@ export function TransactionsPage() {
             <TransactionListPanel
               formatAmount={formatAmount}
               formatDate={formatDate}
-              isAutoTagging={autoTagMutation.isPending}
               isLoading={isTransactionsLoading}
-              onAutoTag={(item) => {
-                void handleAutoTagListItem(item);
-              }}
               onDelete={(item) => {
                 setDeletingTransaction({
                   description: item.description,

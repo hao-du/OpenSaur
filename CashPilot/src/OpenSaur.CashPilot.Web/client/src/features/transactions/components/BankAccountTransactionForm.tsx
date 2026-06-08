@@ -29,6 +29,7 @@ const handleNumberChange = (val: string, onChange: (v: string) => void) => {
 
 type Props = {
   detail: DetailEditor;
+  disabled?: boolean;
   onAccept: (detail: DetailEditor) => void;
   onDelete: () => void;
   onCancelNew: () => void;
@@ -36,6 +37,7 @@ type Props = {
 
 export function BankAccountTransactionForm({
   detail,
+  disabled = false,
   onAccept,
   onDelete,
   onCancelNew
@@ -107,8 +109,8 @@ export function BankAccountTransactionForm({
       <TextField label={t("transactions.description")} value={draft.description} onChange={e => setDraft({ ...draft, description: e.target.value })} multiline minRows={3} fullWidth />
       
       <Stack direction="row" justifyContent="flex-end" spacing={1} sx={{ mt: 1 }}>
-        <ActionButton onClick={handleCancel} variant="outlined">{t("action.cancel")}</ActionButton>
-        <ActionButton onClick={handleAccept} variant="contained" color="primary">{t("action.confirm")}</ActionButton>
+        <ActionButton onClick={handleCancel} variant="outlined" disabled={disabled}>{t("action.cancel")}</ActionButton>
+        <ActionButton onClick={handleAccept} variant="contained" color="primary" disabled={disabled}>{t("action.confirm")}</ActionButton>
       </Stack>
     </FormSection>
   );

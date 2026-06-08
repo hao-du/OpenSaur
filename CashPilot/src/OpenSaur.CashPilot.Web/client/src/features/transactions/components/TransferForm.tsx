@@ -140,6 +140,7 @@ export function TransferForm({
 }: Props) {
   const { t, todayIsoDate } = useSettings();
   const today = todayIsoDate;
+  const isBusy = isSubmitting || isAutoTagging;
   const [tab, setTab] = useState<(typeof transactionFormTabs)[keyof typeof transactionFormTabs]>(transactionFormTabs.form);
 
   const initialHeaderValues = getInitialHeaderValues(movementInitialValue, counterparties, currencies, today);
@@ -241,7 +242,6 @@ export function TransferForm({
               counterparties={counterparties}
               currencies={currencies}
               control={headerForm.control}
-              isSubmitting={isSubmitting}
             />
             <Stack direction="row" justifyContent="space-between" alignItems="center">
               <h3 style={{ margin: 0 }}>{t("transactions.transactionDetails")}</h3>
@@ -249,17 +249,17 @@ export function TransferForm({
                 onClick={addNewDetail}
                 color="secondary"
                 size="small"
-                disabled={isSubmitting}
+                disabled={isBusy}
               >
                 {t("transactions.addTransaction")}
               </ActionButton>
             </Stack>
             <Stack spacing={2}>
               {details.map((detail) => (
-                <TransferFormTransaction
-                  key={detail.clientKey}
-                  detail={detail}
-                  isSubmitting={isSubmitting}
+                  <TransferFormTransaction
+                    key={detail.clientKey}
+                    detail={detail}
+                    isSubmitting={isBusy}
                   onAccept={(updated) =>
                     setDetails((prev) =>
                       prev.map((x) =>
@@ -282,22 +282,22 @@ export function TransferForm({
             </Stack>
             <Stack direction="row" justifyContent="flex-end" spacing={1}>
               <ActionButton
-                disabled={isSubmitting || isAutoTagging || onAutoTag == null}
+                disabled={isBusy || onAutoTag == null}
                 onClick={() => {
                   void handleAutoTag();
                 }}
                 startIcon={<WandSparkles size={16} />}
                 variant="outlined"
               >
-                {isAutoTagging ? t("action.working") : t("transactions.autoTag")}
+                {isBusy ? t("action.working") : t("transactions.autoTag")}
               </ActionButton>
               <ActionButton
-                disabled={isSubmitting || calculatedAmount <= 0}
+                disabled={isBusy || calculatedAmount <= 0}
                 onClick={() => {
                   void handleSave();
                 }}
               >
-                {isSubmitting ? t("action.working") : movementSubmitLabel ?? submitLabel}
+                {isBusy ? t("action.working") : movementSubmitLabel ?? submitLabel}
               </ActionButton>
             </Stack>
           </Stack>
@@ -306,7 +306,7 @@ export function TransferForm({
           <TransactionItemsEditor
             control={transactionItemsForm.control}
             name="transactionItems"
-            disabled={isSubmitting}
+            disabled={isBusy}
             currencyCode={selectedCurrencyCode}
           />
         }

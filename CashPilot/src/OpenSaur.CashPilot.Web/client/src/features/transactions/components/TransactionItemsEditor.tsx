@@ -56,13 +56,11 @@ export function TransactionItemsEditor<TFieldValues extends FieldValues>({
             control={control}
             name={`${name}.${index}.name` as Path<TFieldValues>}
             label={t("transactions.transactionItems.name")}
-            disabled={disabled}
           />
           <NumberInput
             control={control}
             name={`${name}.${index}.amount` as Path<TFieldValues>}
             label={t("transactions.transactionItems.amount")}
-            disabled={disabled}
           />
           <ActionButton
             type="button"

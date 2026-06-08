@@ -71,6 +71,11 @@ public sealed class TransactionAutoTagService(
         IReadOnlyList<TagDefinitionPromptItem> tagDefinitions,
         CancellationToken cancellationToken)
     {
+        var tagContext = string.Join(
+            Environment.NewLine,
+            tagDefinitions.Select(tag =>
+                $"- {tag.Name}: {FormatMatchingTerms(tag.MatchingTerms)}"));
+
         using var httpRequest = new HttpRequestMessage(HttpMethod.Post, configuredOptions.Endpoint);
         httpRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", configuredOptions.ApiKey);
 
@@ -91,26 +96,25 @@ public sealed class TransactionAutoTagService(
                     {"tags":["tag name"]}
 
                     Rules:
-                    - Use only tag names provided in the input.
+                    - Use only tag names from the AVAILABLE TAGS list in the user message.
                     - Do not invent new tags.
-                    - Return an empty tags array only when no provided tag is relevant.
-                    - Select every relevant tag when the description is similar to a tag name, matching term, or meaning.
-                    - A matching term is a strong signal for that tag.
+                    - Return {"tags":[]} only when no listed tag is relevant.
+                    - Select every relevant tag when the description matches a tag name, a matching term, or the tag meaning.
+                    - Treat matching terms as examples of the tag category, not only as literal substring matches.
+                    - Matching terms are strong evidence for that tag and should also influence broader category tags.
+                    - If a tag has no matching terms, it is still a valid candidate.
                     """
                 },
                 new
                 {
                     role = "user",
-                    content = JsonSerializer.Serialize(new
-                    {
-                        description,
-                        transactionType,
-                        tags = tagDefinitions.Select(x => new
-                        {
-                            name = x.Name,
-                            matchingTerms = x.MatchingTerms
-                        })
-                    }, JsonOptions)
+                    content = $"""
+                    Transaction type: {transactionType ?? "(unknown)"}
+                    Description: {description}
+
+                    AVAILABLE TAGS:
+                    {tagContext}
+                    """
                 }
             }
         };
@@ -172,6 +176,13 @@ public sealed class TransactionAutoTagService(
         {
             return [];
         }
+    }
+
+    private static string FormatMatchingTerms(string[] matchingTerms)
+    {
+        return matchingTerms.Length == 0
+            ? "(no matching terms)"
+            : string.Join(", ", matchingTerms);
     }
 
     private static string[] ReadStringArray(JsonElement tagsElement)

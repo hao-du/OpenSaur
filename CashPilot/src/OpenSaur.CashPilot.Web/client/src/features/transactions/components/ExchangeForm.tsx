@@ -101,6 +101,7 @@ export function ExchangeForm({
 }: Props) {
   const { t, todayIsoDate } = useSettings();
   const today = todayIsoDate;
+  const isBusy = isSubmitting || isAutoTagging;
 
   const [tab, setTab] = useState<(typeof transactionFormTabs)[keyof typeof transactionFormTabs]>(transactionFormTabs.form);
 
@@ -134,7 +135,7 @@ export function ExchangeForm({
           <TransactionItemsEditor
             control={form.control}
             name="transactionItems"
-            disabled={isSubmitting}
+            disabled={isBusy}
             currencyCode={selectedCurrencyCode}
           />
         }
@@ -171,7 +172,6 @@ export function ExchangeForm({
             <Grid size={{ xs: 12, md: 6 }}>
               <DatePicker
                 control={form.control}
-                disabled={isSubmitting}
                 label={t("transactions.exchangeDate")}
                 name="exchangeDate"
                 required
@@ -182,7 +182,6 @@ export function ExchangeForm({
             <Grid size={{ xs: 12, md: 6 }}>
               <NumberField
                 control={form.control}
-                disabled={isSubmitting}
                 label={t("transactions.exchangeRate")}
                 name="exchangeRate"
               />
@@ -191,7 +190,6 @@ export function ExchangeForm({
             <Grid size={{ xs: 12 }}>
               <TextArea
                 control={form.control}
-                disabled={isSubmitting}
                 label={t("transactions.description")}
                 name="description"
                 minRows={3}
@@ -201,7 +199,6 @@ export function ExchangeForm({
             <Grid size={{ xs: 12 }}>
               <TagAutocompleteMultiSelect
                 control={form.control}
-                disabled={isSubmitting}
                 label={t("tags.title")}
                 name="tags"
               />
@@ -214,7 +211,6 @@ export function ExchangeForm({
             <Grid size={{ xs: 12, md: 6 }}>
               <NumberField
                 control={form.control}
-                disabled={isSubmitting}
                 label={t("transactions.outAmount")}
                 name="outAmount"
                 required
@@ -225,7 +221,6 @@ export function ExchangeForm({
             <Grid size={{ xs: 12, md: 6 }}>
               <DropDown
                 control={form.control}
-                disabled={isSubmitting}
                 label={t("transactions.outCurrency")}
                 name="outCurrencyId"
                 options={currencyOptions}
@@ -237,7 +232,6 @@ export function ExchangeForm({
             <Grid size={{ xs: 12, md: 6 }}>
               <NumberField
                 control={form.control}
-                disabled={isSubmitting}
                 label={t("transactions.inAmount")}
                 name="inAmount"
                 required
@@ -248,7 +242,6 @@ export function ExchangeForm({
             <Grid size={{ xs: 12, md: 6 }}>
               <DropDown
                 control={form.control}
-                disabled={isSubmitting}
                 label={t("transactions.inCurrency")}
                 name="inCurrencyId"
                 options={currencyOptions}
@@ -260,17 +253,17 @@ export function ExchangeForm({
             <Grid size={{ xs: 12 }}>
               <Stack direction="row" justifyContent="flex-end" spacing={1}>
                 <ActionButton
-                  disabled={isSubmitting || isAutoTagging || onAutoTag == null}
+                  disabled={isBusy || onAutoTag == null}
                   onClick={() => {
                     void handleAutoTag();
                   }}
                   startIcon={<WandSparkles size={16} />}
                   variant="outlined"
                 >
-                  {isAutoTagging ? t("action.working") : t("transactions.autoTag")}
+                  {isBusy ? t("action.working") : t("transactions.autoTag")}
                 </ActionButton>
-                <ActionButton disabled={isSubmitting} type="submit">
-                  {isSubmitting ? t("action.working") : submitLabel}
+                <ActionButton disabled={isBusy} type="submit">
+                  {isBusy ? t("action.working") : submitLabel}
                 </ActionButton>
               </Stack>
             </Grid>

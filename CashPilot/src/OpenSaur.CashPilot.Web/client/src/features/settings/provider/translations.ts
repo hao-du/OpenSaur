@@ -568,7 +568,7 @@ export const translations = {
     "transactions.directionIn": "Vào",
     "transactions.directionOut": "Ra",
     "transactions.edit": "Sửa",
-    "transactions.autoTag": "Auto Tag",
+    "transactions.autoTag": "Gắn nhãn",
     "transactions.editBankAccount": "Sửa tài khoản ngân hàng",
     "transactions.editExchange": "Sửa quy đổi",
     "transactions.editTransfer": "Sửa chuyển khoản",

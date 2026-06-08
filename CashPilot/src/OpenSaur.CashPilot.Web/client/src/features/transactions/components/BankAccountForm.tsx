@@ -113,6 +113,7 @@ export function BankAccountForm({
 }: Props) {
   const { t, todayIsoDate } = useSettings();
   const today = todayIsoDate;
+  const isBusy = isSubmitting || isAutoTagging;
 
   const [tab, setTab] = useState<(typeof transactionFormTabs)[keyof typeof transactionFormTabs]>(transactionFormTabs.form);
 
@@ -222,7 +223,7 @@ export function BankAccountForm({
           <TransactionItemsEditor
             control={form.control}
             name="transactionItems"
-            disabled={isSubmitting}
+            disabled={isBusy}
             currencyCode={selectedCurrencyCode}
           />
         }
@@ -356,6 +357,7 @@ export function BankAccountForm({
             <Stack direction="row" justifyContent="space-between" alignItems="center">
               <h3 style={{ margin: 0 }}>{t("transactions.transactionDetails")}</h3>
               <ActionButton
+                disabled={isBusy}
                 onClick={() => {
                   setDetails(prev => [
                     ...prev,
@@ -386,6 +388,7 @@ export function BankAccountForm({
                   <BankAccountTransactionForm
                     key={detail.clientKey}
                     detail={detail}
+                    disabled={isBusy}
                     onAccept={updated =>
                       setDetails(prev => prev.map(x => x.clientKey === detail.clientKey ? updated : x))
                     }
@@ -401,22 +404,22 @@ export function BankAccountForm({
 
             <Stack direction="row" justifyContent="flex-end" spacing={1}>
               <ActionButton
-                disabled={isSubmitting || isAutoTagging || onAutoTag == null}
+                disabled={isBusy || onAutoTag == null}
                 onClick={() => {
                   void handleAutoTag();
                 }}
                 startIcon={<WandSparkles size={16} />}
                 variant="outlined"
               >
-                {isAutoTagging ? t("action.working") : t("transactions.autoTag")}
+                {isBusy ? t("action.working") : t("transactions.autoTag")}
               </ActionButton>
               <ActionButton
                 onClick={() => {
                   void form.handleSubmit(submitHandler)();
                 }}
-                disabled={isSubmitting}
+                disabled={isBusy}
               >
-                {isSubmitting ? t("action.working") : submitLabel}
+                {isBusy ? t("action.working") : submitLabel}
               </ActionButton>
             </Stack>
           </Stack>
