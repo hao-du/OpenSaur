@@ -5,6 +5,7 @@ import type { CurrencyDto } from "../../currencies/dtos/CurrencyDto";
 import type { SaveBankAccountFormRequestDto } from "../dtos/TransactionDto";
 import { BankAccountForm } from "./BankAccountForm";
 import { useSettings } from "../../settings/provider/SettingProvider";
+import type { TransactionType } from "../dtos/TransactionPageState";
 
 type Props = {
   editingBankAccount?: SaveBankAccountFormRequestDto | null;
@@ -12,10 +13,21 @@ type Props = {
   onClose: () => void;
   banks: BankDto[];
   currencies: CurrencyDto[];
+  isAutoTagging?: boolean;
+  onAutoTag?: (description: string, existingTags: string[], transactionType: TransactionType) => Promise<string[]>;
   onSave: (payload: SaveBankAccountFormRequestDto) => Promise<void>;
 };
 
-export function BankAccountFormDrawer({ editingBankAccount, isOpen, onClose, banks, currencies, onSave }: Props) {
+export function BankAccountFormDrawer({
+  editingBankAccount,
+  isOpen,
+  onClose,
+  banks,
+  currencies,
+  isAutoTagging = false,
+  onAutoTag,
+  onSave,
+}: Props) {
   const { t } = useSettings();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -26,6 +38,8 @@ export function BankAccountFormDrawer({ editingBankAccount, isOpen, onClose, ban
         banks={banks}
         currencies={currencies}
         initialValue={editingBankAccount}
+        isAutoTagging={isAutoTagging}
+        onAutoTag={onAutoTag}
         onSubmit={async payload => {
           setIsSubmitting(true);
           try {

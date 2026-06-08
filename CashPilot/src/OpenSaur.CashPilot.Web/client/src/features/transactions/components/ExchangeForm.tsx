@@ -1,4 +1,5 @@
 import { Grid, Stack } from "@mui/material";
+import { WandSparkles } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { ActionButton } from "../../../components/atoms/ActionButton";
@@ -28,6 +29,8 @@ type Props = {
   } | null;
   submitLabel?: string;
   isSubmitting?: boolean;
+  isAutoTagging?: boolean;
+  onAutoTag?: (description: string, existingTags: string[], transactionType: "Exchange") => Promise<string[]>;
   onSubmit: (payload: {
     exchangeRate?: number;
     exchangeDate: string;
@@ -92,6 +95,8 @@ export function ExchangeForm({
   initialValue,
   submitLabel = "Create Exchange",
   isSubmitting = false,
+  isAutoTagging = false,
+  onAutoTag,
   onSubmit
 }: Props) {
   const { t, todayIsoDate } = useSettings();
@@ -110,6 +115,15 @@ export function ExchangeForm({
   const currencyOptions = currencies.map(x => ({ label: x.shortName, value: x.id }));
   const outCurrencyId = useWatch({ control: form.control, name: "outCurrencyId" });
   const selectedCurrencyCode = currencies.find(x => x.id === outCurrencyId)?.shortName;
+  const handleAutoTag = async () => {
+    if (onAutoTag == null) {
+      return;
+    }
+
+    const values = form.getValues();
+    const tags = await onAutoTag(values.description, values.tags, "Exchange");
+    form.setValue("tags", tags, { shouldDirty: true, shouldTouch: true });
+  };
 
   return (
     <Stack spacing={2}>
@@ -244,7 +258,17 @@ export function ExchangeForm({
             </Grid>
 
             <Grid size={{ xs: 12 }}>
-              <Stack direction="row" justifyContent="flex-end">
+              <Stack direction="row" justifyContent="flex-end" spacing={1}>
+                <ActionButton
+                  disabled={isSubmitting || isAutoTagging || onAutoTag == null}
+                  onClick={() => {
+                    void handleAutoTag();
+                  }}
+                  startIcon={<WandSparkles size={16} />}
+                  variant="outlined"
+                >
+                  {isAutoTagging ? t("action.working") : t("transactions.autoTag")}
+                </ActionButton>
                 <ActionButton disabled={isSubmitting} type="submit">
                   {isSubmitting ? t("action.working") : submitLabel}
                 </ActionButton>

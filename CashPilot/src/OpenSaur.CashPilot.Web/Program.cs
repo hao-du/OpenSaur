@@ -35,6 +35,8 @@ builder.Services.AddDbContext<CashPilotDbContext>(options =>
 
 builder.Services.AddHttpContextAccessor();
 builder.Services.Configure<OidcOptions>(builder.Configuration.GetSection("Oidc"));
+builder.Services.Configure<AutoTaggingOptions>(builder.Configuration.GetSection(AutoTaggingOptions.SectionName));
+builder.Services.AddHttpClient<TransactionAutoTagService>();
 
 builder.Services.AddOpenIddict()
     .AddValidation(options =>

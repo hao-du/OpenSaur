@@ -15,11 +15,12 @@ import {
   getCurrencyExchangeById,
   getTransferFormById,
 } from "../api/transactionsApi";
-import type { CashFlowDetailDto, SaveBankAccountFormRequestDto } from "../dtos/TransactionDto";
+import type { CashFlowDetailDto, SaveBankAccountFormRequestDto, TransactionListItemDto } from "../dtos/TransactionDto";
 import type { ExchangeDraft, TransactionDeleteTarget, TransactionType, TransferMovementDraft } from "../dtos/TransactionPageState";
 import { useCreateCashFlowMutation } from "../hooks/useCreateCashFlowMutation";
 import { useCreateCurrencyExchangeMutation } from "../hooks/useCreateCurrencyExchangeMutation";
 import { useDeleteTransactionMutation } from "../hooks/useDeleteTransactionMutation";
+import { useAutoTagMutation } from "../hooks/useAutoTagMutation";
 import { useSaveBankAccountMutation } from "../hooks/useSaveBankAccountMutation";
 import { useSaveTransferMutation } from "../hooks/useSaveTransferMutation";
 import { useTemplatesQuery } from "../../templates/hooks/useTemplatesQuery";
@@ -67,6 +68,7 @@ export function TransactionsPage() {
   const createCurrencyExchangeMutation = useCreateCurrencyExchangeMutation();
   const updateCurrencyExchangeMutation = useUpdateCurrencyExchangeMutation();
   const deleteTransactionMutation = useDeleteTransactionMutation();
+  const autoTagMutation = useAutoTagMutation();
   const now = new Date();
   const startOfMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
   const endOfMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()).padStart(2, "0")}`;
@@ -213,19 +215,20 @@ export function TransactionsPage() {
     type: TransactionType,
     id: string,
     transferId?: string | null,
+    suggestedTags?: string[],
   ) => {
     try {
       setError(null);
       if (type === "CashFlow") {
         const detail = await getCashFlowById(id);
-        setEditingCashFlow(detail);
+        setEditingCashFlow(suggestedTags == null ? detail : { ...detail, tags: suggestedTags });
         setIsCashFlowDrawerOpen(true);
         return;
       }
 
       if (type === "BankAccount") {
         const bankAccount = await getBankAccountFormById(id);
-        setEditingBankAccount(bankAccount);
+        setEditingBankAccount(suggestedTags == null ? bankAccount : { ...bankAccount, tags: suggestedTags });
         setIsBankAccountDrawerOpen(true);
         return;
       }
@@ -252,7 +255,7 @@ export function TransactionsPage() {
           status: transferForm.status,
           transactionDate: transferForm.transactionDate,
           transferType: transferForm.transferType,
-          tags: transferForm.tags,
+          tags: suggestedTags ?? transferForm.tags,
           transactionItems: transferForm.transactionItems ?? []
         });
         setIsTransferDrawerOpen(true);
@@ -270,13 +273,38 @@ export function TransactionsPage() {
           isActive: detail.isActive,
           outAmount: detail.outLeg.amount,
           outCurrencyId: detail.outLeg.currencyId,
-          tags: detail.tags,
+          tags: suggestedTags ?? detail.tags,
           transactionItems: detail.transactionItems ?? []
         });
       setIsExchangeDrawerOpen(true);
     } catch (e) {
       setError(e instanceof Error ? e.message : t("transactions.errorSave"));
     }
+  };
+
+  const requestAutoTags = async (
+    description: string | null | undefined,
+    existingTags: string[] | null | undefined,
+    transactionType: TransactionType,
+  ) => {
+    try {
+      setError(null);
+      const response = await autoTagMutation.mutateAsync({
+        description,
+        existingTags: existingTags ?? [],
+        transactionType,
+      });
+
+      return response.tags;
+    } catch (e) {
+      setError(e instanceof Error ? e.message : t("transactions.errorAutoTag"));
+      return existingTags ?? [];
+    }
+  };
+
+  const handleAutoTagListItem = async (item: TransactionListItemDto) => {
+    const tags = await requestAutoTags(item.description, item.tags ?? [], item.type);
+    await handleEdit(item.type, item.id, item.transferId, tags);
   };
 
   const headerActions = (
@@ -347,6 +375,7 @@ export function TransactionsPage() {
         <CashFlowFormDrawer
           currencies={currencies}
           editingCashFlow={editingCashFlow}
+          isAutoTagging={autoTagMutation.isPending}
           isOpen={isCashFlowDrawerOpen}
           onClose={() => {
             setIsCashFlowDrawerOpen(false);
@@ -355,6 +384,7 @@ export function TransactionsPage() {
           onSubmit={(payload) =>
             submit(() => createCashFlowMutation.mutateAsync(payload))
           }
+          onAutoTag={requestAutoTags}
           onUpdate={(id, payload) =>
             submit(() => updateCashFlowMutation.mutateAsync({ id, payload }))
           }
@@ -364,6 +394,7 @@ export function TransactionsPage() {
           banks={banks}
           currencies={currencies}
           editingBankAccount={editingBankAccount}
+          isAutoTagging={autoTagMutation.isPending}
           isOpen={isBankAccountDrawerOpen}
           onClose={() => {
             setIsBankAccountDrawerOpen(false);
@@ -372,12 +403,14 @@ export function TransactionsPage() {
           onSave={(payload) =>
             submit(() => saveBankAccountMutation.mutateAsync(payload))
           }
+          onAutoTag={requestAutoTags}
         />
 
         <TransferFormDrawer
           counterparties={counterparties}
           currencies={currencies}
           editingMovement={editingTransferMovement}
+          isAutoTagging={autoTagMutation.isPending}
           isOpen={isTransferDrawerOpen}
           onClose={() => {
             setIsTransferDrawerOpen(false);
@@ -386,11 +419,13 @@ export function TransactionsPage() {
           onSave={(payload) =>
             submit(() => saveTransferMutation.mutateAsync(payload))
           }
+          onAutoTag={requestAutoTags}
         />
 
         <ExchangeFormDrawer
           currencies={currencies}
           editingExchange={editingExchange}
+          isAutoTagging={autoTagMutation.isPending}
           isOpen={isExchangeDrawerOpen}
           onClose={() => {
             setIsExchangeDrawerOpen(false);
@@ -399,6 +434,7 @@ export function TransactionsPage() {
           onSubmit={(payload) =>
             submit(() => createCurrencyExchangeMutation.mutateAsync(payload))
           }
+          onAutoTag={requestAutoTags}
           onUpdate={(id, payload) =>
             submit(() =>
               updateCurrencyExchangeMutation.mutateAsync({ id, payload }),
@@ -439,7 +475,11 @@ export function TransactionsPage() {
             <TransactionListPanel
               formatAmount={formatAmount}
               formatDate={formatDate}
+              isAutoTagging={autoTagMutation.isPending}
               isLoading={isTransactionsLoading}
+              onAutoTag={(item) => {
+                void handleAutoTagListItem(item);
+              }}
               onDelete={(item) => {
                 setDeletingTransaction({
                   description: item.description,

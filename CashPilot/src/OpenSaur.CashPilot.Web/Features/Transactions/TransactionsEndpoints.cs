@@ -14,6 +14,7 @@ public static class TransactionsEndpoints
         transactions.MapGet("/get", GetTransactionsHandler.HandleAsync);
         transactions.MapGet("/dashboard", GetTransactionDashboardHandler.HandleAsync);
         transactions.MapGet("/dashboard/daily-in-out", GetDailyInOutCalendarHandler.HandleAsync);
+        transactions.MapPost("/auto-tag", AutoTagTransactionHandler.HandleAsync);
 
         // CashFlow
         transactions.MapGet("/cashflows/getById/{id:guid}", GetCashFlowByIdHandler.HandleAsync);

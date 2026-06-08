@@ -19,6 +19,16 @@ export type TransactionListItemDto = {
   isActive: boolean;
 };
 
+export type AutoTagRequestDto = {
+  description?: string | null;
+  transactionType?: TransactionListItemDto["type"] | null;
+  existingTags: string[];
+};
+
+export type AutoTagResponseDto = {
+  tags: string[];
+};
+
 export type CreateCashFlowRequestDto = {
   currencyId: string;
   amount: number;

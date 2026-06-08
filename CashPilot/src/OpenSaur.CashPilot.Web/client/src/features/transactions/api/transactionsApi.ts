@@ -2,6 +2,8 @@ import { client } from "../../../infrastructure/http/client";
 import type {
   SaveBankAccountFormRequestDto,
   SaveTransferFormRequestDto,
+  AutoTagRequestDto,
+  AutoTagResponseDto,
   CashFlowDetailDto,
   CreateCashFlowRequestDto,
   CurrencyExchangeDetailDto,
@@ -24,6 +26,10 @@ export async function getTransactionDashboard() {
 
 export async function getDailyInOutCalendar(year: number, month: number) {
   return client.get<DailyInOutCalendarDto>(`/api/transactions/dashboard/daily-in-out?year=${year}&month=${month}`);
+}
+
+export async function autoTagTransaction(request: AutoTagRequestDto) {
+  return client.post<AutoTagResponseDto, AutoTagRequestDto>("/api/transactions/auto-tag", request);
 }
 
 export async function getBankAccountFormById(id: string) {

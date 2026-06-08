@@ -1,4 +1,5 @@
 import { Grid, Stack } from "@mui/material";
+import { WandSparkles } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { ActionButton } from "../../../components/atoms/ActionButton";
@@ -27,6 +28,8 @@ type Props = {
   onSubmit: (payload: SaveBankAccountFormRequestDto) => Promise<void>;
   submitLabel?: string;
   isSubmitting?: boolean;
+  isAutoTagging?: boolean;
+  onAutoTag?: (description: string, existingTags: string[], transactionType: "BankAccount") => Promise<string[]>;
 };
 
 type HeaderValues = {
@@ -104,7 +107,9 @@ export function BankAccountForm({
   initialValue,
   onSubmit,
   submitLabel = "Create",
-  isSubmitting = false
+  isSubmitting = false,
+  isAutoTagging = false,
+  onAutoTag,
 }: Props) {
   const { t, todayIsoDate } = useSettings();
   const today = todayIsoDate;
@@ -126,6 +131,16 @@ export function BankAccountForm({
   useEffect(() => {
     void form.trigger(["startDate", "maturityDate"]);
   }, [form, maturityDate, startDate]);
+
+  const handleAutoTag = async () => {
+    if (onAutoTag == null) {
+      return;
+    }
+
+    const values = form.getValues();
+    const tags = await onAutoTag(values.description, values.tags, "BankAccount");
+    form.setValue("tags", tags, { shouldDirty: true, shouldTouch: true });
+  };
 
   const submitHandler = async (values: HeaderValues) => {
     const headerIsActive = initialValue?.isActive ?? true;
@@ -384,7 +399,17 @@ export function BankAccountForm({
                 ))}
             </Stack>
 
-            <Stack direction="row" justifyContent="flex-end">
+            <Stack direction="row" justifyContent="flex-end" spacing={1}>
+              <ActionButton
+                disabled={isSubmitting || isAutoTagging || onAutoTag == null}
+                onClick={() => {
+                  void handleAutoTag();
+                }}
+                startIcon={<WandSparkles size={16} />}
+                variant="outlined"
+              >
+                {isAutoTagging ? t("action.working") : t("transactions.autoTag")}
+              </ActionButton>
               <ActionButton
                 onClick={() => {
                   void form.handleSubmit(submitHandler)();

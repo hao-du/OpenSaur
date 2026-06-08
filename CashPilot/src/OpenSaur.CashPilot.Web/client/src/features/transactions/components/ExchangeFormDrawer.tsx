@@ -4,12 +4,15 @@ import type { CurrencyDto } from "../../currencies/dtos/CurrencyDto";
 import type { ExchangeDraft } from "../dtos/TransactionPageState";
 import { ExchangeForm } from "./ExchangeForm";
 import { useSettings } from "../../settings/provider/SettingProvider";
+import type { TransactionType } from "../dtos/TransactionPageState";
 
 type Props = {
   editingExchange?: ExchangeDraft | null;
   isOpen: boolean;
   onClose: () => void;
   currencies: CurrencyDto[];
+  isAutoTagging?: boolean;
+  onAutoTag?: (description: string, existingTags: string[], transactionType: TransactionType) => Promise<string[]>;
   onSubmit: (payload: {
     exchangeRate?: number;
     exchangeDate: string;
@@ -31,7 +34,16 @@ type Props = {
   }) => Promise<void>;
 };
 
-export function ExchangeFormDrawer({ editingExchange, isOpen, onClose, currencies, onSubmit, onUpdate }: Props) {
+export function ExchangeFormDrawer({
+  editingExchange,
+  isOpen,
+  onClose,
+  currencies,
+  isAutoTagging = false,
+  onAutoTag,
+  onSubmit,
+  onUpdate,
+}: Props) {
   const { t } = useSettings();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -40,7 +52,9 @@ export function ExchangeFormDrawer({ editingExchange, isOpen, onClose, currencie
       <ExchangeForm
         currencies={currencies}
         initialValue={editingExchange == null ? null : editingExchange}
+        isAutoTagging={isAutoTagging}
         isSubmitting={isSubmitting}
+        onAutoTag={onAutoTag}
         onSubmit={async payload => {
           setIsSubmitting(true);
           try {

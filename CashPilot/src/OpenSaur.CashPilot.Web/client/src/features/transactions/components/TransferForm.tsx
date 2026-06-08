@@ -1,4 +1,5 @@
 import { Stack } from "@mui/material";
+import { WandSparkles } from "lucide-react";
 import { useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { ActionButton } from "../../../components/atoms/ActionButton";
@@ -47,6 +48,8 @@ type Props = {
   isSubmitting?: boolean;
   submitLabel?: string;
   onCompleted?: () => void;
+  isAutoTagging?: boolean;
+  onAutoTag?: (description: string, existingTags: string[], transactionType: "Transfer") => Promise<string[]>;
 };
 
 type TransferItemsFormValues = {
@@ -132,6 +135,8 @@ export function TransferForm({
   isSubmitting = false,
   submitLabel = "Create",
   onCompleted,
+  isAutoTagging = false,
+  onAutoTag,
 }: Props) {
   const { t, todayIsoDate } = useSettings();
   const today = todayIsoDate;
@@ -171,6 +176,16 @@ export function TransferForm({
         transactionDate: headerForm.getValues("transactionDate") ?? today,
       },
     ]);
+
+  const handleAutoTag = async () => {
+    if (onAutoTag == null) {
+      return;
+    }
+
+    const headerValues = headerForm.getValues();
+    const tags = await onAutoTag(headerValues.description, headerValues.tags, "Transfer");
+    headerForm.setValue("tags", tags, { shouldDirty: true, shouldTouch: true });
+  };
 
   const handleSave = async () => {
     const headerValues = headerForm.getValues();
@@ -265,7 +280,17 @@ export function TransferForm({
                 />
               ))}
             </Stack>
-            <Stack direction="row" justifyContent="flex-end">
+            <Stack direction="row" justifyContent="flex-end" spacing={1}>
+              <ActionButton
+                disabled={isSubmitting || isAutoTagging || onAutoTag == null}
+                onClick={() => {
+                  void handleAutoTag();
+                }}
+                startIcon={<WandSparkles size={16} />}
+                variant="outlined"
+              >
+                {isAutoTagging ? t("action.working") : t("transactions.autoTag")}
+              </ActionButton>
               <ActionButton
                 disabled={isSubmitting || calculatedAmount <= 0}
                 onClick={() => {

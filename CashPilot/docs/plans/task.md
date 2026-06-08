@@ -37,3 +37,4 @@
 | Split transaction aggregation and bank-account movement responsibilities | Done | Transaction list/dashboard/calendar queries now flow through per-aggregate query providers, and bank-account movement sync logic lives in a dedicated manager instead of the form handlers. |
 | Simplify bank-account movement DI | Done | Removed the unnecessary bank-account movement interface and registered the concrete manager directly in DI. |
 | Reduce transaction validator public surface | Done | Transaction request validators and helper interfaces that are only used internally are no longer public API. |
+| Add AI Auto Tag button for transactions | Done | Added OpenSpec slice, backend OpenRouter suggestion endpoint, form/list Auto Tag buttons, and runtime `AutoTagging__ApiKey` configuration. |

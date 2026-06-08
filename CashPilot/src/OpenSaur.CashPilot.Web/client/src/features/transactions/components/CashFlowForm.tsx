@@ -1,4 +1,5 @@
 import { Stack } from "@mui/material";
+import { WandSparkles } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { ActionButton } from "../../../components/atoms/ActionButton";
@@ -29,6 +30,8 @@ type Props = {
   currencies: CurrencyDto[];
   initialValue?: CashFlowDetailDto | null;
   isSubmitting?: boolean;
+  isAutoTagging?: boolean;
+  onAutoTag?: (description: string, existingTags: string[], transactionType: "CashFlow") => Promise<string[]>;
   onSubmit: (payload: {
     amount: number;
     currencyId: string;
@@ -72,7 +75,14 @@ function getInitialValues(
   };
 }
 
-export function CashFlowForm({ currencies, initialValue, isSubmitting = false, onSubmit }: Props) {
+export function CashFlowForm({
+  currencies,
+  initialValue,
+  isSubmitting = false,
+  isAutoTagging = false,
+  onAutoTag,
+  onSubmit,
+}: Props) {
   const { t, todayIsoDate } = useSettings();
   const today = todayIsoDate;
   const [tab, setTab] = useState<(typeof transactionFormTabs)[keyof typeof transactionFormTabs]>(transactionFormTabs.form);
@@ -90,6 +100,15 @@ export function CashFlowForm({ currencies, initialValue, isSubmitting = false, o
   );
   const selectedCurrencyId = useWatch({ control: form.control, name: "currencyId" });
   const selectedCurrencyCode = currencies.find((x) => x.id === selectedCurrencyId)?.shortName;
+  const handleAutoTag = async () => {
+    if (onAutoTag == null) {
+      return;
+    }
+
+    const values = form.getValues();
+    const tags = await onAutoTag(values.description, values.tags, "CashFlow");
+    form.setValue("tags", tags, { shouldDirty: true, shouldTouch: true });
+  };
 
   return (
     <Stack
@@ -187,7 +206,17 @@ export function CashFlowForm({ currencies, initialValue, isSubmitting = false, o
                 name="tags"
               />
             </Stack>
-            <Stack direction="row" justifyContent="flex-end" sx={layoutStyles.formFooterRow}>
+            <Stack direction="row" justifyContent="flex-end" spacing={1} sx={layoutStyles.formFooterRow}>
+              <ActionButton
+                disabled={isSubmitting || isAutoTagging || onAutoTag == null}
+                onClick={() => {
+                  void handleAutoTag();
+                }}
+                startIcon={<WandSparkles size={16} />}
+                variant="outlined"
+              >
+                {isAutoTagging ? t("action.working") : t("transactions.autoTag")}
+              </ActionButton>
               <ActionButton disabled={isSubmitting} type="submit">
                 {isSubmitting ? t("action.working") : initialValue == null ? t("transactions.create") : t("transactions.save")}
               </ActionButton>
