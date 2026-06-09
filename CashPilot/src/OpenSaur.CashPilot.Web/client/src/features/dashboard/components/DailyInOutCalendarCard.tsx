@@ -1,8 +1,10 @@
-import { Grid, MenuItem, Paper, Select, Stack, Tooltip } from "@mui/material";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Grid, IconButton, MenuItem, Paper, Select, Stack, Tooltip } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import { useMemo } from "react";
 import { BodyText } from "../../../components/atoms/BodyText";
 import { PageTitleText } from "../../../components/atoms/PageTitleText";
+import { AppIcon } from "../../../components/icons/AppIcon";
 import { formatAmount } from "../../../infrastructure/constants/numberFormatters";
 import type { DailyInOutCalendarItemDto } from "../../transactions/dtos/TransactionDto";
 import { useSettings } from "../../settings/provider/SettingProvider";
@@ -44,11 +46,16 @@ export function DailyInOutCalendarCard({
   items,
   onDayClick
 }: Props) {
-  const { locale } = useSettings();
+  const { locale, todayIsoDate } = useSettings();
+  const today = new Date(todayIsoDate);
   const yearOptions = useMemo(() => {
     const years = new Set<number>([year - 1, year, year + 1]);
     return Array.from(years).sort((a, b) => b - a);
   }, [year]);
+
+  const todayYear = today.getUTCFullYear();
+  const todayMonth = today.getUTCMonth() + 1;
+  const todayDay = today.getUTCDate();
 
   const dailySummary = useMemo(() => {
     const result = new Map<number, { income: number; outcome: number }>();
@@ -67,6 +74,26 @@ export function DailyInOutCalendarCard({
   const totalCells = Math.ceil((offset + daysInMonth) / 7) * 7;
   const weekDays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
+  function handlePreviousMonth() {
+    if (month === 1) {
+      onYearChange(year - 1);
+      onMonthChange(12);
+      return;
+    }
+
+    onMonthChange(month - 1);
+  }
+
+  function handleNextMonth() {
+    if (month === 12) {
+      onYearChange(year + 1);
+      onMonthChange(1);
+      return;
+    }
+
+    onMonthChange(month + 1);
+  }
+
   return (
     <Paper variant="outlined" sx={{ p: 1.5, height: "100%", display: "flex", flexDirection: "column" }}>
       <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
@@ -76,7 +103,17 @@ export function DailyInOutCalendarCard({
             <BodyText>{`(${defaultCurrencyCode})`}</BodyText>
           ) : null}
         </Stack>
-        <Stack direction="row" spacing={1}>
+        <Stack direction="row" spacing={1} alignItems="center">
+          <Tooltip title="Previous month">
+            <IconButton aria-label="Previous month" onClick={handlePreviousMonth} size="small">
+              <AppIcon icon={ChevronLeft} />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Next month">
+            <IconButton aria-label="Next month" onClick={handleNextMonth} size="small">
+              <AppIcon icon={ChevronRight} />
+            </IconButton>
+          </Tooltip>
           <Select size="small" value={month.toString()} onChange={e => onMonthChange(Number(e.target.value))}>
             {monthNames.map((month, index) => (
               <MenuItem key={month} value={(index + 1).toString()}>{`${monthLabel} ${month}`}</MenuItem>
@@ -106,26 +143,39 @@ export function DailyInOutCalendarCard({
             {Array.from({ length: totalCells }).map((_, cellIndex) => {
               const dayNumber = cellIndex - offset + 1;
               const isInCurrentMonth = dayNumber >= 1 && dayNumber <= daysInMonth;
+              const isToday = isInCurrentMonth
+                && year === todayYear
+                && month === todayMonth
+                && dayNumber === todayDay;
               const summary = isInCurrentMonth ? dailySummary.get(dayNumber) : undefined;
               const income = summary?.income ?? 0;
               const outcome = summary?.outcome ?? 0;
 
               return (
                 <Grid key={cellIndex} size={1}>
-                <Stack
-                  onClick={isInCurrentMonth ? () => onDayClick?.(dayNumber) : undefined}
+                  <Stack
+                    onClick={isInCurrentMonth ? () => onDayClick?.(dayNumber) : undefined}
                     sx={(theme) => ({
                       border: `1px solid ${alpha(theme.palette.primary.main, 0.16)}`,
                       borderRadius: 1,
+                      backgroundColor: isToday ? alpha(theme.palette.primary.main, 0.1) : "transparent",
+                      boxShadow: isToday ? `inset 0 0 0 1px ${alpha(theme.palette.primary.main, 0.45)}` : "none",
                       minHeight: 78,
                       p: 0.5,
                       opacity: isInCurrentMonth ? 1 : 0.35,
                       cursor: isInCurrentMonth ? "pointer" : "default"
                     })}
                   >
-                    <BodyText sx={{ fontWeight: 600 }}>{isInCurrentMonth ? dayNumber : ""}</BodyText>
+                    <BodyText
+                      sx={{
+                        color: isToday ? "primary.main" : "text.primary",
+                        fontWeight: isToday ? 700 : 600
+                      }}
+                    >
+                      {isInCurrentMonth ? dayNumber : ""}
+                    </BodyText>
                     {isInCurrentMonth ? (
-                        <Tooltip title={`${inLabel}: ${formatAmount(income, locale)} | ${outLabel}: ${formatAmount(outcome, locale)}`}>
+                      <Tooltip title={`${inLabel}: ${formatAmount(income, locale)} | ${outLabel}: ${formatAmount(outcome, locale)}`}>
                         <Stack spacing={0}>
                           <BodyText
                             sx={{

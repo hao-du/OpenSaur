@@ -1,2 +1,2 @@
 export const loadingSpinnerSize = 28;
-export const transactionAmountFontSize = 22;
+export const transactionAmountFontSize = 16;

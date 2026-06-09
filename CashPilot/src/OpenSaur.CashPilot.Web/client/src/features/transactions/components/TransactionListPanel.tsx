@@ -275,7 +275,6 @@ export function TransactionListPanel({
                               ? "primary.main"
                               : "error.main",
                         fontSize: transactionAmountFontSize,
-                        fontWeight: 800,
                         lineHeight: 1.1,
                       }}
                     >

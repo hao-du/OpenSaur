@@ -38,3 +38,5 @@
 | Simplify bank-account movement DI | Done | Removed the unnecessary bank-account movement interface and registered the concrete manager directly in DI. |
 | Reduce transaction validator public surface | Done | Transaction request validators and helper interfaces that are only used internally are no longer public API. |
 | Add AI Auto Tag button for transactions | Done | Added OpenSpec slice, backend OpenRouter suggestion endpoint, form/list Auto Tag buttons, and runtime `AutoTagging__ApiKey` configuration. |
+| Add month navigation and today highlight to the dashboard calendar | Done | Added previous/next month buttons to `DailyInOutCalendarCard` and highlighted the current day. |
+| Reduce transaction list amount text size and weight | Done | Lowered the transaction list amount font size further and removed the bold weight so the value reads lighter. |
