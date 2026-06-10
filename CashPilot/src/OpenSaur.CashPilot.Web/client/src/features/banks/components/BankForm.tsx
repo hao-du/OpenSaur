@@ -1,10 +1,8 @@
 import { Stack } from "@mui/material";
 import type { Control } from "react-hook-form";
-import { ActionButton } from "../../../components/atoms/ActionButton";
 import { CheckBox } from "../../../components/atoms/CheckBox";
 import { Text } from "../../../components/atoms/Text";
 import { TextArea } from "../../../components/atoms/TextArea";
-import { layoutStyles } from "../../../infrastructure/theme/theme";
 import { useSettings } from "../../settings/provider/SettingProvider";
 
 export type BankFormValues = {
@@ -17,17 +15,15 @@ export type BankFormValues = {
 type BankFormProps = {
   control: Control<BankFormValues>;
   isSubmitting: boolean;
-  submitLabel: string;
 };
 
 export function BankForm({
   control,
   isSubmitting,
-  submitLabel
 }: BankFormProps) {
   const { t } = useSettings();
   return (
-    <Stack spacing={2} sx={layoutStyles.drawerBody}>
+    <Stack spacing={2}>
       <Text
         control={control}
         disabled={isSubmitting}
@@ -64,11 +60,6 @@ export function BankForm({
         label={t("common.isDefault")}
         name="isDefault"
       />
-      <Stack direction="row" justifyContent="flex-end" spacing={1} sx={layoutStyles.formFooterRow}>
-        <ActionButton disabled={isSubmitting} type="submit">
-          {isSubmitting ? t("action.working") : submitLabel}
-        </ActionButton>
-      </Stack>
     </Stack>
   );
 }

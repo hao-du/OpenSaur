@@ -53,12 +53,13 @@ export function BanksPage() {
     setIsFormOpen,
     setIsSubmitting,
   } = useCrudPageState<BankDto>();
+  const [formErrorMessage, setFormErrorMessage] = useState<string | null>(null);
   const form = useForm<BankFormValues>({
     defaultValues: emptyFormState,
   });
 
   async function handleSubmit(values: BankFormValues) {
-    setErrorMessage(null);
+    setFormErrorMessage(null);
     setIsSubmitting(true);
 
     try {
@@ -82,7 +83,7 @@ export function BanksPage() {
       setEditingItem(null);
       setIsFormOpen(false);
     } catch (error) {
-      setErrorMessage(getApiErrorMessage(error, t("banks.errorSave")));
+      setFormErrorMessage(getApiErrorMessage(error, t("banks.errorSave")));
     } finally {
       setIsSubmitting(false);
     }
@@ -123,6 +124,7 @@ export function BanksPage() {
       <ActionButton
         onClick={() => {
           form.reset(emptyFormState);
+          setFormErrorMessage(null);
           openCrudCreateForm();
         }}
       >
@@ -145,6 +147,7 @@ export function BanksPage() {
             openDeleteConfirm(bank);
           }}
           onEdit={(bank) => {
+            setFormErrorMessage(null);
             form.reset({
               description: bank.description ?? "",
               isDefault: bank.isDefault,
@@ -160,12 +163,14 @@ export function BanksPage() {
         isEditMode={isEditMode}
         isOpen={isFormOpen}
         isSubmitting={isSubmitting}
+        errorMessage={formErrorMessage}
         onClose={() => {
           if (isSubmitting) {
             return;
           }
 
           closeForm();
+          setFormErrorMessage(null);
           form.reset(emptyFormState);
         }}
         onSubmit={handleSubmit}

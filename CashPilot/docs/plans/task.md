@@ -40,3 +40,11 @@
 | Add AI Auto Tag button for transactions | Done | Added OpenSpec slice, backend OpenRouter suggestion endpoint, form/list Auto Tag buttons, and runtime `AutoTagging__ApiKey` configuration. |
 | Add month navigation and today highlight to the dashboard calendar | Done | Added previous/next month buttons to `DailyInOutCalendarCard` and highlighted the current day. |
 | Reduce transaction list amount text size and weight | Done | Lowered the transaction list amount font size further and removed the bold weight so the value reads lighter. |
+| Add a bank-only drawer shell with fixed footer | Done | Replaced the bank form's shared drawer wrapper with a dedicated three-section drawer so the footer stays anchored at the bottom without changing the other modules. |
+| Introduce a new common three-section drawer organism | Done | Added a reusable `AppDrawer` shell with Header, Body, and Footer slots and migrated only the bank form to prove the layout before any broader rollout. |
+| Rename the reusable drawer file to `Drawer.tsx` | Done | Moved the new common drawer to `Drawer.tsx`, kept `AppDrawer.tsx` as a compatibility re-export, and pointed the bank drawer at the renamed file. |
+| Show bank form save errors inside the drawer | Done | Split bank save errors into drawer-local state so submit failures render above the form instead of in the page list area. |
+| Move form error rendering into shared drawer body | Done | Added `errorMessage` support to the common `DrawerBody` slot so forms can render their inline error state consistently without duplicating alert layout. |
+| Let shared drawer body own the form wrapper | Done | Extended `DrawerBody` to accept form semantics directly so drawers can render the body as the `<form>` element instead of wrapping another Stack around it. |
+| Make shared drawer footer accept action lists | Done | Changed `DrawerFooter` to accept an `actions` array so form drawers can pass button lists explicitly and keep the footer contract consistent. |
+| Restore footer submit wiring for bank drawer | Done | Added a form id to `DrawerBody` and linked the footer action to it so the fixed bottom button submits the body form again. |

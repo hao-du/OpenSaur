@@ -17,6 +17,10 @@ const navSelected = "rgba(0,204,255,0.10)";
 const navSelectedHover = "rgba(0,204,255,0.14)";
 export const tabSelectedBg = "rgba(0,204,255,0.14)";
 const headerSurface = "rgba(237,243,248,0.92)";
+export const drawerPaperWidths = {
+  narrow: { sm: 480, xs: "100%" },
+  wide: { sm: 620, xs: "100%" },
+} as const;
 
 export const theme = createTheme({
   palette: {
@@ -190,13 +194,13 @@ export const layoutStyles: Record<string, SxProps<Theme>> = {
   drawerPaperWide: {
     "& .MuiDrawer-paper": {
       p: 0,
-      width: { sm: 620, xs: "100%" }
+      width: drawerPaperWidths.wide
     }
   },
   drawerPaperNarrow: {
     "& .MuiDrawer-paper": {
       p: 0,
-      width: { sm: 480, xs: "100%" }
+      width: drawerPaperWidths.narrow
     }
   },
   drawerContent: {
