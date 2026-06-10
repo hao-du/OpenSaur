@@ -1,5 +1,7 @@
 | Task | Status | Notes |
 | --- | --- | --- |
+| Make transaction list action buttons circular | Done | The edit and delete buttons on transaction cards now use explicit square sizing with full border radius, so they render as circles. |
+| Group the side menu by navigation area | Done | Dashboard and Transactions stay at the top, Banks/Currencies/Counterparties now render under a master-data section, and Templates/Tags render under a content section. |
 | Fix the cash flow drawer render loop caused by footer auto-tag state | Done | The drawer now stores the auto-tag handler in a ref instead of React state, so editing cash flow no longer retriggers a render loop. |
 | Move transaction form and filter actions into the shared drawer footer | Done | Bank account, cash flow, exchange, transfer, and transaction filter drawers now own their action buttons in `DrawerFooter`, with the forms rendering fields only. |
 | Move the transaction type form drawers to the shared Drawer component | Done | Bank account, cash flow, exchange, and transfer drawers now use `Drawer`, `DrawerHeader`, and `DrawerBody` instead of `DrawerPanel`. |

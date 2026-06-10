@@ -293,6 +293,7 @@ export function TransactionListPanel({
                         size="small"
                         sx={{
                           borderRadius: "50%",
+                          minHeight: 34,
                           minWidth: 34,
                           width: 34,
                           height: 34,
@@ -313,6 +314,7 @@ export function TransactionListPanel({
                         size="small"
                         sx={{
                           borderRadius: "50%",
+                          minHeight: 34,
                           minWidth: 34,
                           width: 34,
                           height: 34,

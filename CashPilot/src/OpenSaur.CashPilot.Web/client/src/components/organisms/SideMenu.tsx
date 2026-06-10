@@ -20,6 +20,7 @@ import {
   Users,
   type LucideIcon
 } from "lucide-react";
+import { Stack } from "@mui/material";
 import { EyebrowText } from "../atoms/EyebrowText";
 import { MetaText } from "../atoms/MetaText";
 import { AppIcon } from "../icons/AppIcon";
@@ -50,6 +51,21 @@ const navigationLabelKeys: Record<string, TranslationKey> = {
   "/tags": "nav.tags",
 };
 
+const navigationGroups = [
+  {
+    labelKey: null,
+    paths: ["/", "/transactions"],
+  },
+  {
+    labelKey: "nav.group.setup",
+    paths: ["/templates", "/tags"],
+  },
+  {
+    labelKey: "nav.group.masterData",
+    paths: ["/banks", "/currencies", "/counterparties"],
+  }
+] as const;
+
 type SideMenuProps = {
   currentYear: number;
 };
@@ -60,6 +76,29 @@ export function SideMenu({ currentYear }: SideMenuProps) {
   const { data: currentProfile, isLoading: isCurrentProfileLoading } = useCurrentProfileQuery();
   const { t } = useSettings();
   const navigationItems = currentProfile?.navigationItems ?? [];
+  const navigationItemsByPath = new Map(navigationItems.map(item => [item.path, item]));
+  const groupedPaths = new Set<string>(navigationGroups.flatMap(group => group.paths));
+  const remainingItems = navigationItems.filter(item => !groupedPaths.has(item.path));
+
+  const renderNavigationItem = (item: typeof navigationItems[number]) => {
+    const Icon = navigationIcons[item.icon] ?? LayoutDashboard;
+
+    return (
+      <ListItemButton
+        key={item.path}
+        onClick={() => {
+          navigate(item.path);
+        }}
+        selected={location.pathname === item.path}
+        sx={layoutStyles.navItem}
+      >
+        <ListItemIcon sx={layoutStyles.navItemIcon}>
+          <AppIcon icon={Icon} />
+        </ListItemIcon>
+        <ListItemText primary={navigationLabelKeys[item.path] ? t(navigationLabelKeys[item.path]) : item.label} />
+      </ListItemButton>
+    );
+  };
 
   return (
     <Box sx={layoutStyles.sidebarContainer}>
@@ -104,25 +143,38 @@ export function SideMenu({ currentYear }: SideMenuProps) {
               <Skeleton height={24} variant="text" width={index === 1 ? 132 : 104} />
             </ListItemButton>
           ))
-        ) : navigationItems.map(item => {
-          const Icon = navigationIcons[item.icon] ?? LayoutDashboard;
+        ) : (
+          <Stack spacing={1.5}>
+            {navigationGroups.map(group => {
+              const items = group.paths
+                .map(path => navigationItemsByPath.get(path))
+                .filter((item): item is typeof navigationItems[number] => item != null);
 
-          return (
-            <ListItemButton
-              key={item.path}
-              onClick={() => {
-                navigate(item.path);
-              }}
-              selected={location.pathname === item.path}
-              sx={layoutStyles.navItem}
-            >
-              <ListItemIcon sx={layoutStyles.navItemIcon}>
-                <AppIcon icon={Icon} />
-              </ListItemIcon>
-              <ListItemText primary={navigationLabelKeys[item.path] ? t(navigationLabelKeys[item.path]) : item.label} />
-            </ListItemButton>
-          );
-        })}
+              if (items.length === 0) {
+                return null;
+              }
+
+              return (
+                <Box key={group.labelKey}>
+                  {group.labelKey != null ? (
+                    <MetaText sx={{ px: 2, py: 0.5 }}>
+                      {t(group.labelKey)}
+                    </MetaText>
+                  ) : null}
+                  {items.map(renderNavigationItem)}
+                </Box>
+              );
+            })}
+            {remainingItems.length > 0 ? (
+              <Box>
+                <MetaText sx={{ px: 2, py: 0.5 }}>
+                  {t("nav.group.other")}
+                </MetaText>
+                {remainingItems.map(renderNavigationItem)}
+              </Box>
+            ) : null}
+          </Stack>
+        )}
       </List>
       <Box sx={layoutStyles.flexGrow} />
       <Divider sx={layoutStyles.fullWidthDividerSpacing} />
@@ -132,7 +184,6 @@ export function SideMenu({ currentYear }: SideMenuProps) {
     </Box>
   );
 }
-
 
 
 
