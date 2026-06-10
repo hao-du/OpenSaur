@@ -1,10 +1,8 @@
 import { Stack } from "@mui/material";
 import type { Control } from "react-hook-form";
-import { ActionButton } from "../../../components/atoms/ActionButton";
 import { CheckBox } from "../../../components/atoms/CheckBox";
 import { Text } from "../../../components/atoms/Text";
 import { TextArea } from "../../../components/atoms/TextArea";
-import { layoutStyles } from "../../../infrastructure/theme/theme";
 import { useSettings } from "../../settings/provider/SettingProvider";
 
 export type CurrencyFormValues = {
@@ -16,19 +14,17 @@ export type CurrencyFormValues = {
 
 type CurrencyFormProps = {
   control: Control<CurrencyFormValues>;
-  isEditMode: boolean;
   isSubmitting: boolean;
 };
 
 export function CurrencyForm({
   control,
-  isEditMode,
   isSubmitting
 }: CurrencyFormProps) {
   const { t } = useSettings();
 
   return (
-    <Stack spacing={2} sx={layoutStyles.drawerBody}>
+    <Stack spacing={2}>
       <Text
         control={control}
         disabled={isSubmitting}
@@ -72,11 +68,6 @@ export function CurrencyForm({
         label={t("common.isDefault")}
         name="isDefault"
       />
-      <Stack direction="row" justifyContent="flex-end" spacing={1} sx={layoutStyles.formFooterRow}>
-        <ActionButton disabled={isSubmitting} type="submit">
-          {isSubmitting ? t("action.working") : isEditMode ? t("common.save") : t("common.create")}
-        </ActionButton>
-      </Stack>
     </Stack>
   );
 }

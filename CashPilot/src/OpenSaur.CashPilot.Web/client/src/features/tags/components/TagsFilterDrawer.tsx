@@ -4,8 +4,7 @@ import { useForm } from "react-hook-form";
 import { ActionButton } from "../../../components/atoms/ActionButton";
 import { CheckBox } from "../../../components/atoms/CheckBox";
 import { Text } from "../../../components/atoms/Text";
-import { DrawerPanel } from "../../../components/organisms/DrawerPanel";
-import { layoutStyles } from "../../../infrastructure/theme/theme";
+import { Drawer, DrawerBody, DrawerFooter, DrawerHeader } from "../../../components/organisms/Drawer";
 import { useSettings } from "../../settings/provider/SettingProvider";
 import type { TagFilterParams } from "../api/tagsApi";
 
@@ -31,13 +30,15 @@ export function TagsFilterDrawer({ initialValues, isOpen, onApply, onClose }: Ta
   }, [form, initialValues, isOpen]);
 
   return (
-    <DrawerPanel
+    <Drawer
       isOpen={isOpen}
       onClose={onClose}
       title={t("tags.filterTitle")}
     >
-      <Stack
+      <DrawerHeader />
+      <DrawerBody
         component="form"
+        id="tags-filter-form"
         noValidate
         onSubmit={form.handleSubmit(values => {
           onApply({
@@ -45,24 +46,24 @@ export function TagsFilterDrawer({ initialValues, isOpen, onApply, onClose }: Ta
             name: values.name.trim()
           });
         })}
-        spacing={2}
-        sx={layoutStyles.drawerBody}
       >
-        <Text
-          control={form.control}
-          label={t("tags.name")}
-          name="name"
-        />
-        <CheckBox
-          control={form.control}
-          label={t("common.activeOnly")}
-          name="isActive"
-        />
-        <Stack direction="row" spacing={1} sx={layoutStyles.formFooterRow}>
-          <ActionButton type="submit">
-            {t("common.apply")}
-          </ActionButton>
+        <Stack spacing={2}>
+          <Text
+            control={form.control}
+            label={t("tags.name")}
+            name="name"
+          />
+          <CheckBox
+            control={form.control}
+            label={t("common.activeOnly")}
+            name="isActive"
+          />
+        </Stack>
+      </DrawerBody>
+      <DrawerFooter
+        actions={[
           <ActionButton
+            key="reset"
             onClick={() => {
               form.reset({
                 isActive: true,
@@ -72,9 +73,12 @@ export function TagsFilterDrawer({ initialValues, isOpen, onApply, onClose }: Ta
             variant="outlined"
           >
             {t("common.reset")}
+          </ActionButton>,
+          <ActionButton key="apply" form="tags-filter-form" type="submit">
+            {t("common.apply")}
           </ActionButton>
-        </Stack>
-      </Stack>
-    </DrawerPanel>
+        ]}
+      />
+    </Drawer>
   );
 }

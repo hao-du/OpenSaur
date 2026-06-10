@@ -1,6 +1,6 @@
-import { Stack } from "@mui/material";
 import type { UseFormReturn } from "react-hook-form";
-import { DrawerPanel } from "../../../components/organisms/DrawerPanel";
+import { ActionButton } from "../../../components/atoms/ActionButton";
+import { Drawer, DrawerBody, DrawerFooter, DrawerHeader } from "../../../components/organisms/Drawer";
 import { useSettings } from "../../settings/provider/SettingProvider";
 import { CurrencyForm, type CurrencyFormValues } from "./CurrencyForm";
 
@@ -24,13 +24,15 @@ export function CurrencyFormDrawer({
   const { t } = useSettings();
 
   return (
-    <DrawerPanel
+    <Drawer
       isOpen={isOpen}
       onClose={onClose}
       title={isEditMode ? t("currencies.editTitle") : t("currencies.createTitle")}
     >
-      <Stack
+      <DrawerHeader />
+      <DrawerBody
         component="form"
+        id="currency-form"
         noValidate
         onSubmit={form.handleSubmit(async values => {
           await onSubmit(values);
@@ -38,11 +40,17 @@ export function CurrencyFormDrawer({
       >
         <CurrencyForm
           control={form.control}
-          isEditMode={isEditMode}
           isSubmitting={isSubmitting}
         />
-      </Stack>
-    </DrawerPanel>
+      </DrawerBody>
+      <DrawerFooter
+        actions={[
+          <ActionButton key="submit" form="currency-form" disabled={isSubmitting} type="submit">
+            {isSubmitting ? t("action.working") : isEditMode ? t("common.save") : t("common.create")}
+          </ActionButton>
+        ]}
+      />
+    </Drawer>
   );
 }
 

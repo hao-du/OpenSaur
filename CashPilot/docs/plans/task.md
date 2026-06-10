@@ -1,5 +1,10 @@
-﻿| Task | Status | Notes |
+| Task | Status | Notes |
 | --- | --- | --- |
+| Move the tag form and filter drawers to the shared drawer footer layout | Done | Tag create/edit and filter drawers now use `Drawer`, `DrawerBody`, `DrawerFooter`, and `DrawerHeader`, with actions in the footer. |
+| Move the currency filter to the shared drawer footer layout | Done | Currency filter now uses `Drawer`, `DrawerBody`, `DrawerFooter`, and `DrawerHeader` with the filter actions in the footer. |
+| Move the currency form submit button into the shared drawer footer | Done | `CurrencyForm` now renders fields only, and `CurrencyFormDrawer` owns the submit button in `DrawerFooter`. |
+| Remove the edit-only counterparty active toggle | Done | Editing counterparties now keeps the current active state without exposing an `isActive` checkbox in the form. |
+| Move the counterparty form submit button into the shared drawer footer | Done | CounterpartyForm now renders fields only, and CounterpartyFormDrawer owns the submit button in DrawerFooter. |
 | Tag management and persisted transaction tags | Done | Tag CRUD, `Tags` fields, and UI rendering remain in place. |
 | Remove model-based tag runtime wiring | Done | Deleted the tag model service, options, package reference, and appsettings sections; auto-tagging now returns no predictions. |
 | Fix Transfer description rendering and preserve Transfer form state when switching tabs | Done | Keep Transfer form mounted across tabs and show the transfer header description in the transaction list. |

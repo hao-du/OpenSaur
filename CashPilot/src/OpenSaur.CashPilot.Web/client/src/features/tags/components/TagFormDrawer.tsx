@@ -1,6 +1,6 @@
-import { Stack } from "@mui/material";
 import type { UseFormReturn } from "react-hook-form";
-import { DrawerPanel } from "../../../components/organisms/DrawerPanel";
+import { ActionButton } from "../../../components/atoms/ActionButton";
+import { Drawer, DrawerBody, DrawerFooter, DrawerHeader } from "../../../components/organisms/Drawer";
 import { useSettings } from "../../settings/provider/SettingProvider";
 import { TagForm, type TagFormValues } from "./TagForm";
 
@@ -16,13 +16,15 @@ type TagFormDrawerProps = {
 export function TagFormDrawer({ form, isEditMode, isOpen, isSubmitting, onClose, onSubmit }: TagFormDrawerProps) {
   const { t } = useSettings();
   return (
-    <DrawerPanel
+    <Drawer
       isOpen={isOpen}
       onClose={onClose}
       title={isEditMode ? t("tags.editTitle") : t("tags.createTitle")}
     >
-      <Stack
+      <DrawerHeader />
+      <DrawerBody
         component="form"
+        id="tag-form"
         noValidate
         onSubmit={form.handleSubmit(async values => {
           await onSubmit(values);
@@ -31,9 +33,15 @@ export function TagFormDrawer({ form, isEditMode, isOpen, isSubmitting, onClose,
         <TagForm
           control={form.control}
           isSubmitting={isSubmitting}
-          submitLabel={isEditMode ? t("common.save") : t("common.create")}
         />
-      </Stack>
-    </DrawerPanel>
+      </DrawerBody>
+      <DrawerFooter
+        actions={[
+          <ActionButton key="submit" form="tag-form" disabled={isSubmitting} type="submit">
+            {isSubmitting ? t("action.working") : isEditMode ? t("common.save") : t("common.create")}
+          </ActionButton>
+        ]}
+      />
+    </Drawer>
   );
 }

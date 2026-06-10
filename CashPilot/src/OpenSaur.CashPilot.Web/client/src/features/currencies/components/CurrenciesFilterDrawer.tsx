@@ -4,8 +4,7 @@ import { useForm } from "react-hook-form";
 import { ActionButton } from "../../../components/atoms/ActionButton";
 import { CheckBox } from "../../../components/atoms/CheckBox";
 import { Text } from "../../../components/atoms/Text";
-import { DrawerPanel } from "../../../components/organisms/DrawerPanel";
-import { layoutStyles } from "../../../infrastructure/theme/theme";
+import { Drawer, DrawerBody, DrawerFooter, DrawerHeader } from "../../../components/organisms/Drawer";
 import { useSettings } from "../../settings/provider/SettingProvider";
 import type { CurrencyFilterParams } from "../api/currenciesApi";
 
@@ -36,13 +35,15 @@ export function CurrenciesFilterDrawer({
   }, [form, initialValues, isOpen]);
 
   return (
-    <DrawerPanel
+    <Drawer
       isOpen={isOpen}
       onClose={onClose}
       title={t("currencies.filterTitle")}
     >
-      <Stack
+      <DrawerHeader />
+      <DrawerBody
         component="form"
+        id="currencies-filter-form"
         noValidate
         onSubmit={form.handleSubmit(values => {
           onApply({
@@ -51,29 +52,30 @@ export function CurrenciesFilterDrawer({
             shortName: values.shortName.trim()
           });
         })}
-        spacing={2}
-        sx={layoutStyles.drawerBody}
       >
-        <Text control={form.control} label={t("currencies.name")} name="name" />
-        <Text control={form.control} label={t("currencies.shortCode")} name="shortName" />
-        <CheckBox control={form.control} label={t("common.activeOnly")} name="isActive" />
-        <Stack direction="row" spacing={1} sx={layoutStyles.formFooterRow}>
-          <ActionButton type="submit">{t("common.apply")}</ActionButton>
-          <ActionButton
-            onClick={() => {
-              form.reset({
-                isActive: true,
-                name: "",
-                shortName: ""
-              });
-            }}
-            variant="outlined"
-          >
-            {t("common.reset")}
-          </ActionButton>
+        <Stack spacing={2}>
+          <Text control={form.control} label={t("currencies.name")} name="name" />
+          <Text control={form.control} label={t("currencies.shortCode")} name="shortName" />
+          <CheckBox control={form.control} label={t("common.activeOnly")} name="isActive" />
         </Stack>
-      </Stack>
-    </DrawerPanel>
+      </DrawerBody>
+      <DrawerFooter
+        actions={[
+          <ActionButton key="reset" type="button" variant="outlined" onClick={() => {
+            form.reset({
+              isActive: true,
+              name: "",
+              shortName: ""
+            });
+          }}>
+            {t("common.reset")}
+          </ActionButton>,
+          <ActionButton key="apply" form="currencies-filter-form" type="submit">
+            {t("common.apply")}
+          </ActionButton>
+        ]}
+      />
+    </Drawer>
   );
 }
 

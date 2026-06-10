@@ -66,9 +66,6 @@ export function BanksFilterDrawer({
       </DrawerBody>
       <DrawerFooter
         actions={[
-          <ActionButton key="apply" form="banks-filter-form" type="submit">
-            {t("common.apply")}
-          </ActionButton>,
           <ActionButton
             key="reset"
             onClick={() => {
@@ -82,6 +79,9 @@ export function BanksFilterDrawer({
           >
             {t("common.reset")}
           </ActionButton>,
+          <ActionButton key="apply" form="banks-filter-form" type="submit">
+            {t("common.apply")}
+          </ActionButton>
         ]}
       />
     </Drawer>
