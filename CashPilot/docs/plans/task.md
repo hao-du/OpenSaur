@@ -1,5 +1,8 @@
 | Task | Status | Notes |
 | --- | --- | --- |
+| Fix the cash flow drawer render loop caused by footer auto-tag state | Done | The drawer now stores the auto-tag handler in a ref instead of React state, so editing cash flow no longer retriggers a render loop. |
+| Move transaction form and filter actions into the shared drawer footer | Done | Bank account, cash flow, exchange, transfer, and transaction filter drawers now own their action buttons in `DrawerFooter`, with the forms rendering fields only. |
+| Move the transaction type form drawers to the shared Drawer component | Done | Bank account, cash flow, exchange, and transfer drawers now use `Drawer`, `DrawerHeader`, and `DrawerBody` instead of `DrawerPanel`. |
 | Disable the transfer header amount field in add/edit transfer transactions | Done | The transfer header amount now renders read-only and no longer carries a required validation rule; the transfer save flow still uses the detail total. |
 | Use the shared drawer error slot in template populate drawers | Done | The populate wrappers now pass the error through `DrawerBody errorMessage`, so the shared drawer handles the alert rendering. |
 | Fix template tag field spillover in template drawers | Done | The shared multi-select now wraps chips and the template field row constrains both columns so the mode switches no longer collide with the tag input. |

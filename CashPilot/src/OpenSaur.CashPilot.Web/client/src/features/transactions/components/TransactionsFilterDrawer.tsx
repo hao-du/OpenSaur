@@ -6,8 +6,7 @@ import { DatePicker } from "../../../components/atoms/DatePicker";
 import { DropDown } from "../../../components/atoms/DropDown";
 import { MultiSelect } from "../../../components/atoms/MultiSelect";
 import { Text } from "../../../components/atoms/Text";
-import { DrawerPanel } from "../../../components/organisms/DrawerPanel";
-import { layoutStyles } from "../../../infrastructure/theme/theme";
+import { Drawer, DrawerBody, DrawerFooter, DrawerHeader } from "../../../components/organisms/Drawer";
 import { useSettings } from "../../settings/provider/SettingProvider";
 
 export type TransactionFilterValues = {
@@ -32,6 +31,7 @@ export function TransactionsFilterDrawer({
   onClose
 }: Props) {
   const { t } = useSettings();
+  const formId = "transactions-filter-form";
   const now = new Date();
   const year = now.getFullYear();
   const month = now.getMonth();
@@ -116,9 +116,11 @@ export function TransactionsFilterDrawer({
   }, [form, rangePreset]);
 
   return (
-    <DrawerPanel isOpen={isOpen} onClose={onClose} title={t("transactions.filterTitle")}>
-      <Stack
+    <Drawer isOpen={isOpen} onClose={onClose} title={t("transactions.filterTitle")}>
+      <DrawerHeader />
+      <DrawerBody
         component="form"
+        id={formId}
         noValidate
         onSubmit={form.handleSubmit(values => {
           let fromDate = values.fromDate;
@@ -141,60 +143,65 @@ export function TransactionsFilterDrawer({
             toDate
           });
         })}
-        spacing={2}
-        sx={layoutStyles.drawerBody}
       >
-        <DropDown
-          control={form.control}
-          label={t("transactions.filter.dateRange")}
-          name="rangePreset"
-          options={[
-            { label: t("transactions.filter.month"), value: "Month" },
-            { label: t("transactions.filter.year"), value: "Year" },
-            { label: t("transactions.filter.thisWeek"), value: "ThisWeek" },
-            { label: t("transactions.filter.today"), value: "Today" },
-            { label: t("transactions.filter.custom"), value: "Custom" }
-          ]}
-        />
-        <DatePicker
-          control={form.control}
-          disabled={rangePreset === "Today" || rangePreset === "ThisWeek"}
-          label={t("transactions.filter.fromDate")}
-          mode={rangePreset === "Month" ? "month" : rangePreset === "Year" ? "year" : "date"}
-          name="fromDate"
-        />
-        <DatePicker
-          control={form.control}
-          disabled={rangePreset === "Today" || rangePreset === "ThisWeek"}
-          label={t("transactions.filter.toDate")}
-          minDate={fromDate}
-          mode={rangePreset === "Month" ? "month" : rangePreset === "Year" ? "year" : "date"}
-          name="toDate"
-        />
-        <MultiSelect
-          control={form.control}
-          label={t("transactions.filter.transactionType")}
-          name="types"
-          options={[
-            { label: t("transactions.cashFlow"), value: "CashFlow" },
-            { label: t("transactions.bankAccount"), value: "BankAccount" },
-            { label: t("transactions.transfer"), value: "Transfer" },
-            { label: t("transactions.exchange"), value: "Exchange" }
-          ]}
-        />
-        <Text control={form.control} label={t("transactions.filter.findDescription")} name="description" />
-        <Stack direction="row" spacing={1} sx={layoutStyles.formFooterRow}>
-          <ActionButton type="submit">{t("transactions.filter.apply")}</ActionButton>
+        <Stack spacing={2}>
+          <DropDown
+            control={form.control}
+            label={t("transactions.filter.dateRange")}
+            name="rangePreset"
+            options={[
+              { label: t("transactions.filter.month"), value: "Month" },
+              { label: t("transactions.filter.year"), value: "Year" },
+              { label: t("transactions.filter.thisWeek"), value: "ThisWeek" },
+              { label: t("transactions.filter.today"), value: "Today" },
+              { label: t("transactions.filter.custom"), value: "Custom" }
+            ]}
+          />
+          <DatePicker
+            control={form.control}
+            disabled={rangePreset === "Today" || rangePreset === "ThisWeek"}
+            label={t("transactions.filter.fromDate")}
+            mode={rangePreset === "Month" ? "month" : rangePreset === "Year" ? "year" : "date"}
+            name="fromDate"
+          />
+          <DatePicker
+            control={form.control}
+            disabled={rangePreset === "Today" || rangePreset === "ThisWeek"}
+            label={t("transactions.filter.toDate")}
+            minDate={fromDate}
+            mode={rangePreset === "Month" ? "month" : rangePreset === "Year" ? "year" : "date"}
+            name="toDate"
+          />
+          <MultiSelect
+            control={form.control}
+            label={t("transactions.filter.transactionType")}
+            name="types"
+            options={[
+              { label: t("transactions.cashFlow"), value: "CashFlow" },
+              { label: t("transactions.bankAccount"), value: "BankAccount" },
+              { label: t("transactions.transfer"), value: "Transfer" },
+              { label: t("transactions.exchange"), value: "Exchange" }
+            ]}
+          />
+          <Text control={form.control} label={t("transactions.filter.findDescription")} name="description" />
+        </Stack>
+      </DrawerBody>
+      <DrawerFooter
+        actions={[
           <ActionButton
+            key="reset"
             onClick={() => {
               form.reset(getDefaultFilterValues());
             }}
             variant="outlined"
           >
             {t("transactions.filter.reset")}
+          </ActionButton>,
+          <ActionButton key="apply" form={formId} type="submit">
+            {t("transactions.filter.apply")}
           </ActionButton>
-        </Stack>
-      </Stack>
-    </DrawerPanel>
+        ]}
+      />
+    </Drawer>
   );
 }

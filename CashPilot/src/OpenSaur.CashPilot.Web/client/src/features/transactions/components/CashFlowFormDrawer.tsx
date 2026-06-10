@@ -1,5 +1,7 @@
-import { useState } from "react";
-import { DrawerPanel } from "../../../components/organisms/DrawerPanel";
+import { useRef, useState } from "react";
+import { WandSparkles } from "lucide-react";
+import { ActionButton } from "../../../components/atoms/ActionButton";
+import { Drawer, DrawerBody, DrawerFooter, DrawerHeader } from "../../../components/organisms/Drawer";
 import { useSettings } from "../../settings/provider/SettingProvider";
 import type { CurrencyDto } from "../../currencies/dtos/CurrencyDto";
 import type { CashFlowDetailDto } from "../dtos/TransactionDto";
@@ -46,34 +48,61 @@ export function CashFlowFormDrawer({
 }: Props) {
   const { t } = useSettings();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const isBusy = isSubmitting || isAutoTagging;
+  const autoTagActionRef = useRef<(() => Promise<void>) | null>(null);
 
   return (
-    <DrawerPanel
+    <Drawer
       isOpen={isOpen}
       onClose={onClose}
       title={editingCashFlow == null ? t("transactions.createCashFlowTitle") : t("transactions.editCashFlowTitle")}
       width="wide"
     >
-      <CashFlowForm
-        currencies={currencies}
-        initialValue={editingCashFlow}
-        isSubmitting={isSubmitting}
-        isAutoTagging={isAutoTagging}
-        onAutoTag={onAutoTag}
-        onSubmit={async (payload) => {
-          setIsSubmitting(true);
-          try {
-            if (editingCashFlow != null && onUpdate != null) {
-              await onUpdate(editingCashFlow.id, { ...payload, isActive: editingCashFlow.isActive });
-            } else {
-              await onSubmit(payload);
+      <DrawerHeader />
+      <DrawerBody>
+        <CashFlowForm
+          formId="cash-flow-form"
+          currencies={currencies}
+          initialValue={editingCashFlow}
+          isSubmitting={isSubmitting}
+          isAutoTagging={isAutoTagging}
+          onAutoTag={onAutoTag}
+          onAutoTagActionChange={handler => {
+            autoTagActionRef.current = handler;
+          }}
+          onSubmit={async (payload) => {
+            setIsSubmitting(true);
+            try {
+              if (editingCashFlow != null && onUpdate != null) {
+                await onUpdate(editingCashFlow.id, { ...payload, isActive: editingCashFlow.isActive });
+              } else {
+                await onSubmit(payload);
+              }
+              onClose();
+            } finally {
+              setIsSubmitting(false);
             }
-            onClose();
-          } finally {
-            setIsSubmitting(false);
-          }
-        }}
+          }}
+        />
+      </DrawerBody>
+      <DrawerFooter
+        actions={[
+          <ActionButton
+            key="autoTag"
+            disabled={isBusy || onAutoTag == null}
+            onClick={() => {
+              void autoTagActionRef.current?.();
+            }}
+            startIcon={<WandSparkles size={16} />}
+            variant="outlined"
+          >
+            {isBusy ? t("action.working") : t("transactions.autoTag")}
+          </ActionButton>,
+          <ActionButton key="submit" disabled={isBusy} form="cash-flow-form" type="submit">
+            {isBusy ? t("action.working") : editingCashFlow == null ? t("transactions.create") : t("transactions.save")}
+          </ActionButton>
+        ]}
       />
-    </DrawerPanel>
+    </Drawer>
   );
 }
