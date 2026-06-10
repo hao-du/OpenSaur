@@ -1,9 +1,7 @@
 import { Divider, Stack } from "@mui/material";
 import { Controller, type Control } from "react-hook-form";
-import { ActionButton } from "../../../../components/atoms/ActionButton";
 import { Text } from "../../../../components/atoms/Text";
 import { TextArea } from "../../../../components/atoms/TextArea";
-import { layoutStyles } from "../../../../infrastructure/theme/theme";
 import { useSettings } from "../../../settings/provider/SettingProvider";
 import { TagAutocompleteMultiSelect } from "../../../tags/components/TagAutocompleteMultiSelect";
 import type { BankDto } from "../../../banks/dtos/BankDto";
@@ -29,7 +27,6 @@ export type TemplateFormValues = {
 type Props = {
   control: Control<TemplateFormValues>;
   isSubmitting: boolean;
-  submitLabel: string;
   banks: BankDto[];
   counterparties: CounterpartyDto[];
   currencies: CurrencyDto[];
@@ -41,12 +38,11 @@ export function TemplateForm({
   counterparties,
   currencies,
   isSubmitting,
-  submitLabel,
 }: Props) {
   const { t } = useSettings();
 
   return (
-    <Stack spacing={2} sx={layoutStyles.drawerBody}>
+    <Stack spacing={2}>
       <Text
         control={control}
         disabled={isSubmitting}
@@ -109,16 +105,6 @@ export function TemplateForm({
           name="templateData.tags.value"
         />
       </FieldRow>
-      <Stack
-        direction="row"
-        justifyContent="flex-end"
-        spacing={1}
-        sx={layoutStyles.formFooterRow}
-      >
-        <ActionButton disabled={isSubmitting} type="submit">
-          {isSubmitting ? t("action.working") : submitLabel}
-        </ActionButton>
-      </Stack>
     </Stack>
   );
 }

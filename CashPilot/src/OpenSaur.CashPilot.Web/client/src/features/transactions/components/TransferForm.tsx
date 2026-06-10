@@ -242,6 +242,7 @@ export function TransferForm({
               counterparties={counterparties}
               currencies={currencies}
               control={headerForm.control}
+              amountDisabled
             />
             <Stack direction="row" justifyContent="space-between" alignItems="center">
               <h3 style={{ margin: 0 }}>{t("transactions.transactionDetails")}</h3>

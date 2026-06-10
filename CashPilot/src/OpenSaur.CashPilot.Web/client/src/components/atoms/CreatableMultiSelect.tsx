@@ -131,8 +131,8 @@ export function CreatableMultiSelect<TFieldValues extends FieldValues>({
                 required={required}
                 sx={{
                   "& .MuiAutocomplete-input": {
-                    flexBasis: "100%",
-                    minWidth: "100% !important",
+                    flex: "1 1 8rem",
+                    minWidth: "8rem !important",
                   },
                 }}
               />

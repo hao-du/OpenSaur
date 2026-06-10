@@ -1,7 +1,6 @@
 import { Alert, Grid, Stack } from "@mui/material";
 import { useEffect, useMemo, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
-import { ActionButton } from "../../../../components/atoms/ActionButton";
 import { PageTitleText } from "../../../../components/atoms/PageTitleText";
 import { DatePicker } from "../../../../components/atoms/DatePicker";
 import { DropDown } from "../../../../components/atoms/DropDown";
@@ -33,20 +32,24 @@ import {
   shown,
 } from "./utils";
 type Props = {
+  formId: string;
   t: (key: TranslationKey) => string;
   todayIsoDate: string;
   currencyOptions: OptionItem[];
   templateData: ExchangeTemplateDataShape;
   onSaved?: () => Promise<void> | void;
   onClose: () => void;
+  onSubmittingChange?: (isSubmitting: boolean) => void;
 };
 export function ExchangePopulateForm({
+  formId,
   t,
   todayIsoDate,
   currencyOptions,
   templateData,
   onSaved,
   onClose,
+  onSubmittingChange,
 }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -75,6 +78,7 @@ export function ExchangePopulateForm({
 
   const submit = async (v: ExchangeFormValues) => {
     setIsSubmitting(true);
+    onSubmittingChange?.(true);
     setError(null);
     try {
       await createCurrencyExchangeMutation.mutateAsync({
@@ -122,11 +126,12 @@ export function ExchangePopulateForm({
       );
     } finally {
       setIsSubmitting(false);
+      onSubmittingChange?.(false);
     }
   };
 
   return (
-    <Stack spacing={2} component="form" onSubmit={form.handleSubmit(submit)}>
+    <Stack spacing={2} component="form" id={formId} onSubmit={form.handleSubmit(submit)}>
       {error ? <Alert severity="error">{error}</Alert> : null}
       <TransactionFormTabs
         value={tab}
@@ -243,13 +248,6 @@ export function ExchangePopulateForm({
         ) : null}
       </Grid>}
       />
-      {tab === "form" ? (
-        <Stack direction="row" justifyContent="flex-end">
-          <ActionButton type="submit" disabled={isSubmitting}>
-            {isSubmitting ? t("action.working") : t("transactions.create")}
-          </ActionButton>
-        </Stack>
-      ) : null}
     </Stack>
   );
 }

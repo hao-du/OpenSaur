@@ -1,5 +1,14 @@
 | Task | Status | Notes |
 | --- | --- | --- |
+| Disable the transfer header amount field in add/edit transfer transactions | Done | The transfer header amount now renders read-only and no longer carries a required validation rule; the transfer save flow still uses the detail total. |
+| Use the shared drawer error slot in template populate drawers | Done | The populate wrappers now pass the error through `DrawerBody errorMessage`, so the shared drawer handles the alert rendering. |
+| Fix template tag field spillover in template drawers | Done | The shared multi-select now wraps chips and the template field row constrains both columns so the mode switches no longer collide with the tag input. |
+| Restore wide drawer sizing for template forms and populate drawers | Done | The template settings drawer and all template populate drawers now pass `width="wide"` again so the tag row and mode controls have room. |
+| Move the template populate submit button into the drawer footer | Done | The four type-specific populate drawers now own the submit action in `DrawerFooter`, with the forms reporting submitting state back to the wrappers. |
+| Replace the template populate drawers with the shared Drawer component | Done | The populate selector and all type-specific populate drawers now use `Drawer`, `DrawerHeader`, and `DrawerBody` instead of `DrawerPanel`. |
+| Split the template populate flow into type-specific drawers | Done | Added `CashFlowPopulateFormDrawer`, `TransferPopulateFormDrawer`, `ExchangePopulateFormDrawer`, and `BankAccountPopulateFormDrawer`, with `TemplatePopulateDrawer` acting as the selector and loader. |
+| Move TemplatePopulateDrawer into the template populate folder | Done | The populate drawer now lives under `components/populate` and the page import points to the new path. |
+| Move the template settings and filter drawers to the shared drawer footer layout | Done | Template settings and filter drawers now use `Drawer`, `DrawerBody`, `DrawerFooter`, and `DrawerHeader`, with submit actions in the footer. |
 | Move the tag form and filter drawers to the shared drawer footer layout | Done | Tag create/edit and filter drawers now use `Drawer`, `DrawerBody`, `DrawerFooter`, and `DrawerHeader`, with actions in the footer. |
 | Move the currency filter to the shared drawer footer layout | Done | Currency filter now uses `Drawer`, `DrawerBody`, `DrawerFooter`, and `DrawerHeader` with the filter actions in the footer. |
 | Move the currency form submit button into the shared drawer footer | Done | `CurrencyForm` now renders fields only, and `CurrencyFormDrawer` owns the submit button in `DrawerFooter`. |
