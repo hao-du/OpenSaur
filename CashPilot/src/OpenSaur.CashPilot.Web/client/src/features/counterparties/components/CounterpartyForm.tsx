@@ -1,6 +1,5 @@
 import { Stack } from "@mui/material";
 import type { Control } from "react-hook-form";
-import { ActionButton } from "../../../components/atoms/ActionButton";
 import { CheckBox } from "../../../components/atoms/CheckBox";
 import { Text } from "../../../components/atoms/Text";
 import { TextArea } from "../../../components/atoms/TextArea";
@@ -18,13 +17,11 @@ export type CounterpartyFormValues = {
 
 type CounterpartyFormProps = {
   control: Control<CounterpartyFormValues>;
-  isEditMode: boolean;
   isSubmitting: boolean;
 };
 
 export function CounterpartyForm({
   control,
-  isEditMode,
   isSubmitting
 }: CounterpartyFormProps) {
   const { t } = useSettings();
@@ -79,19 +76,6 @@ export function CounterpartyForm({
         label={t("common.isDefault")}
         name="isDefault"
       />
-      {isEditMode ? (
-        <CheckBox
-          control={control}
-          disabled={isSubmitting}
-          label={t("counterparties.active")}
-          name="isActive"
-        />
-      ) : null}
-      <Stack direction="row" justifyContent="flex-end" spacing={1} sx={layoutStyles.formFooterRow}>
-        <ActionButton disabled={isSubmitting} type="submit">
-          {isSubmitting ? t("action.working") : isEditMode ? t("common.save") : t("common.create")}
-        </ActionButton>
-      </Stack>
     </Stack>
   );
 }

@@ -18,7 +18,7 @@ import {
   safeParseTemplateData,
   toStoredTemplateData,
 } from "../components/settings/TemplateDataCodec";
-import { TemplatePopulateDrawer } from "../components/TemplatePopulateDrawer";
+import { TemplatePopulateDrawer } from "../components/populate/TemplatePopulateDrawer";
 import {
   type TemplateFormValues,
 } from "../components/settings/TemplateForm";

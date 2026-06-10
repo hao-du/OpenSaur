@@ -1,6 +1,5 @@
 import { Stack } from "@mui/material";
-import { WandSparkles } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { ActionButton } from "../../../components/atoms/ActionButton";
 import type { CounterpartyDto } from "../../counterparties/dtos/CounterpartyDto";
@@ -44,12 +43,12 @@ type Props = {
     isActive: boolean;
   }>;
   movementInitialTransactionItems?: Array<{ id?: string; name: string; amount: number }>;
-  movementSubmitLabel?: string;
+  formId: string;
   isSubmitting?: boolean;
-  submitLabel?: string;
   onCompleted?: () => void;
   isAutoTagging?: boolean;
   onAutoTag?: (description: string, existingTags: string[], transactionType: "Transfer") => Promise<string[]>;
+  onAutoTagActionChange?: (handler: (() => Promise<void>) | null) => void;
 };
 
 type TransferItemsFormValues = {
@@ -127,16 +126,16 @@ function getInitialTransactionItems(
 export function TransferForm({
   counterparties,
   currencies,
+  formId,
   onSave,
   movementInitialValue,
   movementInitialDetails = [],
   movementInitialTransactionItems = [],
-  movementSubmitLabel = "Create",
   isSubmitting = false,
-  submitLabel = "Create",
   onCompleted,
   isAutoTagging = false,
   onAutoTag,
+  onAutoTagActionChange,
 }: Props) {
   const { t, todayIsoDate } = useSettings();
   const today = todayIsoDate;
@@ -188,8 +187,18 @@ export function TransferForm({
     headerForm.setValue("tags", tags, { shouldDirty: true, shouldTouch: true });
   };
 
+  useEffect(() => {
+    onAutoTagActionChange?.(onAutoTag == null ? null : handleAutoTag);
+    return () => {
+      onAutoTagActionChange?.(null);
+    };
+  }, [handleAutoTag, onAutoTag, onAutoTagActionChange]);
+
   const handleSave = async () => {
     const headerValues = headerForm.getValues();
+    if (calculatedAmount <= 0) {
+      return;
+    }
     if (
       headerValues.counterpartyId.trim().length === 0 ||
       headerValues.currencyId.trim().length === 0 ||
@@ -232,7 +241,15 @@ export function TransferForm({
   };
 
   return (
-    <Stack spacing={2}>
+    <Stack
+      component="form"
+      id={formId}
+      spacing={2}
+      noValidate
+      onSubmit={headerForm.handleSubmit(async () => {
+        await handleSave();
+      })}
+    >
       <TransactionFormTabs
         value={tab}
         onChange={setTab}
@@ -242,6 +259,7 @@ export function TransferForm({
               counterparties={counterparties}
               currencies={currencies}
               control={headerForm.control}
+              amountDisabled
             />
             <Stack direction="row" justifyContent="space-between" alignItems="center">
               <h3 style={{ margin: 0 }}>{t("transactions.transactionDetails")}</h3>
@@ -277,28 +295,8 @@ export function TransferForm({
                       prev.filter((x) => x.clientKey !== detail.clientKey),
                     )
                   }
-                />
+                  />
               ))}
-            </Stack>
-            <Stack direction="row" justifyContent="flex-end" spacing={1}>
-              <ActionButton
-                disabled={isBusy || onAutoTag == null}
-                onClick={() => {
-                  void handleAutoTag();
-                }}
-                startIcon={<WandSparkles size={16} />}
-                variant="outlined"
-              >
-                {isBusy ? t("action.working") : t("transactions.autoTag")}
-              </ActionButton>
-              <ActionButton
-                disabled={isBusy || calculatedAmount <= 0}
-                onClick={() => {
-                  void handleSave();
-                }}
-              >
-                {isBusy ? t("action.working") : movementSubmitLabel ?? submitLabel}
-              </ActionButton>
             </Stack>
           </Stack>
         }

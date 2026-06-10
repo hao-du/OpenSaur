@@ -1,5 +1,22 @@
-﻿| Task | Status | Notes |
+| Task | Status | Notes |
 | --- | --- | --- |
+| Fix the cash flow drawer render loop caused by footer auto-tag state | Done | The drawer now stores the auto-tag handler in a ref instead of React state, so editing cash flow no longer retriggers a render loop. |
+| Move transaction form and filter actions into the shared drawer footer | Done | Bank account, cash flow, exchange, transfer, and transaction filter drawers now own their action buttons in `DrawerFooter`, with the forms rendering fields only. |
+| Move the transaction type form drawers to the shared Drawer component | Done | Bank account, cash flow, exchange, and transfer drawers now use `Drawer`, `DrawerHeader`, and `DrawerBody` instead of `DrawerPanel`. |
+| Disable the transfer header amount field in add/edit transfer transactions | Done | The transfer header amount now renders read-only and no longer carries a required validation rule; the transfer save flow still uses the detail total. |
+| Use the shared drawer error slot in template populate drawers | Done | The populate wrappers now pass the error through `DrawerBody errorMessage`, so the shared drawer handles the alert rendering. |
+| Fix template tag field spillover in template drawers | Done | The shared multi-select now wraps chips and the template field row constrains both columns so the mode switches no longer collide with the tag input. |
+| Restore wide drawer sizing for template forms and populate drawers | Done | The template settings drawer and all template populate drawers now pass `width="wide"` again so the tag row and mode controls have room. |
+| Move the template populate submit button into the drawer footer | Done | The four type-specific populate drawers now own the submit action in `DrawerFooter`, with the forms reporting submitting state back to the wrappers. |
+| Replace the template populate drawers with the shared Drawer component | Done | The populate selector and all type-specific populate drawers now use `Drawer`, `DrawerHeader`, and `DrawerBody` instead of `DrawerPanel`. |
+| Split the template populate flow into type-specific drawers | Done | Added `CashFlowPopulateFormDrawer`, `TransferPopulateFormDrawer`, `ExchangePopulateFormDrawer`, and `BankAccountPopulateFormDrawer`, with `TemplatePopulateDrawer` acting as the selector and loader. |
+| Move TemplatePopulateDrawer into the template populate folder | Done | The populate drawer now lives under `components/populate` and the page import points to the new path. |
+| Move the template settings and filter drawers to the shared drawer footer layout | Done | Template settings and filter drawers now use `Drawer`, `DrawerBody`, `DrawerFooter`, and `DrawerHeader`, with submit actions in the footer. |
+| Move the tag form and filter drawers to the shared drawer footer layout | Done | Tag create/edit and filter drawers now use `Drawer`, `DrawerBody`, `DrawerFooter`, and `DrawerHeader`, with actions in the footer. |
+| Move the currency filter to the shared drawer footer layout | Done | Currency filter now uses `Drawer`, `DrawerBody`, `DrawerFooter`, and `DrawerHeader` with the filter actions in the footer. |
+| Move the currency form submit button into the shared drawer footer | Done | `CurrencyForm` now renders fields only, and `CurrencyFormDrawer` owns the submit button in `DrawerFooter`. |
+| Remove the edit-only counterparty active toggle | Done | Editing counterparties now keeps the current active state without exposing an `isActive` checkbox in the form. |
+| Move the counterparty form submit button into the shared drawer footer | Done | CounterpartyForm now renders fields only, and CounterpartyFormDrawer owns the submit button in DrawerFooter. |
 | Tag management and persisted transaction tags | Done | Tag CRUD, `Tags` fields, and UI rendering remain in place. |
 | Remove model-based tag runtime wiring | Done | Deleted the tag model service, options, package reference, and appsettings sections; auto-tagging now returns no predictions. |
 | Fix Transfer description rendering and preserve Transfer form state when switching tabs | Done | Keep Transfer form mounted across tabs and show the transfer header description in the transaction list. |
@@ -40,3 +57,11 @@
 | Add AI Auto Tag button for transactions | Done | Added OpenSpec slice, backend OpenRouter suggestion endpoint, form/list Auto Tag buttons, and runtime `AutoTagging__ApiKey` configuration. |
 | Add month navigation and today highlight to the dashboard calendar | Done | Added previous/next month buttons to `DailyInOutCalendarCard` and highlighted the current day. |
 | Reduce transaction list amount text size and weight | Done | Lowered the transaction list amount font size further and removed the bold weight so the value reads lighter. |
+| Add a bank-only drawer shell with fixed footer | Done | Replaced the bank form's shared drawer wrapper with a dedicated three-section drawer so the footer stays anchored at the bottom without changing the other modules. |
+| Introduce a new common three-section drawer organism | Done | Added a reusable `AppDrawer` shell with Header, Body, and Footer slots and migrated only the bank form to prove the layout before any broader rollout. |
+| Rename the reusable drawer file to `Drawer.tsx` | Done | Moved the new common drawer to `Drawer.tsx`, kept `AppDrawer.tsx` as a compatibility re-export, and pointed the bank drawer at the renamed file. |
+| Show bank form save errors inside the drawer | Done | Split bank save errors into drawer-local state so submit failures render above the form instead of in the page list area. |
+| Move form error rendering into shared drawer body | Done | Added `errorMessage` support to the common `DrawerBody` slot so forms can render their inline error state consistently without duplicating alert layout. |
+| Let shared drawer body own the form wrapper | Done | Extended `DrawerBody` to accept form semantics directly so drawers can render the body as the `<form>` element instead of wrapping another Stack around it. |
+| Make shared drawer footer accept action lists | Done | Changed `DrawerFooter` to accept an `actions` array so form drawers can pass button lists explicitly and keep the footer contract consistent. |
+| Restore footer submit wiring for bank drawer | Done | Added a form id to `DrawerBody` and linked the footer action to it so the fixed bottom button submits the body form again. |

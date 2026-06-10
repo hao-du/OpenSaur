@@ -1,5 +1,4 @@
 import { Grid, Stack } from "@mui/material";
-import { WandSparkles } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { ActionButton } from "../../../components/atoms/ActionButton";
@@ -22,14 +21,15 @@ import { TransactionFormTabs } from "./TransactionFormTabs";
 import { bankAccountStatuses, bankAccountTransactionTypes, transactionDirectionValues, transactionDirections, transactionFormTabs } from "../../../infrastructure/constants/transactionEnums";
 
 type Props = {
-  banks: BankDto[];
+  banks: BankDto[]; 
   currencies: CurrencyDto[];
+  formId: string;
   initialValue?: SaveBankAccountFormRequestDto | null;
   onSubmit: (payload: SaveBankAccountFormRequestDto) => Promise<void>;
-  submitLabel?: string;
   isSubmitting?: boolean;
   isAutoTagging?: boolean;
   onAutoTag?: (description: string, existingTags: string[], transactionType: "BankAccount") => Promise<string[]>;
+  onAutoTagActionChange?: (handler: (() => Promise<void>) | null) => void;
 };
 
 type HeaderValues = {
@@ -104,12 +104,13 @@ function getInitialDetails(
 export function BankAccountForm({
   banks,
   currencies,
+  formId,
   initialValue,
   onSubmit,
-  submitLabel = "Create",
   isSubmitting = false,
   isAutoTagging = false,
   onAutoTag,
+  onAutoTagActionChange,
 }: Props) {
   const { t, todayIsoDate } = useSettings();
   const today = todayIsoDate;
@@ -142,6 +143,13 @@ export function BankAccountForm({
     const tags = await onAutoTag(values.description, values.tags, "BankAccount");
     form.setValue("tags", tags, { shouldDirty: true, shouldTouch: true });
   };
+
+  useEffect(() => {
+    onAutoTagActionChange?.(onAutoTag == null ? null : handleAutoTag);
+    return () => {
+      onAutoTagActionChange?.(null);
+    };
+  }, [handleAutoTag, onAutoTag, onAutoTagActionChange]);
 
   const submitHandler = async (values: HeaderValues) => {
     const headerIsActive = initialValue?.isActive ?? true;
@@ -229,7 +237,7 @@ export function BankAccountForm({
         }
         formContent={
           <Stack spacing={2}>
-            <Grid container spacing={2}>
+            <Grid container spacing={2} component="form" id={formId} noValidate onSubmit={form.handleSubmit(submitHandler)}>
               <Grid size={{ xs: 12 }}>
                 <Text control={form.control} label={t("transactions.accountNumber")} name="accountNumber" />
               </Grid>
@@ -402,26 +410,6 @@ export function BankAccountForm({
                 ))}
             </Stack>
 
-            <Stack direction="row" justifyContent="flex-end" spacing={1}>
-              <ActionButton
-                disabled={isBusy || onAutoTag == null}
-                onClick={() => {
-                  void handleAutoTag();
-                }}
-                startIcon={<WandSparkles size={16} />}
-                variant="outlined"
-              >
-                {isBusy ? t("action.working") : t("transactions.autoTag")}
-              </ActionButton>
-              <ActionButton
-                onClick={() => {
-                  void form.handleSubmit(submitHandler)();
-                }}
-                disabled={isBusy}
-              >
-                {isBusy ? t("action.working") : submitLabel}
-              </ActionButton>
-            </Stack>
           </Stack>
         }
       />

@@ -26,12 +26,14 @@ type Props = {
   control: Control<TransferHeaderValues>;
   counterparties: CounterpartyDto[];
   currencies: CurrencyDto[];
+  amountDisabled?: boolean;
 };
 
 export function TransferHeaderForm({
   control,
   counterparties,
   currencies,
+  amountDisabled = false,
 }: Props) {
   const { t } = useSettings();
 
@@ -79,10 +81,9 @@ export function TransferHeaderForm({
       <Grid size={{ xs: 12, md: 6 }}>
         <NumberField
           control={control}
+          disabled={amountDisabled}
           label={t("transactions.amount")}
           name="amount"
-          required
-          rules={{ required: t("transactions.validation.amountRequired") }}
         />
       </Grid>
       <Grid size={{ xs: 12, md: 6 }}>

@@ -4,8 +4,7 @@ import { useForm } from "react-hook-form";
 import { ActionButton } from "../../../components/atoms/ActionButton";
 import { CheckBox } from "../../../components/atoms/CheckBox";
 import { Text } from "../../../components/atoms/Text";
-import { DrawerPanel } from "../../../components/organisms/DrawerPanel";
-import { layoutStyles } from "../../../infrastructure/theme/theme";
+import { Drawer, DrawerBody, DrawerFooter, DrawerHeader } from "../../../components/organisms/Drawer";
 import type { CounterpartyFilterParams } from "../api/counterpartiesApi";
 import { useSettings } from "../../settings/provider/SettingProvider";
 
@@ -36,13 +35,15 @@ export function CounterpartiesFilterDrawer({
   }, [form, initialValues, isOpen]);
 
   return (
-    <DrawerPanel
+    <Drawer
       isOpen={isOpen}
       onClose={onClose}
       title={t("counterparties.filterTitle")}
     >
-      <Stack
+      <DrawerHeader />
+      <DrawerBody
         component="form"
+        id="counterparties-filter-form"
         noValidate
         onSubmit={form.handleSubmit(values => {
           onApply({
@@ -52,16 +53,19 @@ export function CounterpartiesFilterDrawer({
             phoneNumber: values.phoneNumber.trim()
           });
         })}
-        spacing={2}
-        sx={layoutStyles.drawerBody}
       >
-        <Text control={form.control} label={t("counterparties.fullName")} name="fullName" />
-        <Text control={form.control} label={t("counterparties.email")} name="email" />
-        <Text control={form.control} label={t("counterparties.phoneNumber")} name="phoneNumber" />
-        <CheckBox control={form.control} label={t("common.activeOnly")} name="isActive" />
-        <Stack direction="row" spacing={1} sx={layoutStyles.formFooterRow}>
-          <ActionButton type="submit">{t("common.apply")}</ActionButton>
+        <Stack spacing={2}>
+          <Text control={form.control} label={t("counterparties.fullName")} name="fullName" />
+          <Text control={form.control} label={t("counterparties.email")} name="email" />
+          <Text control={form.control} label={t("counterparties.phoneNumber")} name="phoneNumber" />
+          <CheckBox control={form.control} label={t("common.activeOnly")} name="isActive" />
+        </Stack>
+      </DrawerBody>
+      <DrawerFooter
+        actions={[
           <ActionButton
+            key="reset"
+            type="button"
             onClick={() => {
               form.reset({
                 email: "",
@@ -71,12 +75,15 @@ export function CounterpartiesFilterDrawer({
               });
             }}
             variant="outlined"
-          >
-            {t("common.reset")}
+            >
+              {t("common.reset")}
+            </ActionButton>,
+          <ActionButton key="apply" form="counterparties-filter-form" type="submit">
+            {t("common.apply")}
           </ActionButton>
-        </Stack>
-      </Stack>
-    </DrawerPanel>
+        ]}
+      />
+    </Drawer>
   );
 }
 

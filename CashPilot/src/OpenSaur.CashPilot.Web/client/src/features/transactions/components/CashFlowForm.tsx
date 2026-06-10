@@ -1,8 +1,6 @@
 import { Stack } from "@mui/material";
-import { WandSparkles } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
-import { ActionButton } from "../../../components/atoms/ActionButton";
 import { DatePicker } from "../../../components/atoms/DatePicker";
 import { DropDown } from "../../../components/atoms/DropDown";
 import { Number as NumberInput } from "../../../components/atoms/Number";
@@ -28,10 +26,12 @@ export type CashFlowFormValues = {
 
 type Props = {
   currencies: CurrencyDto[];
+  formId: string;
   initialValue?: CashFlowDetailDto | null;
   isSubmitting?: boolean;
   isAutoTagging?: boolean;
   onAutoTag?: (description: string, existingTags: string[], transactionType: "CashFlow") => Promise<string[]>;
+  onAutoTagActionChange?: (handler: (() => Promise<void>) | null) => void;
   onSubmit: (payload: {
     amount: number;
     currencyId: string;
@@ -77,10 +77,12 @@ function getInitialValues(
 
 export function CashFlowForm({
   currencies,
+  formId,
   initialValue,
   isSubmitting = false,
   isAutoTagging = false,
   onAutoTag,
+  onAutoTagActionChange,
   onSubmit,
 }: Props) {
   const { t, todayIsoDate } = useSettings();
@@ -111,10 +113,18 @@ export function CashFlowForm({
     form.setValue("tags", tags, { shouldDirty: true, shouldTouch: true });
   };
 
+  useEffect(() => {
+    onAutoTagActionChange?.(onAutoTag == null ? null : handleAutoTag);
+    return () => {
+      onAutoTagActionChange?.(null);
+    };
+  }, [handleAutoTag, onAutoTag, onAutoTagActionChange]);
+
   return (
     <Stack
       spacing={2}
       component="form"
+      id={formId}
       noValidate
       onSubmit={form.handleSubmit(async (values) => {
         await onSubmit({
@@ -200,21 +210,6 @@ export function CashFlowForm({
                 label={t("tags.title")}
                 name="tags"
               />
-            </Stack>
-            <Stack direction="row" justifyContent="flex-end" spacing={1} sx={layoutStyles.formFooterRow}>
-              <ActionButton
-                disabled={isBusy || onAutoTag == null}
-                onClick={() => {
-                  void handleAutoTag();
-                }}
-                startIcon={<WandSparkles size={16} />}
-                variant="outlined"
-              >
-                {isBusy ? t("action.working") : t("transactions.autoTag")}
-              </ActionButton>
-              <ActionButton disabled={isBusy} type="submit">
-                {isBusy ? t("action.working") : initialValue == null ? t("transactions.create") : t("transactions.save")}
-              </ActionButton>
             </Stack>
           </Stack>
         }

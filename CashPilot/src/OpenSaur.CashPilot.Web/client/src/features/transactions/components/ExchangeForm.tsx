@@ -1,8 +1,6 @@
 import { Grid, Stack } from "@mui/material";
-import { WandSparkles } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
-import { ActionButton } from "../../../components/atoms/ActionButton";
 import { DatePicker } from "../../../components/atoms/DatePicker";
 import { DropDown } from "../../../components/atoms/DropDown";
 import { Number as NumberField } from "../../../components/atoms/Number";
@@ -16,6 +14,7 @@ import { TransactionFormTabs } from "./TransactionFormTabs";
 
 type Props = {
   currencies: CurrencyDto[];
+  formId: string;
   initialValue?: {
     exchangeRate: number | null;
     exchangeDate: string;
@@ -27,10 +26,10 @@ type Props = {
     tags?: string[] | null;
     transactionItems?: Array<{ id?: string; name: string; amount: number }>;
   } | null;
-  submitLabel?: string;
   isSubmitting?: boolean;
   isAutoTagging?: boolean;
   onAutoTag?: (description: string, existingTags: string[], transactionType: "Exchange") => Promise<string[]>;
+  onAutoTagActionChange?: (handler: (() => Promise<void>) | null) => void;
   onSubmit: (payload: {
     exchangeRate?: number;
     exchangeDate: string;
@@ -92,11 +91,12 @@ function getInitialValues(
 
 export function ExchangeForm({
   currencies,
+  formId,
   initialValue,
-  submitLabel = "Create Exchange",
   isSubmitting = false,
   isAutoTagging = false,
   onAutoTag,
+  onAutoTagActionChange,
   onSubmit
 }: Props) {
   const { t, todayIsoDate } = useSettings();
@@ -126,6 +126,13 @@ export function ExchangeForm({
     form.setValue("tags", tags, { shouldDirty: true, shouldTouch: true });
   };
 
+  useEffect(() => {
+    onAutoTagActionChange?.(onAutoTag == null ? null : handleAutoTag);
+    return () => {
+      onAutoTagActionChange?.(null);
+    };
+  }, [handleAutoTag, onAutoTag, onAutoTagActionChange]);
+
   return (
     <Stack spacing={2}>
       <TransactionFormTabs
@@ -144,6 +151,7 @@ export function ExchangeForm({
             container
             spacing={2}
             component="form"
+            id={formId}
             noValidate
             onSubmit={form.handleSubmit(async values => {
               await onSubmit({
@@ -248,24 +256,6 @@ export function ExchangeForm({
                 required
                 rules={{ required: t("transactions.validation.inCurrencyRequired") }}
               />
-            </Grid>
-
-            <Grid size={{ xs: 12 }}>
-              <Stack direction="row" justifyContent="flex-end" spacing={1}>
-                <ActionButton
-                  disabled={isBusy || onAutoTag == null}
-                  onClick={() => {
-                    void handleAutoTag();
-                  }}
-                  startIcon={<WandSparkles size={16} />}
-                  variant="outlined"
-                >
-                  {isBusy ? t("action.working") : t("transactions.autoTag")}
-                </ActionButton>
-                <ActionButton disabled={isBusy} type="submit">
-                  {isBusy ? t("action.working") : submitLabel}
-                </ActionButton>
-              </Stack>
             </Grid>
           </Grid>
         }

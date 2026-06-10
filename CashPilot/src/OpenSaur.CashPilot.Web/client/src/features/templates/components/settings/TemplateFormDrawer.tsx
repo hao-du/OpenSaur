@@ -1,7 +1,7 @@
-import { Stack } from "@mui/material";
 import { FormProvider, useWatch, type UseFormReturn } from "react-hook-form";
+import { ActionButton } from "../../../../components/atoms/ActionButton";
 import { FormTitleHelpIcon } from "../../../../components/atoms/FormTitleHelpIcon";
-import { DrawerPanel } from "../../../../components/organisms/DrawerPanel";
+import { Drawer, DrawerBody, DrawerFooter, DrawerHeader } from "../../../../components/organisms/Drawer";
 import type { BankDto } from "../../../banks/dtos/BankDto";
 import type { CounterpartyDto } from "../../../counterparties/dtos/CounterpartyDto";
 import type { CurrencyDto } from "../../../currencies/dtos/CurrencyDto";
@@ -86,21 +86,23 @@ export function TemplateFormDrawer({
   const title = `${isEditMode ? t("templates.editTitle") : t("templates.createTitle")} ${typeTitle}`;
 
   return (
-    <DrawerPanel
+    <Drawer
       isOpen={isOpen}
       onClose={onClose}
       title={title}
+      width="wide"
       titleAction={(
         <FormTitleHelpIcon
           ariaLabel={t("common.showDetails")}
           message={t("templates.formulaHint")}
         />
       )}
-      width="wide"
     >
       <FormProvider {...form}>
-        <Stack
+        <DrawerHeader />
+        <DrawerBody
           component="form"
+          id="template-form"
           noValidate
           onSubmit={form.handleSubmit(onSubmit)}
         >
@@ -110,13 +112,17 @@ export function TemplateFormDrawer({
             counterparties={counterparties}
             currencies={currencies}
             isSubmitting={isSubmitting}
-            submitLabel={
-              isEditMode ? t("common.save") : t("templates.create")
-            }
           />
-        </Stack>
+        </DrawerBody>
+        <DrawerFooter
+          actions={[
+            <ActionButton key="submit" form="template-form" disabled={isSubmitting} type="submit">
+              {isSubmitting ? t("action.working") : isEditMode ? t("common.save") : t("templates.create")}
+            </ActionButton>
+          ]}
+        />
       </FormProvider>
-    </DrawerPanel>
+    </Drawer>
   );
 }
 

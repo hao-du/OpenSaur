@@ -4,8 +4,7 @@ import { useForm } from "react-hook-form";
 import { ActionButton } from "../../../components/atoms/ActionButton";
 import { CheckBox } from "../../../components/atoms/CheckBox";
 import { Text } from "../../../components/atoms/Text";
-import { DrawerPanel } from "../../../components/organisms/DrawerPanel";
-import { layoutStyles } from "../../../infrastructure/theme/theme";
+import { Drawer, DrawerBody, DrawerFooter, DrawerHeader } from "../../../components/organisms/Drawer";
 import { useSettings } from "../../settings/provider/SettingProvider";
 import type { BankFilterParams } from "../api/banksApi";
 
@@ -36,13 +35,16 @@ export function BanksFilterDrawer({
   }, [form, initialValues, isOpen]);
 
   return (
-    <DrawerPanel
+    <Drawer
       isOpen={isOpen}
       onClose={onClose}
       title={t("banks.filterTitle")}
+      width="wide"
     >
-      <Stack
+      <DrawerHeader />
+      <DrawerBody
         component="form"
+        id="banks-filter-form"
         noValidate
         onSubmit={form.handleSubmit(values => {
           onApply({
@@ -51,9 +53,8 @@ export function BanksFilterDrawer({
             shortName: values.shortName.trim()
           });
         })}
-        spacing={2}
-        sx={layoutStyles.drawerBody}
       >
+        <Stack spacing={2}>
         <Text control={form.control} label={t("common.name")} name="name" />
         <Text
           control={form.control}
@@ -61,9 +62,12 @@ export function BanksFilterDrawer({
           name="shortName"
         />
         <CheckBox control={form.control} label={t("common.activeOnly")} name="isActive" />
-        <Stack direction="row" spacing={1} sx={layoutStyles.formFooterRow}>
-          <ActionButton type="submit">{t("common.apply")}</ActionButton>
+        </Stack>
+      </DrawerBody>
+      <DrawerFooter
+        actions={[
           <ActionButton
+            key="reset"
             onClick={() => {
               form.reset({
                 isActive: true,
@@ -74,10 +78,13 @@ export function BanksFilterDrawer({
             variant="outlined"
           >
             {t("common.reset")}
+          </ActionButton>,
+          <ActionButton key="apply" form="banks-filter-form" type="submit">
+            {t("common.apply")}
           </ActionButton>
-        </Stack>
-      </Stack>
-    </DrawerPanel>
+        ]}
+      />
+    </Drawer>
   );
 }
 

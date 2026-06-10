@@ -1,7 +1,6 @@
 import { Alert, Grid, Stack } from "@mui/material";
 import { useEffect, useMemo, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
-import { ActionButton } from "../../../../components/atoms/ActionButton";
 import { DatePicker } from "../../../../components/atoms/DatePicker";
 import { DropDown } from "../../../../components/atoms/DropDown";
 import { Number as NumberInput } from "../../../../components/atoms/Number";
@@ -33,6 +32,7 @@ import {
   shown,
 } from "./utils";
 type Props = {
+  formId: string;
   t: (key: TranslationKey) => string;
   todayIsoDate: string;
   currencyOptions: OptionItem[];
@@ -40,8 +40,10 @@ type Props = {
   templateData: BankAccountTemplateDataShape;
   onSaved?: () => Promise<void> | void;
   onClose: () => void;
+  onSubmittingChange?: (isSubmitting: boolean) => void;
 };
 export function BankAccountPopulateForm({
+  formId,
   t,
   todayIsoDate,
   currencyOptions,
@@ -49,6 +51,7 @@ export function BankAccountPopulateForm({
   templateData,
   onSaved,
   onClose,
+  onSubmittingChange,
 }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -78,6 +81,7 @@ export function BankAccountPopulateForm({
 
   const submit = async (v: BankAccountFormValues) => {
     setIsSubmitting(true);
+    onSubmittingChange?.(true);
     setError(null);
     try {
       const maturityDate = resolveDate(
@@ -129,11 +133,12 @@ export function BankAccountPopulateForm({
       );
     } finally {
       setIsSubmitting(false);
+      onSubmittingChange?.(false);
     }
   };
 
   return (
-    <Stack spacing={2} component="form" onSubmit={form.handleSubmit(submit)}>
+    <Stack spacing={2} component="form" id={formId} onSubmit={form.handleSubmit(submit)}>
       {error ? <Alert severity="error">{error}</Alert> : null}
       <TransactionFormTabs
         value={tab}
@@ -250,13 +255,6 @@ export function BankAccountPopulateForm({
         ) : null}
       </Grid>}
       />
-      {tab === "form" ? (
-        <Stack direction="row" justifyContent="flex-end">
-          <ActionButton type="submit" disabled={isSubmitting}>
-            {isSubmitting ? t("action.working") : t("transactions.create")}
-          </ActionButton>
-        </Stack>
-      ) : null}
     </Stack>
   );
 }

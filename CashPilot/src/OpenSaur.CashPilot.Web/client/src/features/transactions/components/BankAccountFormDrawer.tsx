@@ -1,5 +1,7 @@
-import { useState } from "react";
-import { DrawerPanel } from "../../../components/organisms/DrawerPanel";
+import { useRef, useState } from "react";
+import { WandSparkles } from "lucide-react";
+import { ActionButton } from "../../../components/atoms/ActionButton";
+import { Drawer, DrawerBody, DrawerFooter, DrawerHeader } from "../../../components/organisms/Drawer";
 import type { BankDto } from "../../banks/dtos/BankDto";
 import type { CurrencyDto } from "../../currencies/dtos/CurrencyDto";
 import type { SaveBankAccountFormRequestDto } from "../dtos/TransactionDto";
@@ -30,28 +32,59 @@ export function BankAccountFormDrawer({
 }: Props) {
   const { t } = useSettings();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const isBusy = isSubmitting || isAutoTagging;
+  const autoTagActionRef = useRef<(() => Promise<void>) | null>(null);
 
   return (
-    <DrawerPanel isOpen={isOpen} onClose={onClose} title={editingBankAccount == null ? t("transactions.createBankAccount") : t("transactions.editBankAccount")} width="wide">
-      <BankAccountForm
-        key={`${isOpen ? "open" : "closed"}-${editingBankAccount?.id ?? "new"}`}
-        banks={banks}
-        currencies={currencies}
-        initialValue={editingBankAccount}
-        isAutoTagging={isAutoTagging}
-        onAutoTag={onAutoTag}
-        onSubmit={async payload => {
-          setIsSubmitting(true);
-          try {
-            await onSave(payload);
-            onClose();
-          } finally {
-            setIsSubmitting(false);
-          }
-        }}
-        isSubmitting={isSubmitting}
-        submitLabel={editingBankAccount == null ? t("transactions.create") : t("transactions.save")}
+    <Drawer
+      isOpen={isOpen}
+      onClose={onClose}
+      title={editingBankAccount == null ? t("transactions.createBankAccount") : t("transactions.editBankAccount")}
+      width="wide"
+    >
+      <DrawerHeader />
+      <DrawerBody>
+        <BankAccountForm
+          key={`${isOpen ? "open" : "closed"}-${editingBankAccount?.id ?? "new"}`}
+          formId="bank-account-form"
+          banks={banks}
+          currencies={currencies}
+          initialValue={editingBankAccount}
+          isAutoTagging={isAutoTagging}
+          onAutoTag={onAutoTag}
+          onAutoTagActionChange={handler => {
+            autoTagActionRef.current = handler;
+          }}
+          onSubmit={async payload => {
+            setIsSubmitting(true);
+            try {
+              await onSave(payload);
+              onClose();
+            } finally {
+              setIsSubmitting(false);
+            }
+          }}
+          isSubmitting={isSubmitting}
+        />
+      </DrawerBody>
+      <DrawerFooter
+        actions={[
+          <ActionButton
+            key="autoTag"
+            disabled={isBusy || onAutoTag == null}
+            onClick={() => {
+              void autoTagActionRef.current?.();
+            }}
+            startIcon={<WandSparkles size={16} />}
+            variant="outlined"
+          >
+            {isBusy ? t("action.working") : t("transactions.autoTag")}
+          </ActionButton>,
+          <ActionButton key="submit" disabled={isBusy} form="bank-account-form" type="submit">
+            {isBusy ? t("action.working") : editingBankAccount == null ? t("transactions.create") : t("transactions.save")}
+          </ActionButton>
+        ]}
       />
-    </DrawerPanel>
+    </Drawer>
   );
 }

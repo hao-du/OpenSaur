@@ -8,7 +8,7 @@ import type { BankDto } from "../../banks/dtos/BankDto";
 import type { CounterpartyDto } from "../../counterparties/dtos/CounterpartyDto";
 import type { CurrencyDto } from "../../currencies/dtos/CurrencyDto";
 import { useSettings } from "../../settings/provider/SettingProvider";
-import { TemplatePopulateDrawer } from "../../templates/components/TemplatePopulateDrawer";
+import { TemplatePopulateDrawer } from "../../templates/components/populate/TemplatePopulateDrawer";
 import type { TemplateListItemDto } from "../../templates/dtos/TemplateDto";
 import { useForm } from "react-hook-form";
 
