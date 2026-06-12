@@ -1,5 +1,6 @@
-const appShellCacheName = "cashpilot-shell-v1";
+const appShellCacheName = "cashpilot-shell-v2";
 const assetCacheName = "cashpilot-assets-v1";
+const appShellUrls = ["/", "/index.html", "/app-config.js"];
 
 function isSameOrigin(request) {
   return new URL(request.url).origin === self.location.origin;
@@ -12,8 +13,34 @@ function isAssetRequest(request) {
     || request.destination === "font";
 }
 
+async function cacheResponse(cache, request) {
+  const response = await fetch(request);
+  if (response.ok) {
+    await cache.put(request, response.clone());
+  }
+
+  return response;
+}
+
+async function precacheAppShell() {
+  const cache = await caches.open(appShellCacheName);
+  await Promise.all(
+    appShellUrls.map(async (url) => {
+      try {
+        await cacheResponse(cache, url);
+      } catch {
+        // Ignore individual shell precache failures; the app can still fall back
+        // to whatever was cached previously.
+      }
+    }),
+  );
+}
+
 self.addEventListener("install", (event) => {
-  event.waitUntil(self.skipWaiting());
+  event.waitUntil((async () => {
+    await precacheAppShell();
+    await self.skipWaiting();
+  })());
 });
 
 self.addEventListener("activate", (event) => {
@@ -47,10 +74,12 @@ self.addEventListener("fetch", (event) => {
   if (request.mode === "navigate") {
     event.respondWith((async () => {
       try {
-        const networkResponse = await fetch(request);
         const cache = await caches.open(appShellCacheName);
-        await cache.put("/", networkResponse.clone());
-        await cache.put("/index.html", networkResponse.clone());
+        const networkResponse = await fetch(request);
+        if (networkResponse.ok) {
+          await cache.put("/", networkResponse.clone());
+          await cache.put("/index.html", networkResponse.clone());
+        }
         return networkResponse;
       } catch {
         const cache = await caches.open(appShellCacheName);
