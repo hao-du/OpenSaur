@@ -53,7 +53,6 @@ export function AuthSessionProvider({ children }: PropsWithChildren) {
     }
 
     if (isOnline === false) {
-      setIsRestoring(false);
       return;
     }
 

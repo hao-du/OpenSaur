@@ -3,7 +3,6 @@ import { getCounterparties } from "../../counterparties/api/counterpartiesApi";
 import { getCurrencies } from "../../currencies/api/currenciesApi";
 import { getTags } from "../../tags/api/tagsApi";
 import { getTemplates } from "../../templates/api/templatesApi";
-import { client } from "../../../infrastructure/http/client";
 import { loadCurrentProfile } from "../../profile/storages/currentProfileStore";
 import type { OfflineMetadataSnapshot } from "../storages/offlineMetadataStore";
 import { saveOfflineMetadataSnapshot } from "../storages/offlineMetadataStore";
@@ -15,6 +14,12 @@ import type {
   SaveBankAccountFormRequestDto,
   SaveTransferFormRequestDto,
 } from "../../transactions/dtos/TransactionDto";
+import {
+  createCashFlow,
+  createCurrencyExchange,
+  saveBankAccountForm,
+  saveTransferForm,
+} from "../../transactions/api/transactionsApi";
 import type { OfflineTransactionRecord } from "../storages/offlineTransactionsStore";
 
 export async function syncOfflineMetadata() {
@@ -87,33 +92,22 @@ async function syncTransaction(transaction: OfflineTransactionRecord) {
   switch (transaction.type) {
     case "CashFlow": {
       const payload = JSON.parse(transaction.payloadJson) as CreateCashFlowRequestDto;
-      const { amount, currencyId, direction, description, tags, transactionItems, transactionDate } = payload;
-      await client.post<string, CreateCashFlowRequestDto>("/api/transactions/cashflows/create", {
-        amount,
-        currencyId,
-        description,
-        direction,
-        tags,
-        transactionDate,
-        transactionItems,
-      });
+      await createCashFlow(payload);
       return;
     }
     case "BankAccount": {
       const payload = JSON.parse(transaction.payloadJson) as SaveBankAccountFormRequestDto;
-      const { id: _, ...request } = payload;
-      await client.post<string, SaveBankAccountFormRequestDto>("/api/transactions/bankaccounts/create", request);
+      await saveBankAccountForm(payload);
       return;
     }
     case "Transfer": {
       const payload = JSON.parse(transaction.payloadJson) as SaveTransferFormRequestDto;
-      const { id: _, ...request } = payload;
-      await client.post<string, SaveTransferFormRequestDto>("/api/transactions/transfers/create", request);
+      await saveTransferForm(payload);
       return;
     }
     case "Exchange": {
       const payload = parseExchangePayload(transaction.payloadJson);
-      await client.post<string, CreateCurrencyExchangeRequestDto>("/api/transactions/exchanges/create", payload);
+      await createCurrencyExchange(payload);
       return;
     }
     default:
