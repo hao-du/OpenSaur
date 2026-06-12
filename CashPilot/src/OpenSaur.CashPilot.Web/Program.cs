@@ -84,6 +84,7 @@ app.UseAuthorization();
 
 // Map the custom frontend routes
 app.MapFrontEndRoutes();
+app.MapOfflineProbeEndpoints();
 app.MapProfileEndpoints();
 app.MapSettingsEndpoints();
 app.MapBanksEndpoints();

@@ -8,12 +8,15 @@ const templateTypeMap: Record<string, number> = {
   BankAccount: 4
 };
 
-export async function getTemplates(filters: TemplateFilterParams) {
-  return client.get<TemplateListItemDto[]>("/api/templates", {
+export async function getTemplates(filters: TemplateFilterParams, getDetail?: false): Promise<TemplateListItemDto[]>;
+export async function getTemplates(filters: TemplateFilterParams, getDetail: true): Promise<TemplateDetailDto[]>;
+export async function getTemplates(filters: TemplateFilterParams, getDetail = false): Promise<TemplateListItemDto[] | TemplateDetailDto[]> {
+  return client.get<TemplateListItemDto[] | TemplateDetailDto[]>("/api/templates", {
     params: {
       isActive: filters.isActive,
       name: filters.name.trim().length > 0 ? filters.name.trim() : undefined,
-      templateType: filters.templateType.length > 0 ? templateTypeMap[filters.templateType] : undefined
+      templateType: filters.templateType.length > 0 ? templateTypeMap[filters.templateType] : undefined,
+      getDetail
     }
   });
 }

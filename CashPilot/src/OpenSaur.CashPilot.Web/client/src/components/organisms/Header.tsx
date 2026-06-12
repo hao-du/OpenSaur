@@ -17,10 +17,11 @@ import { UserProfileMenu } from "./UserProfileMenu";
 
 type AppHeaderProps = {
   isDesktop: boolean;
+  showNavigationToggle?: boolean;
   onOpenNavigation: () => void;
 };
 
-export function Header({ isDesktop, onOpenNavigation }: AppHeaderProps) {
+export function Header({ isDesktop, onOpenNavigation, showNavigationToggle = true }: AppHeaderProps) {
   const { data: currentProfile, isLoading: isCurrentProfileLoading } = useCurrentProfileQuery();
   const { t } = useSettings();
   const workspaceName = currentProfile?.workspaceName ?? t("nav.protectedWorkspace");
@@ -41,7 +42,7 @@ export function Header({ isDesktop, onOpenNavigation }: AppHeaderProps) {
           direction="row"
           spacing={2}
         >
-          {!isDesktop ? (
+          {!isDesktop && showNavigationToggle ? (
             <IconButton
               aria-label={t("nav.openNavigation")}
               edge="start"

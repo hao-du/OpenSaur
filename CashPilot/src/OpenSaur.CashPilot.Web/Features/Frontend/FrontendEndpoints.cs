@@ -15,7 +15,8 @@ public static class FrontendEndpoints
         "/currencies",
         "/transactions",
         "/templates",
-        "/tags"
+        "/tags",
+        "/offline/transactions"
     ];
 
     public static IEndpointRouteBuilder MapFrontEndRoutes(this IEndpointRouteBuilder app)

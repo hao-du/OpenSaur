@@ -266,7 +266,11 @@ export function BankAccountForm({
                       if (!Number.isFinite(Number(value))) {
                         return t("transactions.validation.interestRateInvalid");
                       }
-                      return Number(value) <= 100 ? true : t("transactions.validation.interestRateMax");
+                      const numericValue = Number(value);
+                      if (numericValue < 0 || numericValue > 100) {
+                        return t("transactions.validation.interestRateRange");
+                      }
+                      return true;
                     }
                   }}
                 />

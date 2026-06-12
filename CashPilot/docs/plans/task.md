@@ -1,5 +1,7 @@
 | Task | Status | Notes |
 | --- | --- | --- |
+| Split the remaining offline populate branches into dedicated populate forms | Done | Cash flow, transfer, and exchange now have `Offline*PopulateForm` plus `Offline*PopulateFormDrawer` components under the offline populate folder, matching the bank-account branch. |
+| Rename offline populate drawers with `Offline` prefix | Done | The offline template flow now uses `Offline*PopulateFormDrawer` components, while the offline transactions page keeps the non-populate `Offline*FormDrawer` components. |
 | Make transaction list action buttons circular | Done | The edit and delete buttons on transaction cards now use explicit square sizing with full border radius, so they render as circles. |
 | Group the side menu by navigation area | Done | Dashboard and Transactions stay at the top, Banks/Currencies/Counterparties now render under a master-data section, and Templates/Tags render under a content section. |
 | Fix the cash flow drawer render loop caused by footer auto-tag state | Done | The drawer now stores the auto-tag handler in a ref instead of React state, so editing cash flow no longer retriggers a render loop. |

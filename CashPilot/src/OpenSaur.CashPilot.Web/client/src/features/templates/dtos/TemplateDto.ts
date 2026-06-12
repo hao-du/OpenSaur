@@ -75,6 +75,7 @@ export type TemplateListItemDto = {
   name: string;
   description: string | null;
   templateType: number;
+  templateDataJson: string | null;
   isActive: boolean;
 };
 

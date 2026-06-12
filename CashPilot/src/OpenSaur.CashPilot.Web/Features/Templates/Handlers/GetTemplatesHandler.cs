@@ -15,6 +15,7 @@ public static class GetTemplatesHandler
         [FromQuery] bool? isActive,
         [FromQuery] string? name,
         [FromQuery] TemplateType? templateType,
+        [FromQuery] bool getDetail,
         ClaimsPrincipal user,
         CashPilotDbContext dbContext,
         CancellationToken cancellationToken)
@@ -45,6 +46,7 @@ public static class GetTemplatesHandler
                 template.Name,
                 template.Description,
                 template.TemplateType,
+                getDetail ? template.TemplateDataJson : null,
                 template.IsActive))
             .ToListAsync(cancellationToken);
 

@@ -71,6 +71,10 @@ export const client = {
     return response.data;
   },
 
+  head: async (url: string, config?: ClientRequestConfig) => {
+    await executeWithRetry(() => axios.head(url, config));
+  },
+
   post: async <TResponse, TRequest = unknown>(
     url: string,
     data?: TRequest,

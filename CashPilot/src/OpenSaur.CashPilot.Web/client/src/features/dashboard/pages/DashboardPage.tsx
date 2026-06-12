@@ -11,6 +11,7 @@ import { useBanksQuery } from "../../banks/hooks/useBanksQuery";
 import { useCounterpartiesQuery } from "../../counterparties/hooks/useCounterpartiesQuery";
 import { useTemplatesQuery } from "../../templates/hooks/useTemplatesQuery";
 import { TemplatePopulateActionCard } from "../components/TemplatePopulateActionCard";
+import { DashboardSyncCard } from "../components/DashboardSyncCard";
 import { TotalAmountByCurrencyCard } from "../components/TotalAmountByCurrencyCard";
 import { TotalActiveBankAccountCard } from "../components/TotalActiveBankAccountCard";
 import { IncomeOutcomeCard } from "../components/IncomeOutcomeCard";
@@ -41,78 +42,79 @@ export function DashboardPage() {
     <DefaultLayout title={t("dashboard.title")}>
       <Stack spacing={3}>
         <Paper elevation={0} sx={(theme) => ({ border: `1px solid ${alpha(theme.palette.primary.main, 0.12)}`, p: 3 })}>
-          <Stack spacing={2}>
-            <Grid container spacing={2} alignItems="stretch">
-              <Grid size={{ lg: 4, sm: 6, xs: 12 }}>
-                <TemplatePopulateActionCard
-                  banks={banks}
-                  counterparties={counterparties}
-                  currencies={currencies}
-                  onSaved={async () => {
-                    await transactionDashboard.refetch();
-                    await refetchTemplates();
-                  }}
-                  templates={templates}
-                />
-              </Grid>
-              <Grid size={{ lg: 4, sm: 6, xs: 12 }}>
-                {isLoading ? (
-                  <DashboardCardSkeleton rows={4} />
-                ) : (
-                  <TotalAmountByCurrencyCard
-                    items={transactionDashboard.data?.currencyBalances ?? []}
-                    title={t("transactions.totalByCurrency")}
-                  />
-                )}
-              </Grid>
-              <Grid size={{ lg: 4, sm: 6, xs: 12 }}>
-                {isLoading ? (
-                  <DashboardCardSkeleton rows={3} />
-                ) : (
-                  <TotalActiveBankAccountCard
-                    items={transactionDashboard.data?.activeBankBalances ?? []}
-                    title={t("transactions.totalByBank")}
-                  />
-                )}
-              </Grid>
-              <Grid size={{ lg: 4, sm: 6, xs: 12 }}>
-                {isLoading || isCurrenciesLoading ? (
-                  <DashboardCardSkeleton rows={4} />
-                ) : (
-                  <IncomeOutcomeCard
-                    currencyCode={defaultCurrencyCode}
-                    items={incomeOutcomeItems}
-                    title={incomeOutcomeTitle}
-                  />
-                )}
-              </Grid>
-              <Grid size={{ lg: 8, xs: 12 }}>
-                {calendarQuery.isLoading || calendarQuery.isFetching ? (
-                  <DashboardCardSkeleton rows={8} />
-                ) : (
-                  <DailyInOutCalendarCard
-                    defaultCurrencyCode={calendarQuery.data?.currencyCode ?? undefined}
-                    isLoading={calendarQuery.isLoading || calendarQuery.isFetching}
-                    inLabel={t("transactions.directionIn")}
-                    items={calendarQuery.data?.items ?? []}
-                    month={calendarMonth}
-                    monthLabel={t("transactions.filter.month")}
-                    noDefaultCurrencyLabel={t("dashboard.defaultCurrencyRequired")}
-                    onDayClick={(day) => {
-                      const date = `${calendarYear}-${String(calendarMonth).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-                      navigate(`/transactions?date=${date}`);
-                    }}
-                    onMonthChange={setCalendarMonth}
-                    onYearChange={setCalendarYear}
-                    outLabel={t("transactions.directionOut")}
-                    title={t("dashboard.dailyInOutCalendar")}
-                    year={calendarYear}
-                    yearLabel={t("transactions.filter.year")}
-                  />
-                )}
-              </Grid>
+          <Grid container spacing={2} alignItems="stretch">
+            <Grid size={{ lg: 6, xs: 12 }}>
+              <TemplatePopulateActionCard
+                banks={banks}
+                counterparties={counterparties}
+                currencies={currencies}
+                onSaved={async () => {
+                  await transactionDashboard.refetch();
+                  await refetchTemplates();
+                }}
+                templates={templates}
+              />
             </Grid>
-          </Stack>
+            <Grid size={{ lg: 6, xs: 12 }}>
+              <DashboardSyncCard />
+            </Grid>
+            <Grid size={{ lg: 4, sm: 6, xs: 12 }}>
+              {isLoading ? (
+                <DashboardCardSkeleton rows={4} />
+              ) : (
+                <TotalAmountByCurrencyCard
+                  items={transactionDashboard.data?.currencyBalances ?? []}
+                  title={t("transactions.totalByCurrency")}
+                />
+              )}
+            </Grid>
+            <Grid size={{ lg: 4, sm: 6, xs: 12 }}>
+              {isLoading ? (
+                <DashboardCardSkeleton rows={3} />
+              ) : (
+                <TotalActiveBankAccountCard
+                  items={transactionDashboard.data?.activeBankBalances ?? []}
+                  title={t("transactions.totalByBank")}
+                />
+              )}
+            </Grid>
+            <Grid size={{ lg: 4, sm: 6, xs: 12 }}>
+              {isLoading || isCurrenciesLoading ? (
+                <DashboardCardSkeleton rows={4} />
+              ) : (
+                <IncomeOutcomeCard
+                  currencyCode={defaultCurrencyCode}
+                  items={incomeOutcomeItems}
+                  title={incomeOutcomeTitle}
+                />
+              )}
+            </Grid>
+          </Grid>
+          </Paper>
+        <Paper elevation={0} sx={(theme) => ({ border: `1px solid ${alpha(theme.palette.primary.main, 0.12)}`, p: 3 })}>
+          {calendarQuery.isLoading || calendarQuery.isFetching ? (
+            <DashboardCardSkeleton rows={15} />
+          ) : (
+            <DailyInOutCalendarCard
+              defaultCurrencyCode={calendarQuery.data?.currencyCode ?? undefined}
+              isLoading={calendarQuery.isLoading || calendarQuery.isFetching}
+              inLabel={t("transactions.directionIn")}
+              items={calendarQuery.data?.items ?? []}
+              month={calendarMonth}
+              monthLabel={t("transactions.filter.month")}
+              noDefaultCurrencyLabel={t("dashboard.defaultCurrencyRequired")}
+              onDayClick={(day) => {
+                const date = `${calendarYear}-${String(calendarMonth).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+                navigate(`/transactions?date=${date}`);
+              }}
+              onMonthChange={setCalendarMonth}
+              onYearChange={setCalendarYear}
+              outLabel={t("transactions.directionOut")}
+              title={t("dashboard.dailyInOutCalendar")}
+              year={calendarYear}
+              yearLabel={t("transactions.filter.year")}
+            />
+          )}
         </Paper>
       </Stack>
     </DefaultLayout>
