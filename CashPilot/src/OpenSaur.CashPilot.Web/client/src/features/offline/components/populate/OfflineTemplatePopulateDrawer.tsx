@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Drawer, DrawerBody, DrawerHeader } from "../../../../components/organisms/Drawer";
 import type { BankDto } from "../../../banks/dtos/BankDto";
 import type { CounterpartyDto } from "../../../counterparties/dtos/CounterpartyDto";
@@ -8,10 +8,11 @@ import type { TemplateData, TemplateType } from "../../../templates/dtos/Templat
 import type { OfflineTransactionRecord } from "../../storages/offlineTransactionsStore";
 import { loadOfflineTemplates } from "../../storages/offlineTemplatesStore";
 import { parseTemplateData, templateTypeNumberToTransactionType } from "../../services/offlineTransactionFormUtils";
-import { BankAccountPopulateFormDrawer } from "./BankAccountPopulateFormDrawer";
-import { CashFlowPopulateFormDrawer } from "./CashFlowPopulateFormDrawer";
-import { ExchangePopulateFormDrawer } from "./ExchangePopulateFormDrawer";
-import { TransferPopulateFormDrawer } from "./TransferPopulateFormDrawer";
+import { OfflineBankAccountPopulateFormDrawer } from "./OfflineBankAccountPopulateFormDrawer";
+import type { BankAccountTemplateDataShape } from "./types";
+import { OfflineCashFlowPopulateFormDrawer } from "./OfflineCashFlowPopulateFormDrawer";
+import { OfflineExchangePopulateFormDrawer } from "./OfflineExchangePopulateFormDrawer";
+import { OfflineTransferPopulateFormDrawer } from "./OfflineTransferPopulateFormDrawer";
 
 type Props = {
   banks: BankDto[];
@@ -35,7 +36,7 @@ const emptyTemplateState: TemplateState = {
   templateType: null,
 };
 
-export function TemplatePopulateDrawer({
+export function OfflineTemplatePopulateDrawer({
   banks,
   counterparties,
   currencies,
@@ -44,8 +45,16 @@ export function TemplatePopulateDrawer({
   onClose,
   onSave,
 }: Props) {
-  const { t } = useSettings();
+  const { t, todayIsoDate } = useSettings();
   const [state, setState] = useState<TemplateState>(emptyTemplateState);
+  const currencyOptions = useMemo(
+    () => currencies.map((item) => ({ label: item.shortName, value: item.id })),
+    [currencies],
+  );
+  const counterpartyOptions = useMemo(
+    () => counterparties.map((item) => ({ label: item.fullName, value: item.id })),
+    [counterparties],
+  );
 
   useEffect(() => {
     if (!isOpen) {
@@ -82,53 +91,57 @@ export function TemplatePopulateDrawer({
 
   if (state.templateType === "CashFlow") {
     return (
-      <CashFlowPopulateFormDrawer
-        currencies={currencies}
-        editingTransaction={null}
-        isOpen={isOpen}
-        onClose={onClose}
-        onSave={onSave}
-        templateData={state.templateData}
-      />
-    );
+    <OfflineCashFlowPopulateFormDrawer
+      currencyOptions={currencyOptions}
+      isOpen={isOpen}
+      onClose={onClose}
+      onSave={onSave}
+      t={t}
+      templateData={state.templateData}
+      todayIsoDate={todayIsoDate}
+    />
+  );
   }
 
   if (state.templateType === "Transfer") {
     return (
-      <TransferPopulateFormDrawer
-        counterparties={counterparties}
-        currencies={currencies}
-        editingTransaction={null}
-        isOpen={isOpen}
-        onClose={onClose}
-        onSave={onSave}
-        templateData={state.templateData}
-      />
-    );
+    <OfflineTransferPopulateFormDrawer
+      counterpartyOptions={counterpartyOptions}
+      currencyOptions={currencyOptions}
+      isOpen={isOpen}
+      onClose={onClose}
+      onSave={onSave}
+      t={t}
+      templateData={state.templateData}
+      todayIsoDate={todayIsoDate}
+    />
+  );
   }
 
   if (state.templateType === "Exchange") {
     return (
-      <ExchangePopulateFormDrawer
-        currencies={currencies}
-        editingTransaction={null}
-        isOpen={isOpen}
-        onClose={onClose}
-        onSave={onSave}
-        templateData={state.templateData}
-      />
-    );
-  }
-
-  return (
-    <BankAccountPopulateFormDrawer
-      banks={banks}
-      currencies={currencies}
-      editingTransaction={null}
+    <OfflineExchangePopulateFormDrawer
+      currencyOptions={currencyOptions}
       isOpen={isOpen}
       onClose={onClose}
       onSave={onSave}
+      t={t}
       templateData={state.templateData}
+      todayIsoDate={todayIsoDate}
+    />
+  );
+  }
+
+  return (
+    <OfflineBankAccountPopulateFormDrawer
+      banks={banks}
+      currencies={currencies}
+      isOpen={isOpen}
+      onClose={onClose}
+      onSave={onSave}
+      t={t}
+      templateData={state.templateData as BankAccountTemplateDataShape}
+      todayIsoDate={todayIsoDate}
     />
   );
 }

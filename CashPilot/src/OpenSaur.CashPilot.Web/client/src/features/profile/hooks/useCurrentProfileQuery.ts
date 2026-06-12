@@ -10,7 +10,7 @@ export function useCurrentProfileQuery() {
     queryFn: async () => {
       const cachedProfile = loadCurrentProfile();
 
-      if (!isOnline && cachedProfile != null) {
+      if (isOnline !== true && cachedProfile != null) {
         return cachedProfile;
       }
 

@@ -5,7 +5,6 @@ import type { AuthSessionDto } from "../dtos/AuthSessionDto";
 import { buildLogoutUrl } from "../services/UriService";
 import { setClientAccessToken } from "../../../infrastructure/http/client";
 import { getConfig } from "../../../infrastructure/config/Config";
-import { clearAuthSession, loadAuthSession, saveAuthSession } from "../storages/authSessionStore";
 import { useNetworkStatus } from "../../../infrastructure/offline/useNetworkStatus";
 
 type AuthSessionContextValue = {
@@ -29,20 +28,17 @@ export function AuthSessionProvider({ children }: PropsWithChildren) {
   const [idToken, setIdToken] = useState<string | null>(null);
   const [isRestoring, setIsRestoring] = useState(true);
   const hasTriedRestore = useRef(false);
-  const [cachedSessionLoaded, setCachedSessionLoaded] = useState(false);
 
   const setSession = useCallback((nextAuthSession: AuthSessionDto) => {
     setAccessToken(nextAuthSession.accessToken);
     setIdToken(nextAuthSession.idToken);
     setAuthSession(nextAuthSession);
-    saveAuthSession(nextAuthSession);
   }, []);
 
   const clearSession = useCallback(() => {
     setAccessToken(null);
     setIdToken(null);
     setAuthSession(null);
-    clearAuthSession();
   }, []);
 
   useEffect(() => {
@@ -50,21 +46,13 @@ export function AuthSessionProvider({ children }: PropsWithChildren) {
   }, [accessToken]);
 
   useEffect(() => {
-    if (cachedSessionLoaded) {
+    if (location.pathname === "/auth/callback") {
+      hasTriedRestore.current = false;
+      setIsRestoring(false);
       return;
     }
 
-    const cachedSession = loadAuthSession();
-    if (cachedSession != null) {
-      setSession(cachedSession);
-    }
-
-    setCachedSessionLoaded(true);
-  }, [cachedSessionLoaded, setSession]);
-
-  useEffect(() => {
-    if (location.pathname === "/auth/callback") {
-      hasTriedRestore.current = false;
+    if (isOnline === false) {
       setIsRestoring(false);
       return;
     }
@@ -79,10 +67,6 @@ export function AuthSessionProvider({ children }: PropsWithChildren) {
       }
 
       try {
-        if (!isOnline) {
-          return;
-        }
-
         const refreshedSession = await refreshAuthSession(getConfig());
         if (!isMounted) {
           return;
@@ -94,9 +78,7 @@ export function AuthSessionProvider({ children }: PropsWithChildren) {
           return;
         }
 
-        if (authSession == null) {
-          clearSession();
-        }
+        clearSession();
       } finally {
         if (isMounted && isRestore) {
           setIsRestoring(false);
@@ -108,10 +90,6 @@ export function AuthSessionProvider({ children }: PropsWithChildren) {
       if (hasTriedRestore.current) {
         setIsRestoring(false);
       } else {
-        if (!cachedSessionLoaded) {
-          return;
-        }
-
         void refreshSession(true);
       }
     } else {
@@ -132,7 +110,7 @@ export function AuthSessionProvider({ children }: PropsWithChildren) {
         window.clearTimeout(timeoutId);
       }
     };
-  }, [authSession, cachedSessionLoaded, clearSession, isOnline, location.pathname, setSession]);
+  }, [authSession, clearSession, isOnline, location.pathname, setSession]);
 
   const handleLogout = useCallback(() => {
     const currentSession = authSession;

@@ -215,18 +215,36 @@ export function buildExchangeInitialValue(
 } | null {
   if (record != null && record.payloadJson.length > 0) {
     try {
-      return JSON.parse(record.payloadJson) as {
-        description?: string | null;
-        exchangeDate: string;
-        exchangeRate: number | null;
-        id: string;
-        inAmount: number;
-        inCurrencyId: string;
-        isActive: boolean;
-        outAmount: number;
-        outCurrencyId: string;
-        tags?: string[] | null;
-        transactionItems?: Array<{ id?: string; name: string; amount: number }>;
+      const parsed = JSON.parse(record.payloadJson) as ExchangePayloadRecord;
+
+      if (isExchangeLegPayload(parsed)) {
+        return {
+          description: parsed.description ?? null,
+          exchangeDate: parsed.exchangeDate,
+          exchangeRate: parsed.exchangeRate,
+          id: record.id,
+          inAmount: parsed.inLeg.amount,
+          inCurrencyId: parsed.inLeg.currencyId,
+          isActive: record.isActive,
+          outAmount: parsed.outLeg.amount,
+          outCurrencyId: parsed.outLeg.currencyId,
+          tags: parsed.tags ?? null,
+          transactionItems: parsed.transactionItems ?? [],
+        };
+      }
+
+      return {
+        description: parsed.description ?? null,
+        exchangeDate: parsed.exchangeDate,
+        exchangeRate: parsed.exchangeRate,
+        id: parsed.id,
+        inAmount: parsed.inAmount,
+        inCurrencyId: parsed.inCurrencyId,
+        isActive: parsed.isActive,
+        outAmount: parsed.outAmount,
+        outCurrencyId: parsed.outCurrencyId,
+        tags: parsed.tags ?? null,
+        transactionItems: parsed.transactionItems ?? [],
       };
     } catch {
       // fall through to template/default values
@@ -252,7 +270,47 @@ export function buildExchangeInitialValue(
   };
 }
 
-export function buildTransactionListItem(record: OfflineTransactionRecord): TransactionListItemDto {
+type ExchangePayloadRecord = ExchangeLegPayload | LegacyExchangePayload;
+
+type ExchangeLegPayload = {
+  description?: string | null;
+  exchangeDate: string;
+  exchangeRate: number | null;
+  inLeg: {
+    amount: number;
+    currencyId: string;
+    description?: string;
+  };
+  outLeg: {
+    amount: number;
+    currencyId: string;
+    description?: string;
+  };
+  tags?: string[] | null;
+  transactionItems?: Array<{ id?: string; name: string; amount: number }>;
+};
+
+type LegacyExchangePayload = {
+  description?: string | null;
+  exchangeDate: string;
+  exchangeRate: number | null;
+  id: string;
+  inAmount: number;
+  inCurrencyId: string;
+  isActive: boolean;
+  outAmount: number;
+  outCurrencyId: string;
+  tags?: string[] | null;
+  transactionItems?: Array<{ id?: string; name: string; amount: number }>;
+};
+
+function isExchangeLegPayload(payload: ExchangePayloadRecord): payload is ExchangeLegPayload {
+  return "inLeg" in payload && "outLeg" in payload;
+}
+
+export function buildTransactionListItem(record: OfflineTransactionRecord, currencies: CurrencyDto[] = []): TransactionListItemDto {
+  const currencyCode = currencies.find((currency) => currency.id === record.currencyCode)?.shortName ?? record.currencyCode;
+
   return {
     amount: record.amount,
     bankAccountId: record.type === "BankAccount" ? record.id : null,
@@ -271,7 +329,7 @@ export function buildTransactionListItem(record: OfflineTransactionRecord): Tran
     transferStatus: record.transferStatus ?? null,
     transferType: record.transferType ?? null,
     type: record.type,
-    currencyCode: record.currencyCode,
+    currencyCode,
   };
 }
 

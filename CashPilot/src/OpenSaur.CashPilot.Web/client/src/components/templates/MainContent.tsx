@@ -5,18 +5,20 @@ import { PageTitleText } from "../atoms/PageTitleText";
 import { layoutStyles } from "../../infrastructure/theme/theme";
 
 type MainContentProps = PropsWithChildren<{
+  beforeTitle?: ReactNode;
   headerActions?: ReactNode;
   subtitle?: string;
   title: string;
 }>;
 
-export function MainContent({ children, headerActions, subtitle, title }: MainContentProps) {
+export function MainContent({ beforeTitle, children, headerActions, subtitle, title }: MainContentProps) {
   return (
     <Box
       component="main"
       sx={layoutStyles.mainContent}
     >
       <Stack spacing={2}>
+        {beforeTitle}
         <Stack
           alignItems={{ md: "center", xs: "flex-start" }}
           direction={{ md: "row", xs: "column" }}

@@ -1,4 +1,5 @@
 import { loadOfflineJson, saveOfflineJson } from "../../../infrastructure/offline/offlineStorage";
+import { loadCurrentProfile } from "../../profile/storages/currentProfileStore";
 
 export type OfflineTransactionType = "CashFlow" | "BankAccount" | "Transfer" | "Exchange";
 
@@ -11,6 +12,7 @@ export type OfflineTransactionRecord = {
   description: string;
   id: string;
   isActive: boolean;
+  userId?: string;
   payloadJson: string;
   counterpartyName?: string | null;
   direction?: number | null;
@@ -38,6 +40,7 @@ export function upsertOfflineTransaction(record: Omit<OfflineTransactionRecord, 
   const currentTransactions = loadOfflineTransactions();
   const nextRecord: OfflineTransactionRecord = {
     ...record,
+    userId: record.userId ?? loadCurrentProfile()?.id,
     updatedAt: new Date().toISOString(),
   };
 

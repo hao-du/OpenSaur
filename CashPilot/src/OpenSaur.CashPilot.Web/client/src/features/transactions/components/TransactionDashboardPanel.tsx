@@ -1,8 +1,9 @@
-import { Paper, Stack } from "@mui/material";
+import { Grid, Paper, Stack } from "@mui/material";
 import type { CounterpartyDto } from "../../counterparties/dtos/CounterpartyDto";
 import type { CurrencyDto } from "../../currencies/dtos/CurrencyDto";
 import type { BankDto } from "../../banks/dtos/BankDto";
 import { TemplatePopulateActionCard } from "../../dashboard/components/TemplatePopulateActionCard";
+import { DashboardSyncCard } from "../../dashboard/components/DashboardSyncCard";
 import { DashboardCardSkeleton } from "../../dashboard/components/DashboardCardSkeleton";
 import { TotalAmountByCurrencyCard } from "../../dashboard/components/TotalAmountByCurrencyCard";
 import { TotalActiveBankAccountCard } from "../../dashboard/components/TotalActiveBankAccountCard";
@@ -39,12 +40,19 @@ export function TransactionDashboardPanel({
   return (
     <Paper sx={{ p: 2, height: "100%" }}>
       <Stack spacing={2}>
-        <TemplatePopulateActionCard
-          templates={templates}
-          banks={banks}
-          currencies={currencies}
-          counterparties={counterparties}
-        />
+        <Grid container spacing={2} alignItems="stretch">
+          <Grid size={{ lg: 6, xs: 12 }}>
+            <TemplatePopulateActionCard
+              templates={templates}
+              banks={banks}
+              currencies={currencies}
+              counterparties={counterparties}
+            />
+          </Grid>
+          <Grid size={{ lg: 6, xs: 12 }}>
+            <DashboardSyncCard />
+          </Grid>
+        </Grid>
         {isDashboardLoading ? (
           <>
             <DashboardCardSkeleton rows={4} />

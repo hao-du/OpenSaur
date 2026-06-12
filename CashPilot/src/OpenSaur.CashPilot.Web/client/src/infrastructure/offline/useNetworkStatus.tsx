@@ -1,30 +1,84 @@
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
+import { client } from "../http/client";
 
-export function useNetworkStatus() {
-  const [isOnline, setIsOnline] = useState(() => {
-    if (typeof window === "undefined") {
-      return true;
-    }
+type NetworkStatus = {
+  isChecking: boolean;
+  isOnline: boolean | null;
+};
 
-    return window.navigator.onLine;
-  });
+type NetworkStatusState = NetworkStatus;
 
-  useEffect(() => {
-    if (typeof window === "undefined") {
-      return;
-    }
+const initialState: NetworkStatusState = {
+  isChecking: true,
+  isOnline: null,
+};
 
-    const handleOnline = () => setIsOnline(true);
-    const handleOffline = () => setIsOnline(false);
+let state: NetworkStatusState = initialState;
+const listeners = new Set<() => void>();
+let isStarted = false;
+let handleOnline: (() => void) | null = null;
+let handleOffline: (() => void) | null = null;
 
-    window.addEventListener("online", handleOnline);
-    window.addEventListener("offline", handleOffline);
+function notify() {
+  for (const listener of listeners) {
+    listener();
+  }
+}
 
-    return () => {
-      window.removeEventListener("online", handleOnline);
-      window.removeEventListener("offline", handleOffline);
-    };
-  }, []);
+function setState(nextState: Partial<NetworkStatusState>) {
+  state = { ...state, ...nextState };
+  notify();
+}
 
-  return { isOnline };
+async function probeConnectivity() {
+  try {
+    await client.head("/api/offline-probe", { skipAuth: true });
+    setState({ isOnline: true });
+  } catch {
+    setState({ isOnline: false });
+  } finally {
+    setState({ isChecking: false });
+  }
+}
+
+function startNetworkTracking() {
+  if (typeof window === "undefined" || isStarted) {
+    return;
+  }
+
+  isStarted = true;
+
+  handleOnline = () => {
+    setState({ isOnline: true });
+  };
+
+  handleOffline = () => {
+    setState({ isOnline: false });
+  };
+
+  window.addEventListener("online", handleOnline);
+  window.addEventListener("offline", handleOffline);
+
+  void probeConnectivity();
+}
+
+function subscribe(listener: () => void) {
+  listeners.add(listener);
+  startNetworkTracking();
+
+  return () => {
+    listeners.delete(listener);
+  };
+}
+
+function getSnapshot(): NetworkStatusState {
+  return state;
+}
+
+function getServerSnapshot(): NetworkStatusState {
+  return initialState;
+}
+
+export function useNetworkStatus(): NetworkStatus {
+  return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 }

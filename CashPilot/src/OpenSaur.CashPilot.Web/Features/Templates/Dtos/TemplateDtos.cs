@@ -7,6 +7,7 @@ public sealed record TemplateListItemResponse(
     string Name,
     string? Description,
     TemplateType TemplateType,
+    string? TemplateDataJson,
     bool IsActive);
 
 public sealed record TemplateDetailResponse(

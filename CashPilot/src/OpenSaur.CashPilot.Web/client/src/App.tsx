@@ -12,10 +12,40 @@ import { TemplatesPage } from "./features/templates/pages/TemplatesPage";
 import { SettingsPage } from "./features/settings/pages/SettingsPage";
 import { TagsPage } from "./features/tags/pages/TagsPage";
 import { OfflineTransactionsPage } from "./features/offline/pages/OfflineTransactionsPage";
+import { useNetworkStatus } from "./infrastructure/offline/useNetworkStatus";
 export function App() {
     const { authSession, isRestoring } = useAuthSession();
+    const { isChecking, isOnline } = useNetworkStatus();
     const location = useLocation();
     const returnTo = `${location.pathname}${location.search}${location.hash}`;
+    const isOfflineWorkspace = isOnline === false;
+
+    if (isChecking) {
+        return null;
+    }
+
+    if (isOfflineWorkspace) {
+        return (
+            <Routes>
+                <Route
+                    element={<Outlet />}
+                >
+                    <Route
+                        element={<Navigate replace to="/offline/transactions" />}
+                        path="/"
+                    />
+                    <Route
+                        element={<OfflineTransactionsPage />}
+                        path="/offline/transactions"
+                    />
+                    <Route
+                        element={<Navigate replace to="/offline/transactions" />}
+                        path="*"
+                    />
+                </Route>
+            </Routes>
+        );
+    }
 
     return (
         <Routes>

@@ -1,5 +1,4 @@
-import { useRef, useState } from "react";
-import { WandSparkles } from "lucide-react";
+import { useState } from "react";
 import { ActionButton } from "../../../components/atoms/ActionButton";
 import { Drawer, DrawerBody, DrawerFooter, DrawerHeader } from "../../../components/organisms/Drawer";
 import type { CurrencyDto } from "../../currencies/dtos/CurrencyDto";
@@ -29,7 +28,6 @@ export function OfflineExchangeFormDrawer({
 }: Props) {
   const { t, todayIsoDate } = useSettings();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const autoTagActionRef = useRef<(() => Promise<void>) | null>(null);
   const isBusy = isSubmitting;
   const initialValue = buildExchangeInitialValue(templateData, currencies, todayIsoDate, editingTransaction);
   const recordId = editingTransaction?.id ?? "new";
@@ -49,9 +47,6 @@ export function OfflineExchangeFormDrawer({
           formId="offline-exchange-form"
           initialValue={initialValue}
           isSubmitting={isSubmitting}
-          onAutoTagActionChange={(handler) => {
-            autoTagActionRef.current = handler;
-          }}
           onSubmit={async (payload: CreateCurrencyExchangeRequestDto) => {
             setIsSubmitting(true);
             try {
@@ -68,7 +63,7 @@ export function OfflineExchangeFormDrawer({
                 exchangeId: id,
                 id,
                 isActive: editingTransaction?.isActive ?? true,
-                payloadJson: JSON.stringify({ ...payload, id, isActive: editingTransaction?.isActive ?? true }),
+                payloadJson: JSON.stringify(payload),
                 tags: payload.tags ?? [],
                 transactionDate: payload.exchangeDate,
                 transferId: null,
@@ -86,17 +81,6 @@ export function OfflineExchangeFormDrawer({
       </DrawerBody>
       <DrawerFooter
         actions={[
-          <ActionButton
-            key="autoTag"
-            disabled
-            onClick={() => {
-              void autoTagActionRef.current?.();
-            }}
-            startIcon={<WandSparkles size={16} />}
-            variant="outlined"
-          >
-            {isBusy ? t("action.working") : t("transactions.autoTag")}
-          </ActionButton>,
           <ActionButton key="submit" disabled={isBusy} form="offline-exchange-form" type="submit">
             {isBusy ? t("action.working") : editingTransaction == null ? t("transactions.createExchange") : t("transactions.saveExchange")}
           </ActionButton>,

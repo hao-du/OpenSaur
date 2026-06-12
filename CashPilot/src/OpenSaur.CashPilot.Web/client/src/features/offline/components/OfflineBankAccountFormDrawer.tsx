@@ -1,5 +1,4 @@
-import { useRef, useState } from "react";
-import { WandSparkles } from "lucide-react";
+import { useState } from "react";
 import { ActionButton } from "../../../components/atoms/ActionButton";
 import { Drawer, DrawerBody, DrawerFooter, DrawerHeader } from "../../../components/organisms/Drawer";
 import type { BankDto } from "../../banks/dtos/BankDto";
@@ -33,7 +32,6 @@ export function OfflineBankAccountFormDrawer({
 }: Props) {
   const { t, todayIsoDate } = useSettings();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const autoTagActionRef = useRef<(() => Promise<void>) | null>(null);
   const isBusy = isSubmitting;
   const initialValue: SaveBankAccountFormRequestDto | null = buildBankAccountInitialValue(templateData, banks, currencies, todayIsoDate, editingTransaction);
 
@@ -53,9 +51,6 @@ export function OfflineBankAccountFormDrawer({
           formId="offline-bank-account-form"
           initialValue={initialValue}
           isSubmitting={isSubmitting}
-          onAutoTagActionChange={(handler) => {
-            autoTagActionRef.current = handler;
-          }}
           onSubmit={async (payload) => {
             setIsSubmitting(true);
             try {
@@ -93,17 +88,6 @@ export function OfflineBankAccountFormDrawer({
       </DrawerBody>
       <DrawerFooter
         actions={[
-          <ActionButton
-            key="autoTag"
-            disabled
-            onClick={() => {
-              void autoTagActionRef.current?.();
-            }}
-            startIcon={<WandSparkles size={16} />}
-            variant="outlined"
-          >
-            {isBusy ? t("action.working") : t("transactions.autoTag")}
-          </ActionButton>,
           <ActionButton key="submit" disabled={isBusy} form="offline-bank-account-form" type="submit">
             {isBusy ? t("action.working") : editingTransaction == null ? t("transactions.create") : t("transactions.save")}
           </ActionButton>,

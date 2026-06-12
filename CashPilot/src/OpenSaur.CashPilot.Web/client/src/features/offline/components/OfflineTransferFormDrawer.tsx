@@ -1,5 +1,4 @@
-import { useRef, useState } from "react";
-import { WandSparkles } from "lucide-react";
+import { useState } from "react";
 import { ActionButton } from "../../../components/atoms/ActionButton";
 import { Drawer, DrawerBody, DrawerFooter, DrawerHeader } from "../../../components/organisms/Drawer";
 import type { CounterpartyDto } from "../../counterparties/dtos/CounterpartyDto";
@@ -32,7 +31,6 @@ export function OfflineTransferFormDrawer({
 }: Props) {
   const { t, todayIsoDate } = useSettings();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const autoTagActionRef = useRef<(() => Promise<void>) | null>(null);
   const isBusy = isSubmitting;
   const initialValue = buildTransferInitialValue(templateData, counterparties, currencies, todayIsoDate, editingTransaction);
 
@@ -54,9 +52,6 @@ export function OfflineTransferFormDrawer({
           movementInitialDetails={initialValue.movementInitialDetails}
           movementInitialTransactionItems={initialValue.movementInitialTransactionItems}
           movementInitialValue={initialValue.movementInitialValue}
-          onAutoTagActionChange={(handler) => {
-            autoTagActionRef.current = handler;
-          }}
           onSave={async (payload: SaveTransferFormRequestDto) => {
             setIsSubmitting(true);
             try {
@@ -94,17 +89,6 @@ export function OfflineTransferFormDrawer({
       </DrawerBody>
       <DrawerFooter
         actions={[
-          <ActionButton
-            key="autoTag"
-            disabled
-            onClick={() => {
-              void autoTagActionRef.current?.();
-            }}
-            startIcon={<WandSparkles size={16} />}
-            variant="outlined"
-          >
-            {isBusy ? t("action.working") : t("transactions.autoTag")}
-          </ActionButton>,
           <ActionButton key="submit" disabled={isBusy} form="offline-transfer-form" type="submit">
             {isBusy ? t("action.working") : editingTransaction == null ? t("transactions.create") : t("transactions.save")}
           </ActionButton>,

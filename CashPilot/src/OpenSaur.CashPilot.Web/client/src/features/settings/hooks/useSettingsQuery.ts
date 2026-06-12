@@ -11,7 +11,7 @@ export function useSettingsQuery(enabled = true) {
     queryFn: async () => {
       const cachedSettings = loadCachedSettings();
 
-      if (!isOnline && cachedSettings != null) {
+      if (isOnline !== true && cachedSettings != null) {
         return cachedSettings;
       }
 
