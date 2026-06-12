@@ -11,6 +11,7 @@ import { TransactionsPage } from "./features/transactions/pages/TransactionsPage
 import { TemplatesPage } from "./features/templates/pages/TemplatesPage";
 import { SettingsPage } from "./features/settings/pages/SettingsPage";
 import { TagsPage } from "./features/tags/pages/TagsPage";
+import { OfflineTransactionsPage } from "./features/offline/pages/OfflineTransactionsPage";
 export function App() {
     const { authSession, isRestoring } = useAuthSession();
     const location = useLocation();
@@ -46,6 +47,10 @@ export function App() {
                 <Route
                     element={<SettingsPage />}
                     path="/settings"
+                />
+                <Route
+                    element={<OfflineTransactionsPage />}
+                    path="/offline/transactions"
                 />
                 <Route
                     element={<TemplatesPage />}

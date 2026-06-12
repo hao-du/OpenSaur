@@ -17,6 +17,7 @@ type Props = {
   form: UseFormReturn<TemplateFormValues>;
   isEditMode: boolean;
   isOpen: boolean;
+  errorMessage?: string | null;
   isSubmitting: boolean;
   onClose: () => void;
   onSubmit: (values: TemplateFormValues) => Promise<void>;
@@ -32,6 +33,7 @@ export function TemplateFormDrawer({
   form,
   isEditMode,
   isOpen,
+  errorMessage,
   isSubmitting,
   onClose,
   onSubmit,
@@ -105,6 +107,7 @@ export function TemplateFormDrawer({
           id="template-form"
           noValidate
           onSubmit={form.handleSubmit(onSubmit)}
+          errorMessage={errorMessage ?? undefined}
         >
           <TemplateForm
             banks={banks}

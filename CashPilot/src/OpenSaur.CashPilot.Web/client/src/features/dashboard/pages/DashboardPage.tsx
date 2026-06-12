@@ -11,6 +11,7 @@ import { useBanksQuery } from "../../banks/hooks/useBanksQuery";
 import { useCounterpartiesQuery } from "../../counterparties/hooks/useCounterpartiesQuery";
 import { useTemplatesQuery } from "../../templates/hooks/useTemplatesQuery";
 import { TemplatePopulateActionCard } from "../components/TemplatePopulateActionCard";
+import { DashboardSyncCard } from "../components/DashboardSyncCard";
 import { TotalAmountByCurrencyCard } from "../components/TotalAmountByCurrencyCard";
 import { TotalActiveBankAccountCard } from "../components/TotalActiveBankAccountCard";
 import { IncomeOutcomeCard } from "../components/IncomeOutcomeCard";
@@ -40,6 +41,7 @@ export function DashboardPage() {
   return (
     <DefaultLayout title={t("dashboard.title")}>
       <Stack spacing={3}>
+        <DashboardSyncCard />
         <Paper elevation={0} sx={(theme) => ({ border: `1px solid ${alpha(theme.palette.primary.main, 0.12)}`, p: 3 })}>
           <Stack spacing={2}>
             <Grid container spacing={2} alignItems="stretch">
