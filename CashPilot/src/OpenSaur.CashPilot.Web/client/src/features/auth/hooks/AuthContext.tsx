@@ -5,7 +5,7 @@ import type { AuthSessionDto } from "../dtos/AuthSessionDto";
 import { buildLogoutUrl } from "../services/UriService";
 import { setClientAccessToken } from "../../../infrastructure/http/client";
 import { getConfig } from "../../../infrastructure/config/Config";
-import { isOfflineBuild } from "../../../infrastructure/config/buildMode";
+import { isOfflineMode } from "../../../infrastructure/config/buildMode";
 
 type AuthSessionContextValue = {
   accessToken: string | null;
@@ -45,7 +45,7 @@ export function AuthSessionProvider({ children }: PropsWithChildren) {
   }, [accessToken]);
 
   useEffect(() => {
-    if (isOfflineBuild) {
+    if (isOfflineMode()) {
       hasTriedRestore.current = true;
       setIsRestoring(false);
       return;
@@ -113,7 +113,7 @@ export function AuthSessionProvider({ children }: PropsWithChildren) {
   }, [authSession, clearSession, location.pathname, setSession]);
 
   const handleLogout = useCallback(() => {
-    if (isOfflineBuild) {
+    if (isOfflineMode()) {
       clearSession();
       return;
     }

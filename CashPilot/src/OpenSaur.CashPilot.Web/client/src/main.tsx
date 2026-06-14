@@ -7,7 +7,7 @@ import { AuthSessionProvider } from "./features/auth/hooks/AuthContext";
 import { SettingProvider } from "./features/settings/provider/SettingProvider";
 import { AppLocalizationProvider } from "./components/providers/AppLocalizationProvider";
 import { theme } from "./infrastructure/theme/theme";
-import { isOfflineBuild } from "./infrastructure/config/buildMode";
+import { setAppMode } from "./infrastructure/config/buildMode";
 import "./infrastructure/styles/transactionType.css";
 import "dayjs/locale/vi";
 import "dayjs/locale/en";
@@ -27,7 +27,8 @@ if ("serviceWorker" in navigator) {
 }
 
 async function loadRuntimeConfig() {
-    if (isOfflineBuild || window.__CASHPILOT_CONFIG__ != null) {
+    if (window.__CASHPILOT_CONFIG__ != null) {
+        setAppMode("online");
         return;
     }
 
@@ -41,7 +42,12 @@ async function loadRuntimeConfig() {
     });
 }
 
-await loadRuntimeConfig();
+try {
+    await loadRuntimeConfig();
+    setAppMode("online");
+} catch {
+    setAppMode("offline");
+}
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
     <BrowserRouter>

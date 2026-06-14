@@ -20,7 +20,7 @@ import { AppIcon } from "../icons/AppIcon";
 import { Avatar } from "./Avatar";
 import type { CurrentProfileDto } from "../../features/profile/dtos/CurrentProfileDto";
 import { useAuthSession } from "../../features/auth/hooks/AuthContext";
-import { isOfflineBuild } from "../../infrastructure/config/buildMode";
+import { isOfflineMode } from "../../infrastructure/config/buildMode";
 import { layoutStyles } from "../../infrastructure/theme/theme";
 import { useSettings } from "../../features/settings/provider/SettingProvider";
 
@@ -60,7 +60,7 @@ export function UserProfileMenu({ isLoading = false, profile }: UserProfileMenuP
     setAnchorElement(null);
   }
 
-  if (isOfflineBuild) {
+  if (isOfflineMode()) {
     return (
       <Box sx={{ alignItems: "center", display: "flex", minHeight: 40 }}>
         {isLoading ? (

@@ -82,3 +82,4 @@
 | Hide the user dropdown in offline mode | Done | The offline build now renders only the avatar area in the header, so the profile/settings/logout menu items are not shown. |
 | Move offline user-menu visibility to a prop | Done | `UserProfileMenu` now takes `showMenuItems`, and `Header` decides whether the menu actions render. |
 | Move offline user-menu visibility back into the organism | Done | The offline build check now lives inside `UserProfileMenu` again, and `Header` only passes composition props. |
+| Keep `/offline/transactions` reachable in online mode | Done | The online app now renders `OfflineTransactionsPage` directly for `/offline/transactions` so offline data can be reviewed and adjusted after recovery. |
