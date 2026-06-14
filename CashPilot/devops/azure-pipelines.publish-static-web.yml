@@ -13,7 +13,7 @@ parameters:
     default: CashPilot/src/OpenSaur.CashPilot.Web/wwwroot
   - name: frontendArtifactName
     type: string
-    default: frontend-wwwroot
+    default: frontend-wwwroot-offline
 
 stages:
   - stage: PublishStaticWeb

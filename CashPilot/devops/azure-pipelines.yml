@@ -38,6 +38,7 @@ stages:
       clientWorkingDirectory: $(clientWorkingDirectory)
       siteOutputDirectory: CashPilot/src/OpenSaur.CashPilot.Web/wwwroot
       frontendArtifactName: frontend-wwwroot
+      frontendOfflineArtifactName: frontend-wwwroot-offline
 
   - ${{ if or(eq(parameters.publishTarget, 'Publish container'), eq(parameters.publishTarget, 'Publish both')) }}:
       - template: azure-pipelines.artifact-to-dockerhub.yml
@@ -66,4 +67,4 @@ stages:
           storageAccountName: cashpilot
           storageContainerName: $web
           siteOutputDirectory: CashPilot/src/OpenSaur.CashPilot.Web/wwwroot
-          frontendArtifactName: frontend-wwwroot
+          frontendArtifactName: frontend-wwwroot-offline
