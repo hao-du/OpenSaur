@@ -5,10 +5,8 @@
   "type": "module",
   "scripts": {
     "build": "tsc -b && vite build",
-    "build-dev": "tsc -b && node ./scripts/build-vite.mjs --mode development",
-    "build-dev-offline": "tsc -b && node ./scripts/build-vite.mjs --mode development --offline-mode",
-    "build-prod": "tsc -b && node ./scripts/build-vite.mjs --mode production",
-    "build-prod-offline": "tsc -b && node ./scripts/build-vite.mjs --mode production --offline-mode",
+    "build-dev": "tsc -b && vite build --mode development",
+    "build-prod": "tsc -b && vite build --mode production",
     "dev": "vite",
     "preview": "vite preview"
   },

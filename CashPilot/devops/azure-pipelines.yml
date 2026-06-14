@@ -1,16 +1,6 @@
 trigger: none
 pr: none
 
-parameters:
-  - name: publishTarget
-    displayName: Publish target
-    type: string
-    default: Publish both
-    values:
-      - Publish static web
-      - Publish container
-      - Publish both
-
 pool:
   vmImage: ubuntu-latest
 
@@ -36,35 +26,21 @@ stages:
       nodeVersion: $(nodeVersion)
       webProject: $(webProject)
       clientWorkingDirectory: $(clientWorkingDirectory)
-      siteOutputDirectory: CashPilot/src/OpenSaur.CashPilot.Web/wwwroot
-      frontendArtifactName: frontend-wwwroot
-      frontendOfflineArtifactName: frontend-wwwroot-offline
 
-  - ${{ if or(eq(parameters.publishTarget, 'Publish container'), eq(parameters.publishTarget, 'Publish both')) }}:
-      - template: azure-pipelines.artifact-to-dockerhub.yml
-        parameters:
-          buildConfiguration: $(buildConfiguration)
-          dotnetSdkVersion: $(dotnetSdkVersion)
-          webProject: $(webProject)
-          clientWorkingDirectory: $(clientWorkingDirectory)
-          siteOutputDirectory: CashPilot/src/OpenSaur.CashPilot.Web/wwwroot
-          publishOutputDirectory: $(publishOutputDirectory)
-          dockerfileTemplate: $(dockerfileTemplate)
-          dockerHubServiceConnection: $(dockerHubServiceConnection)
-          dockerRepository: $(dockerRepository)
-          frontendArtifactName: frontend-wwwroot
+  - template: azure-pipelines.artifact-to-dockerhub.yml
+    parameters:
+      buildConfiguration: $(buildConfiguration)
+      dotnetSdkVersion: $(dotnetSdkVersion)
+      nodeVersion: $(nodeVersion)
+      webProject: $(webProject)
+      clientWorkingDirectory: $(clientWorkingDirectory)
+      publishOutputDirectory: $(publishOutputDirectory)
+      dockerfileTemplate: $(dockerfileTemplate)
+      dockerHubServiceConnection: $(dockerHubServiceConnection)
+      dockerRepository: $(dockerRepository)
 
-      - template: azure-pipelines.dockerhub-to-aca.yml
-        parameters:
-          azureServiceConnection: $(azureServiceConnection)
-          containerAppResourceGroup: $(containerAppResourceGroup)
-          containerAppName: $(containerAppName)
-
-  - ${{ if or(eq(parameters.publishTarget, 'Publish static web'), eq(parameters.publishTarget, 'Publish both')) }}:
-      - template: azure-pipelines.publish-static-web.yml
-        parameters:
-          azureServiceConnection: $(azureServiceConnection)
-          storageAccountName: cashpilot
-          storageContainerName: $web
-          siteOutputDirectory: CashPilot/src/OpenSaur.CashPilot.Web/wwwroot
-          frontendArtifactName: frontend-wwwroot-offline
+  - template: azure-pipelines.dockerhub-to-aca.yml
+    parameters:
+      azureServiceConnection: $(azureServiceConnection)
+      containerAppResourceGroup: $(containerAppResourceGroup)
+      containerAppName: $(containerAppName)

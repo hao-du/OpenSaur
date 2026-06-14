@@ -69,19 +69,3 @@
 | Let shared drawer body own the form wrapper | Done | Extended `DrawerBody` to accept form semantics directly so drawers can render the body as the `<form>` element instead of wrapping another Stack around it. |
 | Make shared drawer footer accept action lists | Done | Changed `DrawerFooter` to accept an `actions` array so form drawers can pass button lists explicitly and keep the footer contract consistent. |
 | Restore footer submit wiring for bank drawer | Done | Added a form id to `DrawerBody` and linked the footer action to it so the fixed bottom button submits the body form again. |
-| Add frontend build modes for online and offline deployments | Done | Switch the client between the online auth app and the offline-local-storage app at build time, and add dedicated build scripts for each mode. |
-| Remove the backend offline probe and simplify network status tracking | Done | Replaced the `/api/offline-probe` HEAD check with browser online/offline events and deleted the unused server endpoint. |
-| Add a pipeline to publish the offline frontend bundle to Azure Blob Storage | Done | Build the offline FE bundle and sync the generated static files to the `$web` container through Azure DevOps. |
-| Add a dev offline build stage to the main Azure pipeline | Done | Added `build-dev-offline` as an optional final or independent stage in `azure-pipelines.yml` through a dedicated stage template. |
-| Merge the offline Blob Storage publish step into the static web pipeline | Done | The offline build template now builds `build-dev-offline` and syncs the generated bundle to Azure Blob Storage `$web` in the same stage. |
-| Add a publish-target dropdown to the main Azure pipeline | Done | The main pipeline now uses a single `publishTarget` selector with `static-web`, `container`, and `both`, while build FE/BE remains the required first stage. |
-| Reuse the Build stage frontend artifact in publish stages | Done | The Build stage now publishes the built `wwwroot` folder, and both the container and static-web publish jobs download that artifact instead of rebuilding the frontend. |
-| Split the build stage into online and offline frontend artifacts | Done | The Build stage now publishes both `frontend-wwwroot` and `frontend-wwwroot-offline` so the container path keeps the online app while Blob Storage receives the offline bundle. |
-| Remove unused offline build-mode exports and aliases | Done | Collapsed the build-mode helper to a single exported flag and removed the redundant local alias in the app route switch. |
-| Remove the unused network status hook | Done | Deleted `useNetworkStatus` and folded the remaining cache/sync flows to rely on direct fetch fallback or explicit sync actions. |
-| Hide the user dropdown in offline mode | Done | The offline build now renders only the avatar area in the header, so the profile/settings/logout menu items are not shown. |
-| Move offline user-menu visibility to a prop | Done | `UserProfileMenu` now takes `showMenuItems`, and `Header` decides whether the menu actions render. |
-| Move offline user-menu visibility back into the organism | Done | The offline build check now lives inside `UserProfileMenu` again, and `Header` only passes composition props. |
-| Keep `/offline/transactions` reachable in online mode | Done | The online app now renders `OfflineTransactionsPage` directly for `/offline/transactions` so offline data can be reviewed and adjusted after recovery. |
-| Restore the offline recovery hook module | Done | Re-added `useOfflineRecovery` so `App.tsx` can compile and the offline build can probe the online origin for recovery. |
-| Remove the offline recovery hook and clean `App.tsx` | Done | Deleted `useOfflineRecovery` and removed its import/call from `App.tsx` so the app stays on the explicit build-mode route split. |

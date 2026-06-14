@@ -5,7 +5,7 @@ import type { AuthSessionDto } from "../dtos/AuthSessionDto";
 import { buildLogoutUrl } from "../services/UriService";
 import { setClientAccessToken } from "../../../infrastructure/http/client";
 import { getConfig } from "../../../infrastructure/config/Config";
-import { isOfflineMode } from "../../../infrastructure/config/buildMode";
+import { useNetworkStatus } from "../../../infrastructure/offline/useNetworkStatus";
 
 type AuthSessionContextValue = {
   accessToken: string | null;
@@ -22,6 +22,7 @@ const refreshBeforeExpiryMs = 2 * 60 * 1000;
 
 export function AuthSessionProvider({ children }: PropsWithChildren) {
   const location = useLocation();
+  const { isOnline } = useNetworkStatus();
   const [authSession, setAuthSession] = useState<AuthSessionDto | null>(null);
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [idToken, setIdToken] = useState<string | null>(null);
@@ -45,15 +46,13 @@ export function AuthSessionProvider({ children }: PropsWithChildren) {
   }, [accessToken]);
 
   useEffect(() => {
-    if (isOfflineMode()) {
-      hasTriedRestore.current = true;
+    if (location.pathname === "/auth/callback") {
+      hasTriedRestore.current = false;
       setIsRestoring(false);
       return;
     }
 
-    if (location.pathname === "/auth/callback") {
-      hasTriedRestore.current = false;
-      setIsRestoring(false);
+    if (isOnline === false) {
       return;
     }
 
@@ -110,17 +109,12 @@ export function AuthSessionProvider({ children }: PropsWithChildren) {
         window.clearTimeout(timeoutId);
       }
     };
-  }, [authSession, clearSession, location.pathname, setSession]);
+  }, [authSession, clearSession, isOnline, location.pathname, setSession]);
 
   const handleLogout = useCallback(() => {
-    if (isOfflineMode()) {
-      clearSession();
-      return;
-    }
-
     const currentSession = authSession;
     window.location.assign(buildLogoutUrl(getConfig(), currentSession?.idToken));
-  }, [authSession, clearSession]);
+  }, [authSession]);
 
   const contextValue = useMemo<AuthSessionContextValue>(() => ({
     accessToken,

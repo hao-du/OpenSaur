@@ -9,15 +9,6 @@ parameters:
     type: string
   - name: clientWorkingDirectory
     type: string
-  - name: siteOutputDirectory
-    type: string
-    default: CashPilot/src/OpenSaur.CashPilot.Web/wwwroot
-  - name: frontendArtifactName
-    type: string
-    default: frontend-wwwroot
-  - name: frontendOfflineArtifactName
-    type: string
-    default: frontend-wwwroot-offline
 
 stages:
   - stage: Build
@@ -66,36 +57,3 @@ stages:
               command: custom
               workingDir: ${{ parameters.clientWorkingDirectory }}
               customCommand: run build
-
-          - task: PublishPipelineArtifact@1
-            displayName: Publish frontend build artifact
-            inputs:
-              targetPath: ${{ parameters.siteOutputDirectory }}
-              artifact: ${{ parameters.frontendArtifactName }}
-
-      - job: FrontendOfflineBuild
-        displayName: Build Offline Frontend
-        steps:
-          - task: UseNode@1
-            displayName: Install Node.js
-            inputs:
-              version: ${{ parameters.nodeVersion }}
-
-          - task: Npm@1
-            displayName: Install frontend dependencies
-            inputs:
-              command: install
-              workingDir: ${{ parameters.clientWorkingDirectory }}
-
-          - task: Npm@1
-            displayName: Build offline frontend
-            inputs:
-              command: custom
-              workingDir: ${{ parameters.clientWorkingDirectory }}
-              customCommand: run build-prod-offline
-
-          - task: PublishPipelineArtifact@1
-            displayName: Publish offline frontend build artifact
-            inputs:
-              targetPath: ${{ parameters.siteOutputDirectory }}
-              artifact: ${{ parameters.frontendOfflineArtifactName }}
