@@ -76,6 +76,7 @@
 | Merge the offline Blob Storage publish step into the static web pipeline | Done | The offline build template now builds `build-dev-offline` and syncs the generated bundle to Azure Blob Storage `$web` in the same stage. |
 | Add a publish-target dropdown to the main Azure pipeline | Done | The main pipeline now uses a single `publishTarget` selector with `static-web`, `container`, and `both`, while build FE/BE remains the required first stage. |
 | Reuse the Build stage frontend artifact in publish stages | Done | The Build stage now publishes the built `wwwroot` folder, and both the container and static-web publish jobs download that artifact instead of rebuilding the frontend. |
+| Split the build stage into online and offline frontend artifacts | Done | The Build stage now publishes both `frontend-wwwroot` and `frontend-wwwroot-offline` so the container path keeps the online app while Blob Storage receives the offline bundle. |
 | Remove unused offline build-mode exports and aliases | Done | Collapsed the build-mode helper to a single exported flag and removed the redundant local alias in the app route switch. |
 | Remove the unused network status hook | Done | Deleted `useNetworkStatus` and folded the remaining cache/sync flows to rely on direct fetch fallback or explicit sync actions. |
 | Hide the user dropdown in offline mode | Done | The offline build now renders only the avatar area in the header, so the profile/settings/logout menu items are not shown. |
