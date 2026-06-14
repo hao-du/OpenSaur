@@ -3,12 +3,13 @@ pr: none
 
 parameters:
   - name: publishTarget
+    displayName: Publish target
     type: string
-    default: both
+    default: Publish both
     values:
-      - static-web
-      - container
-      - both
+      - Publish static web
+      - Publish container
+      - Publish both
 
 pool:
   vmImage: ubuntu-latest
@@ -37,7 +38,7 @@ stages:
       clientWorkingDirectory: $(clientWorkingDirectory)
       frontendArtifactName: frontend-wwwroot
 
-  - ${{ if or(eq(parameters.publishTarget, 'container'), eq(parameters.publishTarget, 'both')) }}:
+  - ${{ if or(eq(parameters.publishTarget, 'Publish container'), eq(parameters.publishTarget, 'Publish both')) }}:
       - template: azure-pipelines.artifact-to-dockerhub.yml
         parameters:
           buildConfiguration: $(buildConfiguration)
@@ -56,7 +57,7 @@ stages:
           containerAppResourceGroup: $(containerAppResourceGroup)
           containerAppName: $(containerAppName)
 
-  - ${{ if or(eq(parameters.publishTarget, 'static-web'), eq(parameters.publishTarget, 'both')) }}:
+  - ${{ if or(eq(parameters.publishTarget, 'Publish static web'), eq(parameters.publishTarget, 'Publish both')) }}:
       - template: azure-pipelines.publish-static-web.yml
         parameters:
           azureServiceConnection: $(azureServiceConnection)
