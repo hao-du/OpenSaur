@@ -1,6 +1,14 @@
 trigger: none
 pr: none
 
+parameters:
+  - name: offlineBuildMode
+    type: string
+    default: last
+    values:
+      - last
+      - independent
+
 pool:
   vmImage: ubuntu-latest
 
@@ -44,3 +52,12 @@ stages:
       azureServiceConnection: $(azureServiceConnection)
       containerAppResourceGroup: $(containerAppResourceGroup)
       containerAppName: $(containerAppName)
+
+  - template: azure-pipelines.publish-static-web.yml
+    parameters:
+      azureServiceConnection: $(azureServiceConnection)
+      storageAccountName: cashpilot
+      storageContainerName: $web
+      nodeVersion: $(nodeVersion)
+      clientWorkingDirectory: $(clientWorkingDirectory)
+      offlineBuildMode: ${{ parameters.offlineBuildMode }}

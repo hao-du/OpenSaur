@@ -20,6 +20,7 @@ import { AppIcon } from "../icons/AppIcon";
 import { Avatar } from "./Avatar";
 import type { CurrentProfileDto } from "../../features/profile/dtos/CurrentProfileDto";
 import { useAuthSession } from "../../features/auth/hooks/AuthContext";
+import { isOfflineBuild } from "../../infrastructure/config/buildMode";
 import { layoutStyles } from "../../infrastructure/theme/theme";
 import { useSettings } from "../../features/settings/provider/SettingProvider";
 
@@ -57,6 +58,18 @@ export function UserProfileMenu({ isLoading = false, profile }: UserProfileMenuP
 
   function handleCloseMenu() {
     setAnchorElement(null);
+  }
+
+  if (isOfflineBuild) {
+    return (
+      <Box sx={{ alignItems: "center", display: "flex", minHeight: 40 }}>
+        {isLoading ? (
+          <Skeleton height={40} variant="circular" width={40} />
+        ) : (
+          <Avatar initials={initials} />
+        )}
+      </Box>
+    );
   }
 
   return (

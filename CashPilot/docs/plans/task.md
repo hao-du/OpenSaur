@@ -69,3 +69,13 @@
 | Let shared drawer body own the form wrapper | Done | Extended `DrawerBody` to accept form semantics directly so drawers can render the body as the `<form>` element instead of wrapping another Stack around it. |
 | Make shared drawer footer accept action lists | Done | Changed `DrawerFooter` to accept an `actions` array so form drawers can pass button lists explicitly and keep the footer contract consistent. |
 | Restore footer submit wiring for bank drawer | Done | Added a form id to `DrawerBody` and linked the footer action to it so the fixed bottom button submits the body form again. |
+| Add frontend build modes for online and offline deployments | Done | Switch the client between the online auth app and the offline-local-storage app at build time, and add dedicated build scripts for each mode. |
+| Remove the backend offline probe and simplify network status tracking | Done | Replaced the `/api/offline-probe` HEAD check with browser online/offline events and deleted the unused server endpoint. |
+| Add a pipeline to publish the offline frontend bundle to Azure Blob Storage | Done | Build the offline FE bundle and sync the generated static files to the `$web` container through Azure DevOps. |
+| Add a dev offline build stage to the main Azure pipeline | Done | Added `build-dev-offline` as an optional final or independent stage in `azure-pipelines.yml` through a dedicated stage template. |
+| Merge the offline Blob Storage publish step into the static web pipeline | Done | The offline build template now builds `build-dev-offline` and syncs the generated bundle to Azure Blob Storage `$web` in the same stage. |
+| Remove unused offline build-mode exports and aliases | Done | Collapsed the build-mode helper to a single exported flag and removed the redundant local alias in the app route switch. |
+| Remove the unused network status hook | Done | Deleted `useNetworkStatus` and folded the remaining cache/sync flows to rely on direct fetch fallback or explicit sync actions. |
+| Hide the user dropdown in offline mode | Done | The offline build now renders only the avatar area in the header, so the profile/settings/logout menu items are not shown. |
+| Move offline user-menu visibility to a prop | Done | `UserProfileMenu` now takes `showMenuItems`, and `Header` decides whether the menu actions render. |
+| Move offline user-menu visibility back into the organism | Done | The offline build check now lives inside `UserProfileMenu` again, and `Header` only passes composition props. |

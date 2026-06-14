@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from "react";
 import { Alert, Grid, Menu, MenuItem, Paper, Stack, Typography } from "@mui/material";
 import { Banknote, Landmark, Repeat, Users } from "lucide-react";
 import { useForm } from "react-hook-form";
-import { useNavigate } from "react-router-dom";
 import { ActionButton } from "../../../components/atoms/ActionButton";
 import { ConfirmModal } from "../../../components/atoms/ConfirmModal";
 import { DefaultLayout } from "../../../components/layouts/DefaultLayout";
@@ -28,7 +27,6 @@ import { OfflineBankAccountFormDrawer } from "../components/OfflineBankAccountFo
 import { OfflineTransferFormDrawer } from "../components/OfflineTransferFormDrawer";
 import { OfflineExchangeFormDrawer } from "../components/OfflineExchangeFormDrawer";
 import { OfflineTemplatePopulateDrawer } from "../components/populate/OfflineTemplatePopulateDrawer";
-import { useNetworkStatus } from "../../../infrastructure/offline/useNetworkStatus";
 
 type TemplatePickerValues = {
   templateId: string;
@@ -53,8 +51,6 @@ function typeColor(templateType: number) {
 export function OfflineTransactionsPage() {
   const { formatAmount, formatDate, t } = useSettings();
   const { data: currentProfile } = useCurrentProfileQuery();
-  const navigate = useNavigate();
-  const { isOnline } = useNetworkStatus();
   const [refreshToken, setRefreshToken] = useState(0);
   const [page, setPage] = useState(1);
   const [error, setError] = useState<string | null>(null);
@@ -213,36 +209,6 @@ export function OfflineTransactionsPage() {
 
   return (
     <DefaultLayout
-      beforeTitle={isOnline === true ? (
-        <Paper
-          elevation={0}
-          sx={{
-            border: "1px solid rgba(33, 150, 243, 0.22)",
-            backgroundColor: "rgba(33, 150, 243, 0.06)",
-            px: 2,
-            py: 1.5,
-          }}
-        >
-          <Stack direction={{ xs: "column", sm: "row" }} justifyContent="space-between" spacing={1.5} alignItems={{ xs: "stretch", sm: "center" }}>
-            <Stack spacing={0.25}>
-              <Typography sx={{ fontWeight: 700 }} variant="body1">
-                {t("offline.backOnlineTitle")}
-              </Typography>
-              <Typography color="text.secondary" variant="body2">
-                {t("offline.backOnlineDescription")}
-              </Typography>
-            </Stack>
-            <ActionButton
-              onClick={() => {
-                navigate("/");
-              }}
-              variant="contained"
-            >
-              {t("action.backToDashboard")}
-            </ActionButton>
-          </Stack>
-        </Paper>
-      ) : null}
       headerActions={headerActions}
       title={t("offline.transactionsTitle")}
     >

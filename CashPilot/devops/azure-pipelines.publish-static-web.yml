@@ -1,0 +1,114 @@
+parameters:
+  - name: azureServiceConnection
+    type: string
+    default: Azure Service Connection
+  - name: storageAccountName
+    type: string
+    default: cashpilot
+  - name: storageContainerName
+    type: string
+    default: $web
+  - name: nodeVersion
+    type: string
+    default: 20.x
+  - name: clientWorkingDirectory
+    type: string
+    default: CashPilot/src/OpenSaur.CashPilot.Web/client
+  - name: siteOutputDirectory
+    type: string
+    default: CashPilot/src/OpenSaur.CashPilot.Web/wwwroot
+  - name: offlineBuildMode
+    type: string
+    default: last
+
+stages:
+  - ${{ if eq(parameters.offlineBuildMode, 'independent') }}:
+      - stage: PublishStaticWeb
+        displayName: Publish Static Web
+        dependsOn: []
+        jobs:
+          - job: PublishStaticWeb
+            displayName: Build And Publish Static Web Bundle
+            steps:
+              - checkout: self
+                clean: true
+
+              - task: UseNode@1
+                displayName: Install Node.js
+                inputs:
+                  version: ${{ parameters.nodeVersion }}
+
+              - task: Npm@1
+                displayName: Install frontend dependencies
+                inputs:
+                  command: install
+                  workingDir: ${{ parameters.clientWorkingDirectory }}
+
+              - task: Npm@1
+                displayName: Build offline frontend
+                inputs:
+                  command: custom
+                  workingDir: ${{ parameters.clientWorkingDirectory }}
+                  customCommand: run build-dev-offline
+
+              - task: AzureCLI@2
+                displayName: Sync static site to $web
+                inputs:
+                  azureSubscription: ${{ parameters.azureServiceConnection }}
+                  scriptType: bash
+                  scriptLocation: inlineScript
+                  inlineScript: |
+                    set -euo pipefail
+
+                    az storage blob sync \
+                      --account-name "${{ parameters.storageAccountName }}" \
+                      --auth-mode login \
+                      --container '${{ parameters.storageContainerName }}' \
+                      --delete-destination true \
+                      --source "${{ parameters.siteOutputDirectory }}"
+
+  - ${{ if ne(parameters.offlineBuildMode, 'independent') }}:
+      - stage: PublishStaticWeb
+        displayName: Publish Static Web
+        dependsOn: Build
+        condition: succeeded()
+        jobs:
+          - job: PublishStaticWeb
+            displayName: Build And Publish Static Web Bundle
+            steps:
+              - checkout: self
+                clean: true
+
+              - task: UseNode@1
+                displayName: Install Node.js
+                inputs:
+                  version: ${{ parameters.nodeVersion }}
+
+              - task: Npm@1
+                displayName: Install frontend dependencies
+                inputs:
+                  command: install
+                  workingDir: ${{ parameters.clientWorkingDirectory }}
+
+              - task: Npm@1
+                displayName: Build offline frontend
+                inputs:
+                  command: custom
+                  workingDir: ${{ parameters.clientWorkingDirectory }}
+                  customCommand: run build-dev-offline
+
+              - task: AzureCLI@2
+                displayName: Sync static site to $web
+                inputs:
+                  azureSubscription: ${{ parameters.azureServiceConnection }}
+                  scriptType: bash
+                  scriptLocation: inlineScript
+                  inlineScript: |
+                    set -euo pipefail
+
+                    az storage blob sync \
+                      --account-name "${{ parameters.storageAccountName }}" \
+                      --auth-mode login \
+                      --container '${{ parameters.storageContainerName }}' \
+                      --delete-destination true \
+                      --source "${{ parameters.siteOutputDirectory }}"

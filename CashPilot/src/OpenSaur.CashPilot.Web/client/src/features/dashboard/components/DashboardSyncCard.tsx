@@ -3,7 +3,6 @@ import { Alert, Box, LinearProgress, Paper, Stack, Typography } from "@mui/mater
 import { ArrowDownUp } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { ActionButton } from "../../../components/atoms/ActionButton";
-import { useNetworkStatus } from "../../../infrastructure/offline/useNetworkStatus";
 import { loadOfflineMetadataSnapshot } from "../../offline/storages/offlineMetadataStore";
 import { loadOfflineTransactions } from "../../offline/storages/offlineTransactionsStore";
 import { syncOfflineMetadata, syncOfflineTransactions } from "../../offline/services/offlineSyncService";
@@ -12,7 +11,6 @@ import { useSettings } from "../../settings/provider/SettingProvider";
 export function DashboardSyncCard() {
   const navigate = useNavigate();
   const { t } = useSettings();
-  const { isOnline } = useNetworkStatus();
   const [isSyncing, setIsSyncing] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [lastSyncedAt, setLastSyncedAt] = useState<string | null>(null);
@@ -73,7 +71,7 @@ export function DashboardSyncCard() {
 
           <Stack direction="row" spacing={1} flexWrap="wrap">
             <ActionButton
-              disabled={isOnline !== true || isSyncing}
+              disabled={isSyncing}
               endIcon={<ArrowDownUp size={16} />}
               onClick={() => {
                 void handleSync();

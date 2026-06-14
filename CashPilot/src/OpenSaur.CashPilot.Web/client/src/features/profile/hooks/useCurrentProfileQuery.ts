@@ -1,18 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { getCurrentProfile } from "../api/profileApi";
 import { loadCurrentProfile, saveCurrentProfile } from "../storages/currentProfileStore";
-import { useNetworkStatus } from "../../../infrastructure/offline/useNetworkStatus";
 
 export function useCurrentProfileQuery() {
-  const { isOnline } = useNetworkStatus();
-
   return useQuery({
     queryFn: async () => {
       const cachedProfile = loadCurrentProfile();
-
-      if (isOnline !== true && cachedProfile != null) {
-        return cachedProfile;
-      }
 
       try {
         const profile = await getCurrentProfile();
