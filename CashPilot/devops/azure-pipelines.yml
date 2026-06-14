@@ -2,12 +2,13 @@ trigger: none
 pr: none
 
 parameters:
-  - name: offlineBuildMode
+  - name: publishTarget
     type: string
-    default: last
+    default: both
     values:
-      - last
-      - independent
+      - static-web
+      - container
+      - both
 
 pool:
   vmImage: ubuntu-latest
@@ -34,30 +35,31 @@ stages:
       nodeVersion: $(nodeVersion)
       webProject: $(webProject)
       clientWorkingDirectory: $(clientWorkingDirectory)
+      frontendArtifactName: frontend-wwwroot
 
-  - template: azure-pipelines.artifact-to-dockerhub.yml
-    parameters:
-      buildConfiguration: $(buildConfiguration)
-      dotnetSdkVersion: $(dotnetSdkVersion)
-      nodeVersion: $(nodeVersion)
-      webProject: $(webProject)
-      clientWorkingDirectory: $(clientWorkingDirectory)
-      publishOutputDirectory: $(publishOutputDirectory)
-      dockerfileTemplate: $(dockerfileTemplate)
-      dockerHubServiceConnection: $(dockerHubServiceConnection)
-      dockerRepository: $(dockerRepository)
+  - ${{ if or(eq(parameters.publishTarget, 'container'), eq(parameters.publishTarget, 'both')) }}:
+      - template: azure-pipelines.artifact-to-dockerhub.yml
+        parameters:
+          buildConfiguration: $(buildConfiguration)
+          dotnetSdkVersion: $(dotnetSdkVersion)
+          webProject: $(webProject)
+          clientWorkingDirectory: $(clientWorkingDirectory)
+          publishOutputDirectory: $(publishOutputDirectory)
+          dockerfileTemplate: $(dockerfileTemplate)
+          dockerHubServiceConnection: $(dockerHubServiceConnection)
+          dockerRepository: $(dockerRepository)
+          frontendArtifactName: frontend-wwwroot
 
-  - template: azure-pipelines.dockerhub-to-aca.yml
-    parameters:
-      azureServiceConnection: $(azureServiceConnection)
-      containerAppResourceGroup: $(containerAppResourceGroup)
-      containerAppName: $(containerAppName)
+      - template: azure-pipelines.dockerhub-to-aca.yml
+        parameters:
+          azureServiceConnection: $(azureServiceConnection)
+          containerAppResourceGroup: $(containerAppResourceGroup)
+          containerAppName: $(containerAppName)
 
-  - template: azure-pipelines.publish-static-web.yml
-    parameters:
-      azureServiceConnection: $(azureServiceConnection)
-      storageAccountName: cashpilot
-      storageContainerName: $web
-      nodeVersion: $(nodeVersion)
-      clientWorkingDirectory: $(clientWorkingDirectory)
-      offlineBuildMode: ${{ parameters.offlineBuildMode }}
+  - ${{ if or(eq(parameters.publishTarget, 'static-web'), eq(parameters.publishTarget, 'both')) }}:
+      - template: azure-pipelines.publish-static-web.yml
+        parameters:
+          azureServiceConnection: $(azureServiceConnection)
+          storageAccountName: cashpilot
+          storageContainerName: $web
+          frontendArtifactName: frontend-wwwroot

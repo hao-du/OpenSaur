@@ -9,6 +9,9 @@ parameters:
     type: string
   - name: clientWorkingDirectory
     type: string
+  - name: frontendArtifactName
+    type: string
+    default: frontend-wwwroot
 
 stages:
   - stage: Build
@@ -57,3 +60,9 @@ stages:
               command: custom
               workingDir: ${{ parameters.clientWorkingDirectory }}
               customCommand: run build
+
+          - task: PublishPipelineArtifact@1
+            displayName: Publish frontend build artifact
+            inputs:
+              targetPath: ${{ parameters.clientWorkingDirectory }}/wwwroot
+              artifact: ${{ parameters.frontendArtifactName }}

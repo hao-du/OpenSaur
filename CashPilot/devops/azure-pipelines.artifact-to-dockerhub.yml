@@ -3,8 +3,6 @@ parameters:
     type: string
   - name: dotnetSdkVersion
     type: string
-  - name: nodeVersion
-    type: string
   - name: webProject
     type: string
   - name: clientWorkingDirectory
@@ -17,6 +15,9 @@ parameters:
     type: string
   - name: dockerRepository
     type: string
+  - name: frontendArtifactName
+    type: string
+    default: frontend-wwwroot
 
 stages:
   - stage: PublishDocker
@@ -36,23 +37,11 @@ stages:
               packageType: sdk
               version: ${{ parameters.dotnetSdkVersion }}
 
-          - task: UseNode@1
-            displayName: Install Node.js
+          - task: DownloadPipelineArtifact@2
+            displayName: Download frontend build artifact
             inputs:
-              version: ${{ parameters.nodeVersion }}
-
-          - task: Npm@1
-            displayName: Install frontend dependencies
-            inputs:
-              command: install
-              workingDir: ${{ parameters.clientWorkingDirectory }}
-
-          - task: Npm@1
-            displayName: Build frontend
-            inputs:
-              command: custom
-              workingDir: ${{ parameters.clientWorkingDirectory }}
-              customCommand: run build
+              artifact: ${{ parameters.frontendArtifactName }}
+              targetPath: ${{ parameters.clientWorkingDirectory }}/wwwroot
 
           - task: DotNetCoreCLI@2
             displayName: Restore web application dependencies
