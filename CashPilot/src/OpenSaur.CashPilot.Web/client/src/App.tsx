@@ -13,12 +13,10 @@ import { SettingsPage } from "./features/settings/pages/SettingsPage";
 import { TagsPage } from "./features/tags/pages/TagsPage";
 import { OfflineTransactionsPage } from "./features/offline/pages/OfflineTransactionsPage";
 import { isOfflineMode } from "./infrastructure/config/buildMode";
-import { useOfflineRecovery } from "./infrastructure/offline/useOfflineRecovery";
 export function App() {
     const { authSession, isRestoring } = useAuthSession();
     const location = useLocation();
     const returnTo = `${location.pathname}${location.search}${location.hash}`;
-    useOfflineRecovery(isOfflineMode());
 
     if (isOfflineMode()) {
         return (

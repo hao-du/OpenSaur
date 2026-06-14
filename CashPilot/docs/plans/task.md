@@ -83,3 +83,5 @@
 | Move offline user-menu visibility to a prop | Done | `UserProfileMenu` now takes `showMenuItems`, and `Header` decides whether the menu actions render. |
 | Move offline user-menu visibility back into the organism | Done | The offline build check now lives inside `UserProfileMenu` again, and `Header` only passes composition props. |
 | Keep `/offline/transactions` reachable in online mode | Done | The online app now renders `OfflineTransactionsPage` directly for `/offline/transactions` so offline data can be reviewed and adjusted after recovery. |
+| Restore the offline recovery hook module | Done | Re-added `useOfflineRecovery` so `App.tsx` can compile and the offline build can probe the online origin for recovery. |
+| Remove the offline recovery hook and clean `App.tsx` | Done | Deleted `useOfflineRecovery` and removed its import/call from `App.tsx` so the app stays on the explicit build-mode route split. |
