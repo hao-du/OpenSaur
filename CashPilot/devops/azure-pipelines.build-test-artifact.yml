@@ -9,6 +9,9 @@ parameters:
     type: string
   - name: clientWorkingDirectory
     type: string
+  - name: siteOutputDirectory
+    type: string
+    default: CashPilot/src/OpenSaur.CashPilot.Web/wwwroot
   - name: frontendArtifactName
     type: string
     default: frontend-wwwroot
@@ -64,5 +67,5 @@ stages:
           - task: PublishPipelineArtifact@1
             displayName: Publish frontend build artifact
             inputs:
-              targetPath: ${{ parameters.clientWorkingDirectory }}/wwwroot
+              targetPath: ${{ parameters.siteOutputDirectory }}
               artifact: ${{ parameters.frontendArtifactName }}

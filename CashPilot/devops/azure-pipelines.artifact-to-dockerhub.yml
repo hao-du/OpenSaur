@@ -7,6 +7,9 @@ parameters:
     type: string
   - name: clientWorkingDirectory
     type: string
+  - name: siteOutputDirectory
+    type: string
+    default: CashPilot/src/OpenSaur.CashPilot.Web/wwwroot
   - name: publishOutputDirectory
     type: string
   - name: dockerfileTemplate
@@ -41,7 +44,7 @@ stages:
             displayName: Download frontend build artifact
             inputs:
               artifact: ${{ parameters.frontendArtifactName }}
-              targetPath: ${{ parameters.clientWorkingDirectory }}/wwwroot
+              targetPath: ${{ parameters.siteOutputDirectory }}
 
           - task: DotNetCoreCLI@2
             displayName: Restore web application dependencies

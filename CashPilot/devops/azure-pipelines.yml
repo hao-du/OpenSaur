@@ -36,6 +36,7 @@ stages:
       nodeVersion: $(nodeVersion)
       webProject: $(webProject)
       clientWorkingDirectory: $(clientWorkingDirectory)
+      siteOutputDirectory: CashPilot/src/OpenSaur.CashPilot.Web/wwwroot
       frontendArtifactName: frontend-wwwroot
 
   - ${{ if or(eq(parameters.publishTarget, 'Publish container'), eq(parameters.publishTarget, 'Publish both')) }}:
@@ -45,6 +46,7 @@ stages:
           dotnetSdkVersion: $(dotnetSdkVersion)
           webProject: $(webProject)
           clientWorkingDirectory: $(clientWorkingDirectory)
+          siteOutputDirectory: CashPilot/src/OpenSaur.CashPilot.Web/wwwroot
           publishOutputDirectory: $(publishOutputDirectory)
           dockerfileTemplate: $(dockerfileTemplate)
           dockerHubServiceConnection: $(dockerHubServiceConnection)
@@ -63,4 +65,5 @@ stages:
           azureServiceConnection: $(azureServiceConnection)
           storageAccountName: cashpilot
           storageContainerName: $web
+          siteOutputDirectory: CashPilot/src/OpenSaur.CashPilot.Web/wwwroot
           frontendArtifactName: frontend-wwwroot
