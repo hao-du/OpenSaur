@@ -49,7 +49,7 @@ stages:
                 inputs:
                   command: custom
                   workingDir: ${{ parameters.clientWorkingDirectory }}
-                  customCommand: run build-dev-offline
+                  customCommand: run build-prod-offline
 
               - task: AzureCLI@2
                 displayName: Sync static site to $web
@@ -95,7 +95,7 @@ stages:
                 inputs:
                   command: custom
                   workingDir: ${{ parameters.clientWorkingDirectory }}
-                  customCommand: run build-dev-offline
+                  customCommand: run build-prod-offline
 
               - task: AzureCLI@2
                 displayName: Sync static site to $web
