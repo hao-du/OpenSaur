@@ -29,6 +29,7 @@ public static class GetTransactionDashboardHandler
         var activeBankRows = await dbContext.BankAccounts
             .AsNoTracking()
             .Where(x => x.IsActive
+                && x.Status == BankAccountStatus.Active && x.Status == BankAccountStatus.Active
                 && x.BankAccountTransactions.Any(bat => bat.IsActive && bat.Transaction.IsActive && bat.Transaction.OwnerId == currentUserId))
             .Select(x => new
             {
