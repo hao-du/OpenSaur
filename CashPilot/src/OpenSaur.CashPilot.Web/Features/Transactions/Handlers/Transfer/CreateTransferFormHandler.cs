@@ -20,7 +20,7 @@ public static class CreateTransferFormHandler
     private static readonly CreateTransferFormRequestValidator Validator = new();
 
     public static async Task<Results<Ok<Guid>, BadRequest<ProblemDetails>, ValidationProblem>> HandleAsync(
-        SaveTransferFormRequest request,
+        CreateTransferFormRequest request,
         ClaimsPrincipal user,
         ITagService tagService,
         CashPilotDbContext dbContext,
@@ -71,7 +71,7 @@ public static class CreateTransferFormHandler
             TransactionDate = request.TransactionDate,
             TransferType = (TransferType)request.TransferType,
             Status = (TransferStatus)request.Status,
-            IsActive = request.IsActive,
+            IsActive = true,
             TransactionItems = request.TransactionItems.ToTransactionItems()
         };
         transfer.Tags = TagTermCodec.Encode(request.Tags ?? []);

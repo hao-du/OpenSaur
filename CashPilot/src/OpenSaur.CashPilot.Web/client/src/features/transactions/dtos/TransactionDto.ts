@@ -51,6 +51,26 @@ export type SaveBankAccountDetailRequestDto = {
   isActive: boolean;
 };
 
+export type CreateBankAccountFormRequestDto = {
+  bankId: string;
+  currencyId: string;
+  amount: number;
+  interestRate?: number;
+  startDate: string;
+  maturityDate?: string;
+  status: number;
+  accountNumber?: string;
+  description?: string;
+  tags?: string[] | null;
+  details: SaveBankAccountDetailRequestDto[];
+  transactionItems: TransactionItemDto[];
+};
+
+export type UpdateBankAccountFormRequestDto = CreateBankAccountFormRequestDto & {
+  id: string;
+  isActive: boolean;
+};
+
 export type SaveBankAccountFormRequestDto = {
   id?: string;
   bankId: string;
@@ -76,6 +96,25 @@ export type SaveTransferDetailRequestDto = {
   transactionDate: string;
   description?: string;
   tags?: string;
+  isActive: boolean;
+};
+
+export type CreateTransferFormRequestDto = {
+  counterpartyId: string;
+  transferType: number;
+  status: number;
+  currencyId: string;
+  amount: number;
+  transactionDate: string;
+  dueDate?: string;
+  description?: string;
+  tags?: string[] | null;
+  details: SaveTransferDetailRequestDto[];
+  transactionItems: TransactionItemDto[];
+};
+
+export type UpdateTransferFormRequestDto = CreateTransferFormRequestDto & {
+  id: string;
   isActive: boolean;
 };
 

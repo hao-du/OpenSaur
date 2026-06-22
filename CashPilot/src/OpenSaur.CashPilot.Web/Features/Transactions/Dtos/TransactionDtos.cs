@@ -62,6 +62,52 @@ public sealed record UpdateCashFlowRequest(
     string[] Tags,
     IReadOnlyList<TransactionItemRequest> TransactionItems) : ICashFlowFormRequest;
 
+public interface IBankAccountFormRequest
+{
+    Guid BankId { get; }
+    Guid CurrencyId { get; }
+    decimal Amount { get; }
+    decimal? InterestRate { get; }
+    DateOnly StartDate { get; }
+    DateOnly? MaturityDate { get; }
+    byte Status { get; }
+    string? AccountNumber { get; }
+    string? Description { get; }
+    string[] Tags { get; }
+    IReadOnlyList<SaveBankAccountDetailRequest> Details { get; }
+    IReadOnlyList<TransactionItemRequest> TransactionItems { get; }
+}
+
+public sealed record CreateBankAccountFormRequest(
+    Guid BankId,
+    Guid CurrencyId,
+    decimal Amount,
+    decimal? InterestRate,
+    DateOnly StartDate,
+    DateOnly? MaturityDate,
+    byte Status,
+    string? AccountNumber,
+    string? Description,
+    string[] Tags,
+    IReadOnlyList<SaveBankAccountDetailRequest> Details,
+    IReadOnlyList<TransactionItemRequest> TransactionItems) : IBankAccountFormRequest;
+
+public sealed record UpdateBankAccountFormRequest(
+    Guid Id,
+    Guid BankId,
+    Guid CurrencyId,
+    decimal Amount,
+    decimal? InterestRate,
+    DateOnly StartDate,
+    DateOnly? MaturityDate,
+    byte Status,
+    string? AccountNumber,
+    string? Description,
+    bool IsActive,
+    string[] Tags,
+    IReadOnlyList<SaveBankAccountDetailRequest> Details,
+    IReadOnlyList<TransactionItemRequest> TransactionItems) : IBankAccountFormRequest;
+
 public sealed record SaveBankAccountFormRequest(
     Guid? Id,
     Guid BankId,
@@ -87,6 +133,49 @@ public sealed record SaveBankAccountDetailRequest(
     DateOnly TransactionDate,
     string? Description,
     bool IsActive);
+public interface ITransferFormRequest
+{
+    Guid CounterpartyId { get; }
+    byte TransferType { get; }
+    byte Status { get; }
+    Guid CurrencyId { get; }
+    decimal Amount { get; }
+    DateOnly TransactionDate { get; }
+    DateOnly? DueDate { get; }
+    string? Description { get; }
+    string[] Tags { get; }
+    IReadOnlyList<SaveTransferDetailRequest> Details { get; }
+    IReadOnlyList<TransactionItemRequest> TransactionItems { get; }
+}
+
+public sealed record CreateTransferFormRequest(
+    Guid CounterpartyId,
+    byte TransferType,
+    byte Status,
+    Guid CurrencyId,
+    decimal Amount,
+    DateOnly TransactionDate,
+    DateOnly? DueDate,
+    string? Description,
+    string[] Tags,
+    IReadOnlyList<SaveTransferDetailRequest> Details,
+    IReadOnlyList<TransactionItemRequest> TransactionItems) : ITransferFormRequest;
+
+public sealed record UpdateTransferFormRequest(
+    Guid Id,
+    Guid CounterpartyId,
+    byte TransferType,
+    byte Status,
+    Guid CurrencyId,
+    decimal Amount,
+    DateOnly TransactionDate,
+    DateOnly? DueDate,
+    string? Description,
+    bool IsActive,
+    string[] Tags,
+    IReadOnlyList<SaveTransferDetailRequest> Details,
+    IReadOnlyList<TransactionItemRequest> TransactionItems) : ITransferFormRequest;
+
 public sealed record SaveTransferFormRequest(
     Guid? Id,
     Guid CounterpartyId,

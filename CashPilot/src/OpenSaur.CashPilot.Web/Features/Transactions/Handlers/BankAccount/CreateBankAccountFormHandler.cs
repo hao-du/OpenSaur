@@ -21,7 +21,7 @@ public static class CreateBankAccountFormHandler
     private static readonly CreateBankAccountFormRequestValidator Validator = new();
 
     public static async Task<Results<Ok<Guid>, BadRequest<ProblemDetails>, ValidationProblem, NotFound<ProblemDetails>>> HandleAsync(
-        SaveBankAccountFormRequest request,
+        CreateBankAccountFormRequest request,
         ClaimsPrincipal user,
         BankAccountMovementManager bankAccountMovementManager,
         ITagService tagService,
@@ -75,11 +75,28 @@ public static class CreateBankAccountFormHandler
         bankAccount.MaturityDate = request.MaturityDate;
         bankAccount.StartDate = request.StartDate;
         bankAccount.Status = (BankAccountStatus)request.Status;
-        bankAccount.IsActive = request.IsActive;
+        bankAccount.IsActive = true;
         bankAccount.TransactionItems = request.TransactionItems.ToTransactionItems();
         bankAccount.Tags = TagTermCodec.Encode(request.Tags ?? []);
         await tagService.EnsureTagDefinitionsExistAsync(currentUserId, request.Tags ?? [], cancellationToken);
-        var syncResult = bankAccountMovementManager.SyncMovements(bankAccount, request, currentUserId, dbContext);
+
+        var saveRequest = new SaveBankAccountFormRequest(
+            null,
+            request.BankId,
+            request.CurrencyId,
+            request.Amount,
+            request.InterestRate,
+            request.StartDate,
+            request.MaturityDate,
+            request.Status,
+            request.AccountNumber,
+            request.Description,
+            IsActive: true,
+            request.Tags ?? [],
+            request.Details,
+            request.TransactionItems);
+
+        var syncResult = bankAccountMovementManager.SyncMovements(bankAccount, saveRequest, currentUserId, dbContext);
         if (!syncResult.Success)
         {
             return AppHttpResults.NotFound(

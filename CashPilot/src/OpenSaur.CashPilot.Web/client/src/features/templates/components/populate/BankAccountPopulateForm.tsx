@@ -8,7 +8,7 @@ import { Text } from "../../../../components/atoms/Text";
 import { TextArea } from "../../../../components/atoms/TextArea";
 import type { TranslationKey } from "../../../settings/provider/translations";
 import { TagAutocompleteMultiSelect } from "../../../tags/components/TagAutocompleteMultiSelect";
-import { useSaveBankAccountMutation } from "../../../transactions/hooks/useSaveBankAccountMutation";
+import { useCreateBankAccountMutation } from "../../../transactions/hooks/useCreateBankAccountMutation";
 import { TransactionItemsEditor } from "../../../transactions/components/TransactionItemsEditor";
 import { TransactionFormTabs } from "../../../transactions/components/TransactionFormTabs";
 import type {
@@ -56,7 +56,7 @@ export function BankAccountPopulateForm({
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [tab, setTab] = useState<"form" | "items">("form");
-  const saveBankAccountMutation = useSaveBankAccountMutation();
+  const createBankAccountMutation = useCreateBankAccountMutation();
   const defaults = useMemo<BankAccountFormValues>(
     () => ({
       bankId: initialValue(templateData.bankId, todayIsoDate),
@@ -89,7 +89,7 @@ export function BankAccountPopulateForm({
         v.maturityDate,
         todayIsoDate,
       );
-      await saveBankAccountMutation.mutateAsync({
+      await createBankAccountMutation.mutateAsync({
         bankId: resolve(templateData.bankId, v.bankId, todayIsoDate),
         accountNumber: resolve(
           templateData.accountNumber,
@@ -121,7 +121,6 @@ export function BankAccountPopulateForm({
           todayIsoDate,
         ),
         tags: resolveTags(templateData.tags, v.tags),
-        isActive: true,
         details: [],
         transactionItems: v.transactionItems.filter(x => x.name.trim().length > 0).map(x => ({ name: x.name.trim(), amount: Number(x.amount || "0") })),
       });

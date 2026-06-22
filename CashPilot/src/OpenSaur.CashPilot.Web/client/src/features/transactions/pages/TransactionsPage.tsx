@@ -21,8 +21,10 @@ import { useCreateCashFlowMutation } from "../hooks/useCreateCashFlowMutation";
 import { useCreateCurrencyExchangeMutation } from "../hooks/useCreateCurrencyExchangeMutation";
 import { useDeleteTransactionMutation } from "../hooks/useDeleteTransactionMutation";
 import { useAutoTagMutation } from "../hooks/useAutoTagMutation";
-import { useSaveBankAccountMutation } from "../hooks/useSaveBankAccountMutation";
-import { useSaveTransferMutation } from "../hooks/useSaveTransferMutation";
+import { useCreateBankAccountMutation } from "../hooks/useCreateBankAccountMutation";
+import { useUpdateBankAccountMutation } from "../hooks/useUpdateBankAccountMutation";
+import { useCreateTransferMutation } from "../hooks/useCreateTransferMutation";
+import { useUpdateTransferMutation } from "../hooks/useUpdateTransferMutation";
 import { useTemplatesQuery } from "../../templates/hooks/useTemplatesQuery";
 import { useTransactionsQuery } from "../hooks/useTransactionsQuery";
 import { useTransactionDashboardQuery } from "../hooks/useTransactionDashboardQuery";
@@ -63,8 +65,10 @@ export function TransactionsPage() {
   const { formatAmount, formatDate, t } = useSettings();
   const createCashFlowMutation = useCreateCashFlowMutation();
   const updateCashFlowMutation = useUpdateCashFlowMutation();
-  const saveBankAccountMutation = useSaveBankAccountMutation();
-  const saveTransferMutation = useSaveTransferMutation();
+  const createBankAccountMutation = useCreateBankAccountMutation();
+  const updateBankAccountMutation = useUpdateBankAccountMutation();
+  const createTransferMutation = useCreateTransferMutation();
+  const updateTransferMutation = useUpdateTransferMutation();
   const createCurrencyExchangeMutation = useCreateCurrencyExchangeMutation();
   const updateCurrencyExchangeMutation = useUpdateCurrencyExchangeMutation();
   const deleteTransactionMutation = useDeleteTransactionMutation();
@@ -395,9 +399,8 @@ export function TransactionsPage() {
             setIsBankAccountDrawerOpen(false);
             setEditingBankAccount(null);
           }}
-          onSave={(payload) =>
-            submit(() => saveBankAccountMutation.mutateAsync(payload))
-          }
+          onCreate={(payload) => submit(() => createBankAccountMutation.mutateAsync(payload))}
+          onEdit={(id, payload) => submit(() => updateBankAccountMutation.mutateAsync({ id, payload }))}
           onAutoTag={requestAutoTags}
         />
 
@@ -411,9 +414,8 @@ export function TransactionsPage() {
             setIsTransferDrawerOpen(false);
             setEditingTransferMovement(null);
           }}
-          onSave={(payload) =>
-            submit(() => saveTransferMutation.mutateAsync(payload))
-          }
+          onCreate={(payload) => submit(() => createTransferMutation.mutateAsync(payload))}
+          onEdit={(id, payload) => submit(() => updateTransferMutation.mutateAsync({ id, payload }))}
           onAutoTag={requestAutoTags}
         />
 

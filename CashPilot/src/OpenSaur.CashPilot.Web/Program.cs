@@ -7,6 +7,7 @@ using OpenSaur.CashPilot.Web.Features.Frontend.Handlers;
 using OpenSaur.CashPilot.Web.Features.Banks;
 using OpenSaur.CashPilot.Web.Features.Counterparties;
 using OpenSaur.CashPilot.Web.Features.Currencies;
+using OpenSaur.CashPilot.Web.Features.PendingTransactions;
 using OpenSaur.CashPilot.Web.Features.Transactions;
 using OpenSaur.CashPilot.Web.Features.Transactions.Queries;
 using OpenSaur.CashPilot.Web.Features.Transactions.Queries.Providers;
@@ -60,6 +61,22 @@ builder.Services.AddAuthentication(options =>
     options.DefaultChallengeScheme = OpenIddictValidationAspNetCoreDefaults.AuthenticationScheme;
 });
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("FrontendOrigins", policy =>
+    {
+        policy.WithOrigins(
+                "https://cashpilot.duchihao.com",
+                "https://off.cashpilot.duchihao.com",
+                "https://localhost:5031",
+                "https://localhost:5032",
+                "http://localhost:5174",
+                "https://localhost:5174")
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
+});
+
 builder.Services.AddAuthorization(AppAuthorization.ConfigurePolicies);
 builder.Services.AddScoped<CreateFrontendRouteHandler>();
 builder.Services.AddScoped<CreateAppConfigJsHandler>();
@@ -79,17 +96,18 @@ app.UseClientAbortedRequestHandling();
 app.UseSecurityHeaders(oidcOptions, app.Environment);
 app.UseDefaultFiles();
 app.UseStaticFiles();
+app.UseCors("FrontendOrigins");
 app.UseAuthentication();
 app.UseAuthorization();
 
 // Map the custom frontend routes
 app.MapFrontEndRoutes();
-app.MapOfflineProbeEndpoints();
 app.MapProfileEndpoints();
 app.MapSettingsEndpoints();
 app.MapBanksEndpoints();
 app.MapCounterpartiesEndpoints();
 app.MapCurrenciesEndpoints();
+app.MapPendingTransactionsEndpoints();
 app.MapTransactionsEndpoints();
 app.MapTemplatesEndpoints();
 app.MapTagsEndpoints();

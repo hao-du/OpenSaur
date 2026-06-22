@@ -21,7 +21,7 @@ public static class UpdateBankAccountFormHandler
     private static readonly UpdateBankAccountFormRequestValidator Validator = new();
 
     public static async Task<Results<Ok<Guid>, BadRequest<ProblemDetails>, ValidationProblem, NotFound<ProblemDetails>>> HandleAsync(
-        SaveBankAccountFormRequest request,
+        UpdateBankAccountFormRequest request,
         ClaimsPrincipal user,
         BankAccountMovementManager bankAccountMovementManager,
         ITagService tagService,
@@ -63,7 +63,7 @@ public static class UpdateBankAccountFormHandler
             return currenciesValidation;
         }
 
-        var id = request.Id.GetValueOrDefault();
+        var id = request.Id;
         var existingBankAccount = await dbContext.BankAccounts
             .Include(x => x.BankAccountTransactions)
                 .ThenInclude(x => x.Transaction)
@@ -92,7 +92,24 @@ public static class UpdateBankAccountFormHandler
         bankAccount.TransactionItems = request.TransactionItems.ToTransactionItems();
         bankAccount.Tags = TagTermCodec.Encode(request.Tags ?? []);
         await tagService.EnsureTagDefinitionsExistAsync(currentUserId, request.Tags ?? [], cancellationToken);
-        var syncResult = bankAccountMovementManager.SyncMovements(bankAccount, request, currentUserId, dbContext);
+
+        var saveRequest = new SaveBankAccountFormRequest(
+            request.Id,
+            request.BankId,
+            request.CurrencyId,
+            request.Amount,
+            request.InterestRate,
+            request.StartDate,
+            request.MaturityDate,
+            request.Status,
+            request.AccountNumber,
+            request.Description,
+            request.IsActive,
+            request.Tags ?? [],
+            request.Details,
+            request.TransactionItems);
+
+        var syncResult = bankAccountMovementManager.SyncMovements(bankAccount, saveRequest, currentUserId, dbContext);
         if (!syncResult.Success)
         {
             return AppHttpResults.NotFound(

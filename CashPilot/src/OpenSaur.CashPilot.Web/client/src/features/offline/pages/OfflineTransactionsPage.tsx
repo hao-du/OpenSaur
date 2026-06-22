@@ -1,18 +1,22 @@
-import { useEffect, useMemo, useState } from "react";
-import { Alert, Grid, Menu, MenuItem, Paper, Stack, Typography } from "@mui/material";
-import { Banknote, Landmark, Repeat, Users } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Grid, IconButton, Menu, MenuItem, Paper, Stack, Typography } from "@mui/material";
+import { Banknote, ChevronDown, Landmark, Repeat, Users } from "lucide-react";
+import { X } from "lucide-react";
 import { useForm } from "react-hook-form";
+import { useLocation, useSearchParams } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 import { ActionButton } from "../../../components/atoms/ActionButton";
 import { ConfirmModal } from "../../../components/atoms/ConfirmModal";
 import { DefaultLayout } from "../../../components/layouts/DefaultLayout";
 import { DropDown } from "../../../components/atoms/DropDown";
+import { useAuthSession } from "../../auth/hooks/AuthContext";
 import { useCurrentProfileQuery } from "../../profile/hooks/useCurrentProfileQuery";
 import { useSettings } from "../../settings/provider/SettingProvider";
 import { TransactionListPanel } from "../../transactions/components/TransactionListPanel";
 import { type TransactionFilterValues } from "../../transactions/components/TransactionsFilterDrawer";
 import { loadOfflineMetadataSnapshot } from "../storages/offlineMetadataStore";
 import {
+  clearOfflineTransactions,
   loadOfflineTransactions,
   removeOfflineTransaction,
   upsertOfflineTransaction,
@@ -28,13 +32,21 @@ import { OfflineBankAccountFormDrawer } from "../components/OfflineBankAccountFo
 import { OfflineTransferFormDrawer } from "../components/OfflineTransferFormDrawer";
 import { OfflineExchangeFormDrawer } from "../components/OfflineExchangeFormDrawer";
 import { OfflineTemplatePopulateDrawer } from "../components/populate/OfflineTemplatePopulateDrawer";
-import { useNetworkStatus } from "../../../infrastructure/offline/useNetworkStatus";
+import { submitPendingTransactions } from "../../pending/api/pendingTransactionsApi";
+import { syncOfflineMetadata } from "../services/offlineMetadataSyncService";
 
 type TemplatePickerValues = {
   templateId: string;
 };
 
 const ITEMS_PER_PAGE = 30;
+
+function formatMessage(template: string, values: Record<string, string>) {
+  return Object.entries(values).reduce(
+    (result, [key, value]) => result.replace(`{${key}}`, value),
+    template,
+  );
+}
 
 function typeIcon(templateType: number) {
   if (templateType === 1) return <Banknote size={16} />;
@@ -52,12 +64,21 @@ function typeColor(templateType: number) {
 
 export function OfflineTransactionsPage() {
   const { formatAmount, formatDate, t } = useSettings();
+  const { authSession } = useAuthSession();
   const { data: currentProfile } = useCurrentProfileQuery();
   const navigate = useNavigate();
-  const { isOnline } = useNetworkStatus();
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
+  const submitReviewRequested = searchParams.get("submitReview") === "1";
+  const importMetadataRequested = searchParams.get("importMetadata") === "1";
+  const submitReviewInFlight = useRef(false);
+  const importMetadataInFlight = useRef(false);
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+  const [isImportingMetadata, setIsImportingMetadata] = useState(false);
   const [refreshToken, setRefreshToken] = useState(0);
   const [page, setPage] = useState(1);
   const [error, setError] = useState<string | null>(null);
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [createMenuAnchor, setCreateMenuAnchor] = useState<null | HTMLElement>(null);
   const filters = useMemo<TransactionFilterValues>(() => {
     const now = new Date();
@@ -87,12 +108,26 @@ export function OfflineTransactionsPage() {
   const metadataSnapshot = loadOfflineMetadataSnapshot();
   const offlineTransactions = useMemo(() => loadOfflineTransactions(), [refreshToken]);
   const offlineTemplates = useMemo(() => loadOfflineTemplates(), [refreshToken]);
+
+  // Filter to only this user's transactions or unassigned ones for editing.
+  // This prevents showing other users' data after auth redirects from import/submitReview buttons.
+  const visibleTransactions = useMemo<OfflineTransactionRecord[]>(() => {
+    if (!authSession || !currentProfile) return offlineTransactions;
+
+    const currentUserId = currentProfile.id ?? "";
+
+    // Filter to this user's transactions or unowned (for creating new ones when no data yet)
+    return offlineTransactions.filter((x) => x.userId === null || x.userId === currentUserId);
+  }, [offlineTransactions, authSession, currentProfile]);
+
+  const hasOfflineMetadata = metadataSnapshot != null;
+  const hasOfflineTransactions = visibleTransactions.length > 0;
   const currencies = metadataSnapshot?.currencies ?? [];
   const banks = metadataSnapshot?.banks ?? [];
   const counterparties = metadataSnapshot?.counterparties ?? [];
   const transactionItems = useMemo(
-    () => offlineTransactions.map((transaction) => buildTransactionListItem(transaction, currencies)),
-    [currencies, offlineTransactions],
+    () => visibleTransactions?.map((transaction) => buildTransactionListItem(transaction, currencies)) ?? [],
+    [currencies, visibleTransactions],
   );
 
   useEffect(() => {
@@ -202,67 +237,194 @@ export function OfflineTransactionsPage() {
     setPopulateTemplateId("");
   };
 
+  const importMetadata = async () => {
+    if (importMetadataInFlight.current) {
+      return;
+    }
+
+    importMetadataInFlight.current = true;
+    setIsImportingMetadata(true);
+
+    try {
+      setError(null);
+      setStatusMessage(null);
+      await syncOfflineMetadata();
+      setRefreshToken((value) => value + 1);
+      setStatusMessage(t("offline.importSuccess"));
+    } catch (error) {
+      setError(error instanceof Error ? error.message : t("offline.importFailed"));
+    } finally {
+      importMetadataInFlight.current = false;
+      setIsImportingMetadata(false);
+    }
+  };
+
+  const submitForReview = async () => {
+    if (submitReviewInFlight.current) {
+      return;
+    }
+
+    submitReviewInFlight.current = true;
+    setIsSubmittingReview(true);
+    try {
+      setError(null);
+      setStatusMessage(null);
+      const transactions = currentProfile?.id == null
+        ? loadOfflineTransactions()
+        : loadOfflineTransactions().filter((transaction) => transaction.userId == null || transaction.userId === currentProfile.id);
+      await submitPendingTransactions(transactions);
+      clearOfflineTransactions();
+      setRefreshToken((value) => value + 1);
+      setStatusMessage(t("offline.submitSuccess"));
+      navigate("/offline/transactions", { replace: true });
+    } catch (error) {
+      setError(error instanceof Error ? error.message : t("offline.submitFailed"));
+    } finally {
+      submitReviewInFlight.current = false;
+      setIsSubmittingReview(false);
+    }
+  };
+
+  useEffect(() => {
+    if (importMetadataRequested) {
+      if (authSession == null) {
+        navigate("/prepare-session", {
+          state: {
+            returnTo: `${location.pathname}?importMetadata=1`,
+          },
+        });
+        return;
+      }
+
+      void importMetadata();
+      return;
+    }
+
+    if (!submitReviewRequested) {
+      return;
+    }
+
+    if (authSession == null) {
+      navigate("/prepare-session", {
+        state: {
+          returnTo: `${location.pathname}?submitReview=1`,
+        },
+      });
+      return;
+    }
+
+    void submitForReview();
+  }, [authSession, importMetadataRequested, location.pathname, navigate, submitReviewRequested]);
+
   const headerActions = (
-    <ActionButton
-      onClick={(event) => setCreateMenuAnchor(event.currentTarget)}
-      variant="contained"
-    >
-      {t("transactions.create")}
-    </ActionButton>
+    <Stack direction="row" spacing={1} sx={{ flexWrap: "nowrap" }}>
+        <ActionButton
+          disabled={isImportingMetadata}
+          sx={{ flex: 1, minWidth: 0, px: { xs: 1.5, sm: 2 } }}
+          onClick={() => {
+            if (authSession == null) {
+              navigate("/prepare-session", {
+                state: {
+                  returnTo: `${location.pathname}?importMetadata=1`,
+                },
+              });
+              return;
+            }
+
+            void importMetadata();
+          }}
+          variant="outlined"
+        >
+          {isImportingMetadata ? t("offline.importing") : t("offline.importAction")}
+        </ActionButton>
+        <ActionButton
+          disabled={isSubmittingReview || !hasOfflineTransactions || !hasOfflineMetadata}
+          sx={{ flex: 1, minWidth: 0, px: { xs: 1.5, sm: 2 } }}
+          onClick={() => {
+            if (authSession == null) {
+              navigate("/prepare-session", {
+                state: {
+                  returnTo: `${location.pathname}?submitReview=1`,
+                },
+              });
+              return;
+            }
+
+            void submitForReview();
+          }}
+          variant="outlined"
+        >
+          {isSubmittingReview ? t("offline.submittingReview") : t("offline.submitForReview")}
+        </ActionButton>
+      <ActionButton
+        disabled={!hasOfflineMetadata}
+        endIcon={<ChevronDown size={16} />}
+        sx={{ flex: 1, minWidth: 0, px: { xs: 1.5, sm: 2 } }}
+        onClick={(event) => setCreateMenuAnchor(event.currentTarget)}
+        variant="contained"
+      >
+        {t("transactions.create")}
+      </ActionButton>
+    </Stack>
   );
 
   return (
     <DefaultLayout
-      beforeTitle={isOnline === true ? (
-        <Paper
-          elevation={0}
-          sx={{
-            border: "1px solid rgba(33, 150, 243, 0.22)",
-            backgroundColor: "rgba(33, 150, 243, 0.06)",
-            px: 2,
-            py: 1.5,
-          }}
-        >
-          <Stack direction={{ xs: "column", sm: "row" }} justifyContent="space-between" spacing={1.5} alignItems={{ xs: "stretch", sm: "center" }}>
-            <Stack spacing={0.25}>
-              <Typography sx={{ fontWeight: 700 }} variant="body1">
-                {t("offline.backOnlineTitle")}
-              </Typography>
-              <Typography color="text.secondary" variant="body2">
-                {t("offline.backOnlineDescription")}
-              </Typography>
-            </Stack>
-            <ActionButton
-              onClick={() => {
-                navigate("/");
-              }}
-              variant="contained"
-            >
-              {t("action.backToDashboard")}
-            </ActionButton>
-          </Stack>
-        </Paper>
-      ) : null}
       headerActions={headerActions}
       title={t("offline.transactionsTitle")}
     >
       <Stack spacing={3}>
-        {error != null ? <Alert severity="error">{error}</Alert> : null}
+        {error != null ? (
+          <Paper elevation={0} sx={{ border: "1px solid rgba(244,67,54,0.20)", backgroundColor: "rgba(244,67,54,0.06)", p: 2 }}>
+            <Typography color="error.main" sx={{ fontWeight: 700 }}>{error}</Typography>
+          </Paper>
+        ) : null}
+        {statusMessage != null ? (
+          <Paper
+            elevation={0}
+            sx={{
+              alignItems: "center",
+              border: "1px solid rgba(76,175,80,0.20)",
+              backgroundColor: "rgba(76,175,80,0.06)",
+              display: "flex",
+              justifyContent: "space-between",
+              p: 2,
+            }}
+          >
+            <Typography color="success.main" sx={{ fontWeight: 700 }}>
+              {statusMessage}
+            </Typography>
+            <IconButton
+              aria-label={t("common.dismissMessage")}
+              onClick={() => setStatusMessage(null)}
+              size="small"
+            >
+              <X size={16} />
+            </IconButton>
+          </Paper>
+        ) : null}
+        {!hasOfflineMetadata ? (
+          <Paper elevation={0} sx={{ border: "1px solid rgba(33,150,243,0.20)", backgroundColor: "rgba(33,150,243,0.06)", p: 2 }}>
+            <Typography sx={{ fontWeight: 700 }}>{t("offline.importTitle")}</Typography>
+            <Typography color="text.secondary">{t("offline.importDescription")}</Typography>
+          </Paper>
+        ) : null}
 
         <Grid container spacing={2} alignItems="stretch">
           <Grid size={{ xs: 12, md: 6 }}>
             <TransactionListPanel
               formatAmount={formatAmount}
               formatDate={formatDate}
+              isActionDisabled={!hasOfflineMetadata}
               isLoading={false}
               onDelete={(item) => {
-                const record = offlineTransactions.find((transaction) => transaction.id === item.id && transaction.type === item.type);
+                const record = visibleTransactions?.find((transaction) => transaction.id === item.id && transaction.type === item.type);
                 if (record != null) {
                   setDeletingTransaction(record);
                 }
               }}
               onEdit={(type, id) => {
-                const record = offlineTransactions.find((transaction) => transaction.id === id && transaction.type === type);
+                const record = visibleTransactions?.find((transaction) => transaction.id === id && transaction.type === type);
                 if (record != null) {
                   openEditDrawer(record);
                 }
@@ -283,10 +445,11 @@ export function OfflineTransactionsPage() {
                   <Stack spacing={1} sx={{ mt: 1 }}>
                     <DropDown
                       control={templatePickerForm.control}
+                      disabled={!hasOfflineMetadata}
                       filterable
                       label=""
                       name="templateId"
-                      placeholder="Please select"
+                      placeholder={t("common.pleaseSelect")}
                       options={offlineTemplates.map((template) => ({
                         icon: typeIcon(template.templateType),
                         label: template.name,
@@ -295,7 +458,7 @@ export function OfflineTransactionsPage() {
                       }))}
                     />
                     <Stack direction="row" justifyContent="flex-end">
-                      <ActionButton disabled={!selectedTemplateId} onClick={() => handlePopulateTemplate()}>
+                      <ActionButton disabled={!selectedTemplateId || !hasOfflineMetadata} onClick={() => handlePopulateTemplate()}>
                         {t("templates.populate")}
                       </ActionButton>
                     </Stack>
@@ -348,7 +511,12 @@ export function OfflineTransactionsPage() {
         <ConfirmModal
           confirmLabel={t("transactions.delete")}
           isConfirming={false}
-          message={deletingTransaction == null ? "" : `${deletingTransaction.type} - ${deletingTransaction.description || "-"}`}
+          message={deletingTransaction == null
+            ? ""
+            : formatMessage(t("offline.deleteConfirmMessage"), {
+              description: deletingTransaction.description || t("common.none"),
+              type: deletingTransaction.type,
+            })}
           onClose={() => setDeletingTransaction(null)}
           onConfirm={() => {
             if (deletingTransaction == null) {

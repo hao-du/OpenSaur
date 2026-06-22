@@ -1,9 +1,19 @@
 import rawAxios, { AxiosHeaders, type AxiosRequestConfig } from "axios";
+import { getConfig } from "../config/Config";
 
 const axios = rawAxios.create();
 let currentAccessToken: string | null = null;
 const maxRetryCount = 2;
 const baseRetryDelayMs = 400;
+
+function resolveRequestUrl(url: string) {
+  if (/^https?:\/\//i.test(url)) {
+    return url;
+  }
+
+  const apiBaseUrl = getConfig().apiBaseUrl ?? window.location.origin;
+  return new URL(url, apiBaseUrl).toString();
+}
 
 export type ClientRequestConfig = AxiosRequestConfig & {
   skipAuth?: boolean;
@@ -67,12 +77,12 @@ async function executeWithRetry<TResponse>(request: () => Promise<TResponse>) {
 
 export const client = {
   get: async <TResponse>(url: string, config?: ClientRequestConfig) => {
-    const response = await executeWithRetry(() => axios.get<TResponse>(url, config));
+    const response = await executeWithRetry(() => axios.get<TResponse>(resolveRequestUrl(url), config));
     return response.data;
   },
 
   head: async (url: string, config?: ClientRequestConfig) => {
-    await executeWithRetry(() => axios.head(url, config));
+    await executeWithRetry(() => axios.head(resolveRequestUrl(url), config));
   },
 
   post: async <TResponse, TRequest = unknown>(
@@ -80,7 +90,7 @@ export const client = {
     data?: TRequest,
     config?: ClientRequestConfig,
   ) => {
-    const response = await executeWithRetry(() => axios.post<TResponse>(url, data, config));
+    const response = await executeWithRetry(() => axios.post<TResponse>(resolveRequestUrl(url), data, config));
     return response.data;
   },
 
@@ -89,7 +99,7 @@ export const client = {
     data?: TRequest,
     config?: ClientRequestConfig,
   ) => {
-    const response = await executeWithRetry(() => axios.put<TResponse>(url, data, config));
+    const response = await executeWithRetry(() => axios.put<TResponse>(resolveRequestUrl(url), data, config));
     return response.data;
   },
 
@@ -97,7 +107,7 @@ export const client = {
     url: string,
     config?: ClientRequestConfig,
   ) => {
-    const response = await executeWithRetry(() => axios.delete<TResponse>(url, config));
+    const response = await executeWithRetry(() => axios.delete<TResponse>(resolveRequestUrl(url), config));
     return response.data;
   },
 };

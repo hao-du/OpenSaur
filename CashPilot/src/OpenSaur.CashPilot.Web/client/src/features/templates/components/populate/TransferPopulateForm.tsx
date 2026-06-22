@@ -6,7 +6,7 @@ import { DropDown } from "../../../../components/atoms/DropDown";
 import { Number as NumberInput } from "../../../../components/atoms/Number";
 import { TextArea } from "../../../../components/atoms/TextArea";
 import type { TranslationKey } from "../../../settings/provider/translations";
-import { useSaveTransferMutation } from "../../../transactions/hooks/useSaveTransferMutation";
+import { useCreateTransferMutation } from "../../../transactions/hooks/useCreateTransferMutation";
 import { TransactionItemsEditor } from "../../../transactions/components/TransactionItemsEditor";
 import { TransactionFormTabs } from "../../../transactions/components/TransactionFormTabs";
 import { TagAutocompleteMultiSelect } from "../../../tags/components/TagAutocompleteMultiSelect";
@@ -55,7 +55,7 @@ export function TransferPopulateForm({
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [tab, setTab] = useState<"form" | "items">("form");
-  const saveTransferMutation = useSaveTransferMutation();
+  const createTransferMutation = useCreateTransferMutation();
   const defaults = useMemo<TransferFormValues>(
     () => ({
       counterpartyId: initialValue(templateData.counterpartyId, todayIsoDate) || counterpartyOptions[0]?.value || "",
@@ -104,7 +104,7 @@ export function TransferPopulateForm({
         todayIsoDate,
       );
       const dueDate = resolveDate(templateData.dueDate, v.dueDate, todayIsoDate);
-      await saveTransferMutation.mutateAsync({
+      await createTransferMutation.mutateAsync({
         counterpartyId: resolve(
           templateData.counterpartyId,
           v.counterpartyId,
@@ -126,7 +126,6 @@ export function TransferPopulateForm({
           todayIsoDate,
         ),
         tags: resolveTags(templateData.tags, v.tags),
-        isActive: true,
         details: [
           { amount, currencyId, direction, transactionDate, isActive: true },
         ],

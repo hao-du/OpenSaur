@@ -20,7 +20,7 @@ public static class UpdateTransferFormHandler
     private static readonly UpdateTransferFormRequestValidator Validator = new();
 
     public static async Task<Results<Ok<Guid>, BadRequest<ProblemDetails>, ValidationProblem, NotFound<ProblemDetails>>> HandleAsync(
-        SaveTransferFormRequest request,
+        UpdateTransferFormRequest request,
         ClaimsPrincipal user,
         ITagService tagService,
         CashPilotDbContext dbContext,
@@ -61,7 +61,7 @@ public static class UpdateTransferFormHandler
             return currenciesValidation;
         }
 
-        var id = request.Id.GetValueOrDefault();
+        var id = request.Id;
         var existingTransfer = await dbContext.Transfers
             .Include(x => x.TransferTransactions)
                 .ThenInclude(x => x.Transaction)

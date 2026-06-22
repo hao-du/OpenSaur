@@ -4,7 +4,7 @@ import { ActionButton } from "../../../components/atoms/ActionButton";
 import { Drawer, DrawerBody, DrawerFooter, DrawerHeader } from "../../../components/organisms/Drawer";
 import type { BankDto } from "../../banks/dtos/BankDto";
 import type { CurrencyDto } from "../../currencies/dtos/CurrencyDto";
-import type { SaveBankAccountFormRequestDto } from "../dtos/TransactionDto";
+import type { CreateBankAccountFormRequestDto, SaveBankAccountFormRequestDto, UpdateBankAccountFormRequestDto } from "../dtos/TransactionDto";
 import { BankAccountForm } from "./BankAccountForm";
 import { useSettings } from "../../settings/provider/SettingProvider";
 import type { TransactionType } from "../dtos/TransactionPageState";
@@ -17,7 +17,8 @@ type Props = {
   currencies: CurrencyDto[];
   isAutoTagging?: boolean;
   onAutoTag?: (description: string, existingTags: string[], transactionType: TransactionType) => Promise<string[]>;
-  onSave: (payload: SaveBankAccountFormRequestDto) => Promise<void>;
+  onCreate: (payload: CreateBankAccountFormRequestDto) => Promise<void>;
+  onEdit?: (id: string, payload: UpdateBankAccountFormRequestDto) => Promise<void>;
 };
 
 export function BankAccountFormDrawer({
@@ -28,7 +29,8 @@ export function BankAccountFormDrawer({
   currencies,
   isAutoTagging = false,
   onAutoTag,
-  onSave,
+  onCreate,
+  onEdit,
 }: Props) {
   const { t } = useSettings();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -55,10 +57,14 @@ export function BankAccountFormDrawer({
           onAutoTagActionChange={handler => {
             autoTagActionRef.current = handler;
           }}
-          onSubmit={async payload => {
+          onSubmit={async (payload) => {
             setIsSubmitting(true);
             try {
-              await onSave(payload);
+              if (editingBankAccount?.id && onEdit != null) {
+                await onEdit(editingBankAccount.id, payload as UpdateBankAccountFormRequestDto);
+              } else {
+                await onCreate(payload as CreateBankAccountFormRequestDto);
+              }
               onClose();
             } finally {
               setIsSubmitting(false);

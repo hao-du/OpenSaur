@@ -58,3 +58,7 @@ export function removeOfflineTransaction(id: string) {
   const nextTransactions = loadOfflineTransactions().filter((item) => item.id !== id);
   saveOfflineTransactions(nextTransactions);
 }
+
+export function clearOfflineTransactions() {
+  saveOfflineTransactions([]);
+}
