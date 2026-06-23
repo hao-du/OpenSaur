@@ -12,6 +12,7 @@ import { DropDown } from "../../../components/atoms/DropDown";
 import { useAuthSession } from "../../auth/hooks/AuthContext";
 import { useCurrentProfileQuery } from "../../profile/hooks/useCurrentProfileQuery";
 import { useSettings } from "../../settings/provider/SettingProvider";
+import type { TranslationKey } from "../../settings/provider/translations";
 import { TransactionListPanel } from "../../transactions/components/TransactionListPanel";
 import { type TransactionFilterValues } from "../../transactions/components/TransactionsFilterDrawer";
 import { loadOfflineMetadataSnapshot } from "../storages/offlineMetadataStore";
@@ -78,7 +79,7 @@ export function OfflineTransactionsPage() {
   const [refreshToken, setRefreshToken] = useState(0);
   const [page, setPage] = useState(1);
   const [error, setError] = useState<string | null>(null);
-  const [statusMessage, setStatusMessage] = useState<string | null>(null);
+  const [statusMessageKey, setStatusMessageKey] = useState<TranslationKey | null>(null);
   const [createMenuAnchor, setCreateMenuAnchor] = useState<null | HTMLElement>(null);
   const filters = useMemo<TransactionFilterValues>(() => {
     const now = new Date();
@@ -247,10 +248,10 @@ export function OfflineTransactionsPage() {
 
     try {
       setError(null);
-      setStatusMessage(null);
+      setStatusMessageKey(null);
       await syncOfflineMetadata();
       setRefreshToken((value) => value + 1);
-      setStatusMessage(t("offline.importSuccess"));
+      setStatusMessageKey("offline.importSuccess");
     } catch (error) {
       setError(error instanceof Error ? error.message : t("offline.importFailed"));
     } finally {
@@ -268,14 +269,14 @@ export function OfflineTransactionsPage() {
     setIsSubmittingReview(true);
     try {
       setError(null);
-      setStatusMessage(null);
+      setStatusMessageKey(null);
       const transactions = currentProfile?.id == null
         ? loadOfflineTransactions()
         : loadOfflineTransactions().filter((transaction) => transaction.userId == null || transaction.userId === currentProfile.id);
       await submitPendingTransactions(transactions);
       clearOfflineTransactions();
       setRefreshToken((value) => value + 1);
-      setStatusMessage(t("offline.submitSuccess"));
+      setStatusMessageKey("offline.submitSuccess");
       navigate("/offline/transactions", { replace: true });
     } catch (error) {
       setError(error instanceof Error ? error.message : t("offline.submitFailed"));
@@ -320,7 +321,7 @@ export function OfflineTransactionsPage() {
     <Stack direction="row" spacing={1} sx={{ flexWrap: "nowrap" }}>
         <ActionButton
           disabled={isImportingMetadata}
-          sx={{ flex: 1, minWidth: 0, px: { xs: 1.5, sm: 2 } }}
+          sx={{ px: { xs: 1.5, sm: 2 } }}
           onClick={() => {
             if (authSession == null) {
               navigate("/prepare-session", {
@@ -339,7 +340,7 @@ export function OfflineTransactionsPage() {
         </ActionButton>
         <ActionButton
           disabled={isSubmittingReview || !hasOfflineTransactions || !hasOfflineMetadata}
-          sx={{ flex: 1, minWidth: 0, px: { xs: 1.5, sm: 2 } }}
+          sx={{ px: { xs: 1.5, sm: 2 } }}
           onClick={() => {
             if (authSession == null) {
               navigate("/prepare-session", {
@@ -359,7 +360,7 @@ export function OfflineTransactionsPage() {
       <ActionButton
         disabled={!hasOfflineMetadata}
         endIcon={<ChevronDown size={16} />}
-        sx={{ flex: 1, minWidth: 0, px: { xs: 1.5, sm: 2 } }}
+        sx={{ px: { xs: 1.5, sm: 2 } }}
         onClick={(event) => setCreateMenuAnchor(event.currentTarget)}
         variant="contained"
       >
@@ -379,7 +380,7 @@ export function OfflineTransactionsPage() {
             <Typography color="error.main" sx={{ fontWeight: 700 }}>{error}</Typography>
           </Paper>
         ) : null}
-        {statusMessage != null ? (
+        {statusMessageKey != null ? (
           <Paper
             elevation={0}
             sx={{
@@ -392,11 +393,11 @@ export function OfflineTransactionsPage() {
             }}
           >
             <Typography color="success.main" sx={{ fontWeight: 700 }}>
-              {statusMessage}
+              {t(statusMessageKey)}
             </Typography>
             <IconButton
               aria-label={t("common.dismissMessage")}
-              onClick={() => setStatusMessage(null)}
+              onClick={() => setStatusMessageKey(null)}
               size="small"
             >
               <X size={16} />
