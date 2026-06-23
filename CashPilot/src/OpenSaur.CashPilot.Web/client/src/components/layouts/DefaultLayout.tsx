@@ -51,6 +51,7 @@ export function DefaultLayout({ beforeTitle, children, headerActions, subtitle, 
       <Box sx={layoutStyles.contentColumn}>
         <Header
           isDesktop={isDesktop}
+          showAccountMenuItems={!isOfflineWorkspace}
           showNavigationToggle={!isOfflineWorkspace}
           onOpenNavigation={() => {
             setIsNavigationOpen(true);

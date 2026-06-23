@@ -5,7 +5,7 @@ import { Drawer, DrawerBody, DrawerFooter, DrawerHeader } from "../../../compone
 import type { CounterpartyDto } from "../../counterparties/dtos/CounterpartyDto";
 import type { CurrencyDto } from "../../currencies/dtos/CurrencyDto";
 import type { TransactionType, TransferMovementDraft } from "../dtos/TransactionPageState";
-import type { SaveTransferFormRequestDto } from "../dtos/TransactionDto";
+import type { CreateTransferFormRequestDto, UpdateTransferFormRequestDto } from "../dtos/TransactionDto";
 import { TransferForm } from "./TransferForm";
 import { useSettings } from "../../settings/provider/SettingProvider";
 
@@ -17,7 +17,8 @@ type Props = {
   currencies: CurrencyDto[];
   isAutoTagging?: boolean;
   onAutoTag?: (description: string, existingTags: string[], transactionType: TransactionType) => Promise<string[]>;
-  onSave: (payload: SaveTransferFormRequestDto) => Promise<void>;
+  onCreate: (payload: CreateTransferFormRequestDto) => Promise<void>;
+  onEdit?: (id: string, payload: UpdateTransferFormRequestDto) => Promise<void>;
 };
 
 export function TransferFormDrawer({
@@ -28,7 +29,8 @@ export function TransferFormDrawer({
   currencies,
   isAutoTagging = false,
   onAutoTag,
-  onSave,
+  onCreate,
+  onEdit,
 }: Props) {
   const { t } = useSettings();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -70,10 +72,14 @@ export function TransferFormDrawer({
           }}
           movementInitialDetails={editingMovement?.details ?? []}
           movementInitialTransactionItems={editingMovement?.transactionItems ?? []}
-          onSave={async payload => {
+          onSave={async (payload) => {
             setIsSubmitting(true);
             try {
-              await onSave(payload);
+              if (editingMovement != null && onEdit != null) {
+                await onEdit(editingMovement.id, payload as UpdateTransferFormRequestDto);
+              } else {
+                await onCreate(payload as CreateTransferFormRequestDto);
+              }
             } finally {
               setIsSubmitting(false);
             }

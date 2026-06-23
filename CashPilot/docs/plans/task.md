@@ -69,3 +69,4 @@
 | Let shared drawer body own the form wrapper | Done | Extended `DrawerBody` to accept form semantics directly so drawers can render the body as the `<form>` element instead of wrapping another Stack around it. |
 | Make shared drawer footer accept action lists | Done | Changed `DrawerFooter` to accept an `actions` array so form drawers can pass button lists explicitly and keep the footer contract consistent. |
 | Restore footer submit wiring for bank drawer | Done | Added a form id to `DrawerBody` and linked the footer action to it so the fixed bottom button submits the body form again. |
+| Filter dashboard bank totals to active status only | Done | Filter the dashboard bank summary to `x.IsActive && x.Status == BankAccountStatus.Active` so matured and closed-early accounts do not appear. |

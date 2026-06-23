@@ -1,6 +1,7 @@
 import path from "node:path";
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
+import basicSsl from "@vitejs/plugin-basic-ssl";
 
 const backendTarget =
     process.env.ASPNETCORE_HTTP_PORTS != null &&
@@ -12,18 +13,21 @@ const backendTarget =
             : "https://localhost:5031";
 
 export default defineConfig(({ mode }) => ({
-    plugins: [react()],
+    plugins: [
+        react(),
+        ...(mode === "dev-offline" ? [basicSsl()] : []),
+    ],
     build: {
         emptyOutDir: true,
         outDir: path.resolve(__dirname, "../wwwroot"),
-        minify: mode === "development" ? false : "esbuild",
-        sourcemap: mode === "development"
+        minify: mode === "development" || mode === "dev-offline" ? false : "esbuild",
+        sourcemap: mode === "development" || mode === "dev-offline"
     },
     server: {
         host: "0.0.0.0",
-        port: 5174,
+        port: mode === "dev-offline" ? 5032 : 5174,
         proxy: {
-            "/app-config.js": {
+            "/api": {
                 changeOrigin: true,
                 secure: false,
                 target: backendTarget

@@ -14,8 +14,10 @@ public static class FrontendEndpoints
         "/counterparties",
         "/currencies",
         "/transactions",
+        "/pending-transactions",
         "/templates",
         "/tags",
+        "/offline/import",
         "/offline/transactions"
     ];
 

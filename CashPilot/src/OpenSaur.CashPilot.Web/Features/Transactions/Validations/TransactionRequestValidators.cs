@@ -41,7 +41,8 @@ internal sealed class SaveBankAccountDetailRequestValidator : AbstractValidator<
     }
 }
 
-internal abstract class BankAccountFormRequestValidatorBase : AbstractValidator<SaveBankAccountFormRequest>
+internal abstract class BankAccountFormRequestValidatorBase<TRequest> : AbstractValidator<TRequest>
+    where TRequest : IBankAccountFormRequest
 {
     protected BankAccountFormRequestValidatorBase()
     {
@@ -70,20 +71,15 @@ internal abstract class BankAccountFormRequestValidatorBase : AbstractValidator<
     }
 }
 
-internal sealed class CreateBankAccountFormRequestValidator : BankAccountFormRequestValidatorBase
+internal sealed class CreateBankAccountFormRequestValidator : BankAccountFormRequestValidatorBase<CreateBankAccountFormRequest>
 {
-    public CreateBankAccountFormRequestValidator()
-    {
-        RuleFor(x => x.Id).Null();
-    }
 }
 
-internal sealed class UpdateBankAccountFormRequestValidator : BankAccountFormRequestValidatorBase
+internal sealed class UpdateBankAccountFormRequestValidator : BankAccountFormRequestValidatorBase<UpdateBankAccountFormRequest>
 {
     public UpdateBankAccountFormRequestValidator()
     {
-        RuleFor(x => x.Id).NotNull();
-        RuleFor(x => x.Id!.Value).NotEmpty();
+        RuleFor(x => x.Id).NotEmpty();
     }
 }
 
@@ -97,7 +93,8 @@ internal sealed class SaveTransferDetailRequestValidator : AbstractValidator<Sav
     }
 }
 
-internal abstract class TransferFormRequestValidatorBase : AbstractValidator<SaveTransferFormRequest>
+internal abstract class TransferFormRequestValidatorBase<TRequest> : AbstractValidator<TRequest>
+    where TRequest : ITransferFormRequest
 {
     protected TransferFormRequestValidatorBase()
     {
@@ -118,20 +115,15 @@ internal abstract class TransferFormRequestValidatorBase : AbstractValidator<Sav
     }
 }
 
-internal sealed class CreateTransferFormRequestValidator : TransferFormRequestValidatorBase
+internal sealed class CreateTransferFormRequestValidator : TransferFormRequestValidatorBase<CreateTransferFormRequest>
 {
-    public CreateTransferFormRequestValidator()
-    {
-        RuleFor(x => x.Id).Null();
-    }
 }
 
-internal sealed class UpdateTransferFormRequestValidator : TransferFormRequestValidatorBase
+internal sealed class UpdateTransferFormRequestValidator : TransferFormRequestValidatorBase<UpdateTransferFormRequest>
 {
     public UpdateTransferFormRequestValidator()
     {
-        RuleFor(x => x.Id).NotNull();
-        RuleFor(x => x.Id!.Value).NotEmpty();
+        RuleFor(x => x.Id).NotEmpty();
     }
 }
 

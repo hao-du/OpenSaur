@@ -115,6 +115,10 @@ namespace OpenSaur.CashPilot.Web.Infrastructure.Database.Migrations
                     b.Property<byte>("Status")
                         .HasColumnType("smallint");
 
+                    b.Property<string>("Tags")
+                        .IsRequired()
+                        .HasColumnType("jsonb");
+
                     b.Property<Guid?>("UpdatedBy")
                         .HasColumnType("uuid");
 
@@ -189,6 +193,10 @@ namespace OpenSaur.CashPilot.Web.Infrastructure.Database.Migrations
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
+
+                    b.Property<string>("Tags")
+                        .IsRequired()
+                        .HasColumnType("jsonb");
 
                     b.Property<Guid>("TransactionId")
                         .HasColumnType("uuid");
@@ -331,6 +339,10 @@ namespace OpenSaur.CashPilot.Web.Infrastructure.Database.Migrations
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
 
+                    b.Property<string>("Tags")
+                        .IsRequired()
+                        .HasColumnType("jsonb");
+
                     b.Property<Guid?>("UpdatedBy")
                         .HasColumnType("uuid");
 
@@ -379,6 +391,88 @@ namespace OpenSaur.CashPilot.Web.Infrastructure.Database.Migrations
                     b.HasIndex("TransactionId");
 
                     b.ToTable("CurrencyExchangeTransactions", (string)null);
+                });
+
+            modelBuilder.Entity("OpenSaur.CashPilot.Web.Domain.PendingTransactionSubmission", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedOn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("LocalTransactionId")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<Guid>("OwnerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("PayloadJson")
+                        .IsRequired()
+                        .HasColumnType("jsonb");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("UpdatedOn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OwnerId", "LocalTransactionId")
+                        .IsUnique();
+
+                    b.ToTable("PendingTransactionSubmissions", (string)null);
+                });
+
+            modelBuilder.Entity("OpenSaur.CashPilot.Web.Domain.TagDefinition", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedOn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("MatchingTerms")
+                        .IsRequired()
+                        .HasColumnType("jsonb");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<Guid>("OwnerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("UpdatedOn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OwnerId", "Name")
+                        .IsUnique();
+
+                    b.ToTable("TagDefinitions", (string)null);
                 });
 
             modelBuilder.Entity("OpenSaur.CashPilot.Web.Domain.Template", b =>
@@ -569,6 +663,10 @@ namespace OpenSaur.CashPilot.Web.Infrastructure.Database.Migrations
 
                     b.Property<byte>("Status")
                         .HasColumnType("smallint");
+
+                    b.Property<string>("Tags")
+                        .IsRequired()
+                        .HasColumnType("jsonb");
 
                     b.Property<DateOnly>("TransactionDate")
                         .HasColumnType("date");
@@ -789,6 +887,15 @@ namespace OpenSaur.CashPilot.Web.Infrastructure.Database.Migrations
                     b.Navigation("CurrencyExchange");
 
                     b.Navigation("Transaction");
+                });
+
+            modelBuilder.Entity("OpenSaur.CashPilot.Web.Domain.PendingTransactionSubmission", b =>
+                {
+                    b.HasOne("OpenSaur.CashPilot.Web.Domain.User", null)
+                        .WithMany()
+                        .HasForeignKey("OwnerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("OpenSaur.CashPilot.Web.Domain.Template", b =>

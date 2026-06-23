@@ -1,7 +1,9 @@
 import { client } from "../../../infrastructure/http/client";
 import type {
+  CreateBankAccountFormRequestDto,
   SaveBankAccountFormRequestDto,
-  SaveTransferFormRequestDto,
+  CreateTransferFormRequestDto,
+  UpdateTransferFormRequestDto,
   AutoTagRequestDto,
   AutoTagResponseDto,
   CashFlowDetailDto,
@@ -13,7 +15,8 @@ import type {
   TransactionDashboardDto,
   TransactionListItemDto,
   TransferFormDto,
-  UpdateCurrencyExchangeRequestDto
+  UpdateCurrencyExchangeRequestDto,
+  UpdateBankAccountFormRequestDto
 } from "../dtos/TransactionDto";
 
 export async function getTransactions() {
@@ -51,17 +54,19 @@ export async function updateCashFlow(id: string, request: CreateCashFlowRequestD
   return client.put<string, UpdateCashFlowRequestDto>("/api/transactions/cashflows/update", { ...request, id });
 }
 
-export async function saveBankAccountForm(request: SaveBankAccountFormRequestDto) {
-  if (request.id == null || request.id.trim().length === 0) {
-    return client.post<string, SaveBankAccountFormRequestDto>("/api/transactions/bankaccounts/create", request);
-  }
-  return client.put<string, SaveBankAccountFormRequestDto>("/api/transactions/bankaccounts/update", request);
+export async function createBankAccountForm(request: CreateBankAccountFormRequestDto) {
+  return client.post<string, CreateBankAccountFormRequestDto>("/api/transactions/bankaccounts/create", request);
 }
-export async function saveTransferForm(request: SaveTransferFormRequestDto) {
-  if (request.id == null || request.id.trim().length === 0) {
-    return client.post<string, SaveTransferFormRequestDto>("/api/transactions/transfers/create", request);
-  }
-  return client.put<string, SaveTransferFormRequestDto>("/api/transactions/transfers/update", request);
+
+export async function updateBankAccountForm(id: string, request: UpdateBankAccountFormRequestDto) {
+  return client.put<string, UpdateBankAccountFormRequestDto>("/api/transactions/bankaccounts/update", { ...request, id });
+}
+export async function createTransferForm(request: CreateTransferFormRequestDto) {
+  return client.post<string, CreateTransferFormRequestDto>("/api/transactions/transfers/create", request);
+}
+
+export async function updateTransferForm(id: string, request: UpdateTransferFormRequestDto) {
+  return client.put<string, UpdateTransferFormRequestDto>("/api/transactions/transfers/update", { ...request, id });
 }
 
 export async function createCurrencyExchange(request: CreateCurrencyExchangeRequestDto) {

@@ -26,10 +26,11 @@ import { useSettings } from "../../features/settings/provider/SettingProvider";
 type UserProfileMenuProps = {
   isLoading?: boolean;
   profile?: CurrentProfileDto;
+  showMenuItems?: boolean;
 };
 
-export function UserProfileMenu({ isLoading = false, profile }: UserProfileMenuProps) {
-  const { handleLogout } = useAuthSession();
+export function UserProfileMenu({ isLoading = false, profile, showMenuItems = true }: UserProfileMenuProps) {
+  const { authSession, handleLogout } = useAuthSession();
   const { t } = useSettings();
   const navigate = useNavigate();
   const [anchorElement, setAnchorElement] = useState<HTMLElement | null>(null);
@@ -95,49 +96,55 @@ export function UserProfileMenu({ isLoading = false, profile }: UserProfileMenuP
             ) : null}
           </Stack>
         </Box>
-        <Divider />
-        <Box sx={layoutStyles.menuActionGroup}>
+        {showMenuItems ? (
+          <>
+            <Divider />
+            <Box sx={layoutStyles.menuActionGroup}>
+              <MenuItem onClick={() => {
+                handleCloseMenu();
+                navigate("/profile");
+              }}>
+                <Stack
+                  alignItems="center"
+                  direction="row"
+                  spacing={1}
+                >
+                  <AppIcon icon={UserRound} />
+                  <span>{t("profile.myProfile")}</span>
+                </Stack>
+              </MenuItem>
+              <MenuItem onClick={() => {
+                handleCloseMenu();
+                navigate("/settings");
+              }}>
+                <Stack
+                  alignItems="center"
+                  direction="row"
+                  spacing={1}
+                >
+                  <AppIcon icon={Settings} />
+                  <span>{t("nav.settings")}</span>
+                </Stack>
+              </MenuItem>
+            </Box>
+            {authSession != null ? <Divider /> : null}
+          </>
+        ) : null}
+        {authSession != null ? (
           <MenuItem onClick={() => {
             handleCloseMenu();
-            navigate("/profile");
+            handleLogout();
           }}>
             <Stack
               alignItems="center"
               direction="row"
               spacing={1}
             >
-              <AppIcon icon={UserRound} />
-              <span>{t("profile.myProfile")}</span>
+              <AppIcon icon={LogOut} />
+              <span>{t("profile.logout")}</span>
             </Stack>
           </MenuItem>
-          <MenuItem onClick={() => {
-            handleCloseMenu();
-            navigate("/settings");
-          }}>
-            <Stack
-              alignItems="center"
-              direction="row"
-              spacing={1}
-            >
-              <AppIcon icon={Settings} />
-              <span>{t("nav.settings")}</span>
-            </Stack>
-          </MenuItem>
-        </Box>
-        <Divider />
-        <MenuItem onClick={() => {
-          handleCloseMenu();
-          handleLogout();
-        }}>
-          <Stack
-            alignItems="center"
-            direction="row"
-            spacing={1}
-          >
-            <AppIcon icon={LogOut} />
-            <span>{t("profile.logout")}</span>
-          </Stack>
-        </MenuItem>
+        ) : null}
       </Menu>
     </>
   );

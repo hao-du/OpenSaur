@@ -72,6 +72,7 @@ type Props = {
   formatAmount: (value: number) => string;
   formatDate: (value: string | number | Date | null | undefined) => string;
   isLoading: boolean;
+  isActionDisabled?: boolean;
   onDelete: (item: TransactionListItemDto) => void;
   onEdit: (type: TransactionType, id: string, transferId?: string | null) => void;
   page: number;
@@ -89,6 +90,7 @@ export function TransactionListPanel({
   formatAmount,
   formatDate,
   isLoading,
+  isActionDisabled = false,
   onDelete,
   onEdit,
   page,
@@ -286,6 +288,7 @@ export function TransactionListPanel({
                     <Stack direction="row" spacing={1}>
                       <ActionButton
                         aria-label={t("transactions.edit")}
+                        disabled={isActionDisabled}
                         noWrap={false}
                         onClick={() => {
                           onEdit(item.type, item.id, item.transferId);
@@ -309,6 +312,7 @@ export function TransactionListPanel({
                       <ActionButton
                         aria-label={t("transactions.delete")}
                         color="error"
+                        disabled={isActionDisabled}
                         noWrap={false}
                         onClick={() => onDelete(item)}
                         size="small"

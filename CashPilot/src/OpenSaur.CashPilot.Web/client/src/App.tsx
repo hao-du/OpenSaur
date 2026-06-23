@@ -12,24 +12,16 @@ import { TemplatesPage } from "./features/templates/pages/TemplatesPage";
 import { SettingsPage } from "./features/settings/pages/SettingsPage";
 import { TagsPage } from "./features/tags/pages/TagsPage";
 import { OfflineTransactionsPage } from "./features/offline/pages/OfflineTransactionsPage";
-import { useNetworkStatus } from "./infrastructure/offline/useNetworkStatus";
+import { PendingTransactionsPage } from "./features/pending/pages/PendingTransactionsPage";
+import { isOfflineMode } from "./infrastructure/config/buildMode";
 export function App() {
     const { authSession, isRestoring } = useAuthSession();
-    const { isChecking, isOnline } = useNetworkStatus();
     const location = useLocation();
     const returnTo = `${location.pathname}${location.search}${location.hash}`;
-    const isOfflineWorkspace = isOnline === false;
-
-    if (isChecking) {
-        return null;
-    }
-
-    if (isOfflineWorkspace) {
+    if (isOfflineMode()) {
         return (
             <Routes>
-                <Route
-                    element={<Outlet />}
-                >
+                <Route element={<Outlet />}>
                     <Route
                         element={<Navigate replace to="/offline/transactions" />}
                         path="/"
@@ -39,10 +31,22 @@ export function App() {
                         path="/offline/transactions"
                     />
                     <Route
+                        element={<Navigate replace to="/offline/transactions?importMetadata=1" />}
+                        path="/offline/import"
+                    />
+                    <Route
                         element={<Navigate replace to="/offline/transactions" />}
                         path="*"
                     />
                 </Route>
+                <Route
+                    element={<PrepareSessionPage isRestoring={isRestoring} />}
+                    path="/prepare-session"
+                />
+                <Route
+                    element={<AuthCallbackPage />}
+                    path="/auth/callback"
+                />
             </Routes>
         );
     }
@@ -79,8 +83,8 @@ export function App() {
                     path="/settings"
                 />
                 <Route
-                    element={<OfflineTransactionsPage />}
-                    path="/offline/transactions"
+                    element={<PendingTransactionsPage />}
+                    path="/pending-transactions"
                 />
                 <Route
                     element={<TemplatesPage />}
@@ -93,6 +97,14 @@ export function App() {
                 <Route
                     element={<SettingsPage />}
                     path="/profile"
+                />
+                <Route
+                    element={<Navigate replace to="/pending-transactions" />}
+                    path="/offline/import"
+                />
+                <Route
+                    element={<Navigate replace to="/pending-transactions" />}
+                    path="/offline/transactions"
                 />
             </Route>
             <Route
