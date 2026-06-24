@@ -6,8 +6,8 @@ pool:
 
 variables:
   nodeVersion: 20.x
-  clientWorkingDirectory: $(Build.SourcesDirectory)/src/OpenSaur.CashPilot.Web/client
-  staticOutputDirectory: $(Build.SourcesDirectory)/src/OpenSaur.CashPilot.Web/wwwroot
+  clientWorkingDirectory: $(Build.SourcesDirectory)/CashPilot/src/OpenSaur.CashPilot.Web/client
+  staticOutputDirectory: $(Build.SourcesDirectory)/CashPilot/src/OpenSaur.CashPilot.Web/wwwroot
 
 steps:
   - checkout: self
@@ -27,7 +27,7 @@ steps:
   - task: AzureStaticWebApp@0
     displayName: Deploy to Azure Static Web Apps
     inputs:
-      workingDirectory: $(Build.SourcesDirectory)
+      workingDirectory: $(Build.SourcesDirectory)/CashPilot
       app_location: src/OpenSaur.CashPilot.Web/wwwroot
       output_location: ''
       skip_app_build: true
