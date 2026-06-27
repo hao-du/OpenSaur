@@ -38,8 +38,10 @@ public static class UpdateTagHandler
 
         entity.Name = name;
         entity.MatchingTerms = TagTermCodec.Encode(request.MatchingTerms);
+        entity.IsActive = request.IsActive;
+        entity.Marker = request.Marker;
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        return TypedResults.Ok(new TagDefinitionResponse(entity.Id, entity.Name, TagTermCodec.Decode(entity.MatchingTerms), entity.IsActive));
+        return TypedResults.Ok(new TagDefinitionResponse(entity.Id, entity.Name, TagTermCodec.Decode(entity.MatchingTerms), entity.IsActive, entity.Marker));
     }
 }

@@ -87,9 +87,10 @@ export function OfflineTransactionsPage() {
     return {
       description: "",
       fromDate: `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`,
-      rangePreset: "Month",
+      rangePreset: "Month" as const,
       toDate: `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()).padStart(2, "0")}`,
       types: ["CashFlow", "BankAccount", "Transfer", "Exchange"],
+      showOnlyInitialDeposits: false,
     };
   }, []);
   const [deletingTransaction, setDeletingTransaction] = useState<OfflineTransactionRecord | null>(null);

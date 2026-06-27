@@ -9,33 +9,14 @@ namespace OpenSaur.CashPilot.Web.Features.Transactions.Queries.Providers;
 
 internal sealed class BankAccountTransactionQueryProvider(CashPilotDbContext dbContext) : ITransactionQueryProvider
 {
-    public async Task<IReadOnlyList<TransactionListItemResponse>> GetListItemsAsync(
+    public string ProviderType => "BankAccount";
+
+    public Task<IReadOnlyList<TransactionListItemResponse>> GetListItemsAsync(
         Guid currentUserId,
+        TransactionFilterParams filter,
         CancellationToken cancellationToken)
     {
-        return await dbContext.BankAccountTransactions
-            .AsNoTracking()
-            .Where(x => x.IsActive && x.Transaction.IsActive && x.Transaction.OwnerId == currentUserId)
-            .Select(x => new TransactionListItemResponse(
-                x.BankAccountId,
-                x.BankAccountId,
-                null,
-                null,
-                x.BankAccount.Bank.ShortName,
-                (byte)x.BankAccount.Status,
-                (byte)x.TransactionType,
-                null,
-                null,
-                null,
-                "BankAccount",
-                x.Description,
-                TagTermCodec.Decode(x.BankAccount.Tags),
-                x.Transaction.Currency.ShortName,
-                x.Transaction.Amount,
-                (byte)x.Transaction.Direction,
-                x.Transaction.TransactionDate,
-                x.IsActive))
-            .ToListAsync(cancellationToken);
+        return Task.FromResult<IReadOnlyList<TransactionListItemResponse>>([]);
     }
 
     public async Task<IReadOnlyList<TransactionSummaryRow>> GetDashboardRowsAsync(

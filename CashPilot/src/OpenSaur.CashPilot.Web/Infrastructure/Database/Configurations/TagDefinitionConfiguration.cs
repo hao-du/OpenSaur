@@ -20,5 +20,9 @@ public sealed class TagDefinitionConfiguration : IEntityTypeConfiguration<TagDef
 
         builder.HasIndex(x => new { x.OwnerId, x.Name })
             .IsUnique();
+
+        builder.Property(x => x.Marker)
+            .IsRequired()
+            .HasDefaultValue(false);
     }
 }

@@ -8,12 +8,13 @@ internal static class TransactionQueryProviderExtensions
     public static async Task<List<TransactionListItemResponse>> GetListItemsAsync(
         this IEnumerable<ITransactionQueryProvider> providers,
         Guid currentUserId,
+        TransactionFilterParams filter,
         CancellationToken cancellationToken)
     {
         var result = new List<TransactionListItemResponse>();
         foreach (var provider in providers)
         {
-            result.AddRange(await provider.GetListItemsAsync(currentUserId, cancellationToken));
+            result.AddRange(await provider.GetListItemsAsync(currentUserId, filter, cancellationToken));
         }
 
         return result;

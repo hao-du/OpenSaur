@@ -317,6 +317,20 @@ public sealed record TransactionDashboardResponse(
 
 public sealed record DailyInOutCalendarQueryRequest(int? Year, int? Month);
 
+public sealed record MarkerCalendarQueryRequest(string TagName, int? PeriodIndex);
+
+public sealed record MarkerCalendarPeriodResponse(
+    DateOnly? StartDate,
+    DateOnly? EndDate);
+
+public sealed record MarkerCalendarItemResponse(DateOnly TransactionDate, decimal Income, decimal Outcome);
+
+public sealed record MarkerCalendarResponse(
+    string TagName,
+    int SelectedPeriodIndex,
+    IReadOnlyList<MarkerCalendarPeriodResponse> Periods,
+    IReadOnlyList<MarkerCalendarItemResponse> Items);
+
 public sealed record DailyInOutCalendarItemResponse(int Day, decimal Income, decimal Outcome);
 
 public sealed record DailyInOutCalendarResponse(

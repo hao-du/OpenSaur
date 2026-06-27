@@ -1,5 +1,6 @@
 import { Stack } from "@mui/material";
 import type { Control } from "react-hook-form";
+import { CheckBox } from "../../../components/atoms/CheckBox";
 import { MultiSelect } from "../../../components/atoms/MultiSelect";
 import { Text } from "../../../components/atoms/Text";
 import { useSettings } from "../../settings/provider/SettingProvider";
@@ -7,6 +8,7 @@ import { useSettings } from "../../settings/provider/SettingProvider";
 export type TagFormValues = {
   name: string;
   matchingTerms: string[];
+  marker?: boolean;
 };
 
 type TagFormProps = {
@@ -37,6 +39,12 @@ export function TagForm({ control, isSubmitting }: TagFormProps) {
         name="matchingTerms"
         options={[]}
         placeholder={t("tags.matchingTermsPlaceholder")}
+      />
+      <CheckBox
+        control={control}
+        disabled={isSubmitting}
+        label={t("tags.marker")}
+        name="marker"
       />
     </Stack>
   );

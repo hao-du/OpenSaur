@@ -1,5 +1,11 @@
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Http;
+using OpenSaur.CashPilot.Web.Features.Tags.Handlers;
+using OpenSaur.CashPilot.Web.Features.Transactions.Dtos;
 using OpenSaur.CashPilot.Web.Features.Transactions.Handlers;
+using OpenSaur.CashPilot.Web.Features.Transactions.Queries;
 using OpenSaur.CashPilot.Web.Infrastructure.Auth;
+using System.Security.Claims;
 
 namespace OpenSaur.CashPilot.Web.Features.Transactions;
 
@@ -14,6 +20,8 @@ public static class TransactionsEndpoints
         transactions.MapGet("/get", GetTransactionsHandler.HandleAsync);
         transactions.MapGet("/dashboard", GetTransactionDashboardHandler.HandleAsync);
         transactions.MapGet("/dashboard/daily-in-out", GetDailyInOutCalendarHandler.HandleAsync);
+        transactions.MapGet("/marker-tags", GetMarkerTagsHandler.HandleAsync);
+        transactions.MapGet("/marker-calendar", GetMarkerCalendarHandler.HandleAsync);
         transactions.MapPost("/auto-tag", AutoTagTransactionHandler.HandleAsync);
 
         // CashFlow

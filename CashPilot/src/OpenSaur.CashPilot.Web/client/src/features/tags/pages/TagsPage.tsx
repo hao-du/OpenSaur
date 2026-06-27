@@ -20,6 +20,7 @@ import { TagsFilterDrawer } from "../components/TagsFilterDrawer";
 const emptyFormState: TagFormValues = {
   name: "",
   matchingTerms: [],
+  marker: false,
 };
 
 export function TagsPage() {
@@ -65,6 +66,7 @@ export function TagsPage() {
         matchingTerms: values.matchingTerms
           .map((x) => x.trim())
           .filter((x) => x.length > 0),
+        marker: values.marker ?? false,
       };
 
       if (editingTag == null) {
@@ -136,6 +138,7 @@ export function TagsPage() {
             form.reset({
               name: tag.name,
               matchingTerms: tag.matchingTerms,
+              marker: tag.marker ?? false,
             });
             openCrudEditForm(tag);
           }}

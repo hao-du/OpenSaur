@@ -4,9 +4,11 @@ public sealed record TagDefinitionResponse(
     Guid Id,
     string Name,
     string[] MatchingTerms,
-    bool IsActive);
+    bool IsActive,
+    bool Marker);
 
 public sealed record SaveTagDefinitionRequest(
     string Name,
     string[] MatchingTerms,
-    bool IsActive);
+    bool IsActive,
+    bool Marker = false);

@@ -184,6 +184,24 @@ export type DailyInOutCalendarDto = {
   items: DailyInOutCalendarItemDto[];
 };
 
+export type MarkerCalendarItemDto = {
+  transactionDate: string;
+  income: number;
+  outcome: number;
+};
+
+export type MarkerCalendarPeriodDto = {
+  startDate: string | null;
+  endDate: string | null;
+};
+
+export type MarkerCalendarDto = {
+  tagName: string;
+  selectedPeriodIndex: number;
+  periods: MarkerCalendarPeriodDto[];
+  items: MarkerCalendarItemDto[];
+};
+
 export type BankAccountLookupDto = {
   id: string;
   bankShortName: string;

@@ -82,6 +82,7 @@ export function TransactionsPage() {
     rangePreset: "Month",
     toDate: endOfMonth,
     types: ["CashFlow", "BankAccount", "Transfer", "Exchange"],
+    showOnlyInitialDeposits: false,
   });
   const selectedDate = searchParams.get("date") ?? "";
 
@@ -115,7 +116,13 @@ export function TransactionsPage() {
       name: "",
       templateType: "",
     }).data ?? [];
-  const transactionsQuery = useTransactionsQuery();
+  const transactionsQuery = useTransactionsQuery({
+    description: filters.description,
+    fromDate: filters.fromDate,
+    showOnlyInitialDeposits: filters.showOnlyInitialDeposits,
+    toDate: filters.toDate,
+    types: filters.types,
+  });
   const dashboardQuery = useTransactionDashboardQuery();
   const defaultCurrencyCode = currencies.find((x) => x.isDefault)?.shortName;
   const incomeOutcomeTitle =
@@ -139,30 +146,7 @@ export function TransactionsPage() {
   const isCurrenciesLoading =
     currencies.length === 0 && (isDashboardLoading || isTransactionsLoading);
 
-  const filteredTransactions = useMemo(() => {
-    const normalizedDescription = filters.description.trim().toLowerCase();
-    return (transactionsQuery.data ?? []).filter((item) => {
-      if (filters.types.length > 0 && !filters.types.includes(item.type)) {
-        return false;
-      }
-      if (
-        filters.fromDate.length > 0 &&
-        item.transactionDate < filters.fromDate
-      ) {
-        return false;
-      }
-      if (filters.toDate.length > 0 && item.transactionDate > filters.toDate) {
-        return false;
-      }
-      if (normalizedDescription.length > 0) {
-        const description = (item.description ?? "").toLowerCase();
-        if (!description.includes(normalizedDescription)) {
-          return false;
-        }
-      }
-      return true;
-    });
-  }, [transactionsQuery.data, filters]);
+  const filteredTransactions = transactionsQuery.data ?? [];
 
   const pageCount = Math.max(
     1,

@@ -5,6 +5,8 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTransactionDashboardQuery } from "../../transactions/hooks/useTransactionDashboardQuery";
 import { useDailyInOutCalendarQuery } from "../../transactions/hooks/useDailyInOutCalendarQuery";
+import { useMarkerTagsQuery } from "../../transactions/hooks/useMarkerTagsQuery";
+import { useMarkerCalendarQuery } from "../../transactions/hooks/useMarkerCalendarQuery";
 import { useSettings } from "../../settings/provider/SettingProvider";
 import { useCurrenciesQuery } from "../../currencies/hooks/useCurrenciesQuery";
 import { useBanksQuery } from "../../banks/hooks/useBanksQuery";
@@ -25,7 +27,16 @@ export function DashboardPage() {
   const now = new Date(todayIsoDate);
   const [calendarYear, setCalendarYear] = useState(now.getUTCFullYear());
   const [calendarMonth, setCalendarMonth] = useState(now.getUTCMonth() + 1);
+  const [selectedMarkerTag, setSelectedMarkerTag] = useState<string>("__monthly__");
+  const [selectedMarkerPeriodIndex, setSelectedMarkerPeriodIndex] = useState<number | undefined>();
+  const markerTagsQuery = useMarkerTagsQuery();
   const calendarQuery = useDailyInOutCalendarQuery(calendarYear, calendarMonth);
+  const isMarkerMode = selectedMarkerTag !== "__monthly__";
+  const markerCalendarQuery = useMarkerCalendarQuery(
+    isMarkerMode ? selectedMarkerTag : "",
+    selectedMarkerPeriodIndex,
+    isMarkerMode
+  );
   const currencies = useCurrenciesQuery({ isActive: true, name: "", shortName: "" }).data ?? [];
   const banks = useBanksQuery({ isActive: true, name: "", shortName: "" }).data ?? [];
   const counterparties = useCounterpartiesQuery({ email: "", fullName: "", isActive: true, phoneNumber: "" }).data ?? [];
@@ -37,6 +48,7 @@ export function DashboardPage() {
   const incomeOutcomeItems = defaultCurrencyCode == null
     ? (transactionDashboard.data?.incomeOutcomes ?? [])
     : (transactionDashboard.data?.incomeOutcomes ?? []).filter(x => x.currencyCode === defaultCurrencyCode);
+  const markerCalendar = markerCalendarQuery.data;
 
   return (
     <DefaultLayout title={t("dashboard.title")}>
@@ -97,19 +109,45 @@ export function DashboardPage() {
           ) : (
             <DailyInOutCalendarCard
               defaultCurrencyCode={calendarQuery.data?.currencyCode ?? undefined}
-              isLoading={calendarQuery.isLoading || calendarQuery.isFetching}
+              isLoading={markerTagsQuery.isLoading || calendarQuery.isLoading || calendarQuery.isFetching || (isMarkerMode && (markerCalendarQuery.isLoading || markerCalendarQuery.isFetching))}
               inLabel={t("transactions.directionIn")}
-              items={calendarQuery.data?.items ?? []}
+              dailyItems={calendarQuery.data?.items ?? []}
+              markerTags={markerTagsQuery.data ?? []}
+              markerCalendar={isMarkerMode ? markerCalendar : undefined}
               month={calendarMonth}
               monthLabel={t("transactions.filter.month")}
+              monthlyLabel={t("dashboard.monthly")}
               noDefaultCurrencyLabel={t("dashboard.defaultCurrencyRequired")}
+              noDataAvailableLabel={t("dashboard.noDataAvailable")}
               onDayClick={(day) => {
-                const date = `${calendarYear}-${String(calendarMonth).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-                navigate(`/transactions?date=${date}`);
+                navigate(`/transactions?date=${day}`);
+              }}
+              onMarkerTagChange={(tagName) => {
+                setSelectedMarkerTag(tagName);
+                setSelectedMarkerPeriodIndex(undefined);
+              }}
+              onNextMarkerPeriod={() => {
+                if (markerCalendar == null) {
+                  return;
+                }
+
+                setSelectedMarkerPeriodIndex(Math.min(
+                  markerCalendar.selectedPeriodIndex + 1,
+                  markerCalendar.periods.length - 1
+                ));
+              }}
+              onPreviousMarkerPeriod={() => {
+                if (markerCalendar == null) {
+                  return;
+                }
+
+                setSelectedMarkerPeriodIndex(Math.max(markerCalendar.selectedPeriodIndex - 1, 0));
               }}
               onMonthChange={setCalendarMonth}
               onYearChange={setCalendarYear}
               outLabel={t("transactions.directionOut")}
+              selectedMarkerTag={selectedMarkerTag}
+              pastPeriodLabel={t("dashboard.pastPeriod")}
               title={t("dashboard.dailyInOutCalendar")}
               year={calendarYear}
               yearLabel={t("transactions.filter.year")}

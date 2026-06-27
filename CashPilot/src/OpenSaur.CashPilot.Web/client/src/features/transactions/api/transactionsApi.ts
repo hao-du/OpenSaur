@@ -16,11 +16,22 @@ import type {
   TransactionListItemDto,
   TransferFormDto,
   UpdateCurrencyExchangeRequestDto,
-  UpdateBankAccountFormRequestDto
+  UpdateBankAccountFormRequestDto,
+  MarkerCalendarDto
 } from "../dtos/TransactionDto";
+import type { TagDefinitionResponse } from "../../tags/dtos/TagDto";
 
-export async function getTransactions() {
-  return client.get<TransactionListItemDto[]>("/api/transactions/get");
+export async function getTransactions(filter?: { description?: string; fromDate?: string; toDate?: string; showOnlyInitialDeposits?: boolean; types?: string[] }) {
+  const params = new URLSearchParams();
+  params.set("description", filter?.description ?? "");
+  params.set("fromDate", filter?.fromDate ?? "");
+  params.set("toDate", filter?.toDate ?? "");
+  params.set("showOnlyInitialDeposits", filter?.showOnlyInitialDeposits ? "true" : "false");
+  if (filter?.types && filter.types.length > 0) {
+    filter.types.forEach(t => params.append("types", t));
+  }
+  const queryString = params.toString();
+  return client.get<TransactionListItemDto[]>(`/api/transactions/get${queryString ? `?${queryString}` : ""}`);
 }
 
 export async function getTransactionDashboard() {
@@ -29,6 +40,17 @@ export async function getTransactionDashboard() {
 
 export async function getDailyInOutCalendar(year: number, month: number) {
   return client.get<DailyInOutCalendarDto>(`/api/transactions/dashboard/daily-in-out?year=${year}&month=${month}`);
+}
+
+export async function getMarkerTags() {
+  return client.get<TagDefinitionResponse[]>('/api/transactions/marker-tags');
+}
+
+export async function getMarkerCalendar(tagName: string, periodIndex?: number) {
+  const params = new URLSearchParams();
+  params.set('tagName', tagName);
+  if (periodIndex != null) params.set('periodIndex', periodIndex.toString());
+  return client.get<MarkerCalendarDto>(`/api/transactions/marker-calendar?${params}`);
 }
 
 export async function autoTagTransaction(request: AutoTagRequestDto) {

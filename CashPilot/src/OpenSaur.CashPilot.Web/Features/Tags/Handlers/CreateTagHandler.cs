@@ -35,12 +35,13 @@ public static class CreateTagHandler
             OwnerId = currentUserId,
             Name = name,
             IsActive = request.IsActive,
-            MatchingTerms = TagTermCodec.Encode(request.MatchingTerms)
+            MatchingTerms = TagTermCodec.Encode(request.MatchingTerms),
+            Marker = request.Marker
         };
 
         dbContext.TagDefinitions.Add(entity);
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        return TypedResults.Created($"/api/tags/{entity.Id}", new TagDefinitionResponse(entity.Id, entity.Name, TagTermCodec.Decode(entity.MatchingTerms), entity.IsActive));
+        return TypedResults.Created($"/api/tags/{entity.Id}", new TagDefinitionResponse(entity.Id, entity.Name, TagTermCodec.Decode(entity.MatchingTerms), entity.IsActive, entity.Marker));
     }
 }

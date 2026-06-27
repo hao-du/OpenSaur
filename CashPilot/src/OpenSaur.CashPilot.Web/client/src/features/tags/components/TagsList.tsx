@@ -34,7 +34,12 @@ export function TagsList({ isLoading, isSubmitting, onDelete, onEdit, tags }: Ta
       loadingLabel={t("tags.loading")}
       renderRow={(tag) => (
         <TableRow hover key={tag.id}>
-          <TableCell>{tag.name}</TableCell>
+          <TableCell>
+            {tag.name}
+            {tag.marker && (
+              <Chip color="success" label={t("tags.marker")} size="small" sx={{ ml: 1 }} variant="filled" />
+            )}
+          </TableCell>
           <TableCell>
             {tag.matchingTerms.length === 0 ? (
               <Chip color="error" label={noneLabel} size="small" variant="outlined" />

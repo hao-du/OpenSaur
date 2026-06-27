@@ -15,6 +15,9 @@
 | Replace the template populate drawers with the shared Drawer component | Done | The populate selector and all type-specific populate drawers now use `Drawer`, `DrawerHeader`, and `DrawerBody` instead of `DrawerPanel`. |
 | Split the template populate flow into type-specific drawers | Done | Added `CashFlowPopulateFormDrawer`, `TransferPopulateFormDrawer`, `ExchangePopulateFormDrawer`, and `BankAccountPopulateFormDrawer`, with `TemplatePopulateDrawer` acting as the selector and loader. |
 | Move TemplatePopulateDrawer into the template populate folder | Done | The populate drawer now lives under `components/populate` and the page import points to the new path. |
+| Add marker-period calendar navigation | Done | Marker mode now hides the month/year controls, shows a computed period label, and navigates marker periods using the ordered marker-date series. |
+| Fix marker calendar EF set-operation translation | Done | Marker-calendar queries now concatenate anonymous primitive rows first and decode tags after materialization, which avoids the client projection set-operation error. |
+| Sum all transactions inside marker periods | Done | Marker calendar values now come from every transaction in the selected period instead of only marker-tagged rows. |
 | Move the template settings and filter drawers to the shared drawer footer layout | Done | Template settings and filter drawers now use `Drawer`, `DrawerBody`, `DrawerFooter`, and `DrawerHeader`, with submit actions in the footer. |
 | Move the tag form and filter drawers to the shared drawer footer layout | Done | Tag create/edit and filter drawers now use `Drawer`, `DrawerBody`, `DrawerFooter`, and `DrawerHeader`, with actions in the footer. |
 | Move the currency filter to the shared drawer footer layout | Done | Currency filter now uses `Drawer`, `DrawerBody`, `DrawerFooter`, and `DrawerHeader` with the filter actions in the footer. |
@@ -70,3 +73,4 @@
 | Make shared drawer footer accept action lists | Done | Changed `DrawerFooter` to accept an `actions` array so form drawers can pass button lists explicitly and keep the footer contract consistent. |
 | Restore footer submit wiring for bank drawer | Done | Added a form id to `DrawerBody` and linked the footer action to it so the fixed bottom button submits the body form again. |
 | Filter dashboard bank totals to active status only | Done | Filter the dashboard bank summary to `x.IsActive && x.Status == BankAccountStatus.Active` so matured and closed-early accounts do not appear. |
+| Fix unified transaction initial-deposit query | Done | Removed the extra join in the `ShowOnlyInitialDeposits` branch and projected directly from `BankAccountTransactions` through the transaction navigation. |

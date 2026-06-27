@@ -2,6 +2,7 @@ import { Stack } from "@mui/material";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { ActionButton } from "../../../components/atoms/ActionButton";
+import { CheckBox } from "../../../components/atoms/CheckBox";
 import { DatePicker } from "../../../components/atoms/DatePicker";
 import { DropDown } from "../../../components/atoms/DropDown";
 import { MultiSelect } from "../../../components/atoms/MultiSelect";
@@ -15,6 +16,7 @@ export type TransactionFilterValues = {
   rangePreset: "Month" | "Year" | "ThisWeek" | "Today" | "Custom";
   toDate: string;
   types: Array<"CashFlow" | "BankAccount" | "Transfer" | "Exchange">;
+  showOnlyInitialDeposits: boolean;
 };
 
 type Props = {
@@ -45,6 +47,7 @@ export function TransactionsFilterDrawer({
     description: "",
     fromDate: getCurrentMonthRange().fromDate,
     rangePreset: "Month",
+    showOnlyInitialDeposits: false,
     toDate: getCurrentMonthRange().toDate,
     types: ["CashFlow", "BankAccount", "Transfer", "Exchange"]
   });
@@ -70,6 +73,7 @@ export function TransactionsFilterDrawer({
   const rangePreset = form.watch("rangePreset");
   const fromDate = form.watch("fromDate");
   const toDate = form.watch("toDate");
+  const showOnlyInitialDeposits = form.watch("showOnlyInitialDeposits", false);
 
   useEffect(() => {
     if (!isOpen) {
@@ -145,45 +149,54 @@ export function TransactionsFilterDrawer({
         })}
       >
         <Stack spacing={2}>
-          <DropDown
+          <CheckBox
             control={form.control}
-            label={t("transactions.filter.dateRange")}
-            name="rangePreset"
-            options={[
-              { label: t("transactions.filter.month"), value: "Month" },
-              { label: t("transactions.filter.year"), value: "Year" },
-              { label: t("transactions.filter.thisWeek"), value: "ThisWeek" },
-              { label: t("transactions.filter.today"), value: "Today" },
-              { label: t("transactions.filter.custom"), value: "Custom" }
-            ]}
+            label={t("transactions.filter.showOnlyActiveBankAccounts")}
+            name="showOnlyInitialDeposits"
           />
-          <DatePicker
-            control={form.control}
-            disabled={rangePreset === "Today" || rangePreset === "ThisWeek"}
-            label={t("transactions.filter.fromDate")}
-            mode={rangePreset === "Month" ? "month" : rangePreset === "Year" ? "year" : "date"}
-            name="fromDate"
-          />
-          <DatePicker
-            control={form.control}
-            disabled={rangePreset === "Today" || rangePreset === "ThisWeek"}
-            label={t("transactions.filter.toDate")}
-            minDate={fromDate}
-            mode={rangePreset === "Month" ? "month" : rangePreset === "Year" ? "year" : "date"}
-            name="toDate"
-          />
-          <MultiSelect
-            control={form.control}
-            label={t("transactions.filter.transactionType")}
-            name="types"
-            options={[
-              { label: t("transactions.cashFlow"), value: "CashFlow" },
-              { label: t("transactions.bankAccount"), value: "BankAccount" },
-              { label: t("transactions.transfer"), value: "Transfer" },
-              { label: t("transactions.exchange"), value: "Exchange" }
-            ]}
-          />
-          <Text control={form.control} label={t("transactions.filter.findDescription")} name="description" />
+          {!showOnlyInitialDeposits && (
+            <>
+              <DropDown
+                control={form.control}
+                label={t("transactions.filter.dateRange")}
+                name="rangePreset"
+                options={[
+                  { label: t("transactions.filter.month"), value: "Month" },
+                  { label: t("transactions.filter.year"), value: "Year" },
+                  { label: t("transactions.filter.thisWeek"), value: "ThisWeek" },
+                  { label: t("transactions.filter.today"), value: "Today" },
+                  { label: t("transactions.filter.custom"), value: "Custom" }
+                ]}
+              />
+              <DatePicker
+                control={form.control}
+                disabled={rangePreset === "Today" || rangePreset === "ThisWeek"}
+                label={t("transactions.filter.fromDate")}
+                mode={rangePreset === "Month" ? "month" : rangePreset === "Year" ? "year" : "date"}
+                name="fromDate"
+              />
+              <DatePicker
+                control={form.control}
+                disabled={rangePreset === "Today" || rangePreset === "ThisWeek"}
+                label={t("transactions.filter.toDate")}
+                minDate={fromDate}
+                mode={rangePreset === "Month" ? "month" : rangePreset === "Year" ? "year" : "date"}
+                name="toDate"
+              />
+              <MultiSelect
+                control={form.control}
+                label={t("transactions.filter.transactionType")}
+                name="types"
+                options={[
+                  { label: t("transactions.cashFlow"), value: "CashFlow" },
+                  { label: t("transactions.bankAccount"), value: "BankAccount" },
+                  { label: t("transactions.transfer"), value: "Transfer" },
+                  { label: t("transactions.exchange"), value: "Exchange" }
+                ]}
+              />
+              <Text control={form.control} label={t("transactions.filter.findDescription")} name="description" />
+            </>
+          )}
         </Stack>
       </DrawerBody>
       <DrawerFooter

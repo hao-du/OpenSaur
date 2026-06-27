@@ -9,33 +9,14 @@ namespace OpenSaur.CashPilot.Web.Features.Transactions.Queries.Providers;
 
 internal sealed class CurrencyExchangeTransactionQueryProvider(CashPilotDbContext dbContext) : ITransactionQueryProvider
 {
-    public async Task<IReadOnlyList<TransactionListItemResponse>> GetListItemsAsync(
+    public string ProviderType => "Exchange";
+
+    public Task<IReadOnlyList<TransactionListItemResponse>> GetListItemsAsync(
         Guid currentUserId,
+        TransactionFilterParams filter,
         CancellationToken cancellationToken)
     {
-        return await dbContext.CurrencyExchangeTransactions
-            .AsNoTracking()
-            .Where(x => x.IsActive && x.CurrencyExchange.IsActive && x.Transaction.IsActive && x.Transaction.OwnerId == currentUserId)
-            .Select(x => new TransactionListItemResponse(
-                x.CurrencyExchangeId,
-                null,
-                null,
-                x.CurrencyExchangeId,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                "Exchange",
-                x.Description,
-                TagTermCodec.Decode(x.CurrencyExchange.Tags),
-                x.Transaction.Currency.ShortName,
-                x.Transaction.Amount,
-                (byte)x.Transaction.Direction,
-                x.Transaction.TransactionDate,
-                x.IsActive))
-            .ToListAsync(cancellationToken);
+        return Task.FromResult<IReadOnlyList<TransactionListItemResponse>>([]);
     }
 
     public async Task<IReadOnlyList<TransactionSummaryRow>> GetDashboardRowsAsync(

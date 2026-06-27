@@ -449,6 +449,10 @@ namespace OpenSaur.CashPilot.Web.Infrastructure.Database.Migrations
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
 
+                    b.Property<bool>("Marker")
+                        .HasDefaultValue(false)
+                        .HasColumnType("boolean");
+
                     b.Property<string>("MatchingTerms")
                         .IsRequired()
                         .HasColumnType("jsonb");
