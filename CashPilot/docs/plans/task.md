@@ -18,6 +18,7 @@
 | Add marker-period calendar navigation | Done | Marker mode now hides the month/year controls, shows a computed period label, and navigates marker periods using the ordered marker-date series. |
 | Fix marker calendar EF set-operation translation | Done | Marker-calendar queries now concatenate anonymous primitive rows first and decode tags after materialization, which avoids the client projection set-operation error. |
 | Sum all transactions inside marker periods | Done | Marker calendar values now come from every transaction in the selected period instead of only marker-tagged rows. |
+| Normalize transaction filter year dates | Done | The filter drawer now keeps year-mode dates idempotent, so it no longer appends `-01-01` or `-12-31` to already normalized values. |
 | Move the template settings and filter drawers to the shared drawer footer layout | Done | Template settings and filter drawers now use `Drawer`, `DrawerBody`, `DrawerFooter`, and `DrawerHeader`, with submit actions in the footer. |
 | Move the tag form and filter drawers to the shared drawer footer layout | Done | Tag create/edit and filter drawers now use `Drawer`, `DrawerBody`, `DrawerFooter`, and `DrawerHeader`, with actions in the footer. |
 | Move the currency filter to the shared drawer footer layout | Done | Currency filter now uses `Drawer`, `DrawerBody`, `DrawerFooter`, and `DrawerHeader` with the filter actions in the footer. |

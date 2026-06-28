@@ -67,6 +67,13 @@ export function TransactionsFilterDrawer({
     to.setDate(from.getDate() + 6);
     return { fromDate: formatDate(from), toDate: formatDate(to) };
   };
+  const normalizeYearDate = (value: string, suffix: string) => {
+    if (/^\d{4}$/.test(value)) {
+      return `${value}${suffix}`;
+    }
+
+    return value;
+  };
   const form = useForm<TransactionFilterValues>({
     defaultValues: initialValues
   });
@@ -136,8 +143,8 @@ export function TransactionsFilterDrawer({
             fromDate = `${fromYear}-${String(fromMonth).padStart(2, "0")}-01`;
             toDate = `${toYear}-${String(toMonth).padStart(2, "0")}-${String(new Date(toYear, toMonth, 0).getDate()).padStart(2, "0")}`;
           } else if (values.rangePreset === "Year") {
-            fromDate = `${values.fromDate}-01-01`;
-            toDate = `${values.toDate}-12-31`;
+            fromDate = normalizeYearDate(values.fromDate, "-01-01");
+            toDate = normalizeYearDate(values.toDate, "-12-31");
           }
 
           onApply({
