@@ -39,7 +39,7 @@ variables:
   containerAppsApiVersion: "2025-07-01"
 
 schedules:
-- cron: "0 19 * * 0-4"  # 2:00 AM UTC+7 (Mon-Fri)
+- cron: "0 20 * * 0-4"  # 3:00 AM UTC+7 (Mon-Fri)
   displayName: "Stop Container App"
   branches:
     include:
