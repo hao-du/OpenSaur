@@ -4,6 +4,7 @@ This document outlines the rules, guidelines, and behavioral expectations for AI
 
 ## Core Principles
 - **Aesthetics First**: Every UI change must be premium, modern, and visually stunning.
+- **Simplicity First**: Always prefer the simplest solution. Avoid unnecessary abstractions, hooks, or patterns when a straightforward approach works.
 - **Clean Code**: Follow architectural patterns established in the `src` directory.
 - **Pure Workspace**: `src` is for project code only; do not add any agentic files or configurations (like `.agent/` or `.superpowers/`) inside the `src` directory.
 - **Safety**: Never run destructive commands without explicit confirmation.

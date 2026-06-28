@@ -8,4 +8,5 @@ public sealed class TagDefinition : EntityBase
     public string Name { get; set; } = string.Empty;
     public string MatchingTerms { get; set; } = "[]";
     public bool Marker { get; set; }
+    public bool IsDefaultMaker { get; set; }
 }

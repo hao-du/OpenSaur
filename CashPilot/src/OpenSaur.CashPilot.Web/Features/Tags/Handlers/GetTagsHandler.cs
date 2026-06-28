@@ -38,7 +38,8 @@ public static class GetTagsHandler
                 x.Name,
                 TagTermCodec.Decode(x.MatchingTerms),
                 x.IsActive,
-                x.Marker))
+                x.Marker,
+                x.IsDefaultMaker))
             .ToListAsync(cancellationToken);
 
         return TypedResults.Ok<IReadOnlyList<TagDefinitionResponse>>(items);

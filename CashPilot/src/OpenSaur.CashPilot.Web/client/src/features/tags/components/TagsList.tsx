@@ -36,9 +36,11 @@ export function TagsList({ isLoading, isSubmitting, onDelete, onEdit, tags }: Ta
         <TableRow hover key={tag.id}>
           <TableCell>
             {tag.name}
-            {tag.marker && (
+            {tag.isDefaultMaker ? (
+              <Chip color="primary" label={t("tags.isDefaultMaker")} size="small" sx={{ ml: 1 }} variant="filled" />
+            ) : tag.marker ? (
               <Chip color="success" label={t("tags.marker")} size="small" sx={{ ml: 1 }} variant="filled" />
-            )}
+            ) : null}
           </TableCell>
           <TableCell>
             {tag.matchingTerms.length === 0 ? (

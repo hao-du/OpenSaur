@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using OpenSaur.CashPilot.Web.Infrastructure.Database;
@@ -11,9 +12,11 @@ using OpenSaur.CashPilot.Web.Infrastructure.Database;
 namespace OpenSaur.CashPilot.Web.Infrastructure.Database.Migrations
 {
     [DbContext(typeof(CashPilotDbContext))]
-    partial class CashPilotDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260628134236_AddTagIsDefaultMaker")]
+    partial class AddTagIsDefaultMaker
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

@@ -21,6 +21,7 @@ const emptyFormState: TagFormValues = {
   name: "",
   matchingTerms: [],
   marker: false,
+  isDefaultMaker: false,
 };
 
 export function TagsPage() {
@@ -67,6 +68,7 @@ export function TagsPage() {
           .map((x) => x.trim())
           .filter((x) => x.length > 0),
         marker: values.marker ?? false,
+        isDefaultMaker: values.isDefaultMaker ?? false,
       };
 
       if (editingTag == null) {
@@ -139,6 +141,7 @@ export function TagsPage() {
               name: tag.name,
               matchingTerms: tag.matchingTerms,
               marker: tag.marker ?? false,
+              isDefaultMaker: tag.isDefaultMaker ?? false,
             });
             openCrudEditForm(tag);
           }}

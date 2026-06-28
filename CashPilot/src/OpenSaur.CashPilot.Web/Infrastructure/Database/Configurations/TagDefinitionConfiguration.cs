@@ -24,5 +24,9 @@ public sealed class TagDefinitionConfiguration : IEntityTypeConfiguration<TagDef
         builder.Property(x => x.Marker)
             .IsRequired()
             .HasDefaultValue(false);
+
+        builder.Property(x => x.IsDefaultMaker)
+            .IsRequired()
+            .HasDefaultValue(false);
     }
 }

@@ -34,6 +34,7 @@ public static class GetMarkerCalendarHandler
                 x.Transaction.TransactionDate,
                 x.Transaction.Amount,
                 x.Transaction.Direction,
+                BankAccountTransactionType = (byte?)x.TransactionType,
                 Tags = x.BankAccount.Tags
             })
             .Concat(
@@ -45,6 +46,7 @@ public static class GetMarkerCalendarHandler
                         x.Transaction.TransactionDate,
                         x.Transaction.Amount,
                         x.Transaction.Direction,
+                        BankAccountTransactionType = (byte?)null,
                         Tags = x.Transfer.Tags
                     }))
             .Concat(
@@ -56,6 +58,7 @@ public static class GetMarkerCalendarHandler
                         x.Transaction.TransactionDate,
                         x.Transaction.Amount,
                         x.Transaction.Direction,
+                        BankAccountTransactionType = (byte?)null,
                         Tags = x.CurrencyExchange.Tags
                     }))
             .Concat(
@@ -67,6 +70,7 @@ public static class GetMarkerCalendarHandler
                         x.Transaction.TransactionDate,
                         x.Transaction.Amount,
                         x.Transaction.Direction,
+                        BankAccountTransactionType = (byte?)null,
                         x.Tags
                     }))
             .ToListAsync(cancellationToken);
@@ -109,6 +113,9 @@ public static class GetMarkerCalendarHandler
         var items = transactions
             .Where(x => selectedPeriod.StartDate == null || x.TransactionDate >= selectedPeriod.StartDate.Value)
             .Where(x => x.TransactionDate <= selectedPeriod.EndDate)
+            .Where(x =>
+                x.BankAccountTransactionType != (byte)BankAccountMovementType.InitialDeposit &&
+                x.BankAccountTransactionType != (byte)BankAccountMovementType.PrincipalReturn)
             .GroupBy(x => x.TransactionDate)
             .Select(g => new MarkerCalendarItemResponse(
                 g.Key,

@@ -6,6 +6,7 @@ type CheckBoxProps<TFieldValues extends FieldValues> = {
   disabled?: boolean;
   label: string;
   name: FieldPath<TFieldValues>;
+  onChange?: (checked: boolean) => void;
   rules?: Omit<RegisterOptions<TFieldValues, FieldPath<TFieldValues>>, "disabled" | "valueAsDate" | "valueAsNumber" | "setValueAs">;
 };
 
@@ -14,6 +15,7 @@ export function CheckBox<TFieldValues extends FieldValues>({
   disabled = false,
   label,
   name,
+  onChange,
   rules
 }: CheckBoxProps<TFieldValues>) {
   return (
@@ -27,6 +29,7 @@ export function CheckBox<TFieldValues extends FieldValues>({
               checked={Boolean(field.value)}
               disabled={disabled}
               onChange={event => {
+                onChange?.(event.target.checked);
                 field.onChange(event.target.checked);
               }}
             />

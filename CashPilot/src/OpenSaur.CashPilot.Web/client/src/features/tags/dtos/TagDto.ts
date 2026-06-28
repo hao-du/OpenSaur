@@ -4,6 +4,7 @@ export type TagDefinitionResponse = {
   matchingTerms: string[];
   isActive: boolean;
   marker: boolean;
+  isDefaultMaker: boolean;
 };
 
 export type TagDto = {
@@ -12,6 +13,7 @@ export type TagDto = {
   matchingTerms: string[];
   isActive: boolean;
   marker?: boolean;
+  isDefaultMaker?: boolean;
 };
 
 export type SaveTagDto = {
@@ -19,4 +21,5 @@ export type SaveTagDto = {
   matchingTerms: string[];
   isActive: boolean;
   marker?: boolean;
+  isDefaultMaker?: boolean;
 };

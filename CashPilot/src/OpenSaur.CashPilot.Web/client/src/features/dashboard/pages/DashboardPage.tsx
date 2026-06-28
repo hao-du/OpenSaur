@@ -32,6 +32,7 @@ export function DashboardPage() {
   const markerTagsQuery = useMarkerTagsQuery();
   const calendarQuery = useDailyInOutCalendarQuery(calendarYear, calendarMonth);
   const isMarkerMode = selectedMarkerTag !== "__monthly__";
+  const defaultMakerTag = markerTagsQuery.data?.find(tag => tag.isDefaultMaker);
   const markerCalendarQuery = useMarkerCalendarQuery(
     isMarkerMode ? selectedMarkerTag : "",
     selectedMarkerPeriodIndex,
@@ -44,7 +45,9 @@ export function DashboardPage() {
   const isLoading = transactionDashboard.isLoading || transactionDashboard.isFetching || !transactionDashboard.data;
   const isCurrenciesLoading = currencies.length === 0 && transactionDashboard.isLoading;
   const defaultCurrencyCode = currencies.find(x => x.isDefault)?.shortName;
-  const incomeOutcomeTitle = t("transactions.incomeOutcome");
+  const incomeOutcomeTitle = defaultMakerTag != null && defaultMakerTag.name.trim().length > 0
+    ? `${t("transactions.incomeOutcome")} ${t("dashboard.by")} ${defaultMakerTag.name.trim()}`
+    : t("transactions.incomeOutcome");
   const incomeOutcomeItems = defaultCurrencyCode == null
     ? (transactionDashboard.data?.incomeOutcomes ?? [])
     : (transactionDashboard.data?.incomeOutcomes ?? []).filter(x => x.currencyCode === defaultCurrencyCode);
@@ -91,11 +94,12 @@ export function DashboardPage() {
               )}
             </Grid>
             <Grid size={{ lg: 4, sm: 6, xs: 12 }}>
-              {isLoading || isCurrenciesLoading ? (
+              {isLoading || isCurrenciesLoading || markerTagsQuery.isLoading ? (
                 <DashboardCardSkeleton rows={4} />
               ) : (
                 <IncomeOutcomeCard
                   currencyCode={defaultCurrencyCode}
+                  defaultMakerTagName={defaultMakerTag?.name}
                   items={incomeOutcomeItems}
                   title={incomeOutcomeTitle}
                 />

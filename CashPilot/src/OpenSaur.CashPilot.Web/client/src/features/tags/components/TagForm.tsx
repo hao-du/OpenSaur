@@ -9,15 +9,18 @@ export type TagFormValues = {
   name: string;
   matchingTerms: string[];
   marker?: boolean;
+  isDefaultMaker?: boolean;
 };
 
 type TagFormProps = {
   control: Control<TagFormValues>;
   isSubmitting: boolean;
+  setValue: (name: "marker" | "isDefaultMaker", value: boolean) => void;
 };
 
-export function TagForm({ control, isSubmitting }: TagFormProps) {
+export function TagForm({ control, isSubmitting, setValue }: TagFormProps) {
   const { t } = useSettings();
+
   return (
     <Stack spacing={2}>
       <Text
@@ -45,6 +48,22 @@ export function TagForm({ control, isSubmitting }: TagFormProps) {
         disabled={isSubmitting}
         label={t("tags.marker")}
         name="marker"
+        onChange={checked => {
+          if (!checked) {
+            setValue("isDefaultMaker", false);
+          }
+        }}
+      />
+      <CheckBox
+        control={control}
+        disabled={isSubmitting}
+        label={t("tags.isDefaultMaker")}
+        name="isDefaultMaker"
+        onChange={checked => {
+          if (checked) {
+            setValue("marker", true);
+          }
+        }}
       />
     </Stack>
   );

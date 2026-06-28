@@ -5,10 +5,12 @@ public sealed record TagDefinitionResponse(
     string Name,
     string[] MatchingTerms,
     bool IsActive,
-    bool Marker);
+    bool Marker,
+    bool IsDefaultMaker);
 
 public sealed record SaveTagDefinitionRequest(
     string Name,
     string[] MatchingTerms,
     bool IsActive,
-    bool Marker = false);
+    bool Marker = false,
+    bool IsDefaultMaker = false);

@@ -30,18 +30,43 @@ public static class CreateTagHandler
             return TypedResults.Conflict(new ProblemDetails { Title = "Tag exists", Detail = "A tag with this name already exists." });
         }
 
+        var marker = request.Marker;
+        var isDefaultMaker = request.IsDefaultMaker;
+        if (isDefaultMaker)
+        {
+            marker = true;
+        }
+        if (!marker)
+        {
+            isDefaultMaker = false;
+        }
+
         var entity = new TagDefinition
         {
             OwnerId = currentUserId,
             Name = name,
             IsActive = request.IsActive,
             MatchingTerms = TagTermCodec.Encode(request.MatchingTerms),
-            Marker = request.Marker
+            Marker = marker,
+            IsDefaultMaker = isDefaultMaker
         };
 
         dbContext.TagDefinitions.Add(entity);
+
+        if (isDefaultMaker)
+        {
+            var otherTags = await dbContext.TagDefinitions
+                .Where(x => x.OwnerId == currentUserId && x.Id != entity.Id && x.IsDefaultMaker)
+                .ToListAsync(cancellationToken);
+
+            foreach (var tag in otherTags)
+            {
+                tag.IsDefaultMaker = false;
+            }
+        }
+
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        return TypedResults.Created($"/api/tags/{entity.Id}", new TagDefinitionResponse(entity.Id, entity.Name, TagTermCodec.Decode(entity.MatchingTerms), entity.IsActive, entity.Marker));
+        return TypedResults.Created($"/api/tags/{entity.Id}", new TagDefinitionResponse(entity.Id, entity.Name, TagTermCodec.Decode(entity.MatchingTerms), entity.IsActive, entity.Marker, entity.IsDefaultMaker));
     }
 }

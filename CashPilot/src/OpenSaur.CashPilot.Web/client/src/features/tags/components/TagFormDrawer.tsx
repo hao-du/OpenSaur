@@ -33,6 +33,7 @@ export function TagFormDrawer({ form, isEditMode, isOpen, isSubmitting, onClose,
         <TagForm
           control={form.control}
           isSubmitting={isSubmitting}
+          setValue={form.setValue}
         />
       </DrawerBody>
       <DrawerFooter

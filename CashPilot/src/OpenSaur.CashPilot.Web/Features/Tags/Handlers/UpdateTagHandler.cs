@@ -39,9 +39,36 @@ public static class UpdateTagHandler
         entity.Name = name;
         entity.MatchingTerms = TagTermCodec.Encode(request.MatchingTerms);
         entity.IsActive = request.IsActive;
-        entity.Marker = request.Marker;
+
+        var marker = request.Marker;
+        var isDefaultMaker = request.IsDefaultMaker;
+        if (isDefaultMaker)
+        {
+            marker = true;
+        }
+        if (!marker)
+        {
+            isDefaultMaker = false;
+        }
+
+        entity.Marker = marker;
+        entity.IsDefaultMaker = isDefaultMaker;
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        return TypedResults.Ok(new TagDefinitionResponse(entity.Id, entity.Name, TagTermCodec.Decode(entity.MatchingTerms), entity.IsActive, entity.Marker));
+        if (isDefaultMaker)
+        {
+            var otherTags = await dbContext.TagDefinitions
+                .Where(x => x.OwnerId == currentUserId && x.Id != id && x.IsDefaultMaker)
+                .ToListAsync(cancellationToken);
+
+            foreach (var tag in otherTags)
+            {
+                tag.IsDefaultMaker = false;
+            }
+
+            await dbContext.SaveChangesAsync(cancellationToken);
+        }
+
+        return TypedResults.Ok(new TagDefinitionResponse(entity.Id, entity.Name, TagTermCodec.Decode(entity.MatchingTerms), entity.IsActive, entity.Marker, entity.IsDefaultMaker));
     }
 }
