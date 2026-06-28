@@ -6,7 +6,6 @@ import { PageTitleText } from "../../../components/atoms/PageTitleText";
 import { useSettings } from "../../settings/provider/SettingProvider";
 import { getMarkerCalendar } from "../../transactions/api/transactionsApi";
 import { useMarkerCalendarQuery } from "../../transactions/hooks/useMarkerCalendarQuery";
-import type { IncomeOutcomeDto } from "../../transactions/dtos/TransactionDto";
 
 type MarkerPeriodSummary = {
   startDate: string | null;
@@ -16,10 +15,9 @@ type MarkerPeriodSummary = {
 };
 
 type Props = {
-  items: IncomeOutcomeDto[];
   title: string;
   currencyCode?: string;
-  defaultMakerTagName?: string | null;
+  defaultMakerTagName: string;
 };
 
 function parseIsoDate(date: string) {
@@ -51,31 +49,31 @@ function buildMarkerPeriodLabel(period: MarkerPeriodSummary, monthLabel: string,
   return `${startMonth} ${start.getUTCFullYear()} - ${endMonth} ${end.getUTCFullYear()}`;
 }
 
-export function IncomeOutcomeCard({ items, title, currencyCode, defaultMakerTagName }: Props) {
+export function IncomeOutcomeMakerPeriodsCard({ title, currencyCode, defaultMakerTagName }: Props) {
   const { formatAmount, t } = useSettings();
-  const hasDefaultMaker = defaultMakerTagName != null && defaultMakerTagName.trim().length > 0;
-  const defaultMakerCalendarQuery = useMarkerCalendarQuery(defaultMakerTagName ?? "", undefined, hasDefaultMaker);
+  const resolvedTitle = `${title} ${t("dashboard.by")} ${defaultMakerTagName}`;
+  const defaultMakerCalendarQuery = useMarkerCalendarQuery(defaultMakerTagName, undefined, true);
   const defaultMakerCalendar = defaultMakerCalendarQuery.data;
 
   const defaultMakerPeriodIndices = useMemo(() => {
-    if (!hasDefaultMaker || defaultMakerCalendar == null) {
+    if (defaultMakerCalendar == null) {
       return [];
     }
 
     const count = Math.min(3, defaultMakerCalendar.periods.length);
     return Array.from({ length: count }, (_, index) => defaultMakerCalendar.periods.length - count + index);
-  }, [defaultMakerCalendar, hasDefaultMaker]);
+  }, [defaultMakerCalendar]);
 
   const defaultMakerPeriodQueries = useQueries({
     queries: defaultMakerPeriodIndices.map(periodIndex => ({
-      enabled: hasDefaultMaker && defaultMakerCalendar != null,
-      queryFn: () => getMarkerCalendar(defaultMakerTagName ?? "", periodIndex),
-      queryKey: ["marker-calendar", defaultMakerTagName ?? "", periodIndex]
+      enabled: defaultMakerCalendar != null,
+      queryFn: () => getMarkerCalendar(defaultMakerTagName, periodIndex),
+      queryKey: ["marker-calendar", defaultMakerTagName, periodIndex]
     }))
   });
 
   const markerPeriods = useMemo(() => {
-    if (!hasDefaultMaker || defaultMakerCalendar == null) {
+    if (defaultMakerCalendar == null) {
       return [];
     }
 
@@ -106,31 +104,24 @@ export function IncomeOutcomeCard({ items, title, currencyCode, defaultMakerTagN
     });
 
     return summaries;
-  }, [defaultMakerCalendar, defaultMakerPeriodIndices, defaultMakerPeriodQueries, hasDefaultMaker]);
+  }, [defaultMakerCalendar, defaultMakerPeriodIndices, defaultMakerPeriodQueries]);
 
-  const hasMarkerPeriods = markerPeriods.length > 0;
-  const latestThreeMonths = hasMarkerPeriods
-    ? []
-    : [...items]
-      .sort((a, b) => {
-        if (a.year !== b.year) {
-          return b.year - a.year;
-        }
-        return b.month - a.month;
-      })
-      .slice(0, 3);
+  const isLoading =
+    defaultMakerCalendarQuery.isLoading ||
+    defaultMakerCalendarQuery.isFetching ||
+    defaultMakerPeriodQueries.some(query => query.isLoading || query.isFetching);
 
   return (
     <Paper variant="outlined" sx={{ p: 1.5, height: "100%", display: "flex", flexDirection: "column" }}>
       <Stack direction="row" spacing={1} alignItems="center">
-        <PageTitleText variant="h6">{title}</PageTitleText>
+        <PageTitleText variant="h6">{resolvedTitle}</PageTitleText>
         {currencyCode != null && currencyCode.trim().length > 0 ? (
           <BodyText>{`(${currencyCode})`}</BodyText>
         ) : null}
       </Stack>
-      {hasDefaultMaker && (defaultMakerCalendarQuery.isLoading || defaultMakerCalendarQuery.isFetching || defaultMakerPeriodQueries.some(query => query.isLoading || query.isFetching)) ? (
+      {isLoading ? (
         <BodyText sx={{ mt: 1 }}>{t("transactions.loading")}</BodyText>
-      ) : hasMarkerPeriods ? (
+      ) : (
         <Stack spacing={1.25} sx={{ mt: 0.75, flex: 1 }}>
           {markerPeriods.map((period, index) => (
             <Stack
@@ -140,7 +131,7 @@ export function IncomeOutcomeCard({ items, title, currencyCode, defaultMakerTagN
               spacing={2}
               alignItems="flex-start"
             >
-              <BodyText sx={{ color: index === 0 ? "text.secondary" : "text.primary", minWidth: 110, pt: 0.25 }}>
+              <BodyText sx={{ minWidth: 110, pt: 0.25 }}>
                 {buildMarkerPeriodLabel(period, t("transactions.filter.month"), t("dashboard.pastPeriod"))}
               </BodyText>
               <Stack spacing={0.25} sx={{ minWidth: 160, fontVariantNumeric: "tabular-nums" }}>
@@ -150,24 +141,6 @@ export function IncomeOutcomeCard({ items, title, currencyCode, defaultMakerTagN
                 <BodyText sx={{ color: "error.main", textAlign: "right" }}>
                   {`-${formatAmount(period.outcome)}`}
                 </BodyText>
-              </Stack>
-            </Stack>
-          ))}
-        </Stack>
-      ) : (
-        <Stack spacing={1.25} sx={{ mt: 0.75, flex: 1 }}>
-          {latestThreeMonths.map(item => (
-            <Stack
-              key={`${item.year}-${item.month}-${item.currencyCode}`}
-              direction="row"
-              justifyContent="space-between"
-              spacing={2}
-              alignItems="flex-start"
-            >
-              <BodyText sx={{ minWidth: 110, pt: 0.25 }}>{`${item.year}-${String(item.month).padStart(2, "0")} ${item.currencyCode}`}</BodyText>
-              <Stack spacing={0.25} sx={{ minWidth: 160, fontVariantNumeric: "tabular-nums" }}>
-                <BodyText sx={{ color: "success.main", textAlign: "right" }}>{`+${formatAmount(item.income)}`}</BodyText>
-                <BodyText sx={{ color: "error.main", textAlign: "right" }}>{`-${formatAmount(item.outcome)}`}</BodyText>
               </Stack>
             </Stack>
           ))}

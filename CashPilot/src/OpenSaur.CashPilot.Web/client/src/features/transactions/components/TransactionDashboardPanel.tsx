@@ -7,8 +7,10 @@ import { DashboardSyncCard } from "../../dashboard/components/DashboardSyncCard"
 import { DashboardCardSkeleton } from "../../dashboard/components/DashboardCardSkeleton";
 import { TotalAmountByCurrencyCard } from "../../dashboard/components/TotalAmountByCurrencyCard";
 import { TotalActiveBankAccountCard } from "../../dashboard/components/TotalActiveBankAccountCard";
-import { IncomeOutcomeCard } from "../../dashboard/components/IncomeOutcomeCard";
+import { IncomeOutcomeMakerPeriodsCard } from "../../dashboard/components/IncomeOutcomeMakerPeriodsCard";
+import { IncomeOutcomeMonthlyCard } from "../../dashboard/components/IncomeOutcomeMonthlyCard";
 import type { TransactionDashboardDto, IncomeOutcomeDto } from "../dtos/TransactionDto";
+import { useMarkerTagsQuery } from "../hooks/useMarkerTagsQuery";
 import type { TemplateListItemDto } from "../../templates/dtos/TemplateDto";
 import type { TranslationKey } from "../../settings/provider/translations";
 
@@ -37,6 +39,11 @@ export function TransactionDashboardPanel({
   templates,
   t,
 }: Props) {
+  const markerTagsQuery = useMarkerTagsQuery();
+  const defaultMakerTag = markerTagsQuery.data?.find(tag => tag.isDefaultMaker);
+  const defaultCurrencyCode = currencies.find(x => x.isDefault)?.shortName;
+  const isMarkerTagsLoading = markerTagsQuery.isLoading || markerTagsQuery.isFetching;
+
   return (
     <Paper sx={{ p: 2, height: "100%" }}>
       <Stack spacing={2}>
@@ -53,10 +60,11 @@ export function TransactionDashboardPanel({
             <DashboardSyncCard />
           </Grid>
         </Grid>
-        {isDashboardLoading ? (
+        {isDashboardLoading || isMarkerTagsLoading ? (
           <>
             <DashboardCardSkeleton rows={4} />
             <DashboardCardSkeleton rows={3} />
+            <DashboardCardSkeleton rows={4} />
             <DashboardCardSkeleton rows={4} />
           </>
         ) : (
@@ -69,10 +77,18 @@ export function TransactionDashboardPanel({
               items={dashboard?.activeBankBalances ?? []}
               title={t("transactions.totalByBank")}
             />
-            <IncomeOutcomeCard
+            <IncomeOutcomeMonthlyCard
+              currencyCode={defaultCurrencyCode}
               items={isCurrenciesLoading ? [] : incomeOutcomeItems}
               title={incomeOutcomeTitle}
             />
+            {defaultMakerTag != null && defaultMakerTag.name.trim().length > 0 ? (
+              <IncomeOutcomeMakerPeriodsCard
+                currencyCode={defaultCurrencyCode}
+                defaultMakerTagName={defaultMakerTag.name.trim()}
+                title={incomeOutcomeTitle}
+              />
+            ) : null}
           </>
         )}
       </Stack>

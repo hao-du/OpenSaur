@@ -16,7 +16,8 @@ import { TemplatePopulateActionCard } from "../components/TemplatePopulateAction
 import { DashboardSyncCard } from "../components/DashboardSyncCard";
 import { TotalAmountByCurrencyCard } from "../components/TotalAmountByCurrencyCard";
 import { TotalActiveBankAccountCard } from "../components/TotalActiveBankAccountCard";
-import { IncomeOutcomeCard } from "../components/IncomeOutcomeCard";
+import { IncomeOutcomeMakerPeriodsCard } from "../components/IncomeOutcomeMakerPeriodsCard";
+import { IncomeOutcomeMonthlyCard } from "../components/IncomeOutcomeMonthlyCard";
 import { DashboardCardSkeleton } from "../components/DashboardCardSkeleton";
 import { DailyInOutCalendarCard } from "../components/DailyInOutCalendarCard";
 
@@ -45,9 +46,7 @@ export function DashboardPage() {
   const isLoading = transactionDashboard.isLoading || transactionDashboard.isFetching || !transactionDashboard.data;
   const isCurrenciesLoading = currencies.length === 0 && transactionDashboard.isLoading;
   const defaultCurrencyCode = currencies.find(x => x.isDefault)?.shortName;
-  const incomeOutcomeTitle = defaultMakerTag != null && defaultMakerTag.name.trim().length > 0
-    ? `${t("transactions.incomeOutcome")} ${t("dashboard.by")} ${defaultMakerTag.name.trim()}`
-    : t("transactions.incomeOutcome");
+  const incomeOutcomeTitle = t("transactions.incomeOutcome");
   const incomeOutcomeItems = defaultCurrencyCode == null
     ? (transactionDashboard.data?.incomeOutcomes ?? [])
     : (transactionDashboard.data?.incomeOutcomes ?? []).filter(x => x.currencyCode === defaultCurrencyCode);
@@ -96,10 +95,15 @@ export function DashboardPage() {
             <Grid size={{ lg: 4, sm: 6, xs: 12 }}>
               {isLoading || isCurrenciesLoading || markerTagsQuery.isLoading ? (
                 <DashboardCardSkeleton rows={4} />
-              ) : (
-                <IncomeOutcomeCard
+              ) : defaultMakerTag != null && defaultMakerTag.name.trim().length > 0 ? (
+                <IncomeOutcomeMakerPeriodsCard
                   currencyCode={defaultCurrencyCode}
-                  defaultMakerTagName={defaultMakerTag?.name}
+                  defaultMakerTagName={defaultMakerTag.name.trim()}
+                  title={incomeOutcomeTitle}
+                />
+              ) : (
+                <IncomeOutcomeMonthlyCard
+                  currencyCode={defaultCurrencyCode}
                   items={incomeOutcomeItems}
                   title={incomeOutcomeTitle}
                 />

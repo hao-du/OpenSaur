@@ -125,10 +125,7 @@ export function TransactionsPage() {
   });
   const dashboardQuery = useTransactionDashboardQuery();
   const defaultCurrencyCode = currencies.find((x) => x.isDefault)?.shortName;
-  const incomeOutcomeTitle =
-    defaultCurrencyCode == null
-      ? t("transactions.incomeOutcome")
-      : `${t("transactions.incomeOutcome")} (${defaultCurrencyCode})`;
+  const incomeOutcomeTitle = t("transactions.incomeOutcome");
   const incomeOutcomeItems =
     defaultCurrencyCode == null
       ? (dashboardQuery.data?.incomeOutcomes ?? [])
