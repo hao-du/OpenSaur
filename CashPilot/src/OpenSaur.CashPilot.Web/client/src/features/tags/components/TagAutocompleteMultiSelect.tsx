@@ -12,6 +12,7 @@ type TagAutocompleteMultiSelectProps<TFieldValues extends FieldValues> = {
   name: FieldPath<TFieldValues>;
   placeholder?: string;
   required?: boolean;
+  tagOptions?: string[];
   rules?: Omit<RegisterOptions<TFieldValues, FieldPath<TFieldValues>>, "disabled" | "valueAsDate" | "valueAsNumber" | "setValueAs">;
 };
 
@@ -25,18 +26,22 @@ export function TagAutocompleteMultiSelect<TFieldValues extends FieldValues>({
   name,
   placeholder,
   required = false,
+  tagOptions,
   rules,
 }: TagAutocompleteMultiSelectProps<TFieldValues>) {
-  const { data: tags = [] } = useTagsQuery({ isActive: true, name: "" });
-
-  const options = useMemo(
-    () =>
-      tags
-        .map((tag) => tag.name.trim())
-        .filter((value, index, array) => value.length > 0 && array.findIndex((item) => normalizeTagName(item) === normalizeTagName(value)) === index)
-        .sort((a, b) => a.localeCompare(b)),
-    [tags],
+  const { data: tags = [] } = useTagsQuery(
+    { isActive: true, name: "" },
+    { enabled: tagOptions == null },
   );
+
+  const options = useMemo(() => {
+    const source = (tagOptions ?? tags.map((tag) => tag.name.trim()))
+      .filter((value) => value.length > 0)
+      .filter((value, index, array) => array.findIndex((item) => normalizeTagName(item) === normalizeTagName(value)) === index)
+      .sort((a, b) => a.localeCompare(b));
+
+    return source;
+  }, [tagOptions, tags]);
 
   return (
     <CreatableMultiSelect

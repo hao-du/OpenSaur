@@ -15,6 +15,7 @@ type Props = {
   isOpen: boolean;
   onClose: () => void;
   onSave: (record: Omit<OfflineTransactionRecord, "updatedAt">) => void;
+  tagOptions?: string[];
   templateData?: TemplateData | null;
 };
 
@@ -24,6 +25,7 @@ export function OfflineExchangeFormDrawer({
   isOpen,
   onClose,
   onSave,
+  tagOptions,
   templateData,
 }: Props) {
   const { t, todayIsoDate } = useSettings();
@@ -47,6 +49,7 @@ export function OfflineExchangeFormDrawer({
           formId="offline-exchange-form"
           initialValue={initialValue}
           isSubmitting={isSubmitting}
+          tagOptions={tagOptions}
           onSubmit={async (payload: CreateCurrencyExchangeRequestDto) => {
             setIsSubmitting(true);
             try {

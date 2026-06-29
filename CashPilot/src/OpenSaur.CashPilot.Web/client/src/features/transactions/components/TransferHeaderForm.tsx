@@ -27,6 +27,7 @@ type Props = {
   counterparties: CounterpartyDto[];
   currencies: CurrencyDto[];
   amountDisabled?: boolean;
+  tagOptions?: string[];
 };
 
 export function TransferHeaderForm({
@@ -34,6 +35,7 @@ export function TransferHeaderForm({
   counterparties,
   currencies,
   amountDisabled = false,
+  tagOptions,
 }: Props) {
   const { t } = useSettings();
 
@@ -125,6 +127,7 @@ export function TransferHeaderForm({
           control={control}
           label={t("tags.title")}
           name="tags"
+          tagOptions={tagOptions}
         />
       </Grid>
     </Grid>

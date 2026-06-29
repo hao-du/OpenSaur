@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import type { Control, FieldPath, FieldValues, RegisterOptions } from "react-hook-form";
 import { Tag } from "lucide-react";
 import { CreatableMultiSelect } from "../../../components/atoms/CreatableMultiSelect";
+import { useCurrentProfileQuery } from "../../profile/hooks/useCurrentProfileQuery";
 import { loadOfflineMetadataSnapshot } from "../storages/offlineMetadataStore";
 
 type OfflineTagAutocompleteMultiSelectProps<TFieldValues extends FieldValues> = {
@@ -27,14 +28,15 @@ export function OfflineTagAutocompleteMultiSelect<TFieldValues extends FieldValu
   required = false,
   rules,
 }: OfflineTagAutocompleteMultiSelectProps<TFieldValues>) {
+  const { data: currentProfile } = useCurrentProfileQuery();
   const options = useMemo(() => {
-    const tags = loadOfflineMetadataSnapshot()?.tags ?? [];
+    const tags = loadOfflineMetadataSnapshot(currentProfile?.id)?.tags ?? [];
 
     return tags
       .map((tag) => tag.name.trim())
       .filter((value, index, array) => value.length > 0 && array.findIndex((item) => normalizeTagName(item) === normalizeTagName(value)) === index)
       .sort((a, b) => a.localeCompare(b));
-  }, []);
+  }, [currentProfile?.id]);
 
   return (
     <CreatableMultiSelect

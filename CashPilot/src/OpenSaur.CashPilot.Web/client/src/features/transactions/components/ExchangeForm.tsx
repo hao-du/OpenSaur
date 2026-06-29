@@ -28,6 +28,7 @@ type Props = {
   } | null;
   isSubmitting?: boolean;
   isAutoTagging?: boolean;
+  tagOptions?: string[];
   onAutoTag?: (description: string, existingTags: string[], transactionType: "Exchange") => Promise<string[]>;
   onAutoTagActionChange?: (handler: (() => Promise<void>) | null) => void;
   onSubmit: (payload: {
@@ -95,6 +96,7 @@ export function ExchangeForm({
   initialValue,
   isSubmitting = false,
   isAutoTagging = false,
+  tagOptions,
   onAutoTag,
   onAutoTagActionChange,
   onSubmit
@@ -205,11 +207,12 @@ export function ExchangeForm({
             </Grid>
 
             <Grid size={{ xs: 12 }}>
-              <TagAutocompleteMultiSelect
-                control={form.control}
-                label={t("tags.title")}
-                name="tags"
-              />
+            <TagAutocompleteMultiSelect
+              control={form.control}
+              label={t("tags.title")}
+              name="tags"
+              tagOptions={tagOptions}
+            />
             </Grid>
 
             <Grid size={{ xs: 12 }}>

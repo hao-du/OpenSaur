@@ -30,6 +30,7 @@ type Props = {
   initialValue?: CashFlowDetailDto | null;
   isSubmitting?: boolean;
   isAutoTagging?: boolean;
+  tagOptions?: string[];
   onAutoTag?: (description: string, existingTags: string[], transactionType: "CashFlow") => Promise<string[]>;
   onAutoTagActionChange?: (handler: (() => Promise<void>) | null) => void;
   onSubmit: (payload: {
@@ -81,6 +82,7 @@ export function CashFlowForm({
   initialValue,
   isSubmitting = false,
   isAutoTagging = false,
+  tagOptions,
   onAutoTag,
   onAutoTagActionChange,
   onSubmit,
@@ -209,6 +211,7 @@ export function CashFlowForm({
                 control={form.control}
                 label={t("tags.title")}
                 name="tags"
+                tagOptions={tagOptions}
               />
             </Stack>
           </Stack>

@@ -107,7 +107,7 @@ export function OfflineTransactionsPage() {
   });
   const selectedTemplateId = templatePickerForm.watch("templateId");
 
-  const metadataSnapshot = loadOfflineMetadataSnapshot();
+  const metadataSnapshot = loadOfflineMetadataSnapshot(currentProfile?.id);
   const offlineTransactions = useMemo(() => loadOfflineTransactions(), [refreshToken]);
   const offlineTemplates = useMemo(() => loadOfflineTemplates(), [refreshToken]);
 
@@ -127,6 +127,15 @@ export function OfflineTransactionsPage() {
   const currencies = metadataSnapshot?.currencies ?? [];
   const banks = metadataSnapshot?.banks ?? [];
   const counterparties = metadataSnapshot?.counterparties ?? [];
+  const tagOptions = useMemo(
+    () =>
+      metadataSnapshot?.tags
+        ?.map((tag) => tag.name.trim())
+        .filter((value) => value.length > 0)
+        .filter((value, index, array) => array.findIndex((item) => item.toLowerCase() === value.toLowerCase()) === index)
+        .sort((a, b) => a.localeCompare(b)),
+    [metadataSnapshot],
+  );
   const transactionItems = useMemo(
     () => visibleTransactions?.map((transaction) => buildTransactionListItem(transaction, currencies)) ?? [],
     [currencies, visibleTransactions],
@@ -250,7 +259,7 @@ export function OfflineTransactionsPage() {
     try {
       setError(null);
       setStatusMessageKey(null);
-      await syncOfflineMetadata();
+      await syncOfflineMetadata(currentProfile?.id);
       setRefreshToken((value) => value + 1);
       setStatusMessageKey("offline.importSuccess");
     } catch (error) {
@@ -539,6 +548,7 @@ export function OfflineTransactionsPage() {
           isOpen={isCashFlowDrawerOpen}
           onClose={closeDrawers}
           onSave={saveTransaction}
+          tagOptions={tagOptions}
         />
 
         <OfflineBankAccountFormDrawer
@@ -548,6 +558,7 @@ export function OfflineTransactionsPage() {
           isOpen={isBankAccountDrawerOpen}
           onClose={closeDrawers}
           onSave={saveTransaction}
+          tagOptions={tagOptions}
         />
 
         <OfflineTransferFormDrawer
@@ -557,6 +568,7 @@ export function OfflineTransactionsPage() {
           isOpen={isTransferDrawerOpen}
           onClose={closeDrawers}
           onSave={saveTransaction}
+          tagOptions={tagOptions}
         />
 
         <OfflineExchangeFormDrawer
@@ -565,6 +577,7 @@ export function OfflineTransactionsPage() {
           isOpen={isExchangeDrawerOpen}
           onClose={closeDrawers}
           onSave={saveTransaction}
+          tagOptions={tagOptions}
         />
 
         <OfflineTemplatePopulateDrawer

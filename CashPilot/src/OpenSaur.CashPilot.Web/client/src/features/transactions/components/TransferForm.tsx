@@ -21,6 +21,7 @@ type Props = {
   counterparties: CounterpartyDto[];
   currencies: CurrencyDto[];
   onSave: (payload: SaveTransferFormRequestDto) => Promise<void>;
+  tagOptions?: string[];
   movementInitialValue?: {
     id: string;
     counterpartyId: string;
@@ -128,6 +129,7 @@ export function TransferForm({
   currencies,
   formId,
   onSave,
+  tagOptions,
   movementInitialValue,
   movementInitialDetails = [],
   movementInitialTransactionItems = [],
@@ -260,6 +262,7 @@ export function TransferForm({
               currencies={currencies}
               control={headerForm.control}
               amountDisabled
+              tagOptions={tagOptions}
             />
             <Stack direction="row" justifyContent="space-between" alignItems="center">
               <h3 style={{ margin: 0 }}>{t("transactions.transactionDetails")}</h3>

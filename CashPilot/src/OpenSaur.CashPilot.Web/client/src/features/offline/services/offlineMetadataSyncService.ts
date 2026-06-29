@@ -7,7 +7,7 @@ import { loadOfflineTemplates, saveOfflineTemplates } from "../storages/offlineT
 import type { OfflineMetadataSnapshot } from "../storages/offlineMetadataStore";
 import { saveOfflineMetadataSnapshot } from "../storages/offlineMetadataStore";
 
-export async function syncOfflineMetadata() {
+export async function syncOfflineMetadata(ownerUserId?: string | null) {
   const [currencies, banks, counterparties, tags, templates] = await Promise.all([
     getCurrencies({ isActive: true, name: "", shortName: "" }),
     getBanks({ isActive: true, name: "", shortName: "" }),
@@ -25,7 +25,7 @@ export async function syncOfflineMetadata() {
     templates,
   };
 
-  saveOfflineMetadataSnapshot(snapshot);
+  saveOfflineMetadataSnapshot(snapshot, ownerUserId);
 
   const currentTemplates = loadOfflineTemplates();
   if (currentTemplates.length === 0) {

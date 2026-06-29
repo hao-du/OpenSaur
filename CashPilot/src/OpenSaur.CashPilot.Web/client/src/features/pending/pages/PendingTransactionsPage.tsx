@@ -26,6 +26,7 @@ import { useCurrenciesQuery } from "../../currencies/hooks/useCurrenciesQuery";
 import { useCurrentProfileQuery } from "../../profile/hooks/useCurrentProfileQuery";
 import { useSettings } from "../../settings/provider/SettingProvider";
 import type { OfflineTransactionRecord } from "../../offline/storages/offlineTransactionsStore";
+import { loadOfflineMetadataSnapshot } from "../../offline/storages/offlineMetadataStore";
 import { OfflineCashFlowFormDrawer } from "../../offline/components/OfflineCashFlowFormDrawer";
 import { OfflineBankAccountFormDrawer } from "../../offline/components/OfflineBankAccountFormDrawer";
 import { OfflineTransferFormDrawer } from "../../offline/components/OfflineTransferFormDrawer";
@@ -97,6 +98,7 @@ export function PendingTransactionsPage() {
   const { data: currencies = [] } = useCurrenciesQuery({ isActive: true, name: "", shortName: "" });
   const { data: banks = [] } = useBanksQuery({ isActive: true, name: "", shortName: "" });
   const { data: counterparties = [] } = useCounterpartiesQuery({ email: "", fullName: "", isActive: true, phoneNumber: "" });
+  const metadataSnapshot = loadOfflineMetadataSnapshot(currentProfile?.id);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [editingSubmission, setEditingSubmission] = useState<PendingTransactionSubmissionDto | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -164,6 +166,15 @@ export function PendingTransactionsPage() {
     () => pendingTransactions.filter((submission) => selectedIds.includes(submission.id)),
     [pendingTransactions, selectedIds],
   );
+  const tagOptions = useMemo(
+    () =>
+      metadataSnapshot?.tags
+        ?.map((tag) => tag.name.trim())
+        .filter((value) => value.length > 0)
+        .filter((value, index, array) => array.findIndex((item) => item.toLowerCase() === value.toLowerCase()) === index)
+        .sort((a, b) => a.localeCompare(b)),
+    [metadataSnapshot],
+  );
 
   const toggleSelected = (submissionId: string, checked: boolean) => {
     setSelectedIds((current) => {
@@ -210,6 +221,7 @@ export function PendingTransactionsPage() {
           isOpen={isOpen}
           onClose={closeEditor}
           onSave={handleSaveSubmission}
+          tagOptions={tagOptions}
         />
       );
     }
@@ -223,6 +235,7 @@ export function PendingTransactionsPage() {
           isOpen={isOpen}
           onClose={closeEditor}
           onSave={handleSaveSubmission}
+          tagOptions={tagOptions}
         />
       );
     }
@@ -236,6 +249,7 @@ export function PendingTransactionsPage() {
           isOpen={isOpen}
           onClose={closeEditor}
           onSave={handleSaveSubmission}
+          tagOptions={tagOptions}
         />
       );
     }
@@ -247,6 +261,7 @@ export function PendingTransactionsPage() {
         isOpen={isOpen}
         onClose={closeEditor}
         onSave={handleSaveSubmission}
+        tagOptions={tagOptions}
       />
     );
   };

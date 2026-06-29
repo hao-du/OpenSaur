@@ -18,6 +18,7 @@ type Props = {
   isOpen: boolean;
   onClose: () => void;
   onSave: (record: Omit<OfflineTransactionRecord, "updatedAt">) => void;
+  tagOptions?: string[];
   templateData?: TemplateData | null;
 };
 
@@ -28,6 +29,7 @@ export function OfflineBankAccountFormDrawer({
   isOpen,
   onClose,
   onSave,
+  tagOptions,
   templateData,
 }: Props) {
   const { t, todayIsoDate } = useSettings();
@@ -51,6 +53,7 @@ export function OfflineBankAccountFormDrawer({
           formId="offline-bank-account-form"
           initialValue={initialValue}
           isSubmitting={isSubmitting}
+          tagOptions={tagOptions}
           onSubmit={async (payload) => {
             setIsSubmitting(true);
             try {

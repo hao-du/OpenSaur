@@ -11,12 +11,13 @@ import type { TemplateData } from "../../templates/dtos/TemplateDto";
 import { buildTransferInitialValue } from "../services/offlineTransactionFormUtils";
 
 type Props = {
-  counterparties: CounterpartyDto[]; 
+  counterparties: CounterpartyDto[];
   currencies: CurrencyDto[];
   editingTransaction?: OfflineTransactionRecord | null;
   isOpen: boolean;
   onClose: () => void;
   onSave: (record: Omit<OfflineTransactionRecord, "updatedAt">) => void;
+  tagOptions?: string[];
   templateData?: TemplateData | null;
 };
 
@@ -27,6 +28,7 @@ export function OfflineTransferFormDrawer({
   isOpen,
   onClose,
   onSave,
+  tagOptions,
   templateData,
 }: Props) {
   const { t, todayIsoDate } = useSettings();
@@ -52,6 +54,7 @@ export function OfflineTransferFormDrawer({
           movementInitialDetails={initialValue.movementInitialDetails}
           movementInitialTransactionItems={initialValue.movementInitialTransactionItems}
           movementInitialValue={initialValue.movementInitialValue}
+          tagOptions={tagOptions}
           onSave={async (payload: SaveTransferFormRequestDto) => {
             setIsSubmitting(true);
             try {

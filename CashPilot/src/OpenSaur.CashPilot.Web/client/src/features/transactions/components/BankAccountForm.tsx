@@ -28,6 +28,7 @@ type Props = {
   onSubmit: (payload: SaveBankAccountFormRequestDto) => Promise<void>;
   isSubmitting?: boolean;
   isAutoTagging?: boolean;
+  tagOptions?: string[];
   onAutoTag?: (description: string, existingTags: string[], transactionType: "BankAccount") => Promise<string[]>;
   onAutoTagActionChange?: (handler: (() => Promise<void>) | null) => void;
 };
@@ -109,6 +110,7 @@ export function BankAccountForm({
   onSubmit,
   isSubmitting = false,
   isAutoTagging = false,
+  tagOptions,
   onAutoTag,
   onAutoTagActionChange,
 }: Props) {
@@ -362,6 +364,7 @@ export function BankAccountForm({
                   control={form.control}
                   label={t("tags.title")}
                   name="tags"
+                  tagOptions={tagOptions}
                 />
               </Grid>
             </Grid>
