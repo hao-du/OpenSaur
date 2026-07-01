@@ -82,13 +82,11 @@ export function OfflineTransactionsPage() {
   const [statusMessageKey, setStatusMessageKey] = useState<TranslationKey | null>(null);
   const [createMenuAnchor, setCreateMenuAnchor] = useState<null | HTMLElement>(null);
   const filters = useMemo<TransactionFilterValues>(() => {
-    const now = new Date();
-
     return {
       description: "",
-      fromDate: `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`,
-      rangePreset: "Month" as const,
-      toDate: `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()).padStart(2, "0")}`,
+      fromDate: "",
+      rangePreset: "Custom" as const,
+      toDate: "",
       types: ["CashFlow", "BankAccount", "Transfer", "Exchange"],
       showOnlyInitialDeposits: false,
     };
