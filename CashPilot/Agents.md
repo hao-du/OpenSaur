@@ -1,23 +1,36 @@
-# Agents & Rules
+# Agent Instructions: CashPilot
 
-This document outlines the rules, guidelines, and behavioral expectations for AI agents working on the **CashPilot** project. **Important**: This file is strictly for operational rules; application requirements and feature specs must be handled via OpenSpec and should not be added here.
+## Memory Workflow
+To maintain context across sessions and tasks, all agents must follow this workflow:
 
-## Core Principles
-- **Aesthetics First**: Every UI change must be premium, modern, and visually stunning.
-- **Simplicity First**: Always prefer the simplest solution. Avoid unnecessary abstractions, hooks, or patterns when a straightforward approach works.
-- **Clean Code**: Follow architectural patterns established in the `src` directory.
-- **Pure Workspace**: `src` is for project code only; do not add any agentic files or configurations (like `.agent/` or `.superpowers/`) inside the `src` directory.
-- **Safety**: Never run destructive commands without explicit confirmation.
+1.  **Context Discovery**: At the start of a session, read `AGENTS.md`, `.agent/rules/`, `.agent/requirements/`, and `.agent/session_log.md`.
+2.  **Task Tracking**: Use the `todowrite` tool to manage active tasks.
+3.  **Logging**: At the end of significant tasks or sessions, update `.agent/session_log.md` with current state, key decisions, and next steps.
 
-## Interaction Rules
-1. **Always Plan**: Provide an implementation plan before making significant changes.
-2. **Follow .NET Patterns**: Use standard C# naming conventions and architectural patterns.
-3. **Artifact Usage**: Use artifacts for reports, plans, and complex code blocks.
-4. **Mandatory Review**: Always read **OpenSpec** and **Superpower** skills (located in `.agent/`) before thinking about or implementing anything.
-5. **OpenSpec First**: Always run **OpenSpec** commands (e.g., `/opsx:propose`) for any new requirement or change request.
+## Project Rules
+- Rules and conventions are documented in the `.agent/rules/` directory.
 
-## Custom Rules
-- **No Testing**: Do not create unit tests or automation tests for either Backend (BE) or Frontend (FE).
-- **No Verification Required**: Do not run verification steps (build, test, lint, or similar checks) unless explicitly requested.
-- **No Auto-Commit**: Do not automatically commit code; always leave staging and committing to the user.
-- **Migration Immutability**: After generating a database migration, never edit that migration file in place. If a schema adjustment is needed later, create a new migration instead of modifying or deleting the existing one. Existing migrations are assumed to be already applied and must remain intact to avoid DB drift.
+## Tech Stack
+- **Backend**: .NET 10 Web API, Entity Framework Core (Npgsql), PostgreSQL, OpenIddict (OIDC), FluentValidation, JWT Authentication.
+- **Frontend**: React 19, Vite, TypeScript, Material UI (MUI), TanStack Query, React Router, Axios, React Hook Form, Lucide React, Day.js.
+
+## Development Workflow
+- **Backend**: `dotnet run --project src/OpenSaur.CashPilot.Web`
+- **Frontend**: `npm run dev` (run in `src/OpenSaur.CashPilot.Web/client`)
+- **Database**: Requires a PostgreSQL instance with `CashPilotDb` connection string configured.
+
+## Project Structure
+- `src/OpenSaur.CashPilot.Web/`: Main application project.
+  - `Features/`: Feature-based backend implementation.
+  - `client/`: React frontend source.
+- `devops/`: CI/CD (Azure Pipelines) and Docker configurations.
+- `.agent/`: Project instructions and memory.
+  - `rules/`: "How" (coding patterns/conventions).
+  - `requirements/`: "What" (business logic/feature specs).
+  - `session_log.md`: "Current" (decisions and progress).
+
+## Architecture & Notes
+- **Monolith SPA**: The .NET backend serves the Vite-built frontend assets from `wwwroot`.
+- **Authentication**: Uses OpenIddict. API endpoints are protected via JWT/OIDC.
+- **Routing**: Backend includes custom frontend routing (`app.MapFrontEndRoutes()`) to support SPA client-side routing.
+
