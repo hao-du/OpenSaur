@@ -1,36 +1,55 @@
 # Agent Instructions: CashPilot
 
 ## Memory Workflow
-To maintain context across sessions and tasks, all agents must follow this workflow:
+1. **Context Discovery**: Read `AGENTS.md`, `.agent/rules/`, `.agent/requirements/`, and `.agent/session_log.md`.
+2. **Task Tracking**: Use `todowrite` for multi-step tasks.
+3. **Logging**: Update `.agent/session_log.md` after significant work.
 
-1.  **Context Discovery**: At the start of a session, read `AGENTS.md`, `.agent/rules/`, `.agent/requirements/`, and `.agent/session_log.md`.
-2.  **Task Tracking**: Use the `todowrite` tool to manage active tasks.
-3.  **Logging**: At the end of significant tasks or sessions, update `.agent/session_log.md` with current state, key decisions, and next steps.
+## Core Context
+- **Architecture**: Monolith SPA. .NET 10 Web API backend serves Vite-built React 19 frontend from `wwwroot`.
+- **Routing**: Uses custom SPA client-side routing via `app.MapFrontEndRoutes()`.
+- **Auth**: OpenIddict (OIDC/JWT).
+- **Stack**: .NET 10, EF Core (Npgsql), PostgreSQL, React 19, TypeScript, MUI, TanStack Query.
 
-## Project Rules
-- Rules and conventions are documented in the `.agent/rules/` directory.
-
-## Tech Stack
-- **Backend**: .NET 10 Web API, Entity Framework Core (Npgsql), PostgreSQL, OpenIddict (OIDC), FluentValidation, JWT Authentication.
-- **Frontend**: React 19, Vite, TypeScript, Material UI (MUI), TanStack Query, React Router, Axios, React Hook Form, Lucide React, Day.js.
-
-## Development Workflow
+## Key Commands
 - **Backend**: `dotnet run --project src/OpenSaur.CashPilot.Web`
 - **Frontend**: `npm run dev` (run in `src/OpenSaur.CashPilot.Web/client`)
-- **Database**: Requires a PostgreSQL instance with `CashPilotDb` connection string configured.
 
 ## Project Structure
-- `src/OpenSaur.CashPilot.Web/`: Main application project.
-  - `Features/`: Feature-based backend implementation.
-  - `client/`: React frontend source.
-- `devops/`: CI/CD (Azure Pipelines) and Docker configurations.
-- `.agent/`: Project instructions and memory.
-  - `rules/`: "How" (coding patterns/conventions).
-  - `requirements/`: "What" (business logic/feature specs).
-  - `session_log.md`: "Current" (decisions and progress).
+- `src/OpenSaur.CashPilot.Web/Features/`: Feature-based backend logic.
+- `src/OpenSaur.CashPilot.Web/client/`: React frontend source.
+- `.agent/rules/`: Coding patterns and conventions.
+- `.agent/requirements/`: Business logic and feature specs.
 
-## Architecture & Notes
-- **Monolith SPA**: The .NET backend serves the Vite-built frontend assets from `wwwroot`.
-- **Authentication**: Uses OpenIddict. API endpoints are protected via JWT/OIDC.
-- **Routing**: Backend includes custom frontend routing (`app.MapFrontEndRoutes()`) to support SPA client-side routing.
+## Specialized Skills
+Always check and use available skills in `.agent/skills/` when performing tasks.
 
+### superpowers
+- `brainstorming`
+- `dispatching-parallel-agents`
+- `executing-plans`
+- `receiving-code-review`
+- `requesting-code-review`
+- `subagent-driven-development`
+- `systematic-debugging`
+- `test-driven-development`
+- `using-git-worktrees`
+- `using-superpowers`
+- `verification-before-completion`
+- `writing-plans`
+- `writing-skills`
+
+### dotnet-skills
+- `configuring-opentelemetry-dotnet`
+- `dotnet-aot-compat`
+- `dotnet-webapi`
+- `migrate-dotnet10-to-dotnet11`
+- `migrate-nullable-references`
+- `mtp-hot-reload`
+- `optimizing-ef-core-queries`
+- `verification-before-completion`
+- `writing-mstest-tests`
+
+### vercel-agent-skills
+- `composition-patterns`
+- `react-best-practices`

@@ -19,6 +19,13 @@
             "input": ["text", "image"],
             "output": ["text"]
           }
+        },
+        "google/gemma-4-31b-qat": {
+          "name": "Gemma 4 31B QAT (local)",
+          "modalities": {
+            "input": ["text", "image"],
+            "output": ["text"]
+          }
         }
       }
     }

@@ -13,7 +13,7 @@ This document outlines the rules, guidelines, and behavioral expectations for AI
 1. **Always Plan**: Provide an implementation plan before making significant changes.
 2. **Follow .NET Patterns**: Use standard C# naming conventions and architectural patterns.
 3. **Artifact Usage**: Use artifacts for reports, plans, and complex code blocks.
-4. **Mandatory Review**: Always read **OpenSpec** and **Superpower** skills (located in `.agent/`) before thinking about or implementing anything.
+4. **Mandatory Review**: Always read **OpenSpec** and **Superpower** skills (located in `.agent/`) before thinking about or implementing anything. This includes `vercel-agent-skills`.
 5. **OpenSpec First**: Always run **OpenSpec** commands (e.g., `/opsx:propose`) for any new requirement or change request.
 
 ## Custom Rules
