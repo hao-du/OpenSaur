@@ -1,0 +1,61 @@
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
+using OpenIddict.Validation.AspNetCore;
+using OpenSaur.CashPilot.Web.Features.Frontend;
+using OpenSaur.CashPilot.Web.Features.Frontend.Handlers;
+using OpenSaur.CashPilot.Web.Infrastructure.Auth;
+using OpenSaur.CashPilot.Web.Infrastructure.ConfigurationOptions;
+using OpenSaur.CashPilot.Web.Infrastructure.Hosting;
+
+var builder = WebApplication.CreateBuilder(args);
+var oidcOptions = builder.Configuration.GetSection(OidcOptions.SectionName).Get<OidcOptions>()
+    ?? throw new InvalidOperationException("OIDC configuration is required.");
+var connectionString = builder.Configuration.GetConnectionString("CashPilotDb")
+    ?? throw new InvalidOperationException("ConnectionStrings:CashPilotDb is required.");
+
+
+builder.Services.AddHttpContextAccessor();
+builder.Services.Configure<OidcOptions>(builder.Configuration.GetSection("Oidc"));
+
+builder.Services.AddOpenIddict()
+    .AddValidation(options =>
+    {
+        options.SetIssuer(oidcOptions.Authority);
+        options.AddAudiences("api");
+        options.UseSystemNetHttp(systemNetHttp =>
+        {
+            systemNetHttp.ConfigureHttpClientHandler(handler =>
+            {
+                handler.ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator;
+            });
+        });
+        options.UseAspNetCore();
+    });
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultScheme = OpenIddictValidationAspNetCoreDefaults.AuthenticationScheme;
+    options.DefaultAuthenticateScheme = OpenIddictValidationAspNetCoreDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = OpenIddictValidationAspNetCoreDefaults.AuthenticationScheme;
+});
+
+builder.Services.AddAuthorization(AppAuthorization.ConfigurePolicies);
+builder.Services.AddScoped<CreateFrontendRouteHandler>();
+builder.Services.AddScoped<CreateAppConfigJsHandler>();
+builder.Services.AddProblemDetails();
+
+var app = builder.Build();
+
+app.UseExceptionHandler();
+app.UseClientAbortedRequestHandling();
+app.UseSecurityHeaders(oidcOptions, app.Environment);
+app.UseDefaultFiles();
+app.UseStaticFiles();
+app.UseAuthentication();
+app.UseAuthorization();
+
+// Map the custom frontend routes
+app.MapFrontEndRoutes();
+
+app.Run();

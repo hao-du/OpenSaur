@@ -1,0 +1,34 @@
+parameters:
+  - name: buildConfiguration
+    type: string
+  - name: dotnetSdkVersion
+    type: string
+  - name: webProject
+    type: string
+
+stages:
+  - stage: Build
+    displayName: Build Umbraco Web
+    jobs:
+      - job: BackendBuild
+        displayName: Build Web Application
+        steps:
+          - task: UseDotNet@2
+            displayName: Install .NET SDK
+            inputs:
+              packageType: sdk
+              version: ${{ parameters.dotnetSdkVersion }}
+
+          - task: DotNetCoreCLI@2
+            displayName: 'Restore backend dependencies'
+            inputs:
+              command: 'restore'
+              projects: '${{ parameters.webProject }}'
+              feedsToUse: 'select'
+
+          - task: DotNetCoreCLI@2
+            displayName: 'Build backend'
+            inputs:
+              command: 'build'
+              projects: '${{ parameters.webProject }}'
+              arguments: '--configuration ${{ parameters.buildConfiguration }} --no-restore'

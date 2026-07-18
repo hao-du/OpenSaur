@@ -1,0 +1,40 @@
+trigger: none
+pr: none
+
+pool:
+  vmImage: ubuntu-latest
+
+variables:
+  buildConfiguration: Release
+  dotnetSdkVersion: 10.0.x
+  webProject: Umbraco/src/OpenSaur.Umbraco.Web/OpenSaur.Umbraco.Web.csproj
+  publishOutputDirectory: $(Build.ArtifactStagingDirectory)/webapp-publish
+  dockerfileTemplate: Umbraco/devops/Dockerfile.artifact
+  dockerHubServiceConnection: Docker Hub
+  dockerRepository: duchihao/umbraco
+  azureServiceConnection: Azure Service Connection
+  containerAppResourceGroup: Home
+  containerAppName: ca-umbraco
+
+stages:
+  - template: azure-pipelines.build-test-artifact.yml
+    parameters:
+      buildConfiguration: $(buildConfiguration)
+      dotnetSdkVersion: $(dotnetSdkVersion)
+      webProject: $(webProject)
+
+  - template: azure-pipelines.artifact-to-dockerhub.yml
+    parameters:
+      buildConfiguration: $(buildConfiguration)
+      dotnetSdkVersion: $(dotnetSdkVersion)
+      webProject: $(webProject)
+      publishOutputDirectory: $(publishOutputDirectory)
+      dockerfileTemplate: $(dockerfileTemplate)
+      dockerHubServiceConnection: $(dockerHubServiceConnection)
+      dockerRepository: $(dockerRepository)
+
+  - template: azure-pipelines.dockerhub-to-aca.yml
+    parameters:
+      azureServiceConnection: $(azureServiceConnection)
+      containerAppResourceGroup: $(containerAppResourceGroup)
+      containerAppName: $(containerAppName)

@@ -1,0 +1,35 @@
+trigger: none
+pr: none
+
+pool:
+  vmImage: ubuntu-latest
+
+variables:
+  nodeVersion: 20.x
+  clientWorkingDirectory: $(Build.SourcesDirectory)/CashPilot/src/OpenSaur.CashPilot.Web/client
+  staticOutputDirectory: $(Build.SourcesDirectory)/CashPilot/src/OpenSaur.CashPilot.Web/wwwroot
+
+steps:
+  - checkout: self
+    clean: true
+
+  - task: NodeTool@0
+    displayName: Install Node.js
+    inputs:
+      versionSpec: $(nodeVersion)
+
+  - script: |
+      npm ci
+      npm run build-offline
+    displayName: Build offline frontend
+    workingDirectory: $(clientWorkingDirectory)
+
+  - task: AzureStaticWebApp@0
+    displayName: Deploy to Azure Static Web Apps
+    inputs:
+      workingDirectory: $(Build.SourcesDirectory)/CashPilot
+      app_location: src/OpenSaur.CashPilot.Web/wwwroot
+      output_location: ''
+      skip_app_build: true
+      skip_api_build: true
+      azure_static_web_apps_api_token: $(deployment_token)

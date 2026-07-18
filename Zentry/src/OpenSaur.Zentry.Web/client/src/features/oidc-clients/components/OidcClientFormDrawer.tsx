@@ -1,0 +1,84 @@
+import { Box, CircularProgress, Stack } from "@mui/material";
+import { useEffect } from "react";
+import { BodyText } from "../../../components/atoms/BodyText";
+import { DrawerPanel } from "../../../components/organisms/DrawerPanel";
+import type { OidcClientDetailsDto } from "../dtos/OidcClientDetailsDto";
+import { layoutStyles } from "../../../infrastructure/theme/theme";
+import { useCreateOidcClient } from "../hooks/useCreateOidcClient";
+import { useEditOidcClient } from "../hooks/useEditOidcClient";
+import { OidcClientForm } from "./OidcClientForm";
+import { useSettings } from "../../settings/provider/SettingProvider";
+
+type OidcClientFormDrawerProps = {
+  initialValues?: OidcClientDetailsDto | null;
+  isEditMode: boolean;
+  isLoading: boolean;
+  isOpen: boolean;
+  onClose: () => void;
+};
+
+export function OidcClientFormDrawer({
+  initialValues,
+  isEditMode,
+  isLoading,
+  isOpen,
+  onClose
+}: OidcClientFormDrawerProps) {
+  const { createOidcClient, errorMessage: createErrorMessage, isCreating, resetError: resetCreateError } = useCreateOidcClient();
+  const { editOidcClient, errorMessage: editErrorMessage, isEditing, resetError: resetEditError } = useEditOidcClient();
+  const { t } = useSettings();
+  const errorMessage = isEditMode ? editErrorMessage : createErrorMessage;
+  const isSubmitting = isEditMode ? isEditing : isCreating;
+
+  useEffect(() => {
+    if (!isOpen) {
+      resetCreateError();
+      resetEditError();
+    }
+  }, [isOpen, resetCreateError, resetEditError]);
+
+  return (
+    <DrawerPanel isOpen={isOpen} onClose={onClose} title={isEditMode ? t("oidc.editTitle") : t("oidc.createTitle")} width="wide">
+        {isLoading ? (
+          <Stack alignItems="center" justifyContent="center" spacing={2} sx={layoutStyles.drawerLoadingState}>
+            <CircularProgress size={28} />
+            <BodyText>{t("oidc.loadingApplication")}</BodyText>
+          </Stack>
+        ) : (
+          <Box sx={layoutStyles.drawerBody}>
+            <OidcClientForm
+              errorMessage={errorMessage}
+              initialValues={{
+                clientId: initialValues?.clientId ?? "",
+                clientType: initialValues?.clientType ?? "public",
+                clientSecret: "",
+                displayName: initialValues?.displayName ?? "",
+                postLogoutRedirectUrisText: (initialValues?.postLogoutRedirectUris ?? []).join("\n"),
+                redirectUrisText: (initialValues?.redirectUris ?? []).join("\n"),
+                scope: initialValues?.scope ?? "openid profile email roles offline_access api"
+              }}
+              isEditMode={isEditMode}
+              isSubmitting={isSubmitting}
+              onSubmit={async values => {
+                if (isEditMode) {
+                  if (initialValues == null) {
+                    return;
+                  }
+
+                  await editOidcClient({
+                    ...values,
+                    id: initialValues.id
+                  });
+                  onClose();
+                  return;
+                }
+
+                await createOidcClient(values);
+                onClose();
+              }}
+            />
+          </Box>
+        )}
+    </DrawerPanel>
+  );
+}

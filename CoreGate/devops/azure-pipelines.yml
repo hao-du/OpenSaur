@@ -1,0 +1,60 @@
+trigger: none
+pr: none
+
+pool:
+  vmImage: ubuntu-latest
+
+variables:
+  - group: CoreGate Certificates
+
+  - name: buildConfiguration
+    value: Release
+  - name: dotnetSdkVersion
+    value: 10.0.x
+  - name: nodeVersion
+    value: 20.x
+  - name: webProject
+    value: CoreGate/src/OpenSaur.CoreGate.Web/OpenSaur.CoreGate.Web.csproj
+  - name: clientWorkingDirectory
+    value: CoreGate/src/OpenSaur.CoreGate.Web/Frontend
+  - name: publishOutputDirectory
+    value: $(Build.ArtifactStagingDirectory)/webapp-publish
+  - name: dockerfileTemplate
+    value: CoreGate/devops/Dockerfile.artifact
+  - name: dockerHubServiceConnection
+    value: Docker Hub
+  - name: dockerRepository
+    value: duchihao/coregate
+  - name: azureServiceConnection
+    value: Azure Service Connection
+  - name: containerAppResourceGroup
+    value: Home
+  - name: containerAppName
+    value: ca-coregate
+
+stages:
+  - template: azure-pipelines.build-test-artifact.yml
+    parameters:
+      buildConfiguration: $(buildConfiguration)
+      dotnetSdkVersion: $(dotnetSdkVersion)
+      nodeVersion: $(nodeVersion)
+      webProject: $(webProject)
+      clientWorkingDirectory: $(clientWorkingDirectory)
+
+  - template: azure-pipelines.artifact-to-dockerhub.yml
+    parameters:
+      buildConfiguration: $(buildConfiguration)
+      dotnetSdkVersion: $(dotnetSdkVersion)
+      nodeVersion: $(nodeVersion)
+      clientWorkingDirectory: $(clientWorkingDirectory)
+      webProject: $(webProject)
+      publishOutputDirectory: $(publishOutputDirectory)
+      dockerfileTemplate: $(dockerfileTemplate)
+      dockerHubServiceConnection: $(dockerHubServiceConnection)
+      dockerRepository: $(dockerRepository)
+
+  - template: azure-pipelines.dockerhub-to-aca.yml
+    parameters:
+      azureServiceConnection: $(azureServiceConnection)
+      containerAppResourceGroup: $(containerAppResourceGroup)
+      containerAppName: $(containerAppName)

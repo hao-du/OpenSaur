@@ -1,0 +1,13 @@
+
+# Beads / Dolt files (added by bd init)
+.dolt/
+*.db
+.beads-credential-key
+.worktrees/
+**/bin/
+**/obj/
+**/node_modules/
+**/*.tsbuildinfo
+**/vite.config.d.ts
+**/vite.config.js
+src/OpenSaur.Zentry.Web/wwwroot/assets/

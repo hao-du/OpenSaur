@@ -1,0 +1,24 @@
+{
+  "$schema": "../../umbraco-package-schema.json",
+  "name": "CoreGate Backoffice Auth",
+  "allowPublicAccess": true,
+  "extensions": [
+    {
+      "type": "authProvider",
+      "alias": "CoreGate",
+      "name": "CoreGate",
+      "forProviderName": "Umbraco.CoreGate",
+      "meta": {
+        "label": "CoreGate",
+        "defaultView": {
+          "icon": "icon-cloud",
+          "color": "default",
+          "look": "primary"
+        },
+        "behavior": {
+          "autoRedirect": true
+        }
+      }
+    }
+  ]
+}
