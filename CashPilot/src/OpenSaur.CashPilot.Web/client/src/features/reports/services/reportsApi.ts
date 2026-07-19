@@ -3,9 +3,8 @@ import { client } from "../../../infrastructure/http/client";
 export interface IncomeOutcomeReportItem {
   month: number;
   currencyCode: string;
-  label: string;
   startDate: string;
-  endDate: string;
+  endDate: string | null;
   income: number;
   outcome: number;
 }

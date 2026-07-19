@@ -30,22 +30,25 @@ Before starting implementation, list the exact files you have read.
 
 To ensure code integrity and prevent regression, every modification task MUST follow this protocol:
 
-### 1. Pre-Edit Verification (The "Read-Before-Write" Rule)
+### 1. Pre-Think Verification (The "Read-Skills-Before-Think" Rule)
+Using **using-superpowers** before thinking.
+
+### 2. Pre-Edit Verification (The "Read-Before-Write" Rule)
 Never attempt an `Edit` or `Write` operation based on a cached or previous reading of the file. You must execute a `Read` tool call on the specific lines you intend to Prime modify immediately before calling `Edit`.
 
-### 2. Surgical Implementation (The "Minimalist Change" Rule)
+### 3. Surgical Implementation (The "Minimalist Change" Rule)
 Avoid large-scale block replacements or wholesale rewrites of files. Prioritize small, targeted edits that only touch the necessary lines. If a change is too large to be safe in one `Edit` call, break it into multiple smaller, sequential `Edit` calls.
 
-### 3. Post-Change Validation (The "Trust but Verify" Rule)
+### 4. Post-Change Validation (The "Trust but Verify" Rule)
 An operation is not complete until its success is verified via:
 - **Linting**: Running `npm run lint` or equivalent to ensure no syntax/style errors.
 - **Testing**: Running relevant tests to ensure no functional regressions.
 - **Structural Verification**: Performing a `Read` on the modified section to confirm content is as intended.
 
-### 4. Full-Stack Traceability (The "Root Cause" Rule)
+### 5. Full-Stack Traceability (The "Root Cause" Rule)
 When investigating issues related to UI elements that depend on dynamic data or routing (e.g., side menus, navigation links), do not assume the issue is purely frontend. You MUST trace the data flow back to its backend source (AP/Services/Controllers/Endpoints). A fix in the frontend is incomplete if the underlying backend contract has not been updated.
 
-### Verification Rules
+### 6. Verification Rules
 1. **Consult the library's typings or official docs** before using any method or property on a returned object.
 2. **Prefer dedicated hooks** (e.g., `useWatch` from *react-hook-form*) over calling non‑existent methods on instances.
 3. Write a minimal test snippet to confirm usage works with TypeScript before modifying production code.

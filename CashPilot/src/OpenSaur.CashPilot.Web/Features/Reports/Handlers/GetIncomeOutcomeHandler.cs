@@ -46,8 +46,6 @@ public static class GetIncomeOutcomeHandler
                 startOfYear,
                 endOfYear,
                 cancellationToken);
-            var monthLabels = new[] { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
-
             monthlyResult = rows
                 .GroupBy(x => new { x.TransactionDate.Month, x.CurrencyCode })
                 .Select(g =>
@@ -58,7 +56,6 @@ public static class GetIncomeOutcomeHandler
                     return new IncomeOutcomeResponseItem(
                         g.Key.Month,
                         g.Key.CurrencyCode,
-                        monthLabels[g.Key.Month - 1],
                         startDate,
                         endDate,
                         g.Where(x => x.Direction == (byte)TransactionDirection.In).Sum(x => x.Amount),

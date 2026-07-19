@@ -110,37 +110,34 @@ public sealed class ReportService(CashPilotDbContext dbContext)
             .DefaultIfEmpty(queryEnd)
             .Min();
 
-        var periods = new List<(DateOnly Start, DateOnly End, string Label)>();
+        var periods = new List<(DateOnly Start, DateOnly? End)>();
 
         if (previousMarkerDate < inYearMarkerDates[0])
         {
-            periods.Add((previousMarkerDate, inYearMarkerDates[0].AddDays(-1), $"Past to {inYearMarkerDates[0]:dd/MM}"));
+            periods.Add((previousMarkerDate, inYearMarkerDates[0].AddDays(-1)));
         }
 
         for (var i = 0; i < inYearMarkerDates.Count - 1; i++)
         {
             var start = inYearMarkerDates[i];
             var end = inYearMarkerDates[i + 1].AddDays(-1);
-            periods.Add((start, end, $"{start:dd/MM} to {end:dd/MM}"));
+            periods.Add((start, end));
         }
 
         var lastMarker = inYearMarkerDates.Last();
         if (lastMarker <= nextMarkerDate)
         {
-            var label = nextMarkerDate > yearEnd
-                ? $"{lastMarker:dd/MM} to {nextMarkerDate:dd/MM}"
-                : $"{lastMarker:dd/MM} to present";
-            periods.Add((lastMarker, nextMarkerDate, label));
+            periods.Add((lastMarker, null));
         }
 
         var result = new List<(int PeriodIndex, IncomeOutcomeResponseItem Item)>();
         var periodIndex = 0;
 
-        foreach (var (start, end, label) in periods)
+        foreach (var (start, end) in periods)
         {
-            var periodItems = allTransactions
-                .Where(x => x.TransactionDate >= start && x.TransactionDate <= end)
-                .ToList();
+            var periodItems = end != null
+                ? allTransactions.Where(x => x.TransactionDate >= start && x.TransactionDate <= end).ToList()
+                : allTransactions.Where(x => x.TransactionDate >= start).ToList();
 
             foreach (var group in periodItems
                 .GroupBy(x => x.CurrencyCode)
@@ -152,7 +149,7 @@ public sealed class ReportService(CashPilotDbContext dbContext)
                 }))
             {
                 var month = start < yearStart ? 1 : start.Month;
-                result.Add((periodIndex, new IncomeOutcomeResponseItem(month, group.CurrencyCode, label, start, end, group.Income, group.Outcome)));
+                result.Add((periodIndex, new IncomeOutcomeResponseItem(month, group.CurrencyCode, start, end, group.Income, group.Outcome)));
             }
 
             periodIndex++;

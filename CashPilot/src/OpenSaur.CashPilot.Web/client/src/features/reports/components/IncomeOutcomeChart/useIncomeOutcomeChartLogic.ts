@@ -42,9 +42,11 @@ export function useIncomeOutcomeChartLogic(markerTag: string, year: number) {
       let label = formatMonthLabel(year, item.month, locale);
 
       if (isTaggedView) {
-        label = startDate.getUTCFullYear() < year
-          ? `${t("reports.pastTo")} ${formatDayMonthLabel(item.endDate, locale)}`
-          : `${formatDayMonthLabel(item.startDate, locale)} ${t("reports.to")} ${formatDayMonthLabel(item.endDate, locale)}`;
+        label = item.endDate == null
+          ? `${t("reports.from")} ${formatDayMonthLabel(item.startDate, locale)}`
+          : startDate.getUTCFullYear() < year
+            ? `${t("reports.pastTo")} ${formatDayMonthLabel(item.endDate, locale)}`
+            : `${formatDayMonthLabel(item.startDate, locale)} ${t("reports.to")} ${formatDayMonthLabel(item.endDate, locale)}`;
       }
 
       const order = isTaggedView ? startDate.getTime() : item.month;

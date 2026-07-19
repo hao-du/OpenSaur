@@ -13,13 +13,6 @@
             "output": ["text"]
           }
         },
-        "google/gemma-4-26b-a4b": {
-          "name": "Gemma 4 26B (local)",
-          "modalities": {
-            "input": ["text", "image"],
-            "output": ["text"]
-          }
-        },
         "qwen/qwen3.5-9b": {
           "name": "Qwen3.5 9B (local)",
           "modalities": {

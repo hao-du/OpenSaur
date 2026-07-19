@@ -1,9 +1,8 @@
 import { BarChart } from "@mui/x-charts/BarChart";
-import { Box, FormControl, IconButton, MenuItem, Paper, Select, Stack, useTheme } from "@mui/material";
+import { Box, CircularProgress, FormControl, IconButton, MenuItem, Paper, Select, Stack, useTheme } from "@mui/material";
 import { BarChart3, ChevronLeft, ChevronRight } from "lucide-react";
 import { useIncomeOutcomeChartLogic } from "./useIncomeOutcomeChartLogic";
 import { LabelText } from "../../../../components/atoms/LabelText";
-import { BodyText } from "../../../../components/atoms/BodyText";
 import { useSettings } from "../../../settings/provider/SettingProvider";
 import type { SelectChangeEvent } from "@mui/material";
 
@@ -72,7 +71,9 @@ export function IncomeOutcomeChart({
         </Stack>
 
         {isLoading ? (
-          <BodyText>{t("transactions.loading")}</BodyText>
+          <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", py: 6 }}>
+            <CircularProgress size={40} />
+          </Box>
         ) : (
           <>
             <Box sx={{ width: "100%", overflowX: "auto" }}>
