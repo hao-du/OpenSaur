@@ -2,133 +2,37 @@
 
 This file is the entrypoint for AI agent guidance in this project.
 
-<!-- BEGIN BEADS INTEGRATION v:1 profile:full hash:f65d5d33 -->
-## Issue Tracking with bd (beads)
 
-**IMPORTANT**: This project uses **bd (beads)** for ALL issue tracking. Do NOT use markdown TODOs, task lists, or other tracking methods.
+## Core Rules
+- Always read the relevant local skills before thinking, planning, or implementing
+- Do not add unit tests or automation tests unless explicitly requested
+- Do not create git commits automatically unless explicitly requested
+- Do not place agentic files, AI instruction files, or workflow docs inside `src/`
+- Do not add data seeding or startup seeding code unless explicitly requested
+- Do not treat example names, client IDs, secrets, URLs, or sample values from discussion as real implementation values
+- Do not create markdown TODO lists or use a second issue tracker
+- No need to give me any code samples during planning phase if not necessary, to save tokens and time.
 
-### Why bd?
+## Skills
+ - Use "agents\skills\superpowers\brainstorming\SKILL.md" to brainstorm ideas for all requirements
+ - Use "agents\skills\superpowers\writing-plans\SKILL.md" and "agents\skills\superpowers\writing-skills\SKILL.md" before writing implementation plans.
 
-- Dependency-aware: Track blockers and relationships between issues
-- Git-friendly: Dolt-powered version control with native sync
-- Agent-optimized: JSON output, ready work detection, discovered-from links
-- Prevents duplicate tracking systems and confusion
+## Folders
+ - agents: contain all agentic-related items such as skills, instructions, memory etc
+ - docs: contain all documentation files which is writen by agentic coding tool.
+ - devops: contain all yaml-related deployment files
+ - src: contain all the implementation code
 
-### Quick Start
-
-**Check for ready work:**
-
-```bash
-bd ready --json
-```
-
-**Create new issues:**
-
-```bash
-bd create "Issue title" --description="Detailed context" -t bug|feature|task -p 0-4 --json
-bd create "Issue title" --description="What this issue is about" -p 1 --deps discovered-from:bd-123 --json
-```
-
-**Claim and update:**
-
-```bash
-bd update <id> --claim --json
-bd update bd-42 --priority 1 --json
-```
-
-**Complete work:**
-
-```bash
-bd close bd-42 --reason "Completed" --json
-```
-
-### Issue Types
-
-- `bug` - Something broken
-- `feature` - New functionality
-- `task` - Work item (tests, docs, refactoring)
-- `epic` - Large feature with subtasks
-- `chore` - Maintenance (dependencies, tooling)
-
-### Priorities
-
-- `0` - Critical (security, data loss, broken builds)
-- `1` - High (major features, important bugs)
-- `2` - Medium (default, nice-to-have)
-- `3` - Low (polish, optimization)
-- `4` - Backlog (future ideas)
-
-### Workflow for AI Agents
-
-1. **Check ready work**: `bd ready` shows unblocked issues
-2. **Claim your task atomically**: `bd update <id> --claim`
-3. **Work on it**: Implement, test, document
-4. **Discover new work?** Create linked issue:
-   - `bd create "Found bug" --description="Details about what was found" -p 1 --deps discovered-from:<parent-id>`
-5. **Complete**: `bd close <id> --reason "Done"`
-
-### Quality
-- Use `--acceptance` and `--design` fields when creating issues
-- Use `--validate` to check description completeness
-
-### Lifecycle
-- `bd defer <id>` / `bd supersede <id>` for issue management
-- `bd stale` / `bd orphans` / `bd lint` for hygiene
-- `bd human <id>` to flag for human decisions
-- `bd formula list` / `bd mol pour <name>` for structured workflows
-
-### Auto-Sync
-
-bd automatically syncs via Dolt:
-
-- Each write auto-commits to Dolt history
-- Use `bd dolt push`/`bd dolt pull` for remote sync
-- No manual export/import needed!
-
-### Important Rules
-
-- ✅ Use bd for ALL task tracking
-- ✅ Always use `--json` flag for programmatic use
-- ✅ Link discovered work with `discovered-from` dependencies
-- ✅ Check `bd ready` before asking "what should I work on?"
-- ❌ Do NOT create markdown TODO lists
-- ❌ Do NOT use external issue trackers
-- ❌ Do NOT duplicate tracking systems
-
-For more details, see README.md and docs/QUICKSTART.md.
-
-## Session Completion
-
-**Do not commit files unless the user explicitly asks you to commit.**
-
-When ending a work session, complete the applicable steps below without creating commits or pushing code unless explicitly requested:
-
-1. **File issues for remaining work** - Create issues for anything that needs follow-up
-2. **Run quality gates** (if code changed) - Tests, linters, builds
-3. **Update issue status** - Close finished work, update in-progress items
-4. **Hand off** - Provide context for next session, including changed files and verification results
-
-**CRITICAL RULES:**
-- Do NOT run `git commit` unless the user explicitly asks for a commit
-- Do NOT run `git push` unless the user explicitly asks for a push
-- Do NOT say work is committed or pushed unless you have actually done it in response to an explicit request
-
-<!-- END BEADS INTEGRATION -->
-
-
-## Project-Specific Notes
-
-Keep critical repo rules in this file. Put longer reference material in `docs/agents/` and link it from here.
-
-- Do not create unit tests for frontend or backend code in this project.
-- Do not add automation tests of any kind.
-- Use manual verification, builds, and runtime checks instead of automated test suites.
-- For frontend development work, use `src/OpenSaur.Zentry.Web/client` and run `npm run build-dev` for build verification during development. Use `npm run build` or `npm run build-prod` only when explicitly validating production output.
-- Prefer this frontend structure going forward:
-  `src/features/<feature>/...` for feature-owned APIs, services, DTOs, storage, and feature-specific pages;
-  `src/pages/` for app-level route pages that are not clearly owned by a single feature;
-  `src/components/...` for shared UI building blocks;
-  `src/infrastructure/...` for cross-cutting config and theme concerns.
-- Keep page placement consistent. If a page is primarily owned by one feature, prefer `src/features/<feature>/pages`. Use `src/pages` for app-level pages such as shared dashboard/shell routes or simple cross-feature route composition.
-- When the user asks for step-by-step implementation, prefer the simplest code that matches the current step. Do not introduce preparatory abstractions, intermediate adapters, or future-facing layers unless the current step already needs them.
-- Keep ownership boundaries obvious. Prefer `App` for bootstrapping/routing, pages for page composition, and small direct config helpers over speculative auth/config abstraction during early phases.
+## Release cycle
+ - All release scopes will be defined manually.
+ - Folder structure will follow:
+ ```
+ docs\
+ -- release-001\
+ ---- specs.md
+ ---- tasks\
+ ------ feature-001.md
+ ------ feature-002.md
+ ```
+ - Foreach feature-xxx.md, split out big feature into smaller items, each item must be reviewed before moving to another item.
+ - Need [] checkbox to track changes for each item inside feature-xxx.md. Only add 'x' if the item is approve manually.
