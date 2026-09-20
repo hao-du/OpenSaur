@@ -10,6 +10,8 @@ public sealed class OidcOptions
 
     public string ClientId { get; set; } = string.Empty;
 
+    public string? ClientSecret { get; set; }
+
     public string Scope { get; set; } = "openid profile email roles offline_access";
 
     public string RedirectPath { get; set; } = "/auth/callback";

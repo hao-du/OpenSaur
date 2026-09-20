@@ -115,10 +115,12 @@ internal static class ClaimPrincipalHelpers
             ClaimTypes.Permissions
                 when claim.Subject is ClaimsIdentity permissionIdentity
                      && permissionIdentity.HasScope("api")
-                => [OpenIddictConstants.Destinations.AccessToken],
+                => [OpenIddictConstants.Destinations.AccessToken, OpenIddictConstants.Destinations.IdentityToken],
             ClaimTypes.ImpersonationOriginalUserId
-                => [OpenIddictConstants.Destinations.AccessToken],
-            ClaimTypes.WorkspaceId or ClaimTypes.WorkspaceName or ClaimTypes.RequirePasswordChange
+                => [OpenIddictConstants.Destinations.AccessToken, OpenIddictConstants.Destinations.IdentityToken],
+            ClaimTypes.WorkspaceId or ClaimTypes.WorkspaceName
+                => [OpenIddictConstants.Destinations.AccessToken, OpenIddictConstants.Destinations.IdentityToken],
+            ClaimTypes.RequirePasswordChange
                 => [OpenIddictConstants.Destinations.AccessToken],
             _ => []
         });

@@ -1,7 +1,8 @@
-import rawAxios, { AxiosHeaders, type AxiosRequestConfig } from "axios";
+import rawAxios, { type AxiosRequestConfig } from "axios";
 
-const axios = rawAxios.create();
-let currentAccessToken: string | null = null;
+const axios = rawAxios.create({
+  withCredentials: true,
+});
 const maxRetryCount = 2;
 const baseRetryDelayMs = 400;
 
@@ -9,21 +10,7 @@ export type ClientRequestConfig = AxiosRequestConfig & {
   skipAuth?: boolean;
 };
 
-export function setClientAccessToken(accessToken: string | null) {
-  currentAccessToken = accessToken;
-}
 
-axios.interceptors.request.use((config) => {
-  const clientConfig = config as ClientRequestConfig;
-  if (clientConfig.skipAuth === true || currentAccessToken == null) {
-    return config;
-  }
-
-  config.headers = AxiosHeaders.from(config.headers);
-  config.headers.set("Authorization", `Bearer ${currentAccessToken}`);
-
-  return config;
-});
 
 function shouldRetry(error: unknown) {
   if (!rawAxios.isAxiosError(error)) {

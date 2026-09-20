@@ -3,10 +3,8 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ActionButton } from "../../../components/atoms/ActionButton";
 import { DefaultLayout } from "../../../components/layouts/DefaultLayout";
-import { getConfig } from "../../../infrastructure/config/Config";
 import { layoutStyles } from "../../../infrastructure/theme/theme";
-import { useAuthSession } from "../../auth/hooks/AuthContext";
-import { buildAuthorizeUrl } from "../../auth/services/UriService";
+import { useAuth } from "../../auth/hooks/useAuth";
 import { useSettings } from "../../settings/provider/SettingProvider";
 import { WorkspaceFiltersDrawer, type WorkspaceFilterValues } from "../components/WorkspaceFiltersDrawer";
 import { WorkspaceFormDrawer } from "../components/WorkspaceFormDrawer";
@@ -19,7 +17,7 @@ import { useWorkspacesQuery } from "../hooks/useWorkspacesQuery";
 
 export function WorkspacesPage() {
   const navigate = useNavigate();
-  const { clearSession } = useAuthSession();
+  const { clearSession, redirectToLogin } = useAuth();
   const { t } = useSettings();
   const [filters, setFilters] = useState<WorkspaceFilterValues>({
     search: "",
@@ -52,8 +50,10 @@ export function WorkspacesPage() {
     }
 
     clearSession();
-    navigate("/prepare-session", { replace: true });
-  }, [clearSession, isUnauthorized, navigate]);
+    redirectToLogin();
+  }, [clearSession, isUnauthorized, redirectToLogin]);
+
+
 
   useEffect(() => {
     if (!isForbidden) {
@@ -64,22 +64,15 @@ export function WorkspacesPage() {
   }, [isForbidden, navigate]);
 
   async function handleStartImpersonation(values: { userId: string; workspaceId: string }) {
-    try {
-      setIsStartingImpersonation(true);
-      const authorizeUrl = await buildAuthorizeUrl(getConfig(), {
-        impersonatedUserId: values.userId,
-        workspaceId: values.workspaceId
-      });
-      window.location.assign(authorizeUrl);
-    } catch (error) {
-      setIsStartingImpersonation(false);
-      setImpersonationErrorMessage(
-        error instanceof Error && error.message.trim().length > 0
-          ? error.message
-          : t("workspaces.impersonationStartError")
-      );
-    }
+    setIsStartingImpersonation(true);
+    const loginUrl = new URL("/bff/login", window.location.origin);
+    loginUrl.searchParams.set("impersonatedUserId", values.userId);
+    loginUrl.searchParams.set("workspaceId", values.workspaceId);
+    loginUrl.searchParams.set("returnUrl", "/");
+    window.location.assign(loginUrl.toString());
   }
+
+
 
   return (
     <DefaultLayout

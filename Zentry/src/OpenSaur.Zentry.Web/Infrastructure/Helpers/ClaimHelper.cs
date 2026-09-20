@@ -1,14 +1,15 @@
-using System.Security.Claims;
 using OpenIddict.Abstractions;
+using OpenSaur.Zentry.Web.Infrastructure.Auth;
+using System.Security.Claims;
 
 namespace OpenSaur.Zentry.Web.Infrastructure.Helpers;
 
 internal static class ClaimHelper
 {
-    public const string WorkspaceIdClaimType = "workspace_id";
-    public const string PermissionClaimType = "permissions";
-    public const string RoleClaimType = "roles";
-    public const string ImpersonationOriginalUserIdClaimType = "impersonation_original_user_id";
+    public const string WorkspaceIdClaimType = CoreGateClaimTypes.WorkspaceId;
+    public const string PermissionClaimType = CoreGateClaimTypes.Permissions;
+    public const string RoleClaimType = ClaimTypes.Role;
+    public const string ImpersonationOriginalUserIdClaimType = CoreGateClaimTypes.ImpersonationOriginalUserId;
 
     public static Guid GetCurrentUserId(ClaimsPrincipal user)
     {
@@ -33,7 +34,7 @@ internal static class ClaimHelper
             return false;
         }
 
-        var isSuperAdmin = user.FindAll(RoleClaimType)
+        var isSuperAdmin = user.FindAll(c => c.Type == RoleClaimType)
             .Any(claim => StringHelper.NormalizeRoleValue(claim.Value) == StringHelper.NormalizeRoleValue(Constants.NormalizedSuperAdministrator));
 
         return isSuperAdmin;

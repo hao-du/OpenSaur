@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ActionButton } from "../../../components/atoms/ActionButton";
 import { DefaultLayout } from "../../../components/layouts/DefaultLayout";
-import { useAuthSession } from "../../auth/hooks/AuthContext";
+import { useAuth } from "../../auth/hooks/useAuth";
 import { useCurrentProfileQuery } from "../../profile/hooks/useCurrentProfileQuery";
 import { useSettings } from "../../settings/provider/SettingProvider";
 import { layoutStyles } from "../../../infrastructure/theme/theme";
@@ -22,7 +22,7 @@ import type { RoleFormValues } from "../components/RoleForm";
 
 export function RolesPage() {
   const navigate = useNavigate();
-  const { clearSession } = useAuthSession();
+  const { clearSession, redirectToLogin } = useAuth();
   const { t } = useSettings();
   const { data: currentProfile } = useCurrentProfileQuery();
   const canEditRoles = currentProfile?.canEditRoles === true;
@@ -59,8 +59,9 @@ export function RolesPage() {
     }
 
     clearSession();
-    navigate("/prepare-session", { replace: true });
-  }, [clearSession, isUnauthorized, navigate]);
+    redirectToLogin();
+  }, [clearSession, isUnauthorized, redirectToLogin]);
+
 
   useEffect(() => {
     if (!isForbidden) {

@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { ActionButton } from "../../../components/atoms/ActionButton";
 import { DefaultLayout } from "../../../components/layouts/DefaultLayout";
 import { layoutStyles } from "../../../infrastructure/theme/theme";
-import { useAuthSession } from "../../auth/hooks/AuthContext";
+import { useAuth } from "../../auth/hooks/useAuth";
 import { useSettings } from "../../settings/provider/SettingProvider";
 import { AssignUserRolesDrawer } from "../components/AssignUserRolesDrawer";
 import { ResetUserPasswordDrawer } from "../components/ResetUserPasswordDrawer";
@@ -19,7 +19,7 @@ import { useUsersQuery } from "../hooks/useUsersQuery";
 
 export function UsersPage() {
   const navigate = useNavigate();
-  const { clearSession } = useAuthSession();
+  const { clearSession, redirectToLogin } = useAuth();
   const { t } = useSettings();
   const [filters, setFilters] = useState<UserFilterValues>({
     search: "",
@@ -61,8 +61,9 @@ export function UsersPage() {
     }
 
     clearSession();
-    navigate("/prepare-session", { replace: true });
-  }, [clearSession, isUnauthorized, navigate]);
+    redirectToLogin();
+  }, [clearSession, isUnauthorized, redirectToLogin]);
+
 
   useEffect(() => {
     if (!isForbidden) {

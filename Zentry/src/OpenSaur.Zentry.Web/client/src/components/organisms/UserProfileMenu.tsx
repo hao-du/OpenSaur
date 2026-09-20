@@ -21,7 +21,7 @@ import { AppIcon } from "../icons/AppIcon";
 import { Avatar } from "./Avatar";
 import { ConfirmationDialog } from "./ConfirmationDialog";
 import type { CurrentProfileDto } from "../../features/profile/dtos/CurrentProfileDto";
-import { useAuthSession } from "../../features/auth/hooks/AuthContext";
+import { useAuth } from "../../features/auth/hooks/useAuth";
 import { useRequirePasswordChange } from "../../features/profile/hooks/useRequirePasswordChange";
 import { getConfig } from "../../infrastructure/config/Config";
 import { layoutStyles } from "../../infrastructure/theme/theme";
@@ -33,7 +33,7 @@ type UserProfileMenuProps = {
 };
 
 export function UserProfileMenu({ isLoading = false, profile }: UserProfileMenuProps) {
-  const { handleLogout } = useAuthSession();
+  const { handleLogout } = useAuth();
   const { t } = useSettings();
   const navigate = useNavigate();
   const [anchorElement, setAnchorElement] = useState<HTMLElement | null>(null);

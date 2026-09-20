@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { ActionButton } from "../../../components/atoms/ActionButton";
 import { DefaultLayout } from "../../../components/layouts/DefaultLayout";
 import { layoutStyles } from "../../../infrastructure/theme/theme";
-import { useAuthSession } from "../../auth/hooks/AuthContext";
+import { useAuth } from "../../auth/hooks/useAuth";
 import { useSettings } from "../../settings/provider/SettingProvider";
 import { OidcClientFiltersDrawer } from "../components/OidcClientFiltersDrawer";
 import type { OidcClientFilterValues } from "../components/OidcClientFiltersDrawer";
@@ -17,7 +17,7 @@ import { useOidcClientsQuery } from "../hooks/useOidcClientsQuery";
 
 export function OidcClientsPage() {
   const navigate = useNavigate();
-  const { clearSession } = useAuthSession();
+  const { clearSession, redirectToLogin } = useAuth();
   const { t } = useSettings();
   const [clientPendingDelete, setClientPendingDelete] = useState<{ displayName: string; id: string } | null>(null);
   const [filters, setFilters] = useState<OidcClientFilterValues>({
@@ -46,8 +46,9 @@ export function OidcClientsPage() {
     }
 
     clearSession();
-    navigate("/prepare-session", { replace: true });
-  }, [clearSession, isUnauthorized, navigate]);
+    redirectToLogin();
+  }, [clearSession, isUnauthorized, redirectToLogin]);
+
 
   useEffect(() => {
     if (!isForbidden) {

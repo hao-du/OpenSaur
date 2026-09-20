@@ -1,12 +1,9 @@
-import { getConfig } from "../../../infrastructure/config/Config";
-import { useAuthSession } from "../../auth/hooks/AuthContext";
 import { DefaultLayout } from "../../../components/layouts/DefaultLayout";
 import { useSettings } from "../../settings/provider/SettingProvider";
 import { useCurrentProfileQuery } from "../../profile/hooks/useCurrentProfileQuery";
 import { useDashboardSummaryQuery } from "../hooks/useDashboardSummaryQuery";
 import { ActionButton } from "../../../components/atoms/ActionButton";
 import { BodyText } from "../../../components/atoms/BodyText";
-import { LabelText } from "../../../components/atoms/LabelText";
 import { MetaText } from "../../../components/atoms/MetaText";
 import { PageTitleText } from "../../../components/atoms/PageTitleText";
 import { Alert, CircularProgress, Grid, Paper, Stack } from "@mui/material";
@@ -14,9 +11,7 @@ import { useNavigate } from "react-router-dom";
 
 export function DashboardPage() {
   const navigate = useNavigate();
-  const config = getConfig();
-  const { authSession } = useAuthSession();
-  const { formatDateTime, t } = useSettings();
+  const { t } = useSettings();
   const { data: currentProfile } = useCurrentProfileQuery();
   const { data: summary, isError, isLoading, refetch } = useDashboardSummaryQuery();
   const canManage = currentProfile?.canAssignUsers === true || currentProfile?.canEditRoles === true || currentProfile?.isSuperAdministrator === true;
@@ -143,37 +138,6 @@ export function DashboardPage() {
     >
       <Stack spacing={3}>
         {renderSummaryBlock()}
-        <Paper elevation={0} sx={{ border: "1px solid rgba(11,110,79,0.12)", p: 3 }}>
-          <Stack spacing={2}>
-            <Stack spacing={0.75}>
-              <PageTitleText variant="h6">{t("dashboard.sessionRuntime")}</PageTitleText>
-              <BodyText>
-                {t("dashboard.oidcRuntimeConfig")} <code>/app-config.js</code>.
-              </BodyText>
-            </Stack>
-            <Grid container spacing={2}>
-              {[
-                [t("dashboard.authenticated"), authSession == null ? t("common.no") : t("common.yes")],
-                [t("auth.tokenType"), authSession?.tokenType ?? t("common.missing")],
-                [t("dashboard.expiresAt"), authSession?.expiresAt ? formatDateTime(authSession.expiresAt) : t("common.missing")],
-                [t("auth.scope"), authSession?.scope ?? t("common.missing")],
-                [t("auth.idToken"), authSession?.idToken == null ? t("common.missing") : t("dashboard.idTokenIssued")],
-                [t("auth.authority"), config.authority],
-                [t("auth.clientId"), config.clientId],
-                [t("auth.redirectUri"), config.redirectUri],
-                [t("auth.postLogoutRedirectUri"), config.postLogoutRedirectUri],
-                [t("dashboard.configScope"), config.scope]
-              ].map(([label, value]) => (
-                <Grid key={label} size={{ md: 6, xs: 12 }}>
-                  <Stack spacing={0.5}>
-                    <LabelText>{label}</LabelText>
-                    <BodyText sx={{ overflowWrap: "anywhere" }}>{value}</BodyText>
-                  </Stack>
-                </Grid>
-              ))}
-            </Grid>
-          </Stack>
-        </Paper>
       </Stack>
     </DefaultLayout>
   );

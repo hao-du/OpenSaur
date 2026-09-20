@@ -1,16 +1,17 @@
-# CoreGate Design Specification: M2M Flow, User Consent Screen & Scope Validation
+# CoreGate Design Specification: M2M Flow, User Consent Screen, Scope Validation & OIDC Claims Propagation
 
-**Date**: 2026-09-17  
-**Status**: Approved (Dynamic Scope Update)  
+**Date**: 2026-09-20  
+**Status**: Approved  
 **Target Systems**: `OpenSaur.CoreGate.Web` (.NET 10, OpenIddict 7.3.0, PostgreSQL)
 
 ---
 
 ## 1. Executive Summary
-This design specification defines three major protocol and security enhancements to the CoreGate Identity & OIDC provider:
+This design specification defines four major protocol and security enhancements to the CoreGate Identity & OIDC provider:
 1. **Dynamic Scope Validation & Client Application Permissions**: Dynamic validation of requested scopes against OpenIddict registered scopes (`IOpenIddictScopeManager`) and client application permissions (`IOpenIddictApplicationManager`), returning `invalid_scope` on unauthorized or unrecognized requests.
 2. **Machine-to-Machine (M2M) Client Credentials Flow**: Full support for `grant_type=client_credentials` in OpenIddict, issuing application-centric JWT access tokens for Backend-For-Frontend (BFF) and service-to-service communication.
 3. **Interactive OAuth2 User Consent Screen**: Interactive authorization prompt and persistent scope approval handling via `OpenIddictAuthorization` records.
+4. **IdentityToken & UserInfo Claims Propagation**: Propagation of workspace and impersonation context claims (`workspace_id`, `workspace_name`, `impersonation_original_user_id`) to the `id_token` and `/connect/userinfo` endpoint for standards-compliant OIDC client consumption without manual token decoding.
 
 ---
 
@@ -75,7 +76,28 @@ In [`AuthorizeHandler.cs`](file:///d:/OpenSaur/CoreGate/src/OpenSaur.CoreGate.We
 
 ---
 
-## 5. Architectural Component Map
+## 5. Feature 4: IdentityToken & UserInfo Claims Propagation
+
+### 5.1 Motivation & Standard OIDC Consumption
+Standard OpenID Connect handlers (e.g. `AddOpenIdConnect` in ASP.NET Core) automatically populate the local `ClaimsPrincipal` using claims present in the `id_token` and retrieved from the `/connect/userinfo` endpoint.
+By emitting tenant/workspace context and impersonation context directly into the `id_token` and `/connect/userinfo`, relying parties (such as Zentry) consume user session context automatically without needing custom JWT decoding or `OnTokenValidated` event handlers.
+
+### 5.2 Claim Destinations
+In [`ClaimPrincipalHelpers.cs`](file:///d:/OpenSaur/CoreGate/src/OpenSaur.CoreGate.Web/Infrastructure/Security/ClaimPrincipalHelpers.cs):
+- Assign `OpenIddictConstants.Destinations.IdentityToken` and `OpenIddictConstants.Destinations.AccessToken` to:
+  - `workspace_id`
+  - `workspace_name`
+  - `impersonation_original_user_id` (when present)
+  - `permissions` (when scope is `api`)
+- `require_password_change` remains restricted to `AccessToken` only.
+
+### 5.3 UserInfo Endpoint
+In [`UserInfoHandler.cs`](file:///d:/OpenSaur/CoreGate/src/OpenSaur.CoreGate.Web/Features/Auth/Handlers/OpenIddict/UserInfoHandler.cs):
+- Include `workspace_name`, `impersonation_original_user_id`, and `permissions` array (when present) in addition to existing `sub`, `preferred_username`, `email`, `workspace_id`, and `roles`.
+
+---
+
+## 6. Architectural Component Map
 
 ```mermaid
 sequenceDiagram
@@ -107,3 +129,4 @@ sequenceDiagram
         end
     end
 ```
+
