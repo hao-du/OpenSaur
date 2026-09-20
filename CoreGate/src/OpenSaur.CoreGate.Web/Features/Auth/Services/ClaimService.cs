@@ -1,5 +1,6 @@
-﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using OpenIddict.Abstractions;
 using OpenSaur.CoreGate.Web.Domain.Identity;
 using OpenSaur.CoreGate.Web.Infrastructure.Database;
 using OpenSaur.CoreGate.Web.Infrastructure.Security;
@@ -12,7 +13,8 @@ public class ClaimService(
     ApplicationDbContext dbContext,
     UserRolePermissionService authorizationDataService,
     UserRolePermissionService userRolePermissionService,
-    UserManager<ApplicationUser> userManager
+    UserManager<ApplicationUser> userManager,
+    IOpenIddictApplicationManager applicationManager
 )
 {
     public async Task<ClaimsPrincipal?> BuildUserClaimPrincipalAsync(
@@ -77,5 +79,22 @@ public class ClaimService(
         var permissions = await authorizationDataService.GetGrantedPermissionCodesAsync(user.Id, assignedWorkspace.Id, cancellationToken);
 
         return ClaimPrincipalHelpers.Create(user, roles, permissions, requestedScopes, originalUserId, assignedWorkspace);
+    }
+
+    public async Task<ClaimsPrincipal?> BuildClientClaimPrincipalAsync(
+        object application,
+        IEnumerable<string> grantedScopes,
+        CancellationToken cancellationToken = default
+    )
+    {
+        var clientId = await applicationManager.GetClientIdAsync(application, cancellationToken);
+        if (string.IsNullOrWhiteSpace(clientId))
+        {
+            return null;
+        }
+
+        var permissions = await applicationManager.GetPermissionsAsync(application, cancellationToken);
+
+        return ClaimPrincipalHelpers.CreateForClient(clientId, permissions, grantedScopes);
     }
 }

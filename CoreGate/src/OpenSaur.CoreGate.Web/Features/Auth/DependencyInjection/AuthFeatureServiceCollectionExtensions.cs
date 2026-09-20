@@ -16,6 +16,7 @@ public static class AuthFeatureServiceCollectionExtensions
         services.AddScoped<ChangePasswordAccessHandler>();
         services.AddScoped<ChangePasswordHandler>();
         services.AddScoped<AuthorizeHandler>();
+        services.AddScoped<ConsentHandler>();
         services.AddScoped<EndSessionHandler>();
         services.AddScoped<TokenHandler>();
         services.AddScoped<UserInfoHandler>();
@@ -26,6 +27,7 @@ public static class AuthFeatureServiceCollectionExtensions
         services.AddScoped<EndSessionRevocationService>();
         services.AddScoped<TokenService>();
         services.AddScoped<TurnstileVerificationService>();
+        services.AddScoped<ScopeValidationService>();
         return services;
     }
 }

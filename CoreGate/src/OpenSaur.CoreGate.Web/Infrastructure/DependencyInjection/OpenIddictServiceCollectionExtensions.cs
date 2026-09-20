@@ -80,7 +80,8 @@ public static class OpenIddictServiceCollectionExtensions
                 options.SetUserInfoEndpointUris(new Uri(issuerBaseUri, "connect/userinfo"));
                 options.SetAccessTokenLifetime(TimeSpan.FromMinutes(15));
                 options.AllowAuthorizationCodeFlow()
-                    .AllowRefreshTokenFlow();
+                    .AllowRefreshTokenFlow()
+                    .AllowClientCredentialsFlow();
                 options.UseReferenceRefreshTokens();
                 options.RequireProofKeyForCodeExchange();
                 options.RegisterScopes(

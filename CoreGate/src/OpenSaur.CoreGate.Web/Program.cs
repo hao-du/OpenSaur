@@ -70,6 +70,7 @@ if (app.Environment.IsDevelopment())
 
 app.MapOpenIddictEndpoints();
 app.MapAuthEndpoints();
+app.MapConsentEndpoints();
 app.MapFallbackToFile("index.html");
 
 app.Run();

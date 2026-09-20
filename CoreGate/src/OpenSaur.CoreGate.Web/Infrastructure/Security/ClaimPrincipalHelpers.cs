@@ -125,4 +125,41 @@ internal static class ClaimPrincipalHelpers
 
         return principal;
     }
+
+    public static ClaimsPrincipal CreateForClient(
+        string clientId,
+        IEnumerable<string> permissions,
+        IEnumerable<string> scopes)
+    {
+        var identity = new ClaimsIdentity(
+            TokenValidationParameters.DefaultAuthenticationType,
+            OpenIddictConstants.Claims.Name,
+            OpenIddictConstants.Claims.Role);
+
+        identity.AddClaim(new Claim(OpenIddictConstants.Claims.Subject, clientId));
+        identity.AddClaim(new Claim(OpenIddictConstants.Claims.ClientId, clientId));
+
+        foreach (var permission in permissions.Where(static p => !string.IsNullOrWhiteSpace(p)).Distinct(StringComparer.Ordinal))
+        {
+            identity.AddClaim(new Claim(ClaimTypes.Permissions, permission));
+        }
+
+        var principal = new ClaimsPrincipal(identity);
+        var scopeArray = scopes
+            .Where(static scope => !string.IsNullOrWhiteSpace(scope))
+            .Distinct(StringComparer.Ordinal)
+            .ToArray();
+
+        principal.SetScopes(scopeArray);
+
+        var scope = "api";
+        if (scopeArray.Contains(scope, StringComparer.Ordinal))
+        {
+            principal.SetResources(scope);
+        }
+
+        principal.SetDestinations(static _ => [OpenIddictConstants.Destinations.AccessToken]);
+
+        return principal;
+    }
 }
