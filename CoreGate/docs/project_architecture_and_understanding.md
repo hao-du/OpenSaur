@@ -1,7 +1,7 @@
 # CoreGate System Architecture & Implementation Understanding
 
 ## 1. Executive Summary & Purpose
-**CoreGate** (`OpenSaur.CoreGate`) is a production-grade, centralized Authentication & Identity Provider (IdP) system built on **OpenID Connect (OIDC)** and **OAuth 2.0** standards. It manages user authentication, role-based and permission-based authorization, session management, and OAuth 2.0/OIDC token issuance for internal/external client applications (such as Auth0 or standalone relying parties).
+**CoreGate** (`OpenSaur.CoreGate`) is a production-grade, centralized Authentication & Identity Provider (IdP) system built on **OpenID Connect (OIDC)** and **OAuth 2.0** standards. It manages user authentication, role-based and permission-based authorization, session management, and OAuth 2.0/OIDC token issuance for internal/external client applications (such as Zentry, Auth0, or standalone relying parties).
 
 ---
 
@@ -28,8 +28,9 @@
 
 ```mermaid
 graph TD
-    ClientApp[OAuth2 Client / Auth0 / Relying Party] -->|OIDC Protocol Requests| OidcEndpoints[OpenIddict Endpoints /connect/*]
+    ClientApp[OAuth2 Client / Zentry BFF / Relying Party] -->|OIDC Protocol Requests| OidcEndpoints[OpenIddict Endpoints /connect/*]
     UserBrowser[User Browser / SPA Frontend] -->|Auth UI & API Calls| AuthEndpoints[Auth Endpoints /auth/*]
+    UserBrowser -->|Interactive Consent| ConsentEndpoints[Consent Endpoints /consent]
     
     subgraph CoreGate Web Backend
         OidcEndpoints --> AuthorizeHandler[AuthorizeHandler]
@@ -37,17 +38,22 @@ graph TD
         OidcEndpoints --> UserInfoHandler[UserInfoHandler]
         OidcEndpoints --> EndSessionHandler[EndSessionHandler]
 
+        ConsentEndpoints --> ConsentHandler[ConsentHandler]
+
         AuthEndpoints --> LoginHandler[LoginHandler]
         AuthEndpoints --> RefreshTokenHandler[RefreshTokenHandler]
         AuthEndpoints --> ExchangeTokenHandler[ExchangeTokenHandler]
         AuthEndpoints --> ChangePasswordHandler[ChangePasswordHandler]
 
+        AuthorizeHandler --> ScopeValidationService[ScopeValidationService]
+        TokenHandler --> ScopeValidationService
         AuthorizeHandler --> ClaimService[ClaimService]
         AuthorizeHandler --> UserRolePermissionService[UserRolePermissionService]
         LoginHandler --> TurnstileService[TurnstileVerificationService]
 
         ClaimService --> AppDbContext[(ApplicationDbContext - PostgreSQL)]
         UserRolePermissionService --> AppDbContext
+        ConsentHandler --> AppDbContext
     end
 ```
 
@@ -63,7 +69,7 @@ The data layer is defined in [`ApplicationDbContext`](file:///d:/OpenSaur/CoreGa
    - [`UserRole`](file:///d:/OpenSaur/CoreGate/src/OpenSaur.CoreGate.Web/Domain/Identity/UserRole.cs): Joins `ApplicationUser` and `Role`.
 
 2. **Permissions & Scopes**:
-   - [`Permission`](file:///d:/OpenSaur/CoreGate/src/OpenSaur.CoreGate.Web/Domain/Permissions/Permission.cs): Defines granual system permissions.
+   - [`Permission`](file:///d:/OpenSaur/CoreGate/src/OpenSaur.CoreGate.Web/Domain/Permissions/Permission.cs): Defines granular system permissions.
    - [`PermissionScope`](file:///d:/OpenSaur/CoreGate/src/OpenSaur.CoreGate.Web/Domain/Permissions/PermissionScope.cs): Groups permissions by feature scope.
    - [`PermissionRole`](file:///d:/OpenSaur/CoreGate/src/OpenSaur.CoreGate.Web/Domain/Permissions/PermissionRole.cs): Connects Roles to Permissions.
 
@@ -78,26 +84,84 @@ The data layer is defined in [`ApplicationDbContext`](file:///d:/OpenSaur/CoreGa
 ## 5. Endpoints & Protocol Flows
 
 ### OIDC & OAuth 2.0 Standard Endpoints ([`OpenIddictEndpoints.cs`](file:///d:/OpenSaur/CoreGate/src/OpenSaur.CoreGate.Web/Features/Auth/OpenIddictEndpoints.cs))
-- `GET/POST /connect/authorize`: Handled by [`AuthorizeHandler`](file:///d:/OpenSaur/CoreGate/src/OpenSaur.CoreGate.Web/Features/Auth/Handlers/OpenIddict/AuthorizeHandler.cs). Processes authorization code request, validates session/cookie authentication, builds security principal with claims/roles, returns authorization code.
-- `POST /connect/token`: Handled by [`TokenHandler`](file:///d:/OpenSaur/CoreGate/src/OpenSaur.CoreGate.Web/Features/Auth/Handlers/OpenIddict/TokenHandler.cs). Exchanges authorization code or refresh token for JWT access token and refresh token.
-- `GET /connect/userinfo`: Handled by [`UserInfoHandler`](file:///d:/OpenSaur/CoreGate/src/OpenSaur.CoreGate.Web/Features/Auth/Handlers/OpenIddict/UserInfoHandler.cs). Returns OIDC compliant user profile claims.
-- `GET/POST /connect/endsession`: Handled by [`EndSessionHandler`](file:///d:/OpenSaur/CoreGate/src/OpenSaur.CoreGate.Web/Features/Auth/Handlers/OpenIddict/EndSessionHandler.cs). Performs single sign-out, revokes tokens via [`EndSessionRevocationService`](file:///d:/OpenSaur/CoreGate/src/OpenSaur.CoreGate.Web/Features/Auth/Services/EndSessionRevocationService.cs), clears session cookies.
+- `GET/POST /connect/authorize`: Handled by [`AuthorizeHandler`](file:///d:/OpenSaur/CoreGate/src/OpenSaur.CoreGate.Web/Features/Auth/Handlers/OpenIddict/AuthorizeHandler.cs).
+  - Validates client application presence and dynamically checks requested scopes against client permissions via [`ScopeValidationService`](file:///d:/OpenSaur/CoreGate/src/OpenSaur.CoreGate.Web/Features/Auth/Services/ScopeValidationService.cs).
+  - Inspects user consent in `OpenIddictAuthorizations`. If consent is required or `prompt=consent`, redirects browser to `/consent`.
+  - Resolves workspace context (`workspace_id`) and administrative impersonation (`impersonated_user_id`).
+  - Issues authorization code with claims structured for `AccessToken` and `IdentityToken`.
+- `POST /connect/token`: Handled by [`TokenHandler`](file:///d:/OpenSaur/CoreGate/src/OpenSaur.CoreGate.Web/Features/Auth/Handlers/OpenIddict/TokenHandler.cs).
+  - Supports `authorization_code`, `refresh_token`, and `client_credentials` flows.
+  - Dynamically re-validates requested scopes on token exchange.
+  - For M2M (`client_credentials`), invokes `ClaimService.BuildClientClaimPrincipalAsync` to issue machine-centric tokens without user context.
+- `GET /connect/userinfo`: Handled by [`UserInfoHandler`](file:///d:/OpenSaur/CoreGate/src/OpenSaur.CoreGate.Web/Features/Auth/Handlers/OpenIddict/UserInfoHandler.cs).
+  - Returns OIDC compliant user profile claims, roles, workspace identity, impersonation metadata, and granular permissions.
+- `GET/POST /connect/endsession`: Handled by [`EndSessionHandler`](file:///d:/OpenSaur/CoreGate/src/OpenSaur.CoreGate.Web/Features/Auth/Handlers/OpenIddict/EndSessionHandler.cs).
+  - Performs single sign-out, revokes tokens via [`EndSessionRevocationService`](file:///d:/OpenSaur/CoreGate/src/OpenSaur.CoreGate.Web/Features/Auth/Services/EndSessionRevocationService.cs), and clears session cookies.
 
-### SPA / direct Authentication Endpoints ([`AuthEndpoints.cs`](file:///d:/OpenSaur/CoreGate/src/OpenSaur.CoreGate.Web/Features/Auth/AuthEndpoints.cs))
-- `POST /auth/login`: Handles password login + Cloudflare Turnstile captcha check via [`TurnstileVerificationService`](file:///d:/OpenSaur/CoreGate/src/OpenSaur.CoreGate.Web/Features/Auth/Services/TurnstileVerificationService.cs). Sets identity cookie.
+### Interactive Consent Endpoints ([`ConsentEndpoints.cs`](file:///d:/OpenSaur/CoreGate/src/OpenSaur.CoreGate.Web/Features/Auth/ConsentEndpoints.cs))
+- `GET /consent`: Renders an interactive HTML consent form displaying the requesting client application's name, requested scopes, and Accept/Reject buttons.
+- `POST /consent`: Handled by [`ConsentHandler`](file:///d:/OpenSaur/CoreGate/src/OpenSaur.CoreGate.Web/Features/Auth/Handlers/OpenIddict/ConsentHandler.cs).
+  - **Accept**: Creates or updates a permanent `OpenIddictAuthorization` record in PostgreSQL (`Type = Permanent`, `Status = Valid`) and redirects back to `/connect/authorize` with an authorization code.
+  - **Reject**: Redirects to client's `redirect_uri` with standard OIDC `error=access_denied`.
+
+### SPA / Direct Authentication Endpoints ([`AuthEndpoints.cs`](file:///d:/OpenSaur/CoreGate/src/OpenSaur.CoreGate.Web/Features/Auth/AuthEndpoints.cs))
+- `POST /auth/login`: Handles password authentication + Cloudflare Turnstile verification via [`TurnstileVerificationService`](file:///d:/OpenSaur/CoreGate/src/OpenSaur.CoreGate.Web/Features/Auth/Services/TurnstileVerificationService.cs). Sets identity cookie.
 - `POST /auth/refresh` & `POST /auth/exchange`: Token refresh and custom token exchange handlers.
 - `GET /auth/change-password/access` & `POST /auth/change-password`: Self-service password change handling.
 
 ---
 
 ## 6. Key Business Logic Services ([`Services`](file:///d:/OpenSaur/CoreGate/src/OpenSaur.CoreGate.Web/Features/Auth/Services/))
-1. [`ClaimService`](file:///d:/OpenSaur/CoreGate/src/OpenSaur.CoreGate.Web/Features/Auth/Services/ClaimService.cs): Standardizes token claims generation (user id, email, full name, system roles, permissions, workspaces).
-2. [`UserRolePermissionService`](file:///d:/OpenSaur/CoreGate/src/OpenSaur.CoreGate.Web/Features/Auth/Services/UserRolePermissionService.cs): Resolves user permissions from DB across system roles and workspace roles.
-3. [`CookieService`](file:///d:/OpenSaur/CoreGate/src/OpenSaur.CoreGate.Web/Features/Auth/Services/CookieService.cs): Configures domain-normalized session cookies for seamless multi-subdomain Auth/SSO.
-4. [`TokenService`](file:///d:/OpenSaur/CoreGate/src/OpenSaur.CoreGate.Web/Features/Auth/Services/TokenService.cs): Helper for internal HTTP calls and token lifecycle.
+1. [`ClaimService`](file:///d:/OpenSaur/CoreGate/src/OpenSaur.CoreGate.Web/Features/Auth/Services/ClaimService.cs):
+   - `BuildUserClaimPrincipalAsync`: Resolves user profile, active workspace, roles, and permissions into an authenticated `ClaimsPrincipal`.
+   - `BuildClientClaimPrincipalAsync`: Constructs client-centric `ClaimsPrincipal` for M2M flows.
+2. [`ScopeValidationService`](file:///d:/OpenSaur/CoreGate/src/OpenSaur.CoreGate.Web/Features/Auth/Services/ScopeValidationService.cs):
+   - Dynamically validates requested scopes against permissions assigned to the client application in OpenIddict (`scp:scope_name`).
+3. [`UserRolePermissionService`](file:///d:/OpenSaur/CoreGate/src/OpenSaur.CoreGate.Web/Features/Auth/Services/UserRolePermissionService.cs):
+   - Resolves user permissions from DB across global system roles and workspace roles.
+4. [`CookieService`](file:///d:/OpenSaur/CoreGate/src/OpenSaur.CoreGate.Web/Features/Auth/Services/CookieService.cs):
+   - Configures domain-normalized session cookies for seamless multi-subdomain Auth/SSO.
+5. [`TokenService`](file:///d:/OpenSaur/CoreGate/src/OpenSaur.CoreGate.Web/Features/Auth/Services/TokenService.cs):
+   - Helper for internal HTTP calls and token lifecycle.
 
 ---
 
-## 7. Configuration & Environment Settings
+## 7. OpenIddict Claims & Destination Architecture
+
+Claim destinations are mapped in [`ClaimPrincipalHelpers.cs`](file:///d:/OpenSaur/CoreGate/src/OpenSaur.CoreGate.Web/Infrastructure/Security/ClaimPrincipalHelpers.cs#L100-L126). In OpenIddict, a claim is only written into a token if explicitly assigned via `principal.SetDestinations`.
+
+CoreGate routes claims across token destinations as follows:
+
+| Claim Type | Standard / OIDC Name | Destinations | Gatekeeping Condition |
+| :--- | :--- | :--- | :--- |
+| `ClaimTypes.Subject` | `sub` | `AccessToken`, `IdentityToken` | Always included |
+| `ClaimTypes.Name` | `name` | `AccessToken`, `IdentityToken` | `profile` scope present |
+| `ClaimTypes.PreferredUserName` | `preferred_username` | `AccessToken`, `IdentityToken` | `profile` scope present |
+| `OpenIddictConstants.Claims.Email` | `email` | `AccessToken`, `IdentityToken` | `email` scope present |
+| `ClaimTypes.Role` | `roles` | `AccessToken`, `IdentityToken` | `roles` scope present |
+| `ClaimTypes.Permissions` | `permissions` | `AccessToken`, `IdentityToken` | `api` scope present |
+| `ClaimTypes.WorkspaceId` | `workspace_id` | `AccessToken`, `IdentityToken` | Always included (authenticated user) |
+| `ClaimTypes.WorkspaceName` | `workspace_name` | `AccessToken`, `IdentityToken` | Always included (authenticated user) |
+| `ClaimTypes.ImpersonationOriginalUserId` | `impersonation_original_user_id` | `AccessToken`, `IdentityToken` | Impersonation active |
+| `ClaimTypes.RequirePasswordChange` | `require_password_change` | `AccessToken` only | Always included on access token |
+
+---
+
+## 8. Client Scopes & Relying Party Claim Consumption Matrix
+
+The following matrix documents all supported client scopes, their security gating rules in CoreGate, the claims emitted to `access_token`, `id_token`, and `/connect/userinfo`, and how consuming client applications (such as Zentry) utilize them:
+
+| Scope | Claims Emitted by CoreGate | CoreGate Gating Condition (`SetDestinations`) | Relying Party Usage (e.g. Zentry) |
+| :--- | :--- | :--- | :--- |
+| **`openid`** | `sub`, `workspace_id`, `workspace_name`, `impersonation_original_user_id` | Core OIDC mandatory scope | Resolves user identifier (`GetCurrentUserId`), active tenant (`GetWorkspaceId`), and whether an administrative impersonation session is active (`IsImpersonating`). |
+| **`profile`** | `name`, `preferred_username` | `profileIdentity.HasScope("profile")` | Standard ASP.NET Core identity name (`Identity.Name`) and UI profile displays. |
+| **`email`** | `email` | `emailIdentity.HasScope("email")` | User contact information and profile views. |
+| **`roles`** | `roles` | `roleIdentity.HasScope("roles")` | Role-based authorization policies (e.g. `SuperAdminOnly` policy and `IsSuperAdministrator`). |
+| **`api`** | `permissions`, resource audience (`aud: api`) | `permissionIdentity.HasScope("api")` | Granular permission policies (e.g. `AdminCanManagePolicy` and `HasPermission`). |
+| **`offline_access`** | `refresh_token` | Granted if client allows refresh token flow | Background sliding session renewal in BFF middleware (`BffTokenRefreshCookieEvents`) without prompting the user to re-authenticate. |
+
+---
+
+## 9. Configuration & Environment Settings
 - Defined across [`appsettings.json`](file:///d:/OpenSaur/CoreGate/src/OpenSaur.CoreGate.Web/appsettings.json), [`appsettings.Development.json`](file:///d:/OpenSaur/CoreGate/src/OpenSaur.CoreGate.Web/appsettings.Development.json), and [`appsettings.Production.json`](file:///d:/OpenSaur/CoreGate/src/OpenSaur.CoreGate.Web/appsettings.Production.json).
 - Key config sections: `ConnectionStrings`, `Oidc`, `AuthCookie`, `CorsOptions`, `TurnstileOptions`.
