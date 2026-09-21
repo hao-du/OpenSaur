@@ -23,7 +23,6 @@ import { ConfirmationDialog } from "./ConfirmationDialog";
 import type { CurrentProfileDto } from "../../features/profile/dtos/CurrentProfileDto";
 import { useAuth } from "../../features/auth/hooks/useAuth";
 import { useRequirePasswordChange } from "../../features/profile/hooks/useRequirePasswordChange";
-import { getConfig } from "../../infrastructure/config/Config";
 import { layoutStyles } from "../../infrastructure/theme/theme";
 import { useSettings } from "../../features/settings/provider/SettingProvider";
 
@@ -72,9 +71,8 @@ export function UserProfileMenu({ isLoading = false, profile }: UserProfileMenuP
 
   async function handleConfirmChangePassword() {
     await requirePasswordChange();
-    const changePasswordUrl = new URL("/change-password", getConfig().authority);
-    changePasswordUrl.searchParams.set("returnUrl", window.location.href);
-    window.location.assign(changePasswordUrl.toString());
+    const returnUrl = encodeURIComponent(window.location.href);
+    window.location.assign(`/bff/change-password?returnUrl=${returnUrl}`);
   }
 
   return (

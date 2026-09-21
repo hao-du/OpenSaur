@@ -7,7 +7,6 @@ using OpenIddict.Validation.AspNetCore;
 using OpenSaur.Zentry.Web.Features.Bff;
 using OpenSaur.Zentry.Web.Features.Bff.Refresh;
 using OpenSaur.Zentry.Web.Features.Dashboard;
-using OpenSaur.Zentry.Web.Features.Frontend.Handlers;
 using OpenSaur.Zentry.Web.Features.OidcClients;
 using OpenSaur.Zentry.Web.Features.OidcClients.CreateOidcClient;
 using OpenSaur.Zentry.Web.Features.OidcClients.EditOidcClient;
@@ -24,6 +23,8 @@ using OpenSaur.Zentry.Web.Features.Users.EditUser;
 using OpenSaur.Zentry.Web.Features.Users.ResetUserPassword;
 using OpenSaur.Zentry.Web.Features.Workspaces;
 using OpenSaur.Zentry.Web.Features.Workspaces.CreateWorkspace;
+using OpenSaur.Zentry.Web.Infrastructure.Lock;
+using OpenSaur.Zentry.Web.Infrastructure.Cache;
 using OpenSaur.Zentry.Web.Features.Workspaces.EditWorkspace;
 using OpenSaur.Zentry.Web.Infrastructure.Auth;
 using OpenSaur.Zentry.Web.Infrastructure.Configuration;
@@ -38,6 +39,20 @@ var connectionString = builder.Configuration.GetConnectionString("ZentryDb")
 
 builder.Services.Configure<OidcOptions>(
     builder.Configuration.GetSection(OidcOptions.SectionName));
+var redisConnectionString = builder.Configuration.GetConnectionString("Redis");
+if (!string.IsNullOrWhiteSpace(redisConnectionString))
+{
+    var multiplexer = StackExchange.Redis.ConnectionMultiplexer.Connect(redisConnectionString);
+    builder.Services.AddSingleton<StackExchange.Redis.IConnectionMultiplexer>(multiplexer);
+    builder.Services.AddStackExchangeRedisCache(options => options.Configuration = redisConnectionString);
+    builder.Services.AddSingleton<ILockService, RedisDistributedLockService>();
+}
+else
+{
+    builder.Services.AddDistributedMemoryCache();
+    builder.Services.AddSingleton<ILockService, MemoryLockService>();
+}
+builder.Services.AddHybridCache();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddHttpClient("CoreGateTokenClient")
     .ConfigurePrimaryHttpMessageHandler(() =>
@@ -49,9 +64,9 @@ builder.Services.AddHttpClient("CoreGateTokenClient")
         }
         return handler;
     });
+builder.Services.AddSingleton<ICacheService, CacheService>();
 builder.Services.AddScoped<ITokenService, CoreGateTokenService>();
 builder.Services.AddScoped<BffTokenRefreshCookieEvents>();
-builder.Services.AddScoped<CreateAppConfigJsHandler>();
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {
     options.UseNpgsql(connectionString);
@@ -173,29 +188,6 @@ app.UseDefaultFiles();
 app.UseStaticFiles();
 app.UseRouting();
 app.UseAuthentication();
-app.Use(async (context, next) =>
-{
-    if (context.Request.Path.StartsWithSegments("/api/oidc-client", StringComparison.OrdinalIgnoreCase))
-    {
-        var logger = context.RequestServices.GetRequiredService<ILoggerFactory>()
-            .CreateLogger("AuthDiagnostics");
-        var hasAuthorizationHeader = context.Request.Headers.Authorization.Count > 0;
-        var authenticateResult = await context.AuthenticateAsync(OpenIddictValidationAspNetCoreDefaults.AuthenticationScheme);
-
-        logger.LogInformation(
-            "OIDC client auth check. Path: {Path}. Authorization header present: {HasAuthorizationHeader}. " +
-            "Succeeded: {Succeeded}. None: {None}. Failure: {Failure}. Authenticated: {Authenticated}. Claims: {Claims}",
-            context.Request.Path,
-            hasAuthorizationHeader,
-            authenticateResult.Succeeded,
-            authenticateResult.None,
-            authenticateResult.Failure?.Message,
-            authenticateResult.Principal?.Identity?.IsAuthenticated,
-            authenticateResult.Principal?.Claims.Select(claim => $"{claim.Type}={claim.Value}").ToArray() ?? []);
-    }
-
-    await next();
-});
 app.UseAuthorization();
 
 app.MapOidcClientEndpoints();

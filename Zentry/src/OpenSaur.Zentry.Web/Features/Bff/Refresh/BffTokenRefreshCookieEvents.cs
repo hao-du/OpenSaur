@@ -4,14 +4,20 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using OpenSaur.Zentry.Web.Infrastructure.Auth;
+using OpenSaur.Zentry.Web.Infrastructure.Cache;
+using OpenSaur.Zentry.Web.Infrastructure.Helpers;
+using OpenSaur.Zentry.Web.Infrastructure.Lock;
 
 namespace OpenSaur.Zentry.Web.Features.Bff.Refresh;
 
 public class BffTokenRefreshCookieEvents(
     ITokenService tokenService,
+    ICacheService cacheService,
+    ILockService lockService,
     ILogger<BffTokenRefreshCookieEvents> logger) : CookieAuthenticationEvents
 {
     private static readonly TimeSpan RefreshWindow = TimeSpan.FromMinutes(5);
+    private static readonly TimeSpan LockTimeout = TimeSpan.FromSeconds(30);
 
     public override async Task ValidatePrincipal(CookieValidatePrincipalContext context)
     {
@@ -38,22 +44,73 @@ public class BffTokenRefreshCookieEvents(
             return;
         }
 
-        var refreshResult = await tokenService.RefreshTokenAsync(refreshToken, context.HttpContext.RequestAborted);
-        if (refreshResult == null)
+        var userId = ClaimHelper.GetCurrentUserId(context.Principal!).ToString();
+        var cacheKey = CacheKeys.TokenSession(userId);
+        var lockKey = LockKeys.TokenRefresh(userId);
+
+        // Check if another concurrent request has already refreshed the token session
+        var cachedSession = await cacheService.GetAsync<CachedTokenSession>(cacheKey, context.HttpContext.RequestAborted);
+        if (cachedSession is not null
+            && DateTimeOffset.TryParse(cachedSession.ExpiresAt, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var cachedExpiresAt)
+            && cachedExpiresAt - DateTimeOffset.UtcNow > RefreshWindow)
         {
-            logger.LogWarning("BFF rejected principal because token refresh failed.");
-            context.RejectPrincipal();
-            await context.HttpContext.SignOutAsync(BffConstants.DefaultCookieScheme);
+            ApplyTokens(context, cachedSession.AccessToken, cachedSession.RefreshToken, cachedSession.ExpiresAt);
             return;
         }
 
-        var newExpiresAt = DateTimeOffset.UtcNow.AddSeconds(refreshResult.ExpiresIn).ToString("o", CultureInfo.InvariantCulture);
+        // Check or acquire distributed lock to coordinate parallel requests
+        var lockAcquired = await lockService.TryAcquireLockAsync(lockKey, LockTimeout, context.HttpContext.RequestAborted);
+        if (!lockAcquired)
+        {
+            // Another thread/instance is refreshing; wait and check cache
+            var awaitedSession = await cacheService.WaitForValueAsync<CachedTokenSession>(cacheKey, cancellationToken: context.HttpContext.RequestAborted);
+            if (awaitedSession is not null)
+            {
+                ApplyTokens(context, awaitedSession.AccessToken, awaitedSession.RefreshToken, awaitedSession.ExpiresAt);
+                return;
+            }
+        }
 
+        try
+        {
+            var refreshResult = await tokenService.RefreshTokenAsync(refreshToken, context.HttpContext.RequestAborted);
+            if (refreshResult == null)
+            {
+                logger.LogWarning("BFF rejected principal because token refresh failed.");
+                context.RejectPrincipal();
+                await context.HttpContext.SignOutAsync(BffConstants.DefaultCookieScheme);
+                return;
+            }
+
+            var newExpiresAt = DateTimeOffset.UtcNow.AddSeconds(refreshResult.ExpiresIn).ToString("o", CultureInfo.InvariantCulture);
+
+            // Store in distributed cache so concurrent tabs or parallel requests use the new tokens
+            var newSession = new CachedTokenSession(refreshResult.AccessToken, refreshResult.RefreshToken, newExpiresAt);
+            await cacheService.SetAsync(cacheKey, newSession, TimeSpan.FromSeconds(refreshResult.ExpiresIn), context.HttpContext.RequestAborted);
+
+            ApplyTokens(context, refreshResult.AccessToken, refreshResult.RefreshToken, newExpiresAt);
+            logger.LogInformation("BFF silent token refresh succeeded. Ticket renewed until {ExpiresAt}", newExpiresAt);
+        }
+        finally
+        {
+            if (lockAcquired)
+            {
+                await lockService.ReleaseLockAsync(lockKey, context.HttpContext.RequestAborted);
+            }
+        }
+    }
+
+    private static void ApplyTokens(
+        CookieValidatePrincipalContext context,
+        string accessToken,
+        string refreshToken,
+        string expiresAt)
+    {
         var tokens = new List<AuthenticationToken>
         {
-            new() { Name = "access_token", Value = refreshResult.AccessToken },
-            new() { Name = "refresh_token", Value = refreshResult.RefreshToken },
-            new() { Name = "expires_at", Value = newExpiresAt }
+            new() { Name = "access_token", Value = accessToken },
+            new() { Name = "refresh_token", Value = refreshToken },
+            new() { Name = "expires_at", Value = expiresAt }
         };
 
         var idToken = context.Properties.GetTokenValue("id_token");
@@ -64,7 +121,6 @@ public class BffTokenRefreshCookieEvents(
 
         context.Properties.StoreTokens(tokens);
         context.ShouldRenew = true;
-        logger.LogInformation("BFF silent token refresh succeeded. Ticket renewed until {ExpiresAt}", newExpiresAt);
     }
 
     public override Task RedirectToLogin(RedirectContext<CookieAuthenticationOptions> context)

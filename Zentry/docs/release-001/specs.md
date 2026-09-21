@@ -48,9 +48,11 @@ The goal of this release is to eliminate JavaScript access to access and refresh
 ---
 
 ## 3. Delivery Scope & Tasks
-The work for Release 001 is broken down into three distinct feature tasks:
+The work for Release 001 is broken down into distinct feature tasks:
 1. `docs/release-001/tasks/feature-001-bff-auth-backend.md`: Backend BFF infrastructure, cookie authentication, OIDC lifecycle endpoints, token management, and SameSite=Strict security.
 2. `docs/release-001/tasks/feature-002-spa-auth-cleanup.md`: Frontend client refactoring, cookie-based session hook, and removal of client-side token handling.
-3. `docs/release-001/tasks/feature-003-distributed-token-cache.md`: Distributed token caching and concurrency locking using `IDistributedCache` (in-memory locally, Redis in production).
+3. `docs/release-001/tasks/feature-003-distributed-token-cache.md`: Hybrid cache and multi-node concurrency locking using HybridCache and ILockService.
 4. `docs/release-001/tasks/feature-004-retire-runtime-app-config.md`: Retirement of `/app-config.js`, `window.__ZENTRY_CONFIG__`, and `getConfig()` in favor of backend BFF encapsulation.
+5. `docs/release-001/tasks/feature-005-cache-lock-optimizations.md`: Application query caching (`/api/permissions`, `/api/profile/current`, `/api/dashboard/summary`) and mutation concurrency locking (`MaxActiveUsers`, role assignments).
+
 

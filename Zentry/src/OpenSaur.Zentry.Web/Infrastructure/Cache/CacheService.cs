@@ -1,0 +1,75 @@
+using Microsoft.Extensions.Caching.Hybrid;
+using Microsoft.Extensions.Logging;
+
+namespace OpenSaur.Zentry.Web.Infrastructure.Cache;
+
+public class CacheService(
+    HybridCache hybridCache,
+    ILogger<CacheService> logger) : ICacheService
+{
+    private static readonly TimeSpan DefaultWaitDelay = TimeSpan.FromMilliseconds(300);
+
+    public async ValueTask<T?> GetAsync<T>(string key, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            return await hybridCache.GetOrCreateAsync<T?>(
+                key,
+                _ => ValueTask.FromResult<T?>(default),
+                cancellationToken: cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Failed to retrieve key {Key} from HybridCache.", key);
+            return default;
+        }
+    }
+
+    public async ValueTask SetAsync<T>(string key, T value, TimeSpan? expiration = null, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var entryOptions = expiration.HasValue
+                ? new HybridCacheEntryOptions { Expiration = expiration.Value }
+                : null;
+
+            await hybridCache.SetAsync(key, value, entryOptions, cancellationToken: cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Failed to set key {Key} in HybridCache.", key);
+        }
+    }
+
+    public async ValueTask RemoveAsync(string key, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            await hybridCache.RemoveAsync(key, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Failed to remove key {Key} from HybridCache.", key);
+        }
+    }
+
+    public async ValueTask<T?> WaitForValueAsync<T>(
+        string key,
+        int maxAttempts = 10,
+        TimeSpan? delayBetweenAttempts = null,
+        CancellationToken cancellationToken = default)
+    {
+        var delay = delayBetweenAttempts ?? DefaultWaitDelay;
+        for (var attempt = 0; attempt < maxAttempts; attempt++)
+        {
+            await Task.Delay(delay, cancellationToken);
+            var value = await GetAsync<T>(key, cancellationToken);
+            if (value is not null)
+            {
+                return value;
+            }
+        }
+
+        return default;
+    }
+}

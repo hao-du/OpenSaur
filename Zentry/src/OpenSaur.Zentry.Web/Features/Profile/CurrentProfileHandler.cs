@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using OpenSaur.Zentry.Web.Infrastructure;
+using OpenSaur.Zentry.Web.Infrastructure.Cache;
 using OpenSaur.Zentry.Web.Infrastructure.Database;
 using OpenSaur.Zentry.Web.Infrastructure.Helpers;
 using System.Security.Claims;
@@ -9,18 +10,35 @@ namespace OpenSaur.Zentry.Web.Features.Profile;
 
 public static class CurrentProfileHandler
 {
+    private static readonly TimeSpan CacheDuration = TimeSpan.FromMinutes(5);
+
     public static async Task<Ok<CurrentProfileResponse>> HandleAsync(
         ClaimsPrincipal user,
         ApplicationDbContext dbContext,
         SideMenuService sideMenuService,
+        ICacheService cacheService,
         CancellationToken cancellationToken)
     {
+        var currentUserId = ClaimHelper.GetCurrentUserId(user);
+        var isImpersonating = ClaimHelper.IsImpersonating(user);
+        var workspaceId = ClaimHelper.GetWorkspaceId(user);
+        var cacheKey = CacheKeys.UserProfileWithContext(currentUserId, isImpersonating, workspaceId);
+
+        if (currentUserId != Guid.Empty)
+        {
+            var cached = await cacheService.GetAsync<CurrentProfileResponse>(cacheKey, cancellationToken);
+            if (cached is not null)
+            {
+                return TypedResults.Ok(cached);
+            }
+        }
+
         var email = string.Empty;
         var firstName = string.Empty;
         var lastName = string.Empty;
         var roles = new List<string>();
         var userName = string.Empty;
-        var currentUserId = ClaimHelper.GetCurrentUserId(user);
+
         if (currentUserId != Guid.Empty)
         {
             var currentUser = await dbContext.Users
@@ -50,7 +68,6 @@ public static class CurrentProfileHandler
             }
         }
 
-        var isImpersonating = ClaimHelper.IsImpersonating(user);
         var isSuperAdministrator = ClaimHelper.IsSuperAdministrator(user);
         var canAssignUsers = ClaimHelper.HasPermission(user, Constants.Permissions.Administration.CanManage);
         var canEditRoles = isSuperAdministrator;
@@ -59,7 +76,6 @@ public static class CurrentProfileHandler
             ? "All workspaces"
             : "Protected workspace";
 
-        var workspaceId = ClaimHelper.GetWorkspaceId(user);
         if (workspaceId.HasValue)
         {
             workspaceName = await dbContext.Workspaces
@@ -70,7 +86,7 @@ public static class CurrentProfileHandler
                 ?? workspaceName;
         }
 
-        return TypedResults.Ok(new CurrentProfileResponse(
+        var response = new CurrentProfileResponse(
             email,
             firstName,
             isImpersonating,
@@ -81,6 +97,13 @@ public static class CurrentProfileHandler
             userName,
             workspaceName,
             canAssignUsers,
-            canEditRoles));
+            canEditRoles);
+
+        if (currentUserId != Guid.Empty)
+        {
+            await cacheService.SetAsync(cacheKey, response, CacheDuration, cancellationToken);
+        }
+
+        return TypedResults.Ok(response);
     }
 }

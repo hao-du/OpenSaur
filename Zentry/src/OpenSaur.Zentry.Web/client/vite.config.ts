@@ -22,13 +22,6 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: "0.0.0.0",
     port: 5174,
-    proxy: {
-      "/app-config.js": {
-        changeOrigin: true,
-        secure: false,
-        target: backendTarget
-      }
-    },
     strictPort: true
   }
 }));

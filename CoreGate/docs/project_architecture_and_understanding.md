@@ -162,6 +162,68 @@ The following matrix documents all supported client scopes, their security gatin
 
 ---
 
-## 9. Configuration & Environment Settings
+## 9. OIDC Client Registration & URL Redirection Verification
+
+CoreGate relies on OpenIddict's database model (`OpenIddictApplications` table in PostgreSQL) to manage registered client applications (such as Zentry, Umbraco, and CashPilot). Every authorization request, token exchange, and logout redirection is validated strictly against this database record.
+
+### 9.1 Application Registration Schema (`OpenIddictApplications`)
+When an application is configured in CoreGate (via UI or seed data), it stores:
+- **`ClientId`**: Unique identifier (e.g. `zentry`).
+- **`Type`**: `public` (Public client with PKCE, secret not required) or `confidential` (requires hashed client secret).
+- **`Permissions`**: Authorized endpoints (`ept:authorization`, `ept:token`, `ept:endsession`), grant types (`gt:authorization_code`, `gt:refresh_token`), and scopes (`scp:openid`, `scp:profile`, `scp:email`, `scp:roles`, `scp:offline_access`, `scp:api`).
+- **`RedirectUris`**: JSON array of absolute URIs where CoreGate is permitted to send authorization codes.
+- **`PostLogoutRedirectUris`**: JSON array of absolute URIs where CoreGate is permitted to redirect users after single sign-out.
+
+### 9.2 How Redirection Validation Works Under the Hood
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant Client as Client (e.g. Zentry BFF)
+    participant Browser as User Browser
+    participant CoreGate as CoreGate (OpenIddict Pipeline)
+    participant DB as PostgreSQL (OpenIddictApplications)
+
+    Note over Client,Browser: 1. Authorization & Login Flow
+    Client->>Browser: Redirect to /connect/authorize?client_id=zentry&redirect_uri=https://localhost:5011/auth/callback
+    Browser->>CoreGate: GET /connect/authorize?client_id=zentry&redirect_uri=https://localhost:5011/auth/callback...
+    CoreGate->>DB: Query OpenIddictApplications by ClientId ('zentry')
+    DB-->>CoreGate: Return application record (RedirectUris, Permissions)
+    
+    alt redirect_uri NOT found in RedirectUris
+        CoreGate-->>Browser: HTTP 400 invalid_redirect_uri (Execution stops immediately)
+    else redirect_uri matches whitelisted URI
+        CoreGate->>Browser: Render Login / Consent UI
+        Browser->>CoreGate: User Authenticates
+        CoreGate-->>Browser: HTTP 302 Redirect to matched redirect_uri with ?code=...
+        Browser->>Client: GET /auth/callback?code=... (BFF completes login)
+    end
+
+    Note over Client,Browser: 2. Logout & End-Session Flow
+    Client->>Browser: Redirect to /connect/endsession?post_logout_redirect_uri=https://localhost:5011/
+    Browser->>CoreGate: GET /connect/endsession?post_logout_redirect_uri=https://localhost:5011/
+    CoreGate->>DB: Check PostLogoutRedirectUris for Client
+    alt post_logout_redirect_uri NOT in PostLogoutRedirectUris
+        CoreGate-->>Browser: End session, but DO NOT redirect (Prevent Open Redirect vulnerability)
+    else post_logout_redirect_uri is whitelisted
+        CoreGate-->>Browser: End session & HTTP 302 Redirect to https://localhost:5011/
+    end
+```
+
+### 9.3 Key Architectural Principles
+1. **OpenIddict Pipeline Interception**: 
+   Redirect URI and Post-Logout Redirect URI verification occurs inside OpenIddict's pre-pipeline middleware handlers (`ValidateAuthorizeRequestContext` and `ValidateRedirectUri`) **before** the request reaches any application-level endpoint handler (e.g., `AuthorizeHandler.cs`). If a URI is not whitelisted, the request is terminated immediately with `invalid_redirect_uri`.
+2. **Protection Against Authorization Code Hijacking**:
+   Without strict database validation of `redirect_uri`, an attacker could supply an external malicious URL (`?redirect_uri=https://attacker.com/steal`) to steal authorization codes and impersonate users.
+3. **Protection Against Open Redirect Attacks**:
+   Validating `post_logout_redirect_uri` against `PostLogoutRedirectUris` ensures that attackers cannot trick users into logging out and being silently redirected to phishing websites.
+4. **Client-Side Coupling (`RedirectPath` & `PostLogoutRedirectPath`)**:
+   In client applications like Zentry, settings such as `Oidc:RedirectPath` (`/auth/callback`) and `Oidc:PostLogoutRedirectPath` (`/`) serve two purposes:
+   - They configure the client's local middleware to listen for incoming callbacks.
+   - They are combined with the client's base address to form the exact `redirect_uri` and `post_logout_redirect_uri` parameters that CoreGate verifies against its database.
+
+---
+
+## 10. Configuration & Environment Settings
 - Defined across [`appsettings.json`](file:///d:/OpenSaur/CoreGate/src/OpenSaur.CoreGate.Web/appsettings.json), [`appsettings.Development.json`](file:///d:/OpenSaur/CoreGate/src/OpenSaur.CoreGate.Web/appsettings.Development.json), and [`appsettings.Production.json`](file:///d:/OpenSaur/CoreGate/src/OpenSaur.CoreGate.Web/appsettings.Production.json).
 - Key config sections: `ConnectionStrings`, `Oidc`, `AuthCookie`, `CorsOptions`, `TurnstileOptions`.

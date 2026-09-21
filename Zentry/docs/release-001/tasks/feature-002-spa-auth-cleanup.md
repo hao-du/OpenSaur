@@ -23,8 +23,8 @@ Refactor the React 19 single-page application to interact strictly with the BFF 
 - [x] Retire obsolete client-side PKCE helper utilities (`UriService.ts`, client-side code verifier/challenge generation).
 
 ### Item 4: Routing & Guard Cleanup
-- [ ] Update route protection in `App.tsx` and `PrepareSessionPage.tsx` to handle cookie session checks.
-- [ ] Deprecate or remove `/auth/callback` client route once callback is handled entirely on the backend.
+- [x] Update route protection in `App.tsx` and `PrepareSessionPage.tsx` to handle cookie session checks.
+- [x] Deprecate or remove `/auth/callback` client route once callback is handled entirely on the backend.
 
 ---
 

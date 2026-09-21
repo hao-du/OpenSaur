@@ -7,7 +7,9 @@ using OpenSaur.Zentry.Web.Features.Users.GetUsers;
 using OpenSaur.Zentry.Web.Features.Users.ResetUserPassword;
 using FluentValidation;
 using OpenSaur.Zentry.Web.Infrastructure.Auth;
+using OpenSaur.Zentry.Web.Infrastructure.Cache;
 using OpenSaur.Zentry.Web.Infrastructure.Database;
+using OpenSaur.Zentry.Web.Infrastructure.Lock;
 using System.Security.Claims;
 
 namespace OpenSaur.Zentry.Web.Features.Users;
@@ -26,8 +28,8 @@ public static class UserEndpoints
         users.MapPut("/{id:guid}/reset-password", (Guid id, ResetUserPasswordRequest request, ClaimsPrincipal user, ApplicationDbContext dbContext, IValidator<ResetUserPasswordRequest> validator, CancellationToken cancellationToken) =>
             ResetUserPasswordHandler.HandleAsync(request with { Id = id }, user, dbContext, validator, cancellationToken));
         users.MapGet("/{id:guid}/roles", GetUserRolesHandler.HandleAsync);
-        users.MapPut("/{id:guid}/roles", (Guid id, AssignUserRolesRequest request, ClaimsPrincipal user, ApplicationDbContext dbContext, CancellationToken cancellationToken) =>
-            AssignUserRolesHandler.HandleAsync(request with { Id = id }, user, dbContext, cancellationToken));
+        users.MapPut("/{id:guid}/roles", (Guid id, AssignUserRolesRequest request, ClaimsPrincipal user, ApplicationDbContext dbContext, ICacheService cacheService, ILockService lockService, CancellationToken cancellationToken) =>
+            AssignUserRolesHandler.HandleAsync(request with { Id = id }, user, dbContext, cacheService, lockService, cancellationToken));
 
         return app;
     }
