@@ -30,7 +30,14 @@ public class CacheService(
         try
         {
             var entryOptions = expiration.HasValue
-                ? new HybridCacheEntryOptions { Expiration = expiration.Value }
+                ? new HybridCacheEntryOptions
+                {
+                    Expiration = expiration.Value,
+                    // Keep L1 in-memory lifespan short (at most 15s or half the total duration) so other nodes refresh from L2 quickly
+                    LocalCacheExpiration = expiration.Value > TimeSpan.FromSeconds(30)
+                        ? TimeSpan.FromSeconds(15)
+                        : TimeSpan.FromSeconds(Math.Max(1, expiration.Value.TotalSeconds / 2))
+                }
                 : null;
 
             await hybridCache.SetAsync(key, value, entryOptions, cancellationToken: cancellationToken);

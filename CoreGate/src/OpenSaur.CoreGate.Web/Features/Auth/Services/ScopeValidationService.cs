@@ -1,9 +1,11 @@
 using OpenIddict.Abstractions;
+using OpenSaur.CoreGate.Web.Infrastructure.Caching;
 
 namespace OpenSaur.CoreGate.Web.Features.Auth.Services;
 
 public sealed class ScopeValidationService(
-    IOpenIddictApplicationManager applicationManager)
+    IOpenIddictApplicationManager applicationManager,
+    ICacheService cacheService)
 {
     public async Task<ScopeValidationResult> ValidateScopesAsync(
         object application,
@@ -20,8 +22,18 @@ public sealed class ScopeValidationService(
             return ScopeValidationResult.Success();
         }
 
-        var applicationPermissions = await applicationManager.GetPermissionsAsync(application, cancellationToken);
-        var permissionsSet = applicationPermissions.ToHashSet(StringComparer.Ordinal);
+        var clientId = await applicationManager.GetClientIdAsync(application, cancellationToken) ?? string.Empty;
+        var cacheKey = CacheKeys.ClientPermissions(clientId);
+
+        var permissionsSet = await cacheService.GetOrCreateAsync(
+            cacheKey,
+            async ct =>
+            {
+                var applicationPermissions = await applicationManager.GetPermissionsAsync(application, ct);
+                return applicationPermissions.ToHashSet(StringComparer.Ordinal);
+            },
+            tags: [CacheKeys.Tags.Client(clientId)],
+            cancellationToken: cancellationToken);
 
         foreach (var scope in scopeList)
         {

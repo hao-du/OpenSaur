@@ -38,7 +38,8 @@ graph TD
         OidcEndpoints --> UserInfoHandler[UserInfoHandler]
         OidcEndpoints --> EndSessionHandler[EndSessionHandler]
 
-        ConsentEndpoints --> ConsentHandler[ConsentHandler]
+        ConsentEndpoints --> GetConsentDetailsHandler[GetConsentDetailsHandler]
+        ConsentEndpoints --> ConsentDecisionHandler[ConsentDecisionHandler]
 
         AuthEndpoints --> LoginHandler[LoginHandler]
         AuthEndpoints --> RefreshTokenHandler[RefreshTokenHandler]
@@ -53,7 +54,7 @@ graph TD
 
         ClaimService --> AppDbContext[(ApplicationDbContext - PostgreSQL)]
         UserRolePermissionService --> AppDbContext
-        ConsentHandler --> AppDbContext
+        ConsentDecisionHandler --> AppDbContext
     end
 ```
 
@@ -98,11 +99,12 @@ The data layer is defined in [`ApplicationDbContext`](file:///d:/OpenSaur/CoreGa
 - `GET/POST /connect/endsession`: Handled by [`EndSessionHandler`](file:///d:/OpenSaur/CoreGate/src/OpenSaur.CoreGate.Web/Features/Auth/Handlers/OpenIddict/EndSessionHandler.cs).
   - Performs single sign-out, revokes tokens via [`EndSessionRevocationService`](file:///d:/OpenSaur/CoreGate/src/OpenSaur.CoreGate.Web/Features/Auth/Services/EndSessionRevocationService.cs), and clears session cookies.
 
-### Interactive Consent Endpoints ([`ConsentEndpoints.cs`](file:///d:/OpenSaur/CoreGate/src/OpenSaur.CoreGate.Web/Features/Auth/ConsentEndpoints.cs))
-- `GET /consent`: Renders an interactive HTML consent form displaying the requesting client application's name, requested scopes, and Accept/Reject buttons.
-- `POST /consent`: Handled by [`ConsentHandler`](file:///d:/OpenSaur/CoreGate/src/OpenSaur.CoreGate.Web/Features/Auth/Handlers/OpenIddict/ConsentHandler.cs).
-  - **Accept**: Creates or updates a permanent `OpenIddictAuthorization` record in PostgreSQL (`Type = Permanent`, `Status = Valid`) and redirects back to `/connect/authorize` with an authorization code.
-  - **Reject**: Redirects to client's `redirect_uri` with standard OIDC `error=access_denied`.
+### Interactive Consent Endpoints & React SPA ([`ConsentEndpoints.cs`](file:///d:/OpenSaur/CoreGate/src/OpenSaur.CoreGate.Web/Features/Auth/ConsentEndpoints.cs))
+- `Client SPA Route /consent`: Client-side React page ([`ConsentPage.tsx`](file:///d:/OpenSaur/CoreGate/src/OpenSaur.CoreGate.Web/Frontend/src/pages/ConsentPage.tsx)) using `PageLayout`, `Card`, and CoreGate design tokens to display requesting client details, scopes list with human-friendly descriptions, and Allow/Cancel buttons.
+- `GET /api/consent`: Handled by [`GetConsentDetailsHandler`](file:///d:/OpenSaur/CoreGate/src/OpenSaur.CoreGate.Web/Features/Auth/Handlers/OpenIddict/GetConsentDetailsHandler.cs). Returns client display name and requested scopes for the authenticated user.
+- `POST /api/consent`: Handled by [`ConsentDecisionHandler`](file:///d:/OpenSaur/CoreGate/src/OpenSaur.CoreGate.Web/Features/Auth/Handlers/OpenIddict/ConsentDecisionHandler.cs).
+  - **Accept**: Creates or updates a permanent `OpenIddictAuthorization` record in PostgreSQL (`Type = Permanent`, `Status = Valid`) and returns `{ redirectUrl }` to resume the OIDC flow.
+  - **Reject**: Returns `{ redirectUrl }` with OIDC `error=access_denied`.
 
 ### SPA / Direct Authentication Endpoints ([`AuthEndpoints.cs`](file:///d:/OpenSaur/CoreGate/src/OpenSaur.CoreGate.Web/Features/Auth/AuthEndpoints.cs))
 - `POST /auth/login`: Handles password authentication + Cloudflare Turnstile verification via [`TurnstileVerificationService`](file:///d:/OpenSaur/CoreGate/src/OpenSaur.CoreGate.Web/Features/Auth/Services/TurnstileVerificationService.cs). Sets identity cookie.
@@ -224,6 +226,31 @@ sequenceDiagram
 
 ---
 
-## 10. Configuration & Environment Settings
+## 10. Caching Architecture (.NET 10 HybridCache & `ICacheService`)
+
+CoreGate encapsulates all caching logic behind [`ICacheService`](file:///d:/OpenSaur/CoreGate/src/OpenSaur.CoreGate.Web/Infrastructure/Caching/CacheService.cs), backed by .NET 10 `HybridCache` ([`CacheServiceCollectionExtensions.cs`](file:///d:/OpenSaur/CoreGate/src/OpenSaur.CoreGate.Web/Infrastructure/DependencyInjection/CacheServiceCollectionExtensions.cs)):
+
+1. **Centralized Service Abstraction (`ICacheService`)**:
+   - Adheres to Single Responsibility and Dependency Inversion principles. Domain services inject `ICacheService` without coupling to `HybridCacheEntryOptions` or caching internals.
+   - Centralizes default TTLs: `DefaultCacheExpiration = 10 minutes` (Redis L2), `DefaultLocalCacheExpiration = 30 seconds` (in-memory L1), both overridable via optional parameters.
+2. **Distributed Fallback**:
+   - Reads `ConnectionStrings:Redis`. If configured, connects to Redis with prefix `CoreGate:`.
+   - If Redis is unconfigured or unavailable, automatically falls back to `AddDistributedMemoryCache()`.
+3. **Centralized Keys & Tags ([`CacheKeys.cs`](file:///d:/OpenSaur/CoreGate/src/OpenSaur.CoreGate.Web/Infrastructure/Caching/CacheKeys.cs))**:
+   - `CacheKeys.UserWorkspaceRoles(userId, workspaceId)`: Caches active normalized user roles per workspace.
+   - `CacheKeys.UserWorkspacePermissions(userId, workspaceId)`: Caches granted permission codes per workspace.
+   - `CacheKeys.UserCanImpersonate(userId)`: Caches administrative super-admin status.
+   - `CacheKeys.Workspace(workspaceId)`: Caches workspace entity metadata (`WorkspaceCacheModel`).
+   - `CacheKeys.ClientPermissions(clientId)`: Caches registered OpenIddict client application permissions.
+4. **Multi-Node L1 Staleness Mitigation**:
+   - In-memory L1 `LocalCacheExpiration` defaults to **30 seconds**, while distributed L2 (`IDistributedCache` / Redis) retains entries for 10 minutes.
+   - This ensures rapid microsecond in-process serving for bursts of auth calls while keeping any cross-node discrepancy window to at most 30 seconds, without requiring custom Pub/Sub synchronization plumbing.
+5. **Cache Invalidation Tags**:
+   - Tagged with `CacheKeys.Tags.User(userId)`, `CacheKeys.Tags.Workspace(workspaceId)`, and `CacheKeys.Tags.Client(clientId)`.
+
+---
+
+## 11. Configuration & Environment Settings
 - Defined across [`appsettings.json`](file:///d:/OpenSaur/CoreGate/src/OpenSaur.CoreGate.Web/appsettings.json), [`appsettings.Development.json`](file:///d:/OpenSaur/CoreGate/src/OpenSaur.CoreGate.Web/appsettings.Development.json), and [`appsettings.Production.json`](file:///d:/OpenSaur/CoreGate/src/OpenSaur.CoreGate.Web/appsettings.Production.json).
-- Key config sections: `ConnectionStrings`, `Oidc`, `AuthCookie`, `CorsOptions`, `TurnstileOptions`.
+- Key config sections: `ConnectionStrings` (including optional `Redis`), `Oidc`, `AuthCookie`, `CorsOptions`, `TurnstileOptions`.
+

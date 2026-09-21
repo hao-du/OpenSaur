@@ -1,7 +1,10 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Hybrid;
 using OpenIddict.Abstractions;
 using OpenSaur.CoreGate.Web.Domain.Identity;
+using OpenSaur.CoreGate.Web.Domain.Workspaces;
+using OpenSaur.CoreGate.Web.Infrastructure.Caching;
 using OpenSaur.CoreGate.Web.Infrastructure.Database;
 using OpenSaur.CoreGate.Web.Infrastructure.Security;
 using System.Security.Claims;
@@ -14,7 +17,8 @@ public class ClaimService(
     UserRolePermissionService authorizationDataService,
     UserRolePermissionService userRolePermissionService,
     UserManager<ApplicationUser> userManager,
-    IOpenIddictApplicationManager applicationManager
+    IOpenIddictApplicationManager applicationManager,
+    ICacheService cacheService
 )
 {
     public async Task<ClaimsPrincipal?> BuildUserClaimPrincipalAsync(
@@ -49,10 +53,17 @@ public class ClaimService(
         {
             return null;
         }
-        var userWorkspace = await dbContext.Workspaces
-            .AsNoTracking()
-            .FirstOrDefaultAsync(workspace => workspace.Id == user.WorkspaceId, cancellationToken);
-        user.Workspace = userWorkspace;
+
+        var userWorkspaceModel = await GetWorkspaceMetadataAsync(user.WorkspaceId, cancellationToken);
+        if (userWorkspaceModel is not null)
+        {
+            user.Workspace = new Workspace
+            {
+                Id = userWorkspaceModel.Id,
+                Name = userWorkspaceModel.Name,
+                IsActive = userWorkspaceModel.IsActive
+            };
+        }
 
         Guid assignedWorkspaceId = Guid.Empty;
         if (!string.IsNullOrWhiteSpace(workspaceId))
@@ -67,18 +78,44 @@ public class ClaimService(
         {
             assignedWorkspaceId = user.WorkspaceId;
         }
-        var assignedWorkspace = await dbContext.Workspaces
-            .AsNoTracking()
-            .FirstOrDefaultAsync(workspace => workspace.Id == assignedWorkspaceId && workspace.IsActive, cancellationToken);
-        if (assignedWorkspace is null)
+
+        var assignedWorkspaceModel = await GetWorkspaceMetadataAsync(assignedWorkspaceId, cancellationToken);
+        if (assignedWorkspaceModel is null || !assignedWorkspaceModel.IsActive)
         {
             return null;
         }
+
+        var assignedWorkspace = new Workspace
+        {
+            Id = assignedWorkspaceModel.Id,
+            Name = assignedWorkspaceModel.Name,
+            IsActive = assignedWorkspaceModel.IsActive
+        };
 
         var roles = await authorizationDataService.GetActiveNormalizedRoleNamesForUserAsync(user.Id, assignedWorkspace.Id, cancellationToken);
         var permissions = await authorizationDataService.GetGrantedPermissionCodesAsync(user.Id, assignedWorkspace.Id, cancellationToken);
 
         return ClaimPrincipalHelpers.Create(user, roles, permissions, requestedScopes, originalUserId, assignedWorkspace);
+    }
+
+    private async Task<WorkspaceCacheModel?> GetWorkspaceMetadataAsync(Guid workspaceId, CancellationToken cancellationToken)
+    {
+        var cacheKey = CacheKeys.Workspace(workspaceId);
+
+        return await cacheService.GetOrCreateAsync<WorkspaceCacheModel?>(
+            cacheKey,
+            async ct =>
+            {
+                var workspace = await dbContext.Workspaces
+                    .AsNoTracking()
+                    .Where(w => w.Id == workspaceId)
+                    .Select(w => new WorkspaceCacheModel(w.Id, w.Name, w.IsActive))
+                    .FirstOrDefaultAsync(ct);
+
+                return workspace;
+            },
+            tags: [CacheKeys.Tags.Workspace(workspaceId)],
+            cancellationToken: cancellationToken);
     }
 
     public async Task<ClaimsPrincipal?> BuildClientClaimPrincipalAsync(

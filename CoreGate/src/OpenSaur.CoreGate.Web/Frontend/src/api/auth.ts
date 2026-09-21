@@ -1,5 +1,6 @@
 import type { ChangePasswordRequest } from "../dtos/ChangePasswordRequest";
 import type { ChangePasswordResponse } from "../dtos/ChangePasswordResponse";
+import type { ConsentDecisionRequest, ConsentDecisionResponse, ConsentDetailsResponse } from "../dtos/ConsentDtos";
 import type { LoginRequest } from "../dtos/LoginRequest";
 import type { LoginResponse } from "../dtos/LoginResponse";
 
@@ -41,4 +42,42 @@ export async function canAccessChangePassword(): Promise<boolean> {
   }
 
   throw new Error("Unable to determine change password access.");
+}
+
+export async function getConsentDetails(returnUrl: string): Promise<ConsentDetailsResponse> {
+  const response = await fetch(`/api/consent?returnUrl=${encodeURIComponent(returnUrl)}`, {
+    method: "GET"
+  });
+
+  if (response.status === 401) {
+    window.location.href = `/login?returnUrl=${encodeURIComponent(window.location.pathname + window.location.search)}`;
+    throw new Error("Unauthorized");
+  }
+
+  if (!response.ok) {
+    throw new Error("Failed to load consent details.");
+  }
+
+  return (await response.json()) as ConsentDetailsResponse;
+}
+
+export async function submitConsent(request: ConsentDecisionRequest): Promise<ConsentDecisionResponse> {
+  const response = await fetch("/api/consent", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(request)
+  });
+
+  if (response.status === 401) {
+    window.location.href = `/login?returnUrl=${encodeURIComponent(window.location.pathname + window.location.search)}`;
+    throw new Error("Unauthorized");
+  }
+
+  if (!response.ok) {
+    throw new Error("Failed to submit consent decision.");
+  }
+
+  return (await response.json()) as ConsentDecisionResponse;
 }

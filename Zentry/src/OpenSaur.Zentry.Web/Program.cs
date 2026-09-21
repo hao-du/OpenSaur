@@ -2,6 +2,7 @@ using System.Security.Claims;
 using FluentValidation;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Hybrid;
 using OpenIddict.Abstractions;
 using OpenIddict.Validation.AspNetCore;
 using OpenSaur.Zentry.Web.Features.Bff;
@@ -52,7 +53,14 @@ else
     builder.Services.AddDistributedMemoryCache();
     builder.Services.AddSingleton<ILockService, MemoryLockService>();
 }
-builder.Services.AddHybridCache();
+builder.Services.AddHybridCache(options =>
+{
+    // Keep local in-memory L1 cache short (15s) so other instances pick up L2 (Redis) changes quickly
+    options.DefaultEntryOptions = new HybridCacheEntryOptions
+    {
+        LocalCacheExpiration = TimeSpan.FromSeconds(15)
+    };
+});
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddHttpClient("CoreGateTokenClient")
     .ConfigurePrimaryHttpMessageHandler(() =>

@@ -1,44 +1,37 @@
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.WebUtilities;
 using OpenIddict.Abstractions;
-using OpenIddict.Server.AspNetCore;
+using OpenSaur.CoreGate.Web.Features.Auth.Dtos;
 using OpenSaur.CoreGate.Web.Infrastructure.Security;
 using System.Collections.Immutable;
+using System.Security.Claims;
 
 namespace OpenSaur.CoreGate.Web.Features.Auth.Handlers.OpenIddict;
 
-public class ConsentHandler(
-    IHttpContextAccessor httpContextAccessor,
+public class ConsentDecisionHandler(
     IOpenIddictApplicationManager applicationManager,
     IOpenIddictAuthorizationManager authorizationManager)
 {
-    public async Task<IResult> HandleConsentAsync()
+    public async Task<IResult> HandleAsync(
+        ConsentDecisionRequest request,
+        ClaimsPrincipal? user,
+        CancellationToken cancellationToken = default)
     {
-        var httpContext = httpContextAccessor.HttpContext
-            ?? throw new InvalidOperationException("The HTTP context could not be resolved.");
-
-        var authenticateResult = await httpContext.AuthenticateAsync(IdentityConstants.ApplicationScheme);
-        if (!authenticateResult.Succeeded || authenticateResult.Principal is null)
+        if (user?.Identity is not { IsAuthenticated: true })
         {
-            return Results.Redirect("/login");
+            return Results.Unauthorized();
         }
 
-        var form = await httpContext.Request.ReadFormAsync();
-        var decision = form["decision"].ToString();
-        var returnUrl = form["returnUrl"].ToString();
-
-        if (string.IsNullOrWhiteSpace(returnUrl))
+        if (string.IsNullOrWhiteSpace(request.ReturnUrl))
         {
-            return Results.BadRequest("Missing returnUrl parameter.");
+            return Results.BadRequest(new { error = "Missing returnUrl." });
         }
 
-        if (string.Equals(decision, "accept", StringComparison.OrdinalIgnoreCase))
+        if (string.Equals(request.Decision, "accept", StringComparison.OrdinalIgnoreCase))
         {
-            return await HandleAcceptAsync(authenticateResult.Principal, returnUrl, httpContext.RequestAborted);
+            return await HandleAcceptAsync(user, request.ReturnUrl, cancellationToken);
         }
 
-        return HandleReject(returnUrl);
+        return HandleReject(request.ReturnUrl);
     }
 
     private static IResult HandleReject(string returnUrl)
@@ -53,13 +46,7 @@ public class ConsentHandler(
 
         if (string.IsNullOrWhiteSpace(redirectUri))
         {
-            return Results.Forbid(
-                authenticationSchemes: [OpenIddictServerAspNetCoreDefaults.AuthenticationScheme],
-                properties: new AuthenticationProperties(new Dictionary<string, string?>
-                {
-                    [OpenIddictServerAspNetCoreConstants.Properties.Error] = OpenIddictConstants.Errors.AccessDenied,
-                    [OpenIddictServerAspNetCoreConstants.Properties.ErrorDescription] = "The user denied the authorization request."
-                }));
+            return Results.BadRequest(new { error = "Missing redirect_uri in returnUrl." });
         }
 
         var errorParameters = new Dictionary<string, string?>(StringComparer.Ordinal)
@@ -74,11 +61,11 @@ public class ConsentHandler(
         }
 
         var errorRedirectUrl = QueryHelpers.AddQueryString(redirectUri, errorParameters);
-        return Results.Redirect(errorRedirectUrl);
+        return Results.Ok(new ConsentDecisionResponse(errorRedirectUrl));
     }
 
     private async Task<IResult> HandleAcceptAsync(
-        System.Security.Claims.ClaimsPrincipal principal,
+        ClaimsPrincipal principal,
         string returnUrl,
         CancellationToken cancellationToken)
     {
@@ -93,13 +80,13 @@ public class ConsentHandler(
         var clientId = query.TryGetValue("client_id", out var clientIdValues) ? clientIdValues.ToString() : null;
         if (string.IsNullOrWhiteSpace(clientId))
         {
-            return Results.BadRequest("Missing client_id in returnUrl.");
+            return Results.BadRequest(new { error = "Missing client_id in returnUrl." });
         }
 
         var application = await applicationManager.FindByClientIdAsync(clientId, cancellationToken);
         if (application is null)
         {
-            return Results.BadRequest("Client application not found.");
+            return Results.BadRequest(new { error = "Client application not found." });
         }
 
         var applicationId = await applicationManager.GetIdAsync(application, cancellationToken)
@@ -140,7 +127,7 @@ public class ConsentHandler(
         }
 
         var resumeUrl = StripConsentPromptFromUrl(path, query);
-        return Results.Redirect(resumeUrl);
+        return Results.Ok(new ConsentDecisionResponse(resumeUrl));
     }
 
     private static string StripConsentPromptFromUrl(string path, Dictionary<string, Microsoft.Extensions.Primitives.StringValues> query)
@@ -169,3 +156,4 @@ public class ConsentHandler(
         return QueryHelpers.AddQueryString(path, filteredQuery);
     }
 }
+

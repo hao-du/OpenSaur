@@ -12,6 +12,7 @@ This design specification defines four major protocol and security enhancements 
 2. **Machine-to-Machine (M2M) Client Credentials Flow**: Full support for `grant_type=client_credentials` in OpenIddict, issuing application-centric JWT access tokens for Backend-For-Frontend (BFF) and service-to-service communication.
 3. **Interactive OAuth2 User Consent Screen**: Interactive authorization prompt and persistent scope approval handling via `OpenIddictAuthorization` records.
 4. **IdentityToken & UserInfo Claims Propagation**: Propagation of workspace and impersonation context claims (`workspace_id`, `workspace_name`, `impersonation_original_user_id`) to the `id_token` and `/connect/userinfo` endpoint for standards-compliant OIDC client consumption without manual token decoding.
+5. **HybridCache Integration & Performance Optimization**: High-performance L1 (in-memory) + L2 (Redis) caching across user roles, permissions, workspace metadata, and client scopes using .NET 10 `HybridCache`.
 
 ---
 
@@ -64,15 +65,18 @@ In [`AuthorizeHandler.cs`](file:///d:/OpenSaur/CoreGate/src/OpenSaur.CoreGate.We
   - If existing authorization is missing any requested scope or `prompt == "consent"`, store parameters and redirect browser to `/consent`.
 
 ### 4.2 Consent UI & Endpoints
-- Implement consent endpoint `/consent` rendering a clean HTML form showing:
-  - Client Application Display Name.
-  - List of requested scopes / permissions.
+- Implement client-side React page `/consent` consistent with CoreGate's UI (`LoginPage`, `PageLayout`, `Card`, Material UI theme):
+  - Client Application Display Name and CoreGate branding.
+  - Formatted list of requested scopes / permissions.
   - Action buttons: **Accept** and **Reject**.
+- Backend API endpoints in [`ConsentEndpoints.cs`](file:///d:/OpenSaur/CoreGate/src/OpenSaur.CoreGate.Web/Features/Auth/ConsentEndpoints.cs) & [`ConsentHandler.cs`](file:///d:/OpenSaur/CoreGate/src/OpenSaur.CoreGate.Web/Features/Auth/Handlers/OpenIddict/ConsentHandler.cs):
+  - `GET /api/consent?returnUrl=...`: Returns client display name and requested scopes for the authenticated user.
+  - `POST /api/consent`: Processes user decision (`accept` or `reject`).
 - **On Accept**:
   - Create or update persistent `OpenIddictAuthorization` record in PostgreSQL (`Type = Permanent`, `Status = Valid`).
-  - Resume authorization flow and return authorization code.
+  - Returns redirect URL with authorization code.
 - **On Reject**:
-  - Return OIDC `access_denied` error redirect to the client's `redirect_uri`.
+  - Returns redirect URL to client's `redirect_uri` with OIDC `access_denied` error.
 
 ---
 
@@ -129,4 +133,25 @@ sequenceDiagram
         end
     end
 ```
+
+---
+
+## 7. Feature 6: HybridCache Integration & Performance Optimization
+
+### 7.1 Objective & Architecture
+Implement multi-tier caching using .NET 10's `Microsoft.Extensions.Caching.Hybrid` (`HybridCache`):
+- **L1 Cache**: In-process memory (ultra-fast, zero-deserialization).
+- **L2 Cache**: Distributed Redis cache (`Microsoft.Extensions.Caching.StackExchangeRedis`) with automatic fallback to in-memory distributed cache when Redis is not configured.
+- **Stampede Protection**: Built-in cache stampede mitigation (`GetOrCreateAsync` locking).
+
+### 7.2 Cache Targets & TTL Policies
+1. **User Roles & Permissions** (`UserRolePermissionService`):
+   - Key: `coregate:roles:{userId}:{workspaceId}` (TTL: 5 minutes)
+   - Key: `coregate:permissions:{userId}:{workspaceId}` (TTL: 5 minutes)
+   - Key: `coregate:can-impersonate:{actorUserId}` (TTL: 5 minutes)
+2. **Workspace Metadata** (`ClaimService`):
+   - Key: `coregate:workspace:{workspaceId}` (TTL: 15 minutes)
+3. **Client Application Permissions** (`ScopeValidationService`):
+   - Key: `coregate:client-permissions:{clientId}` (TTL: 10 minutes)
+
 

@@ -16,7 +16,8 @@ public static class AuthFeatureServiceCollectionExtensions
         services.AddScoped<ChangePasswordAccessHandler>();
         services.AddScoped<ChangePasswordHandler>();
         services.AddScoped<AuthorizeHandler>();
-        services.AddScoped<ConsentHandler>();
+        services.AddScoped<GetConsentDetailsHandler>();
+        services.AddScoped<ConsentDecisionHandler>();
         services.AddScoped<EndSessionHandler>();
         services.AddScoped<TokenHandler>();
         services.AddScoped<UserInfoHandler>();

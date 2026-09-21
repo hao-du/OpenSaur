@@ -21,6 +21,7 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
 
 builder.Services.AddCoreGateConfiguration(builder.Configuration);
 builder.Services.AddCoreGateDatabase(builder.Configuration);
+builder.Services.AddCoreGateCaching(builder.Configuration);
 builder.Services.AddCoreGateAuthentication(builder.Configuration);
 builder.Services.AddHttpClient(TokenService.HttpClientName, client =>
 {
