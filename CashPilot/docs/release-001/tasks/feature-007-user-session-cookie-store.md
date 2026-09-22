@@ -7,16 +7,15 @@ Implement server-side session storage implementing ASP.NET Core `ITicketStore` n
 
 ## Tasks
 
-### Item 1: IUserSessionCookieStore Interface & Implementation
-- [ ] Create `IUserSessionCookieStore` extending `ITicketStore` in `src/OpenSaur.CashPilot.Web/Features/Auth/Session`.
-- [ ] Implement `UserSessionCookieStore` using `IDistributedCache` with `TicketSerializer.Default` to serialize and deserialize `AuthenticationTicket`.
-- [ ] Support sliding expiration and cleanup on `RenewAsync` and `RemoveAsync`.
+### Item 1: UserSessionCookieStore (ITicketStore) Implementation
+- [x] Implement `UserSessionCookieStore` using `ITicketStore` and `IDistributedCache` with `TicketSerializer.Default` to serialize and deserialize `AuthenticationTicket`.
+- [x] Support sliding expiration and cleanup on `RenewAsync` and `RemoveAsync`.
 
 ### Item 2: Cookie Authentication Configuration & Verification
-- [ ] Register `IUserSessionCookieStore` in DI.
-- [ ] Configure `options.SessionStore = app.Services.GetRequiredService<IUserSessionCookieStore>()` in `AddCookie` in `Program.cs`.
-- [ ] Verify `dotnet build` and test login flow via browser/curl.
-- [ ] Verify browser cookie `cashpilot-s` is a single, small cookie and that chunks (`cashpilot-sC1`, `cashpilot-sC2`) are gone.
+- [x] Register `ITicketStore` and `UserSessionCookieStore` in DI.
+- [x] Configure `options.SessionStore` via `AddOptions<CookieAuthenticationOptions>()` in `Program.cs`.
+- [x] Verify `dotnet build` and test login flow via browser/curl.
+- [x] Verify browser cookie `cashpilot-s` is a single, small cookie and that chunks (`cashpilot-sC1`, `cashpilot-sC2`) are gone.
 
 ---
 

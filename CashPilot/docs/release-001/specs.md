@@ -60,3 +60,5 @@ Modernize CashPilot's architecture by:
 3. `docs/release-001/tasks/feature-003-retire-runtime-app-config.md`: Retirement of `/app-config.js`, `window.__CASHPILOT_CONFIG__`, `getConfig()`, and simplification of frontend routing to `MapFallbackToFile`.
 4. `docs/release-001/tasks/feature-004-retire-offline-and-sync.md`: Removal of Offline-First components, Service Worker, and backend PendingTransactions.
 5. `docs/release-001/tasks/feature-005-hybrid-cache-optimizations.md`: HybridCache performance optimization for dashboard, reports, profile, and filter variance.
+6. `docs/release-001/tasks/feature-006-rename-bff-to-auth.md`: Rename BFF endpoints to /auth and mask session cookie to cashpilot-s.
+7. `docs/release-001/tasks/feature-007-user-session-cookie-store.md`: Server-side UserSessionCookieStore (ITicketStore) backed by distributed memory or Redis.
