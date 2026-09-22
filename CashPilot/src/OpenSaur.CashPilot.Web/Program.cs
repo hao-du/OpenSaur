@@ -25,9 +25,21 @@ using OpenSaur.CashPilot.Web.Infrastructure.Database;
 using OpenSaur.CashPilot.Web.Infrastructure.Hosting;
 using OpenSaur.CashPilot.Web.Infrastructure.Caching;
 using OpenSaur.CashPilot.Web.Infrastructure.Lock;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Extensions.Caching.StackExchangeRedis;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor
+        | ForwardedHeaders.XForwardedProto
+        | ForwardedHeaders.XForwardedHost;
+
+    options.KnownIPNetworks.Clear();
+    options.KnownProxies.Clear();
+});
+
 var oidcOptions = builder.Configuration.GetSection(OidcOptions.SectionName).Get<OidcOptions>()
     ?? throw new InvalidOperationException("OIDC configuration is required.");
 var connectionString = builder.Configuration.GetConnectionString("CashPilotDb")
@@ -185,6 +197,7 @@ builder.Services.AddSingleton<IHybridCacheService>(sp => (CacheService)sp.GetReq
 
 var app = builder.Build();
 
+app.UseForwardedHeaders();
 app.UseExceptionHandler();
 app.UseClientAbortedRequestHandling();
 app.UseSecurityHeaders(oidcOptions, app.Environment);

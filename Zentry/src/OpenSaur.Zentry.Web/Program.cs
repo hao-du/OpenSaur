@@ -31,9 +31,21 @@ using OpenSaur.Zentry.Web.Features.Workspaces.EditWorkspace;
 using OpenSaur.Zentry.Web.Infrastructure.Auth;
 using OpenSaur.Zentry.Web.Infrastructure.Configuration;
 using OpenSaur.Zentry.Web.Infrastructure.Database;
+using Microsoft.AspNetCore.HttpOverrides;
 using OpenSaur.Zentry.Web.Infrastructure.Hosting;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor
+        | ForwardedHeaders.XForwardedProto
+        | ForwardedHeaders.XForwardedHost;
+
+    options.KnownIPNetworks.Clear();
+    options.KnownProxies.Clear();
+});
+
 var oidcOptions = builder.Configuration.GetSection(OidcOptions.SectionName).Get<OidcOptions>()
     ?? throw new InvalidOperationException("OIDC configuration is required.");
 var connectionString = builder.Configuration.GetConnectionString("ZentryDb")
@@ -198,6 +210,7 @@ builder.Services.AddProblemDetails();
 
 var app = builder.Build();
 
+app.UseForwardedHeaders();
 app.UseExceptionHandler();
 app.UseClientAbortedRequestHandling();
 app.UseSecurityHeaders(oidcOptions, app.Environment);
