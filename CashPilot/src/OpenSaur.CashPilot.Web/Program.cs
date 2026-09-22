@@ -1,12 +1,14 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.EntityFrameworkCore;
 using OpenIddict.Validation.AspNetCore;
 using OpenSaur.CashPilot.Web.Features.Banks;
+using OpenSaur.CashPilot.Web.Features.Auth;
+using OpenSaur.CashPilot.Web.Features.Auth.Refresh;
+using OpenSaur.CashPilot.Web.Features.Auth.Session;
 using OpenSaur.CashPilot.Web.Features.Counterparties;
 using OpenSaur.CashPilot.Web.Features.Currencies;
 using OpenSaur.CashPilot.Web.Features.Currencies.Services;
 using OpenSaur.CashPilot.Web.Features.Frontend;
-using OpenSaur.CashPilot.Web.Features.Frontend.Handlers;
-using OpenSaur.CashPilot.Web.Features.PendingTransactions;
 using OpenSaur.CashPilot.Web.Features.Profile;
 using OpenSaur.CashPilot.Web.Features.Profile.Profile.Services;
 using OpenSaur.CashPilot.Web.Features.Reports;
@@ -22,6 +24,7 @@ using OpenSaur.CashPilot.Web.Infrastructure.ConfigurationOptions;
 using OpenSaur.CashPilot.Web.Infrastructure.Database;
 using OpenSaur.CashPilot.Web.Infrastructure.Hosting;
 using OpenSaur.CashPilot.Web.Infrastructure.Caching;
+using OpenSaur.CashPilot.Web.Infrastructure.Lock;
 using Microsoft.Extensions.Caching.StackExchangeRedis;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -39,6 +42,18 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.Configure<OidcOptions>(builder.Configuration.GetSection("Oidc"));
 builder.Services.Configure<AutoTaggingOptions>(builder.Configuration.GetSection(AutoTaggingOptions.SectionName));
 builder.Services.AddHttpClient<TransactionAutoTagService>();
+builder.Services.AddHttpClient(CashPilotTokenService.HttpClientName)
+    .ConfigurePrimaryHttpMessageHandler(() =>
+    {
+        var handler = new HttpClientHandler();
+        if (builder.Environment.IsDevelopment())
+        {
+            handler.ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator;
+        }
+        return handler;
+    });
+builder.Services.AddScoped<OpenSaur.CashPilot.Web.Infrastructure.Auth.ITokenService, CashPilotTokenService>();
+builder.Services.AddScoped<AuthTokenRefreshCookieEvents>();
 
 builder.Services.AddOpenIddict()
     .AddValidation(options =>
@@ -55,12 +70,81 @@ builder.Services.AddOpenIddict()
         options.UseAspNetCore();
     });
 
+var redisConnectionString = builder.Configuration.GetConnectionString("Redis");
+if (!string.IsNullOrWhiteSpace(redisConnectionString))
+{
+    var multiplexer = StackExchange.Redis.ConnectionMultiplexer.Connect(redisConnectionString);
+    builder.Services.AddSingleton<StackExchange.Redis.IConnectionMultiplexer>(multiplexer);
+    builder.Services.AddStackExchangeRedisCache(options => options.Configuration = redisConnectionString);
+    builder.Services.AddSingleton<ILockService, RedisDistributedLockService>();
+}
+else
+{
+    builder.Services.AddDistributedMemoryCache();
+    builder.Services.AddSingleton<ILockService, MemoryLockService>();
+}
+
+builder.Services.AddSingleton<ITicketStore, UserSessionCookieStore>();
+
 builder.Services.AddAuthentication(options =>
 {
-    options.DefaultScheme = OpenIddictValidationAspNetCoreDefaults.AuthenticationScheme;
-    options.DefaultAuthenticateScheme = OpenIddictValidationAspNetCoreDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = OpenIddictValidationAspNetCoreDefaults.AuthenticationScheme;
+    options.DefaultScheme = AuthConstants.DefaultCookieScheme;
+    options.DefaultAuthenticateScheme = AuthConstants.DefaultCookieScheme;
+    options.DefaultSignInScheme = AuthConstants.DefaultCookieScheme;
+    options.DefaultChallengeScheme = AuthConstants.DefaultCookieScheme;
+})
+.AddCookie(AuthConstants.DefaultCookieScheme, options =>
+{
+    options.Cookie.Name = "cashpilot-s";
+    options.Cookie.HttpOnly = true;
+    options.Cookie.SameSite = SameSiteMode.Strict;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+    options.Cookie.Path = "/";
+    options.SlidingExpiration = true;
+    options.EventsType = typeof(AuthTokenRefreshCookieEvents);
+    options.ExpireTimeSpan = TimeSpan.FromDays(7);
+})
+.AddOpenIdConnect(AuthConstants.DefaultOidcScheme, options =>
+{
+    options.SignInScheme = AuthConstants.DefaultCookieScheme;
+    options.Authority = oidcOptions.Authority;
+    options.ClientId = oidcOptions.ClientId;
+    if (!string.IsNullOrWhiteSpace(oidcOptions.ClientSecret))
+    {
+        options.ClientSecret = oidcOptions.ClientSecret;
+    }
+
+    options.ResponseType = "code";
+    options.ResponseMode = "query";
+    options.UsePkce = true;
+    options.SaveTokens = true;
+    options.GetClaimsFromUserInfoEndpoint = true;
+
+    options.Scope.Clear();
+    foreach (var scope in oidcOptions.Scope.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+    {
+        options.Scope.Add(scope);
+    }
+
+    options.CallbackPath = oidcOptions.RedirectPath;
+    options.SignedOutCallbackPath = oidcOptions.PostLogoutRedirectPath;
+
+    if (builder.Environment.IsDevelopment())
+    {
+        options.RequireHttpsMetadata = false;
+        var handler = new HttpClientHandler
+        {
+            ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+        };
+        options.BackchannelHttpHandler = handler;
+    }
 });
+
+builder.Services.AddOptions<Microsoft.AspNetCore.Authentication.Cookies.CookieAuthenticationOptions>(AuthConstants.DefaultCookieScheme)
+    .Configure<ITicketStore>((options, sessionStore) =>
+    {
+        options.SessionStore = sessionStore;
+    });
 
 builder.Services.AddCors(options =>
 {
@@ -68,9 +152,7 @@ builder.Services.AddCors(options =>
     {
         policy.WithOrigins(
                 "https://cashpilot.duchihao.com",
-                "https://off.cashpilot.duchihao.com",
                 "https://localhost:5031",
-                "https://localhost:5032",
                 "http://localhost:5174",
                 "https://localhost:5174")
             .AllowAnyHeader()
@@ -79,25 +161,27 @@ builder.Services.AddCors(options =>
 });
 
 builder.Services.AddAuthorization(AppAuthorization.ConfigurePolicies);
-builder.Services.AddScoped<CreateFrontendRouteHandler>();
-builder.Services.AddScoped<CreateAppConfigJsHandler>();
 builder.Services.AddScoped<SideMenuService>();
 builder.Services.AddScoped<TagService>();
 builder.Services.AddScoped<CurrencyService>();
 builder.Services.AddScoped<BankAccountMovementService>();
 builder.Services.AddScoped<TransactionService>();
 builder.Services.AddScoped<ReportService>();
+builder.Services.AddScoped<ITransactionCacheInvalidator, TransactionCacheInvalidator>();
 builder.Services.AddProblemDetails();
 
-// Register Redis as the distributed cache
-builder.Services.AddStackExchangeRedisCache(options =>
+
+builder.Services.AddHybridCache(options =>
 {
-    options.Configuration = builder.Configuration.GetConnectionString("Redis") ?? "localhost:6379";
+    // Keep local in-memory L1 cache short (15s) so other instances pick up L2 (Redis) changes quickly
+    options.DefaultEntryOptions = new Microsoft.Extensions.Caching.Hybrid.HybridCacheEntryOptions
+    {
+        LocalCacheExpiration = TimeSpan.FromSeconds(15)
+    };
 });
 
-// HybridCache now uses Redis for distributed layer + MemoryCache for local layer
-builder.Services.AddHybridCache();
-builder.Services.AddSingleton<IHybridCacheService, HybridCacheService>();
+builder.Services.AddSingleton<ICacheService, CacheService>();
+builder.Services.AddSingleton<IHybridCacheService>(sp => (CacheService)sp.GetRequiredService<ICacheService>());
 
 var app = builder.Build();
 
@@ -106,21 +190,23 @@ app.UseClientAbortedRequestHandling();
 app.UseSecurityHeaders(oidcOptions, app.Environment);
 app.UseDefaultFiles();
 app.UseStaticFiles();
+app.UseRouting();
 app.UseCors("FrontendOrigins");
 app.UseAuthentication();
 app.UseAuthorization();
 
-// Map the custom frontend routes
-app.MapFrontEndRoutes();
+app.MapAuthEndpoints();
 app.MapProfileEndpoints();
 app.MapSettingsEndpoints();
 app.MapBanksEndpoints();
 app.MapCounterpartiesEndpoints();
 app.MapCurrenciesEndpoints();
-app.MapPendingTransactionsEndpoints();
 app.MapTransactionsEndpoints();
 app.MapTemplatesEndpoints();
 app.MapTagsEndpoints();
 app.MapReportsEndpoints();
+
+// Map the custom frontend routes (after API endpoints so fallback doesn't intercept API routes)
+app.MapFrontEndRoutes();
 
 app.Run();

@@ -23,7 +23,7 @@ public static class GetTemplatesHandler
         CancellationToken cancellationToken)
     {
         var currentUserId = ClaimHelper.GetCurrentUserId(user);
-        var cacheKey = CacheConstants.TemplatesKey(currentUserId);
+        var cacheKey = CacheConstants.TemplatesKey(currentUserId, isActive, name, (int?)templateType, getDetail);
 
         var result = await cache.GetOrCreateAsync(
             cacheKey,

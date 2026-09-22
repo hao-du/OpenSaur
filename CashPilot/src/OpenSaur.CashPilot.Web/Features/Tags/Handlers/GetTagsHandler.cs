@@ -19,7 +19,7 @@ public static class GetTagsHandler
         CancellationToken cancellationToken)
     {
         var currentUserId = ClaimHelper.GetCurrentUserId(user);
-        var cacheKey = CacheConstants.TagsKey(currentUserId);
+        var cacheKey = CacheConstants.TagsKey(currentUserId, isActive, name);
 
         var result = await cache.GetOrCreateAsync(
             cacheKey,

@@ -22,7 +22,7 @@ public static class GetCounterpartiesHandler
         CancellationToken cancellationToken)
     {
         var currentUserId = ClaimHelper.GetCurrentUserId(user);
-        var cacheKey = CacheConstants.CounterpartiesKey(currentUserId);
+        var cacheKey = CacheConstants.CounterpartiesKey(currentUserId, isActive, fullName, email, phoneNumber);
 
         var result = await cache.GetOrCreateAsync(
             cacheKey,

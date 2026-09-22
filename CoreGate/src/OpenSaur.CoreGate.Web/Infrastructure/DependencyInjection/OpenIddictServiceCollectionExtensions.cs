@@ -33,6 +33,8 @@ public static class OpenIddictServiceCollectionExtensions
             .AddSignInManager()
             .AddDefaultTokenProviders();
 
+        services.AddSingleton<ITicketStore, UserSessionCookieStore>();
+
         services.ConfigureApplicationCookie(options =>
         {
             options.Cookie.Name = CookieNames.Session;
@@ -54,6 +56,12 @@ public static class OpenIddictServiceCollectionExtensions
                 }
             };
         });
+
+        services.AddOptions<CookieAuthenticationOptions>(IdentityConstants.ApplicationScheme)
+            .Configure<ITicketStore>((options, sessionStore) =>
+            {
+                options.SessionStore = sessionStore;
+            });
 
         services.AddAuthentication(options =>
             {

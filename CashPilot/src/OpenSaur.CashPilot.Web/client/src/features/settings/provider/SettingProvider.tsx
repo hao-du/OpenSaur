@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useMemo, useState, type PropsWithChildren } from "react";
-import { useAuthSession } from "../../auth/hooks/AuthContext";
+import { useAuth } from "../../auth/hooks/useAuth";
 import type { SettingsDto } from "../dtos/SettingsDto";
 import { detectBrowserTimeZone, getSupportedTimeZones } from "../services/timeZones";
 import { getTodayIsoDateByTimeZone } from "../services/dateTime";
@@ -71,10 +71,10 @@ function persistSettings(settings: AppSettings) {
 }
 
 export function SettingProvider({ children }: PropsWithChildren) {
-  const { authSession } = useAuthSession();
+  const { isAuthenticated } = useAuth();
   const [settings, setSettingState] = useState(loadSettingsFromLocalStorage);
   const supportedTimeZones = useMemo(() => getSupportedTimeZones(), []);
-  const { data: savedSettings } = useSettingsQuery(authSession != null);
+  const { data: savedSettings } = useSettingsQuery(isAuthenticated);
 
   const setSettings = useCallback((nextSettings: AppSettings) => {
     setSettingState(nextSettings);

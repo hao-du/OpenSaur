@@ -1,9 +1,8 @@
-import { Grid, Paper, Stack } from "@mui/material";
+import { Paper, Stack } from "@mui/material";
 import type { CounterpartyDto } from "../../counterparties/dtos/CounterpartyDto";
 import type { CurrencyDto } from "../../currencies/dtos/CurrencyDto";
 import type { BankDto } from "../../banks/dtos/BankDto";
 import { TemplatePopulateActionCard } from "../../dashboard/components/TemplatePopulateActionCard";
-import { DashboardSyncCard } from "../../dashboard/components/DashboardSyncCard";
 import { TotalAmountByCurrencyCard } from "../../dashboard/components/TotalAmountByCurrencyCard";
 import { TotalActiveBankAccountCard } from "../../dashboard/components/TotalActiveBankAccountCard";
 import { MarkerPeriodsIncomeOutcomeCard } from "../../dashboard/components/MarkerPeriodsIncomeOutcomeCard/MarkerPeriodsIncomeOutcomeCard";
@@ -29,18 +28,11 @@ export function TransactionDashboardPanel({
   return (
     <Paper sx={{ p: 2, height: "100%" }}>
       <Stack spacing={2}>
-        <Grid container spacing={2} sx={{ alignItems: "stretch" }}>
-          <Grid size={{ lg: 6, xs: 12 }}>
-            <TemplatePopulateActionCard
-              banks={banks}
-              currencies={currencies}
-              counterparties={counterparties}
-            />
-          </Grid>
-          <Grid size={{ lg: 6, xs: 12 }}>
-            <DashboardSyncCard />
-          </Grid>
-        </Grid>
+        <TemplatePopulateActionCard
+          banks={banks}
+          currencies={currencies}
+          counterparties={counterparties}
+        />
         <TotalAmountByCurrencyCard
           defaultCurrencyCode={defaultCurrencyCode}
           title={t("transactions.totalByCurrency")}
@@ -55,5 +47,3 @@ export function TransactionDashboardPanel({
     </Paper>
   );
 }
-
-

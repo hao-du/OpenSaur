@@ -48,10 +48,10 @@ export function Card({ title, subtitle, children }: CardProps) {
             CoreGate
           </Typography>
         </Box>
-        <Typography variant="h3" sx={{ mt: 1, maxWidth: 360 }}>
+        <Typography variant="h3" sx={{ mt: 1 }}>
           {title}
         </Typography>
-        <Typography color="text.secondary" sx={{ mt: 1.5, maxWidth: 420 }}>
+        <Typography color="text.secondary" sx={{ mt: 1.5 }}>
           {subtitle}
         </Typography>
       </Box>

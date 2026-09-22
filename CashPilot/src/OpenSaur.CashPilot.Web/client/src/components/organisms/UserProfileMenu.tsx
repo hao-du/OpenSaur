@@ -19,7 +19,7 @@ import { MetaText } from "../atoms/MetaText";
 import { AppIcon } from "../icons/AppIcon";
 import { Avatar } from "./Avatar";
 import type { CurrentProfileDto } from "../../features/profile/dtos/CurrentProfileDto";
-import { useAuthSession } from "../../features/auth/hooks/AuthContext";
+import { useAuth } from "../../features/auth/hooks/useAuth";
 import { layoutStyles } from "../../infrastructure/theme/theme";
 import { useSettings } from "../../features/settings/provider/SettingProvider";
 
@@ -30,7 +30,7 @@ type UserProfileMenuProps = {
 };
 
 export function UserProfileMenu({ isLoading = false, profile, showMenuItems = true }: UserProfileMenuProps) {
-  const { authSession, handleLogout } = useAuthSession();
+  const { isAuthenticated, handleLogout } = useAuth();
   const { t } = useSettings();
   const navigate = useNavigate();
   const [anchorElement, setAnchorElement] = useState<HTMLElement | null>(null);
@@ -127,10 +127,10 @@ export function UserProfileMenu({ isLoading = false, profile, showMenuItems = tr
                 </Stack>
               </MenuItem>
             </Box>
-            {authSession != null ? <Divider /> : null}
+            {isAuthenticated ? <Divider /> : null}
           </>
         ) : null}
-        {authSession != null ? (
+        {isAuthenticated ? (
           <MenuItem onClick={() => {
             handleCloseMenu();
             handleLogout();

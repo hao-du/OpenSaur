@@ -1,39 +1,14 @@
-import rawAxios, { AxiosHeaders, type AxiosRequestConfig } from "axios";
-import { getConfig } from "../config/Config";
+import rawAxios, { type AxiosRequestConfig } from "axios";
 
-const axios = rawAxios.create();
-let currentAccessToken: string | null = null;
+const axios = rawAxios.create({
+  withCredentials: true,
+});
 const maxRetryCount = 2;
 const baseRetryDelayMs = 400;
-
-function resolveRequestUrl(url: string) {
-  if (/^https?:\/\//i.test(url)) {
-    return url;
-  }
-
-  const apiBaseUrl = getConfig().apiBaseUrl ?? window.location.origin;
-  return new URL(url, apiBaseUrl).toString();
-}
 
 export type ClientRequestConfig = AxiosRequestConfig & {
   skipAuth?: boolean;
 };
-
-export function setClientAccessToken(accessToken: string | null) {
-  currentAccessToken = accessToken;
-}
-
-axios.interceptors.request.use((config) => {
-  const clientConfig = config as ClientRequestConfig;
-  if (clientConfig.skipAuth === true || currentAccessToken == null) {
-    return config;
-  }
-
-  config.headers = AxiosHeaders.from(config.headers);
-  config.headers.set("Authorization", `Bearer ${currentAccessToken}`);
-
-  return config;
-});
 
 function shouldRetry(error: unknown) {
   if (!rawAxios.isAxiosError(error)) {
@@ -77,12 +52,12 @@ async function executeWithRetry<TResponse>(request: () => Promise<TResponse>) {
 
 export const client = {
   get: async <TResponse>(url: string, config?: ClientRequestConfig) => {
-    const response = await executeWithRetry(() => axios.get<TResponse>(resolveRequestUrl(url), config));
+    const response = await executeWithRetry(() => axios.get<TResponse>(url, config));
     return response.data;
   },
 
   head: async (url: string, config?: ClientRequestConfig) => {
-    await executeWithRetry(() => axios.head(resolveRequestUrl(url), config));
+    await executeWithRetry(() => axios.head(url, config));
   },
 
   post: async <TResponse, TRequest = unknown>(
@@ -90,7 +65,7 @@ export const client = {
     data?: TRequest,
     config?: ClientRequestConfig,
   ) => {
-    const response = await executeWithRetry(() => axios.post<TResponse>(resolveRequestUrl(url), data, config));
+    const response = await executeWithRetry(() => axios.post<TResponse>(url, data, config));
     return response.data;
   },
 
@@ -99,7 +74,7 @@ export const client = {
     data?: TRequest,
     config?: ClientRequestConfig,
   ) => {
-    const response = await executeWithRetry(() => axios.put<TResponse>(resolveRequestUrl(url), data, config));
+    const response = await executeWithRetry(() => axios.put<TResponse>(url, data, config));
     return response.data;
   },
 
@@ -107,7 +82,7 @@ export const client = {
     url: string,
     config?: ClientRequestConfig,
   ) => {
-    const response = await executeWithRetry(() => axios.delete<TResponse>(resolveRequestUrl(url), config));
+    const response = await executeWithRetry(() => axios.delete<TResponse>(url, config));
     return response.data;
   },
 };

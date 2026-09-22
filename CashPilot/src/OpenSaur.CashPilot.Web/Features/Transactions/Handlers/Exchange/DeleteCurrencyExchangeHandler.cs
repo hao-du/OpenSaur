@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using OpenSaur.CashPilot.Web.Infrastructure.Database;
 using OpenSaur.CashPilot.Web.Infrastructure.Validation;
 using OpenSaur.CashPilot.Web.Infrastructure.Helpers;
+using OpenSaur.CashPilot.Web.Features.Transactions.Services;
 using System.Security.Claims;
 using AppHttpResults = OpenSaur.CashPilot.Web.Infrastructure.Http.HttpResults;
 
@@ -15,6 +16,7 @@ public static class DeleteCurrencyExchangeHandler
         Guid id,
         ClaimsPrincipal user,
         CashPilotDbContext dbContext,
+        ITransactionCacheInvalidator cacheInvalidator,
         CancellationToken cancellationToken)
     {
         var currentUserId = ClaimHelper.GetCurrentUserId(user);
@@ -41,6 +43,9 @@ public static class DeleteCurrencyExchangeHandler
         }
 
         await dbContext.SaveChangesAsync(cancellationToken);
+
+        await cacheInvalidator.InvalidateDashboardAndReportsAsync(currentUserId, cancellationToken);
+
         return TypedResults.NoContent();
     }
 }

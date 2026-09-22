@@ -54,5 +54,7 @@ The work for Release 001 is broken down into distinct feature tasks:
 3. `docs/release-001/tasks/feature-003-distributed-token-cache.md`: Hybrid cache and multi-node concurrency locking using HybridCache and ILockService.
 4. `docs/release-001/tasks/feature-004-retire-runtime-app-config.md`: Retirement of `/app-config.js`, `window.__ZENTRY_CONFIG__`, and `getConfig()` in favor of backend BFF encapsulation.
 5. `docs/release-001/tasks/feature-005-cache-lock-optimizations.md`: Application query caching (`/api/permissions`, `/api/profile/current`, `/api/dashboard/summary`) and mutation concurrency locking (`MaxActiveUsers`, role assignments).
+6. `docs/release-001/tasks/feature-006-rename-bff-to-auth.md`: Disguise public "bff" naming across endpoints, cookies, and namespaces (`/auth/*`, `zentry-s`).
+7. `docs/release-001/tasks/feature-007-user-session-cookie-store.md`: Server-side user session storage (`ITicketStore` / `UserSessionCookieStore`) backed by `IDistributedCache`.
 
 

@@ -26,7 +26,6 @@ public sealed class CashPilotDbContext: DbContext
     public DbSet<TransactionItem> TransactionItems => Set<TransactionItem>();
     public DbSet<Template> Templates => Set<Template>();
     public DbSet<TagDefinition> TagDefinitions => Set<TagDefinition>();
-    public DbSet<PendingTransactionSubmission> PendingTransactionSubmissions => Set<PendingTransactionSubmission>();
 
     public override int SaveChanges(bool acceptAllChangesOnSuccess)
     {

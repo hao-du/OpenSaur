@@ -10,6 +10,7 @@ import {
   Stack,
   Typography
 } from "@mui/material";
+import { CheckCircle2 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { getConsentDetails, submitConsent } from "../api/auth";
 import { Card } from "../components/molecules/Card";
@@ -105,13 +106,7 @@ export function ConsentPage() {
               {(consentDetails?.scopes ?? []).map((scope) => (
                 <ListItem key={scope.name} sx={{ px: 0, py: 0.5 }}>
                   <ListItemIcon sx={{ minWidth: 28, color: "primary.main", display: "flex", alignItems: "center" }}>
-                    <Box
-                      component="svg"
-                      viewBox="0 0 24 24"
-                      sx={{ width: 18, height: 18, fill: "currentColor" }}
-                    >
-                      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
-                    </Box>
+                    <CheckCircle2 size={18} />
                   </ListItemIcon>
                   <ListItemText
                     primary={scope.name}

@@ -14,6 +14,8 @@ public static class CacheKeys
 
     public static string ClientPermissions(string clientId) => $"client:{clientId}:permissions";
 
+    public static string Session(string sessionId) => $"session:{sessionId}";
+
     public static class Tags
     {
         public static string User(Guid userId) => $"user:{userId}";

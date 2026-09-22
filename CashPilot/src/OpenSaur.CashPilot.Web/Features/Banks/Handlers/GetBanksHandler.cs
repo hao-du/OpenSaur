@@ -21,7 +21,7 @@ public static class GetBanksHandler
         CancellationToken cancellationToken)
     {
         var currentUserId = ClaimHelper.GetCurrentUserId(user);
-        var cacheKey = CacheConstants.BanksKey(currentUserId);
+        var cacheKey = CacheConstants.BanksKey(currentUserId, isActive, name, shortName);
 
         var result = await cache.GetOrCreateAsync(
             cacheKey,

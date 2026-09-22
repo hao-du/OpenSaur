@@ -242,6 +242,7 @@ CoreGate encapsulates all caching logic behind [`ICacheService`](file:///d:/Open
    - `CacheKeys.UserCanImpersonate(userId)`: Caches administrative super-admin status.
    - `CacheKeys.Workspace(workspaceId)`: Caches workspace entity metadata (`WorkspaceCacheModel`).
    - `CacheKeys.ClientPermissions(clientId)`: Caches registered OpenIddict client application permissions.
+   - `CacheKeys.Session(sessionId)`: Caches server-side user session authentication tickets (`UserSessionCookieStore`).
 4. **Multi-Node L1 Staleness Mitigation**:
    - In-memory L1 `LocalCacheExpiration` defaults to **30 seconds**, while distributed L2 (`IDistributedCache` / Redis) retains entries for 10 minutes.
    - This ensures rapid microsecond in-process serving for bursts of auth calls while keeping any cross-node discrepancy window to at most 30 seconds, without requiring custom Pub/Sub synchronization plumbing.

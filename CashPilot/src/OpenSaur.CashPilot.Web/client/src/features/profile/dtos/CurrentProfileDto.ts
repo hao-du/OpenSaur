@@ -12,5 +12,8 @@ export type CurrentProfileDto = {
   userName: string;
   workspaceName?: string;
   isImpersonating?: boolean;
+  isSuperAdministrator?: boolean;
+  canManage?: boolean;
+  roles?: string[];
   navigationItems: NavigationItemDto[];
 };

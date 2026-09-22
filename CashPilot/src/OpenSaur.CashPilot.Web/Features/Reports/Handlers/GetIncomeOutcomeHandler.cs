@@ -4,6 +4,7 @@ using OpenSaur.CashPilot.Web.Domain;
 using OpenSaur.CashPilot.Web.Features.Reports.Dtos;
 using OpenSaur.CashPilot.Web.Features.Reports.Services;
 using OpenSaur.CashPilot.Web.Features.Transactions.Services;
+using OpenSaur.CashPilot.Web.Infrastructure.Caching;
 using OpenSaur.CashPilot.Web.Infrastructure.Database;
 using OpenSaur.CashPilot.Web.Infrastructure.Helpers;
 using System.Security.Claims;
@@ -18,11 +19,22 @@ public static class GetIncomeOutcomeHandler
         TransactionService transactionService,
         ReportService reportService,
         CashPilotDbContext dbContext,
+        ICacheService cacheService,
         CancellationToken cancellationToken)
     {
         var currentUserId = ClaimHelper.GetCurrentUserId(user);
         var year = request.Year;
         var tagName = request.TagName?.Trim();
+        var cacheKey = CacheConstants.ReportIncomeOutcomeKey(currentUserId, year, tag: tagName);
+
+        if (currentUserId != Guid.Empty)
+        {
+            var cached = await cacheService.GetAsync<IncomeOutcomeResponse>(cacheKey, cancellationToken);
+            if (cached is not null)
+            {
+                return TypedResults.Ok(cached);
+            }
+        }
 
         var defaultCurrency = await dbContext.Currencies
             .AsNoTracking()
@@ -70,6 +82,13 @@ public static class GetIncomeOutcomeHandler
             monthlyResult = await reportService.GetIncomeOutcomeAsync(currentUserId, defaultCurrency.Id, year, tagName, cancellationToken);
         }
 
-        return TypedResults.Ok(new IncomeOutcomeResponse(year, defaultCurrencyShortName, monthlyResult));
+        var response = new IncomeOutcomeResponse(year, defaultCurrencyShortName, monthlyResult);
+
+        if (currentUserId != Guid.Empty && defaultCurrency != null)
+        {
+            await cacheService.SetAsync(cacheKey, response, CacheConstants.DefaultTtl, cancellationToken);
+        }
+
+        return TypedResults.Ok(response);
     }
 }

@@ -26,6 +26,7 @@ public static class UpdateBankAccountFormHandler
         BankAccountMovementService bankAccountMovementManager,
         TagService tagService,
         CashPilotDbContext dbContext,
+        ITransactionCacheInvalidator cacheInvalidator,
         CancellationToken cancellationToken)
     {
         var currentUserId = ClaimHelper.GetCurrentUserId(user);
@@ -118,6 +119,9 @@ public static class UpdateBankAccountFormHandler
         }
 
         await dbContext.SaveChangesAsync(cancellationToken);
+
+        await cacheInvalidator.InvalidateDashboardAndReportsAsync(currentUserId, cancellationToken);
+
         return TypedResults.Ok(bankAccount.Id);
     }
 }

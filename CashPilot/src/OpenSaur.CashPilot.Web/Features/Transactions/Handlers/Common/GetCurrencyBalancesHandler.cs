@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using OpenSaur.CashPilot.Web.Domain;
 using OpenSaur.CashPilot.Web.Features.Transactions.Dtos;
+using OpenSaur.CashPilot.Web.Infrastructure.Caching;
 using OpenSaur.CashPilot.Web.Infrastructure.Database;
 using OpenSaur.CashPilot.Web.Infrastructure.Helpers;
 using System.Security.Claims;
@@ -13,9 +14,21 @@ public static class GetCurrencyBalancesHandler
     public static async Task<Ok<IReadOnlyList<CurrencyBalanceItemResponse>>> HandleAsync(
         ClaimsPrincipal user,
         CashPilotDbContext dbContext,
+        ICacheService cacheService,
         CancellationToken cancellationToken)
     {
         var currentUserId = ClaimHelper.GetCurrentUserId(user);
+        var cacheKey = CacheConstants.CurrencyBalancesKey(currentUserId);
+
+        if (currentUserId != Guid.Empty)
+        {
+            var cached = await cacheService.GetAsync<IReadOnlyList<CurrencyBalanceItemResponse>>(cacheKey, cancellationToken);
+            if (cached is not null)
+            {
+                return TypedResults.Ok(cached);
+            }
+        }
+
         var rows = new List<CurrencyBalanceRow>();
 
         rows.AddRange(await dbContext.CashFlows
@@ -60,6 +73,11 @@ public static class GetCurrencyBalancesHandler
             .Select(g => new CurrencyBalanceItemResponse(g.Key, g.Sum(x => x.SignedAmount)))
             .OrderBy(x => x.CurrencyCode)
             .ToList();
+
+        if (currentUserId != Guid.Empty)
+        {
+            await cacheService.SetAsync(cacheKey, (IReadOnlyList<CurrencyBalanceItemResponse>)currencyBalances, CacheConstants.ShortTtl, cancellationToken);
+        }
 
         return TypedResults.Ok<IReadOnlyList<CurrencyBalanceItemResponse>>(currencyBalances);
     }

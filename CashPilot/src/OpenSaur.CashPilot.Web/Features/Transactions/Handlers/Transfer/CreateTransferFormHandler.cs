@@ -10,6 +10,7 @@ using OpenSaur.CashPilot.Web.Features.Transactions.Validations;
 using OpenSaur.CashPilot.Web.Infrastructure.Validation;
 using OpenSaur.CashPilot.Web.Infrastructure.Database;
 using OpenSaur.CashPilot.Web.Infrastructure.Helpers;
+using OpenSaur.CashPilot.Web.Features.Transactions.Services;
 using System.Security.Claims;
 using AppHttpResults = OpenSaur.CashPilot.Web.Infrastructure.Http.HttpResults;
 
@@ -24,6 +25,7 @@ public static class CreateTransferFormHandler
         ClaimsPrincipal user,
         TagService tagService,
         CashPilotDbContext dbContext,
+        ITransactionCacheInvalidator cacheInvalidator,
         CancellationToken cancellationToken)
     {
         var currentUserId = ClaimHelper.GetCurrentUserId(user);
@@ -100,6 +102,9 @@ public static class CreateTransferFormHandler
         }
 
         await dbContext.SaveChangesAsync(cancellationToken);
+
+        await cacheInvalidator.InvalidateDashboardAndReportsAsync(currentUserId, cancellationToken);
+
         return TypedResults.Ok(transfer.Id);
     }
 }
