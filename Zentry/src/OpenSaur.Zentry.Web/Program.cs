@@ -58,7 +58,11 @@ if (!string.IsNullOrWhiteSpace(redisConnectionString))
 {
     var multiplexer = StackExchange.Redis.ConnectionMultiplexer.Connect(redisConnectionString);
     builder.Services.AddSingleton<StackExchange.Redis.IConnectionMultiplexer>(multiplexer);
-    builder.Services.AddStackExchangeRedisCache(options => options.Configuration = redisConnectionString);
+    builder.Services.AddStackExchangeRedisCache(options =>
+    {
+        options.Configuration = redisConnectionString;
+        options.InstanceName = "Zentry:";
+    });
     builder.Services.AddSingleton<ILockService, RedisDistributedLockService>();
 }
 else
