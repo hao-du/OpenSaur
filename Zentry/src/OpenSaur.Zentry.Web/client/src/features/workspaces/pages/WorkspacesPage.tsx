@@ -65,7 +65,7 @@ export function WorkspacesPage() {
 
   async function handleStartImpersonation(values: { userId: string; workspaceId: string }) {
     setIsStartingImpersonation(true);
-    const loginUrl = new URL("/bff/login", window.location.origin);
+    const loginUrl = new URL("/auth/login", window.location.origin);
     loginUrl.searchParams.set("impersonatedUserId", values.userId);
     loginUrl.searchParams.set("workspaceId", values.workspaceId);
     loginUrl.searchParams.set("returnUrl", "/");

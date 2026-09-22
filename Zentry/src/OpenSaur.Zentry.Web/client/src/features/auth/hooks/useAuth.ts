@@ -19,7 +19,7 @@ export type AuthState = {
 
 export function redirectToLogin(returnUrl?: string) {
   const currentPath = returnUrl ?? (window.location.pathname + window.location.search);
-  const loginUrl = new URL("/bff/login", window.location.origin);
+  const loginUrl = new URL("/auth/login", window.location.origin);
   loginUrl.searchParams.set("returnUrl", currentPath || "/");
   window.location.assign(loginUrl.toString());
 }
@@ -40,7 +40,7 @@ export function useAuth(options?: AuthOptions): AuthState {
   };
 
   const handleLogout = () => {
-    window.location.assign("/bff/logout");
+    window.location.assign("/auth/logout");
   };
 
   return {

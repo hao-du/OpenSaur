@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
 using OpenSaur.Zentry.Web.Infrastructure.Configuration;
 
-namespace OpenSaur.Zentry.Web.Features.Bff.ChangePassword;
+namespace OpenSaur.Zentry.Web.Features.Auth.ChangePassword;
 
 public static class ChangePasswordHandler
 {

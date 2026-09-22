@@ -72,7 +72,7 @@ export function UserProfileMenu({ isLoading = false, profile }: UserProfileMenuP
   async function handleConfirmChangePassword() {
     await requirePasswordChange();
     const returnUrl = encodeURIComponent(window.location.href);
-    window.location.assign(`/bff/change-password?returnUrl=${returnUrl}`);
+    window.location.assign(`/auth/change-password?returnUrl=${returnUrl}`);
   }
 
   return (

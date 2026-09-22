@@ -2,7 +2,7 @@ namespace OpenSaur.Zentry.Web.Infrastructure.Cache;
 
 public static class CacheKeys
 {
-    public const string TokenSessionPrefix = "bff:tokens:";
+    public const string TokenSessionPrefix = "auth:tokens:";
     public const string PermissionsCatalog = "permissions:catalog";
     public const string UserProfilePrefix = "profile:user:";
     public const string DashboardSummaryPrefix = "dashboard:summary:";

@@ -4,16 +4,18 @@ using Microsoft.Extensions.Options;
 using OpenSaur.Zentry.Web.Infrastructure.Auth;
 using OpenSaur.Zentry.Web.Infrastructure.Configuration;
 
-namespace OpenSaur.Zentry.Web.Features.Bff.Refresh;
+namespace OpenSaur.Zentry.Web.Features.Auth.Refresh;
 
 public class CoreGateTokenService(
     IHttpClientFactory httpClientFactory,
     IOptions<OidcOptions> oidcOptions,
     ILogger<CoreGateTokenService> logger) : ITokenService
 {
+    public const string HttpClientName = "CoreGateTokenClient";
+
     public async Task<TokenRefreshResult?> RefreshTokenAsync(string refreshToken, CancellationToken cancellationToken = default)
     {
-        var client = httpClientFactory.CreateClient("CoreGateTokenClient");
+        var client = httpClientFactory.CreateClient(HttpClientName);
         var tokenEndpoint = $"{oidcOptions.Value.Authority.TrimEnd('/')}/connect/token";
 
         var parameters = new Dictionary<string, string>

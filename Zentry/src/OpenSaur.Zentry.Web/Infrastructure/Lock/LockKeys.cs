@@ -2,7 +2,7 @@ namespace OpenSaur.Zentry.Web.Infrastructure.Lock;
 
 public static class LockKeys
 {
-    public const string TokenRefreshPrefix = "lock:bff:refresh:";
+    public const string TokenRefreshPrefix = "lock:auth:refresh:";
     public const string WorkspaceUsersPrefix = "lock:workspace:users:";
     public const string UserRolesPrefix = "lock:user:roles:";
     public const string RoleUsersPrefix = "lock:role:users:";

@@ -22,6 +22,18 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: "0.0.0.0",
     port: 5174,
+    proxy: {
+      "/api": {
+        changeOrigin: true,
+        secure: false,
+        target: backendTarget
+      },
+      "/auth": {
+        changeOrigin: true,
+        secure: false,
+        target: backendTarget
+      }
+    },
     strictPort: true
   }
 }));

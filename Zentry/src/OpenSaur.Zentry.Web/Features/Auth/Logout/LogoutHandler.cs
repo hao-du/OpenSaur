@@ -1,10 +1,10 @@
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http.HttpResults;
-using OpenSaur.Zentry.Web.Features.Bff;
+using OpenSaur.Zentry.Web.Features.Auth;
 using OpenSaur.Zentry.Web.Infrastructure.Auth;
 using OpenSaur.Zentry.Web.Infrastructure.Helpers;
 
-namespace OpenSaur.Zentry.Web.Features.Bff.Logout;
+namespace OpenSaur.Zentry.Web.Features.Auth.Logout;
 
 public static class LogoutHandler
 {
@@ -24,10 +24,10 @@ public static class LogoutHandler
             RedirectUri = targetReturnUrl
         };
 
-        // Signs out of both local BFF session cookie and remote OIDC provider (CoreGate /connect/endsession)
+        // Signs out of both local session cookie and remote OIDC provider (CoreGate /connect/endsession)
         return TypedResults.SignOut(
             properties,
-            [BffConstants.DefaultCookieScheme, BffConstants.DefaultOidcScheme]);
+            [AuthConstants.DefaultCookieScheme, AuthConstants.DefaultOidcScheme]);
     }
 }
 

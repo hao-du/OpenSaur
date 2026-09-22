@@ -8,14 +8,14 @@ Implement server-side session storage implementing ASP.NET Core `ITicketStore` n
 ## Tasks
 
 ### Item 1: UserSessionCookieStore Implementation
-- [ ] Create `UserSessionCookieStore` implementing `ITicketStore` in `src/OpenSaur.Zentry.Web/Features/Auth/Session`.
-- [ ] Implement `UserSessionCookieStore` using `IDistributedCache` with `TicketSerializer.Default` to serialize and deserialize `AuthenticationTicket`.
-- [ ] Support sliding expiration and cleanup on `RenewAsync` and `RemoveAsync`.
+- [x] Create `UserSessionCookieStore` implementing `ITicketStore` in `src/OpenSaur.Zentry.Web/Features/Auth/Session`.
+- [x] Implement `UserSessionCookieStore` using `IDistributedCache` with `TicketSerializer.Default` to serialize and deserialize `AuthenticationTicket`.
+- [x] Support sliding expiration and cleanup on `RenewAsync` and `RemoveAsync`.
 
 ### Item 2: Cookie Authentication Configuration & Verification
-- [ ] Register `ITicketStore` with `UserSessionCookieStore` in DI.
-- [ ] Configure `options.SessionStore` via `builder.Services.AddOptions<CookieAuthenticationOptions>(AuthConstants.DefaultCookieScheme).Configure<ITicketStore>(...)` in `Program.cs`.
-- [ ] Verify `dotnet build` and `npm run build` succeed.
+- [x] Register `ITicketStore` with `UserSessionCookieStore` in DI.
+- [x] Configure `options.SessionStore` via `builder.Services.AddOptions<CookieAuthenticationOptions>(AuthConstants.DefaultCookieScheme).Configure<ITicketStore>(...)` in `Program.cs`.
+- [x] Verify `dotnet build` and `npm run build` succeed.
 
 ---
 

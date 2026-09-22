@@ -1,19 +1,19 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
-using OpenSaur.Zentry.Web.Features.Bff.ChangePassword;
-using OpenSaur.Zentry.Web.Features.Bff.Login;
-using OpenSaur.Zentry.Web.Features.Bff.Logout;
+using OpenSaur.Zentry.Web.Features.Auth.ChangePassword;
+using OpenSaur.Zentry.Web.Features.Auth.Login;
+using OpenSaur.Zentry.Web.Features.Auth.Logout;
 using OpenSaur.Zentry.Web.Infrastructure.Configuration;
 
-namespace OpenSaur.Zentry.Web.Features.Bff;
+namespace OpenSaur.Zentry.Web.Features.Auth;
 
-public static class BffEndpoints
+public static class AuthEndpoints
 {
-    public static IEndpointRouteBuilder MapBffEndpoints(this IEndpointRouteBuilder app)
+    public static IEndpointRouteBuilder MapAuthEndpoints(this IEndpointRouteBuilder app)
     {
-        var bff = app.MapGroup("/bff");
+        var auth = app.MapGroup("/auth");
 
-        bff.MapGet("/login", (
+        auth.MapGet("/login", (
             HttpContext httpContext,
             string? returnUrl,
             string? impersonatedUserId,
@@ -28,7 +28,7 @@ public static class BffEndpoints
             return LoginHandler.Handle(request);
         }).AllowAnonymous();
 
-        bff.MapGet("/logout", (
+        auth.MapGet("/logout", (
             HttpContext httpContext,
             string? returnUrl) =>
         {
@@ -39,7 +39,7 @@ public static class BffEndpoints
             return LogoutHandler.Handle(request);
         }).AllowAnonymous();
 
-        bff.MapGet("/change-password", (
+        auth.MapGet("/change-password", (
             HttpContext httpContext,
             IOptions<OidcOptions> oidcOptions,
             string? returnUrl) =>
@@ -52,3 +52,4 @@ public static class BffEndpoints
         return app;
     }
 }
+

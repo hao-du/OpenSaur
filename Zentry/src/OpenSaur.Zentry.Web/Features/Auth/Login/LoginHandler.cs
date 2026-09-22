@@ -1,10 +1,10 @@
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http.HttpResults;
-using OpenSaur.Zentry.Web.Features.Bff;
+using OpenSaur.Zentry.Web.Features.Auth;
 using OpenSaur.Zentry.Web.Infrastructure.Auth;
 using OpenSaur.Zentry.Web.Infrastructure.Helpers;
 
-namespace OpenSaur.Zentry.Web.Features.Bff.Login;
+namespace OpenSaur.Zentry.Web.Features.Auth.Login;
 
 public static class LoginHandler
 {
@@ -38,6 +38,7 @@ public static class LoginHandler
             properties.Items[CoreGateClaimTypes.WorkspaceId] = request.WorkspaceId;
         }
 
-        return TypedResults.Challenge(properties, [BffConstants.DefaultOidcScheme]);
+        return TypedResults.Challenge(properties, [AuthConstants.DefaultOidcScheme]);
     }
 }
+

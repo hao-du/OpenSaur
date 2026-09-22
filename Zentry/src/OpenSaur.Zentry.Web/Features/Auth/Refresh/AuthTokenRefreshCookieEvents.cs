@@ -3,18 +3,19 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
+using OpenSaur.Zentry.Web.Features.Auth;
 using OpenSaur.Zentry.Web.Infrastructure.Auth;
 using OpenSaur.Zentry.Web.Infrastructure.Cache;
 using OpenSaur.Zentry.Web.Infrastructure.Helpers;
 using OpenSaur.Zentry.Web.Infrastructure.Lock;
 
-namespace OpenSaur.Zentry.Web.Features.Bff.Refresh;
+namespace OpenSaur.Zentry.Web.Features.Auth.Refresh;
 
-public class BffTokenRefreshCookieEvents(
+public class AuthTokenRefreshCookieEvents(
     ITokenService tokenService,
     ICacheService cacheService,
     ILockService lockService,
-    ILogger<BffTokenRefreshCookieEvents> logger) : CookieAuthenticationEvents
+    ILogger<AuthTokenRefreshCookieEvents> logger) : CookieAuthenticationEvents
 {
     private static readonly TimeSpan RefreshWindow = TimeSpan.FromMinutes(5);
     private static readonly TimeSpan LockTimeout = TimeSpan.FromSeconds(30);
@@ -76,9 +77,9 @@ public class BffTokenRefreshCookieEvents(
             var refreshResult = await tokenService.RefreshTokenAsync(refreshToken, context.HttpContext.RequestAborted);
             if (refreshResult == null)
             {
-                logger.LogWarning("BFF rejected principal because token refresh failed.");
+                logger.LogWarning("Rejected principal because token refresh failed.");
                 context.RejectPrincipal();
-                await context.HttpContext.SignOutAsync(BffConstants.DefaultCookieScheme);
+                await context.HttpContext.SignOutAsync(AuthConstants.DefaultCookieScheme);
                 return;
             }
 
@@ -89,7 +90,7 @@ public class BffTokenRefreshCookieEvents(
             await cacheService.SetAsync(cacheKey, newSession, TimeSpan.FromSeconds(refreshResult.ExpiresIn), context.HttpContext.RequestAborted);
 
             ApplyTokens(context, refreshResult.AccessToken, refreshResult.RefreshToken, newExpiresAt);
-            logger.LogInformation("BFF silent token refresh succeeded. Ticket renewed until {ExpiresAt}", newExpiresAt);
+            logger.LogInformation("Silent token refresh succeeded. Ticket renewed until {ExpiresAt}", newExpiresAt);
         }
         finally
         {

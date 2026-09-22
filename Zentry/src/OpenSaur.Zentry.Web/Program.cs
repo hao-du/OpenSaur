@@ -5,8 +5,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Hybrid;
 using OpenIddict.Abstractions;
 using OpenIddict.Validation.AspNetCore;
-using OpenSaur.Zentry.Web.Features.Bff;
-using OpenSaur.Zentry.Web.Features.Bff.Refresh;
+using OpenSaur.Zentry.Web.Features.Auth;
+using OpenSaur.Zentry.Web.Features.Auth.Refresh;
+using OpenSaur.Zentry.Web.Features.Auth.Session;
 using OpenSaur.Zentry.Web.Features.Dashboard;
 using OpenSaur.Zentry.Web.Features.OidcClients;
 using OpenSaur.Zentry.Web.Features.OidcClients.CreateOidcClient;
@@ -74,7 +75,8 @@ builder.Services.AddHttpClient("CoreGateTokenClient")
     });
 builder.Services.AddSingleton<ICacheService, CacheService>();
 builder.Services.AddScoped<ITokenService, CoreGateTokenService>();
-builder.Services.AddScoped<BffTokenRefreshCookieEvents>();
+builder.Services.AddScoped<AuthTokenRefreshCookieEvents>();
+builder.Services.AddSingleton<Microsoft.AspNetCore.Authentication.Cookies.ITicketStore, UserSessionCookieStore>();
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {
     options.UseNpgsql(connectionString);
@@ -102,25 +104,25 @@ builder.Services.AddOpenIddict()
     });
 builder.Services.AddAuthentication(options =>
 {
-    options.DefaultScheme = BffConstants.DefaultCookieScheme;
-    options.DefaultAuthenticateScheme = BffConstants.DefaultCookieScheme;
-    options.DefaultSignInScheme = BffConstants.DefaultCookieScheme;
-    options.DefaultChallengeScheme = BffConstants.DefaultCookieScheme;
+    options.DefaultScheme = AuthConstants.DefaultCookieScheme;
+    options.DefaultAuthenticateScheme = AuthConstants.DefaultCookieScheme;
+    options.DefaultSignInScheme = AuthConstants.DefaultCookieScheme;
+    options.DefaultChallengeScheme = AuthConstants.DefaultCookieScheme;
 })
-.AddCookie(BffConstants.DefaultCookieScheme, options =>
+.AddCookie(AuthConstants.DefaultCookieScheme, options =>
 {
-    options.Cookie.Name = "__Host-zentry-bff";
+    options.Cookie.Name = "zentry-s";
     options.Cookie.HttpOnly = true;
     options.Cookie.SameSite = SameSiteMode.Strict;
     options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
     options.Cookie.Path = "/";
     options.SlidingExpiration = true;
-    options.EventsType = typeof(BffTokenRefreshCookieEvents);
+    options.EventsType = typeof(AuthTokenRefreshCookieEvents);
     options.ExpireTimeSpan = TimeSpan.FromDays(7);
 })
-.AddOpenIdConnect(BffConstants.DefaultOidcScheme, options =>
+.AddOpenIdConnect(AuthConstants.DefaultOidcScheme, options =>
 {
-    options.SignInScheme = BffConstants.DefaultCookieScheme;
+    options.SignInScheme = AuthConstants.DefaultCookieScheme;
     options.Authority = oidcOptions.Authority;
     options.ClientId = oidcOptions.ClientId;
     if (!string.IsNullOrWhiteSpace(oidcOptions.ClientSecret))
@@ -170,6 +172,13 @@ builder.Services.AddAuthentication(options =>
         options.BackchannelHttpHandler = handler;
     }
 });
+
+builder.Services.AddOptions<Microsoft.AspNetCore.Authentication.Cookies.CookieAuthenticationOptions>(AuthConstants.DefaultCookieScheme)
+    .Configure<Microsoft.AspNetCore.Authentication.Cookies.ITicketStore>((options, sessionStore) =>
+    {
+        options.SessionStore = sessionStore;
+    });
+
 builder.Services.AddAuthorization(AppAuthorization.ConfigurePolicies);
 builder.Services.AddScoped<IValidator<CreateOidcClientRequest>, CreateOidcClientRequestValidator>();
 builder.Services.AddScoped<IValidator<EditOidcClientRequest>, EditOidcClientRequestValidator>();
@@ -206,7 +215,7 @@ app.MapSettingsEndpoints();
 app.MapRoleEndpoints();
 app.MapUserEndpoints();
 app.MapPermissionEndpoints();
-app.MapBffEndpoints();
+app.MapAuthEndpoints();
 app.MapFrontEndRoutes();
 
 app.Run();
