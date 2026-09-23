@@ -3,6 +3,7 @@ import { Controller, type Control, type FieldPath, type FieldValues, type Regist
 import { formatInputNumberValue } from "../../infrastructure/constants/numberFormatters";
 
 type NumberProps<TFieldValues extends FieldValues> = {
+  allowNegative?: boolean;
   control: Control<TFieldValues>;
   disabled?: boolean;
   helperText?: string;
@@ -13,6 +14,7 @@ type NumberProps<TFieldValues extends FieldValues> = {
 };
 
 export function Number<TFieldValues extends FieldValues>({
+  allowNegative = true,
   control,
   disabled = false,
   helperText,
@@ -36,9 +38,10 @@ export function Number<TFieldValues extends FieldValues>({
           label={required ? `${label} *` : label}
           onChange={e => {
             const val = e.target.value;
-            // Allow only numbers, one dot, and commas (which we remove)
+            // Allow numbers, optional leading minus (if allowNegative), one dot, and commas (which we remove)
             const rawValue = val.replace(/,/g, "");
-            if (/^\d*\.?\d*$/.test(rawValue)) {
+            const pattern = allowNegative ? /^-?\d*\.?\d*$/ : /^\d*\.?\d*$/;
+            if (pattern.test(rawValue)) {
               field.onChange(rawValue);
             }
           }}

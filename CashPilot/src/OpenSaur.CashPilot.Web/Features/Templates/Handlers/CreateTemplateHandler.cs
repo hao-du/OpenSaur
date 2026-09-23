@@ -58,7 +58,7 @@ public static class CreateTemplateHandler
         dbContext.Templates.Add(template);
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        await cache.RemoveAsync(CacheConstants.TemplatesKey(currentUserId));
+        await cache.BumpVersionAsync(CacheConstants.TemplatesVersionKey(currentUserId));
 
         return TypedResults.Created($"/api/templates/{template.Id}", new TemplateDetailResponse(
             template.Id,

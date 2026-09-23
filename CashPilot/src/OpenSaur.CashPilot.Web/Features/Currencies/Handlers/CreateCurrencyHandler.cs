@@ -61,7 +61,7 @@ public static class CreateCurrencyHandler
         await dbContext.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
 
-        await cache.RemoveAsync(CacheConstants.CurrenciesKey(currentUserId));
+        await cache.BumpVersionAsync(CacheConstants.CurrenciesVersionKey(currentUserId));
 
         return TypedResults.Created($"/api/currencies/{currency.Id}", new CurrencyResponse(
             currency.Id,

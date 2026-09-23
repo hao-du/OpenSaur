@@ -54,7 +54,7 @@ public static class CreateCounterpartyHandler
         await dbContext.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
 
-        await cache.RemoveAsync(CacheConstants.CounterpartiesKey(currentUserId));
+        await cache.BumpVersionAsync(CacheConstants.CounterpartiesVersionKey(currentUserId));
 
         return TypedResults.Created($"/api/counterparties/{counterparty.Id}", new CounterpartyResponse(
             counterparty.Id,

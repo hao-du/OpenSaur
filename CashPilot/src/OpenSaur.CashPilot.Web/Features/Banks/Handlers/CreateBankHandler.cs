@@ -61,7 +61,7 @@ public static class CreateBankHandler
         await dbContext.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
 
-        await cache.RemoveAsync(CacheConstants.BanksKey(currentUserId));
+        await cache.BumpVersionAsync(CacheConstants.BanksVersionKey(currentUserId));
 
         return TypedResults.Created($"/api/banks/{bank.Id}", new BankResponse(
             bank.Id,

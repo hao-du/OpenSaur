@@ -12,29 +12,33 @@ This feature introduces user-scoped cache version stamping for all master data d
 ## Tasks
 
 ### Item 1: Cache Version Keys in CacheConstants & CacheService
-- [ ] Add versioning helpers in `CacheConstants` for each master data domain: `Banks`, `Currencies`, `Counterparties`, `Tags`, and `Templates`.
-- [ ] Incorporate master data version keys or prefix eviction into cache key generation and cache invalidation.
+- [x] Add versioning helpers in `CacheConstants` for each master data domain: `Banks`, `Currencies`, `Counterparties`, `Tags`, and `Templates`.
+- [x] Incorporate master data version keys or prefix eviction into cache key generation and cache invalidation.
 
 ### Item 2: Tags & Marker Tags Invalidation
-- [ ] Update `GetTagsHandler` to utilize the user's tag cache version.
-- [ ] Invalidate tag version and marker tag caches in `CreateTagHandler`, `UpdateTagHandler`, and `DeleteTagHandler`.
-- [ ] Invalidate frontend query caches `["tags"]` and `["marker-tags"]` in mutation hooks.
+- [x] Update `GetTagsHandler` to utilize the user's tag cache version.
+- [x] Invalidate tag version and marker tag caches in `CreateTagHandler`, `UpdateTagHandler`, and `DeleteTagHandler`.
+- [x] Invalidate frontend query caches `["tags"]` and `["marker-tags"]` in mutation hooks.
 
 ### Item 3: Banks Cache Invalidation
-- [ ] Update `GetBanksHandler` to utilize the user's bank cache version.
-- [ ] Invalidate bank version in `CreateBankHandler`, `UpdateBankHandler`, and `DeleteBankHandler`.
+- [x] Update `GetBanksHandler` to utilize the user's bank cache version.
+- [x] Invalidate bank version in `CreateBankHandler`, `UpdateBankHandler`, and `DeleteBankHandler`.
 
 ### Item 4: Currencies Cache Invalidation
-- [ ] Update `GetCurrenciesHandler` to utilize the user's currency cache version.
-- [ ] Invalidate currency version in `CreateCurrencyHandler`, `UpdateCurrencyHandler`, and `DeleteCurrencyHandler`.
+- [x] Update `GetCurrenciesHandler` to utilize the user's currency cache version.
+- [x] Invalidate currency version in `CreateCurrencyHandler`, `UpdateCurrencyHandler`, and `DeleteCurrencyHandler`.
 
 ### Item 5: Counterparties Cache Invalidation
-- [ ] Update `GetCounterpartiesHandler` to utilize the user's counterparty cache version.
-- [ ] Invalidate counterparty version in `CreateCounterpartyHandler`, `UpdateCounterpartyHandler`, and `DeleteCounterpartyHandler`.
+- [x] Update `GetCounterpartiesHandler` to utilize the user's counterparty cache version.
+- [x] Invalidate counterparty version in `CreateCounterpartyHandler`, `UpdateCounterpartyHandler`, and `DeleteCounterpartyHandler`.
 
 ### Item 6: Templates Cache Invalidation
-- [ ] Update `GetTemplatesHandler` to utilize the user's template cache version.
-- [ ] Invalidate template version in `CreateTemplateHandler`, `UpdateTemplateHandler`, and `DeleteTemplateHandler`.
+- [x] Update `GetTemplatesHandler` to utilize the user's template cache version.
+- [x] Invalidate template version in `CreateTemplateHandler`, `UpdateTemplateHandler`, and `DeleteTemplateHandler`.
+
+### Item 7: Cache Prefix Cleanup & Redis InstanceName
+- [x] Set `options.InstanceName = "CashPilot:"` in `Program.cs` under `AddStackExchangeRedisCache`.
+- [x] Remove hardcoded `Prefix` from `CacheConstants.cs` so cache keys are concise and don't have duplicate prefixes in Redis.
 
 ---
 

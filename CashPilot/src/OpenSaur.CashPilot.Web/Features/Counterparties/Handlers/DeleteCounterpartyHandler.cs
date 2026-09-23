@@ -29,7 +29,7 @@ public static class DeleteCounterpartyHandler
         counterparty.IsActive = false;
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        await cache.RemoveAsync(CacheConstants.CounterpartiesKey(currentUserId));
+        await cache.BumpVersionAsync(CacheConstants.CounterpartiesVersionKey(currentUserId));
 
         return TypedResults.NoContent();
     }

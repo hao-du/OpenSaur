@@ -14,15 +14,15 @@ This feature ensures that if any sub-transaction is currently open in Add or Edi
 ## Tasks
 
 ### Item 1: Track In-Editing State in BankAccount & Transfer
-- [ ] In `BankAccountForm.tsx`, lift or track the `isEditing` state of sub-transactions (or pass down an edit state callback/ref).
-- [ ] In `TransferForm.tsx`, lift or track the `isEditing` state of sub-transactions.
+- [x] In `BankAccountForm.tsx`, lift or track the `isEditing` state of sub-transactions (or pass down an edit state callback/ref).
+- [x] In `TransferForm.tsx`, lift or track the `isEditing` state of sub-transactions.
 
 ### Item 2: Validation Message & Blocking on Submit
-- [ ] Add translation keys for English and Vietnamese:
+- [x] Add translation keys for English and Vietnamese:
   - `en`: *"Please confirm or cancel all sub-transactions currently being added or edited before saving."*
   - `vi`: *"Vui lòng xác nhận hoặc hủy tất cả giao dịch đang thêm hoặc chỉnh sửa trước khi lưu."*
-- [ ] In `BankAccountForm.tsx`, check if any sub-transaction is in edit/new state during `submitHandler`; if so, set form error / alert and block submission.
-- [ ] In `TransferForm.tsx`, check if any sub-transaction is in edit/new state during `handleSave`; if so, set form error / alert and block submission.
+- [x] In `BankAccountForm.tsx`, check if any sub-transaction is in edit/new state during `submitHandler`; if so, set form error / alert and block submission.
+- [x] In `TransferForm.tsx`, check if any sub-transaction is in edit/new state during `handleSave`; if so, set form error / alert and block submission.
 
 ---
 

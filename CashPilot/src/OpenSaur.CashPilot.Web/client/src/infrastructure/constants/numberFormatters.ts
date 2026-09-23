@@ -15,15 +15,18 @@ export function formatInputNumberValue(value: string | number) {
 
   const stringValue = value.toString();
   const rawValue = stringValue.replace(/,/g, "");
+
+  if (rawValue === "-") return "-";
+
   const num = parseFloat(rawValue);
   if (Number.isNaN(num)) return stringValue;
 
-  const parts = rawValue.split(".");
+  const isNegative = rawValue.startsWith("-");
+  const unsignedRawValue = isNegative ? rawValue.slice(1) : rawValue;
+
+  const parts = unsignedRawValue.split(".");
   const formattedInt = inputNumberFormatter.format(parseInt(parts[0] || "0", 10));
 
-  if (parts.length > 1) {
-    return `${formattedInt}.${parts[1]}`;
-  }
-
-  return formattedInt;
+  const result = parts.length > 1 ? `${formattedInt}.${parts[1]}` : formattedInt;
+  return isNegative ? `-${result}` : result;
 }

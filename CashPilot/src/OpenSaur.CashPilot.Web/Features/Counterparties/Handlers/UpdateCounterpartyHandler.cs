@@ -52,7 +52,7 @@ public static class UpdateCounterpartyHandler
 
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        await cache.RemoveAsync(CacheConstants.CounterpartiesKey(currentUserId));
+        await cache.BumpVersionAsync(CacheConstants.CounterpartiesVersionKey(currentUserId));
 
         return TypedResults.Ok(new CounterpartyResponse(
             counterparty.Id,

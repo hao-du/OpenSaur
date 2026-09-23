@@ -62,7 +62,7 @@ public static class UpdateCurrencyHandler
         await dbContext.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
 
-        await cache.RemoveAsync(CacheConstants.CurrenciesKey(currentUserId));
+        await cache.BumpVersionAsync(CacheConstants.CurrenciesVersionKey(currentUserId));
 
         return TypedResults.Ok(new CurrencyResponse(
             currency.Id,

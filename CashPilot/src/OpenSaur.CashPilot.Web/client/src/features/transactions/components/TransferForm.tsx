@@ -14,7 +14,7 @@ import { useSettings } from "../../settings/provider/SettingProvider";
 import type { SaveTransferFormRequestDto } from "../dtos/TransactionDto";
 import { TransactionItemsEditor } from "./TransactionItemsEditor";
 import { TransactionFormTabs } from "./TransactionFormTabs";
-import { TransferFormTransaction, type TransferDetailEditor } from "./TransferFormTransaction";
+import { SubTransactionItemForm, type SubTransactionEditorModel } from "./SubTransactionItemForm";
 import { TransferHeaderForm, type TransferHeaderValues } from "./TransferHeaderForm";
 
 type Props = {
@@ -51,6 +51,8 @@ type Props = {
   onAutoTag?: (description: string, existingTags: string[], transactionType: "Transfer") => Promise<string[]>;
   onAutoTagActionChange?: (handler: (() => Promise<void>) | null) => void;
 };
+
+export type TransferDetailEditor = SubTransactionEditorModel;
 
 type TransferItemsFormValues = {
   transactionItems: Array<{ id?: string; name: string; amount: string }>;
@@ -179,6 +181,8 @@ export function TransferForm({
     defaultValues: initialHeaderValues,
   });
   const [details, setDetails] = useState<TransferDetailEditor[]>(() => initialDetails);
+  const [editingKeys, setEditingKeys] = useState<Record<string, boolean>>({});
+  const [detailValidationErrors, setDetailValidationErrors] = useState<Record<string, string>>({});
   const transactionItemsForm = useForm<TransferItemsFormValues>({
     defaultValues: { transactionItems: initialTransactionItems },
   });
@@ -218,23 +222,28 @@ export function TransferForm({
     const { counterparties, currencies, movementInitialDetails, movementInitialTransactionItems, movementInitialValue } = initialValuesRef.current;
     headerForm.reset(getInitialHeaderValues(movementInitialValue, counterparties, currencies, today));
     setDetails(getInitialDetails(movementInitialValue, movementInitialDetails));
+    setEditingKeys({});
+    setDetailValidationErrors({});
     transactionItemsForm.reset({
       transactionItems: getInitialTransactionItems(movementInitialValue, movementInitialTransactionItems),
     });
   }, [headerForm, initialValuesSignature, today, transactionItemsForm]);
 
-  const addNewDetail = () =>
+  const addNewDetail = () => {
+    const clientKey = crypto.randomUUID();
     setDetails((prev) => [
       ...prev,
       {
         amount: "",
-        clientKey: crypto.randomUUID(),
+        clientKey,
         description: "",
         direction: String(transactionDirectionValues.inflow),
         isNew: true,
         transactionDate: headerForm.getValues("transactionDate") ?? today,
       },
     ]);
+    setEditingKeys((prev) => ({ ...prev, [clientKey]: true }));
+  };
 
   const handleAutoTag = useCallback(async () => {
     if (onAutoTag == null) {
@@ -253,8 +262,24 @@ export function TransferForm({
     };
   }, [handleAutoTag, onAutoTag, onAutoTagActionChange]);
 
+  const hasPendingSubTransactions = details.some((d) => d.isNew || editingKeys[d.clientKey] === true);
+
   const handleSave = async () => {
     const headerValues = headerForm.getValues();
+
+    if (hasPendingSubTransactions) {
+      const nextErrors: Record<string, string> = {};
+      const msg = t("transactions.validation.pendingSubTransactionsUnconfirmed");
+      details.forEach((d) => {
+        if (d.isNew || editingKeys[d.clientKey] === true) {
+          nextErrors[d.clientKey] = msg;
+        }
+      });
+      setDetailValidationErrors(nextErrors);
+      return;
+    }
+    setDetailValidationErrors({});
+
     if (details.length === 0) {
       headerForm.setError("amount", {
         type: "validate",
@@ -346,28 +371,85 @@ export function TransferForm({
             </Stack>
             <Stack spacing={2}>
               {details.map((detail) => (
-                  <TransferFormTransaction
-                    key={detail.clientKey}
-                    detail={detail}
-                    isSubmitting={isBusy}
-                  onAccept={(updated) =>
+                <SubTransactionItemForm
+                  key={detail.clientKey}
+                  detail={detail}
+                  showDirection
+                  errorMessage={
+                    editingKeys[detail.clientKey] || detail.isNew
+                      ? (detailValidationErrors[detail.clientKey] ?? null)
+                      : null
+                  }
+                  isEditing={Boolean(editingKeys[detail.clientKey] || detail.isNew)}
+                  disabled={isBusy}
+                  onAccept={(updated) => {
                     setDetails((prev) =>
                       prev.map((x) =>
                         x.clientKey === detail.clientKey ? updated : x,
                       ),
-                    )
-                  }
-                  onDelete={() =>
+                    );
+                    setEditingKeys((prev) => {
+                      const next = { ...prev };
+                      delete next[detail.clientKey];
+                      return next;
+                    });
+                    setDetailValidationErrors((prev) => {
+                      const next = { ...prev };
+                      delete next[detail.clientKey];
+                      return next;
+                    });
+                  }}
+                  onStartEdit={() => {
+                    setEditingKeys((prev) => ({ ...prev, [detail.clientKey]: true }));
+                    setDetailValidationErrors((prev) => {
+                      const next = { ...prev };
+                      delete next[detail.clientKey];
+                      return next;
+                    });
+                  }}
+                  onCancelEdit={() => {
+                    setEditingKeys((prev) => {
+                      const next = { ...prev };
+                      delete next[detail.clientKey];
+                      return next;
+                    });
+                    setDetailValidationErrors((prev) => {
+                      const next = { ...prev };
+                      delete next[detail.clientKey];
+                      return next;
+                    });
+                  }}
+                  onDelete={() => {
                     setDetails((prev) =>
                       prev.filter((x) => x.clientKey !== detail.clientKey),
-                    )
-                  }
-                  onCancelNew={() =>
+                    );
+                    setEditingKeys((prev) => {
+                      const next = { ...prev };
+                      delete next[detail.clientKey];
+                      return next;
+                    });
+                    setDetailValidationErrors((prev) => {
+                      const next = { ...prev };
+                      delete next[detail.clientKey];
+                      return next;
+                    });
+                  }}
+                  onCancelNew={() => {
                     setDetails((prev) =>
                       prev.filter((x) => x.clientKey !== detail.clientKey),
-                    )
-                  }
-                  />
+                    );
+                    setEditingKeys((prev) => {
+                      const next = { ...prev };
+                      delete next[detail.clientKey];
+                      return next;
+                    });
+                    setDetailValidationErrors((prev) => {
+                      const next = { ...prev };
+                      delete next[detail.clientKey];
+                      return next;
+                    });
+                  }}
+                />
               ))}
             </Stack>
           </Stack>

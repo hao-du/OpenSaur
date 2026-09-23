@@ -377,6 +377,7 @@ export const translations = {
     "transactions.validation.transferTransactionRequired": "At least one transfer transaction is required.",
     "transactions.validation.transactionDateRequired": "Transaction Date is required.",
     "transactions.validation.typeRequired": "Type is required.",
+    "transactions.validation.pendingSubTransactionsUnconfirmed": "Please confirm or cancel all sub-transactions currently being added or edited before saving.",
   },
   vi: {
     "action.backToDashboard": "Về bảng điều khiển",
@@ -756,6 +757,7 @@ export const translations = {
     "transactions.validation.typeRequired": "Loại là bắt buộc.",
     "transactions.validation.transferAmountPositive": "Tổng số tiền chuyển khoản phải lớn hơn 0.",
     "transactions.validation.transferTransactionRequired": "Cần ít nhất một giao dịch chuyển khoản.",
+    "transactions.validation.pendingSubTransactionsUnconfirmed": "Vui lòng xác nhận hoặc hủy tất cả giao dịch đang thêm hoặc chỉnh sửa trước khi lưu.",
   }
 } as const;
 

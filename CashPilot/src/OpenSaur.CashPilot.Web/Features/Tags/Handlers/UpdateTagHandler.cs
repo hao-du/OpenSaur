@@ -70,7 +70,7 @@ public static class UpdateTagHandler
             await dbContext.SaveChangesAsync(cancellationToken);
         }
 
-        await cache.RemoveAsync(CacheConstants.TagsKey(currentUserId));
+        await cache.BumpVersionAsync(CacheConstants.TagsVersionKey(currentUserId));
 
         return TypedResults.Ok(new TagDefinitionResponse(entity.Id, entity.Name, TagTermCodec.Decode(entity.MatchingTerms), entity.IsActive, entity.Marker, entity.IsDefaultMaker));
     }

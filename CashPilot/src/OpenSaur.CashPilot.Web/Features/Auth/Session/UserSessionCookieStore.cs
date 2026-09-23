@@ -61,16 +61,15 @@ public class UserSessionCookieStore(
     private async Task SaveTicketAsync(string cacheKey, AuthenticationTicket ticket)
     {
         var bytes = TicketSerializer.Default.Serialize(ticket);
-        var expiresAt = ticket.Properties.ExpiresUtc;
 
-        var options = new DistributedCacheEntryOptions();
-        if (expiresAt.HasValue)
+        var options = new DistributedCacheEntryOptions
         {
-            options.SetAbsoluteExpiration(expiresAt.Value);
-        }
-        else
+            SlidingExpiration = DefaultSlidingExpiration
+        };
+
+        if (ticket.Properties.ExpiresUtc.HasValue)
         {
-            options.SetSlidingExpiration(DefaultSlidingExpiration);
+            options.AbsoluteExpiration = ticket.Properties.ExpiresUtc.Value;
         }
 
         await distributedCache.SetAsync(cacheKey, bytes, options);

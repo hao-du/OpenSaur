@@ -7,7 +7,10 @@ export function useCreateTagMutation() {
   return useMutation({
     mutationFn: (payload: SaveTagDto) => createTag(payload),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["tags"] });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["tags"] }),
+        queryClient.invalidateQueries({ queryKey: ["marker-tags"] }),
+      ]);
     },
   });
 }

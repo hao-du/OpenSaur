@@ -63,7 +63,7 @@ public static class UpdateTemplateHandler
 
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        await cache.RemoveAsync(CacheConstants.TemplatesKey(currentUserId));
+        await cache.BumpVersionAsync(CacheConstants.TemplatesVersionKey(currentUserId));
 
         return TypedResults.Ok(new TemplateDetailResponse(
             template.Id,

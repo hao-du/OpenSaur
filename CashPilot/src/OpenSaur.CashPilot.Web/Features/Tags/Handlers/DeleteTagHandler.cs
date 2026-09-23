@@ -27,7 +27,7 @@ public static class DeleteTagHandler
         entity.IsActive = false;
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        await cache.RemoveAsync(CacheConstants.TagsKey(currentUserId));
+        await cache.BumpVersionAsync(CacheConstants.TagsVersionKey(currentUserId));
 
         return TypedResults.NoContent();
     }

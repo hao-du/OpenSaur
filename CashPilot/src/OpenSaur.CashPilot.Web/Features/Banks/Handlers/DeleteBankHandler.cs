@@ -29,7 +29,7 @@ public static class DeleteBankHandler
         bank.IsActive = false;
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        await cache.RemoveAsync(CacheConstants.BanksKey(currentUserId));
+        await cache.BumpVersionAsync(CacheConstants.BanksVersionKey(currentUserId));
 
         return TypedResults.NoContent();
     }

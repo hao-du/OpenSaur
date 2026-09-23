@@ -62,7 +62,7 @@ public static class UpdateBankHandler
         await dbContext.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
 
-        await cache.RemoveAsync(CacheConstants.BanksKey(currentUserId));
+        await cache.BumpVersionAsync(CacheConstants.BanksVersionKey(currentUserId));
 
         return TypedResults.Ok(new BankResponse(
             bank.Id,

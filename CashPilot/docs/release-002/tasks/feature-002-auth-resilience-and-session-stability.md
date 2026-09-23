@@ -17,17 +17,17 @@ Investigation revealed several key factors:
 ## Tasks
 
 ### Item 1: Fix Backchannel Token Client BaseAddress & URL
-- [ ] Configure `CashPilotTokenClient` in `Program.cs` or `CashPilotTokenService` with `oidcOptions.Authority` so `/connect/token` requests reach the authority endpoint properly (mirroring `CoreGateTokenService` in Zentry).
+- [x] Configure `CashPilotTokenClient` in `Program.cs` or `CashPilotTokenService` with `oidcOptions.Authority` so `/connect/token` requests reach the authority endpoint properly (mirroring `CoreGateTokenService` in Zentry).
 
 ### Item 2: Make Silent Token Refresh Resilient
-- [ ] In `AuthTokenRefreshCookieEvents.cs`, do NOT reject the principal if the access token has not actually expired yet (allow graceful retry on subsequent requests instead of instantly kicking the user out).
-- [ ] Use `ILockService` (scoped by user ID / session key) so multiple simultaneous API requests do not trigger duplicate refresh token calls with the same single-use refresh token across instances.
+- [x] In `AuthTokenRefreshCookieEvents.cs`, do NOT reject the principal if the access token has not actually expired yet (allow graceful retry on subsequent requests instead of instantly kicking the user out).
+- [x] Use `ILockService` (scoped by user ID / session key) so multiple simultaneous API requests do not trigger duplicate refresh token calls with the same single-use refresh token across instances.
 
 ### Item 3: Session Store Expiration Synchronization
-- [ ] Ensure `UserSessionCookieStore` maintains the 7-day sliding expiration window on renewals and sets both cookie and cache entry lifetimes consistently.
+- [x] Ensure `UserSessionCookieStore` maintains the 7-day sliding expiration window on renewals and sets both cookie and cache entry lifetimes consistently.
 
-### Item 4: Frontend 401 Interceptor & Smooth Redirect
-- [ ] Add an Axios response interceptor in `client.ts` to detect 401 Unauthorized on non-auth APIs and cleanly trigger `redirectToLogin(window.location.pathname + window.location.search)` without crash loops.
+### Item 4: Frontend 401 Handling via Existing Form & List Error Handlers
+- [x] Allow 401 exceptions to propagate directly to existing form/mutation and query error handlers (preserving user input without abrupt redirects).
 
 ---
 

@@ -54,7 +54,13 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.Configure<OidcOptions>(builder.Configuration.GetSection("Oidc"));
 builder.Services.Configure<AutoTaggingOptions>(builder.Configuration.GetSection(AutoTaggingOptions.SectionName));
 builder.Services.AddHttpClient<TransactionAutoTagService>();
-builder.Services.AddHttpClient(CashPilotTokenService.HttpClientName)
+builder.Services.AddHttpClient(CashPilotTokenService.HttpClientName, client =>
+    {
+        if (!string.IsNullOrWhiteSpace(oidcOptions.Authority))
+        {
+            client.BaseAddress = new Uri(oidcOptions.Authority);
+        }
+    })
     .ConfigurePrimaryHttpMessageHandler(() =>
     {
         var handler = new HttpClientHandler();
@@ -87,7 +93,11 @@ if (!string.IsNullOrWhiteSpace(redisConnectionString))
 {
     var multiplexer = StackExchange.Redis.ConnectionMultiplexer.Connect(redisConnectionString);
     builder.Services.AddSingleton<StackExchange.Redis.IConnectionMultiplexer>(multiplexer);
-    builder.Services.AddStackExchangeRedisCache(options => options.Configuration = redisConnectionString);
+    builder.Services.AddStackExchangeRedisCache(options =>
+    {
+        options.Configuration = redisConnectionString;
+        options.InstanceName = "CashPilot:";
+    });
     builder.Services.AddSingleton<ILockService, RedisDistributedLockService>();
 }
 else

@@ -103,5 +103,36 @@ public class CacheService(
     {
         return RemoveAsync(key).AsTask();
     }
+
+    public async Task<string> GetVersionAsync(string versionKey)
+    {
+        try
+        {
+            var version = await hybridCache.GetOrCreateAsync(
+                versionKey,
+                _ => ValueTask.FromResult(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString()));
+            return version ?? "0";
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Failed to get version for key {Key} from HybridCache.", versionKey);
+            return "0";
+        }
+    }
+
+    public async Task<string> BumpVersionAsync(string versionKey)
+    {
+        var newVersion = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString();
+        try
+        {
+            await hybridCache.SetAsync(versionKey, newVersion);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Failed to bump version for key {Key} in HybridCache.", versionKey);
+        }
+
+        return newVersion;
+    }
 }
 

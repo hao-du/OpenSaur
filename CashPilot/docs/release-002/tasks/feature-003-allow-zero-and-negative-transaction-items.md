@@ -10,16 +10,16 @@ This feature enables entering `0` and negative amounts for transaction items in 
 ## Tasks
 
 ### Item 1: Frontend Number Input Support for Negative & Zero Values
-- [ ] Update `Number.tsx` (or support an `allowNegative` prop) so that minus sign `-`, zero `0`, and decimal formatting work properly for negative inputs (`/^-?\d*\.?\d*$/`).
-- [ ] Update `formatInputNumberValue` in `numberFormatters.ts` to properly retain negative signs when formatting with thousands separators (e.g. `-1,234.56`).
+- [x] Update `Number.tsx` (or support an `allowNegative` prop) so that minus sign `-`, zero `0`, and decimal formatting work properly for negative inputs (`/^-?\d*\.?\d*$/`).
+- [x] Update `formatInputNumberValue` in `numberFormatters.ts` to properly retain negative signs when formatting with thousands separators (e.g. `-1,234.56`).
 
 ### Item 2: Transaction Items Editor & Total Calculation
-- [ ] Verify `TransactionItemsEditor.tsx` correctly accumulates negative and zero amounts into `totalAmount`.
-- [ ] Test line items in `CashFlowForm`, `TransferForm`, `BankAccountForm`, and `ExchangeForm`.
+- [x] Verify `TransactionItemsEditor.tsx` correctly accumulates negative and zero amounts into `totalAmount`.
+- [x] Test line items in `CashFlowForm`, `TransferForm`, `BankAccountForm`, and `ExchangeForm`.
 
 ### Item 3: Backend Validation & Persistence
-- [ ] Verify backend `TransactionItemRequest` and handlers accept zero and negative amounts without throwing validation errors.
-- [ ] Ensure database decimal column preserves the sign and value accurately.
+- [x] Verify backend `TransactionItemRequest` and handlers accept zero and negative amounts without throwing validation errors.
+- [x] Ensure database decimal column preserves the sign and value accurately.
 
 ---
 

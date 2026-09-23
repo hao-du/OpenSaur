@@ -28,7 +28,7 @@ public static class DeleteTemplateHandler
         template.IsActive = false;
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        await cache.RemoveAsync(CacheConstants.TemplatesKey(currentUserId));
+        await cache.BumpVersionAsync(CacheConstants.TemplatesVersionKey(currentUserId));
 
         return TypedResults.NoContent();
     }

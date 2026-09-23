@@ -69,7 +69,7 @@ public static class CreateTagHandler
 
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        await cache.RemoveAsync(CacheConstants.TagsKey(currentUserId));
+        await cache.BumpVersionAsync(CacheConstants.TagsVersionKey(currentUserId));
 
         return TypedResults.Created($"/api/tags/{entity.Id}", new TagDefinitionResponse(entity.Id, entity.Name, TagTermCodec.Decode(entity.MatchingTerms), entity.IsActive, entity.Marker, entity.IsDefaultMaker));
     }

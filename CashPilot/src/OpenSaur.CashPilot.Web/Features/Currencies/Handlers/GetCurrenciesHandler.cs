@@ -21,7 +21,8 @@ public static class GetCurrenciesHandler
         CancellationToken cancellationToken)
     {
         var currentUserId = ClaimHelper.GetCurrentUserId(user);
-        var cacheKey = CacheConstants.CurrenciesKey(currentUserId, isActive, name, shortName);
+        var version = await cache.GetVersionAsync(CacheConstants.CurrenciesVersionKey(currentUserId));
+        var cacheKey = CacheConstants.CurrenciesKey(currentUserId, version, isActive, name, shortName);
 
         var result = await cache.GetOrCreateAsync(
             cacheKey,

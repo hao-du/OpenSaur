@@ -29,7 +29,7 @@ public static class DeleteCurrencyHandler
         currency.IsActive = false;
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        await cache.RemoveAsync(CacheConstants.CurrenciesKey(currentUserId));
+        await cache.BumpVersionAsync(CacheConstants.CurrenciesVersionKey(currentUserId));
 
         return TypedResults.NoContent();
     }
