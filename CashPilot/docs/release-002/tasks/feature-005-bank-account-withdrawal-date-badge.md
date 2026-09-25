@@ -18,12 +18,12 @@ This feature adds a distinctive badge/tag in a different color at the bottom of 
 ## Tasks
 
 ### Item 1: Backend Projection of Maturity / Withdrawal Date
-- [ ] Add `DateOnly? MaturityDate` to `TransactionListItemResponse` in `TransactionDtos.cs`.
-- [ ] In `TransactionService.cs`, populate `bat.BankAccount.MaturityDate` when projecting Bank Account transactions in `GetListItemsAsync` and `LoadIncomeOutcomeRowsAsync`.
+- [x] Add `DateOnly? MaturityDate` to `TransactionListItemResponse` in `TransactionDtos.cs`.
+- [x] In `TransactionService.cs`, populate `bat.BankAccount.MaturityDate` when projecting Bank Account transactions in `GetListItemsAsync` and `LoadIncomeOutcomeRowsAsync`.
 
 ### Item 2: Frontend Display in TransactionListPanel
-- [ ] Update frontend `TransactionListItemDto` in `TransactionDto.ts` to include `maturityDate?: string | null`.
-- [ ] In `TransactionListPanel.tsx`, render a custom styled Chip for Bank Account cards that have a `maturityDate`:
+- [x] Update frontend `TransactionListItemDto` in `TransactionDto.ts` to include `maturityDate?: string | null`.
+- [x] In `TransactionListPanel.tsx`, render a custom styled Chip for Bank Account cards that have a `maturityDate`:
   - Icon: Lucide icon component (such as `CircleDollarSign` or `HandCoins` from `lucide-react`) passed via the Chip's `icon` prop.
   - Label: Formatted date using user's locale: `formatDate(item.maturityDate)`.
   - Color: Distinctive styling (e.g. custom soft teal/cyan or purple background) positioned clearly at the bottom of the card.

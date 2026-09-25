@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using OpenSaur.CashPilot.Web.Infrastructure.Auth;
+using OpenSaur.CashPilot.Web.Infrastructure.Caching;
 using OpenSaur.CashPilot.Web.Infrastructure.Helpers;
 using OpenSaur.CashPilot.Web.Infrastructure.Lock;
 
@@ -11,11 +12,12 @@ namespace OpenSaur.CashPilot.Web.Features.Auth.Refresh;
 
 public class AuthTokenRefreshCookieEvents(
     ITokenService tokenService,
+    ICacheService cacheService,
     ILockService lockService,
     ILogger<AuthTokenRefreshCookieEvents> logger) : CookieAuthenticationEvents
 {
     private static readonly TimeSpan RefreshWindow = TimeSpan.FromMinutes(5);
-    private static readonly TimeSpan LockTimeout = TimeSpan.FromSeconds(15);
+    private static readonly TimeSpan LockTimeout = TimeSpan.FromSeconds(30);
 
     public override async Task ValidatePrincipal(CookieValidatePrincipalContext context)
     {
@@ -42,21 +44,39 @@ public class AuthTokenRefreshCookieEvents(
             return;
         }
 
-        var userId = context.Principal != null ? ClaimHelper.GetCurrentUserId(context.Principal) : Guid.Empty;
-        var lockKey = LockKeys.TokenRefresh(userId != Guid.Empty ? userId.ToString() : "anonymous");
+        var userId = (context.Principal != null ? ClaimHelper.GetCurrentUserId(context.Principal) : Guid.Empty).ToString();
+        var cacheKey = CacheConstants.TokenSessionKey(userId);
+        var lockKey = LockKeys.TokenRefresh(userId);
 
-        var acquired = await lockService.TryAcquireLockAsync(lockKey, LockTimeout, context.HttpContext.RequestAborted);
-        if (!acquired)
+        // Check if another concurrent request has already refreshed the token session
+        var cachedSession = await cacheService.GetAsync<CachedTokenSession>(cacheKey, context.HttpContext.RequestAborted);
+        if (cachedSession is not null
+            && DateTimeOffset.TryParse(cachedSession.ExpiresAt, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var cachedExpiresAt)
+            && cachedExpiresAt - DateTimeOffset.UtcNow > RefreshWindow)
         {
-            // Another concurrent request is already refreshing the token.
-            // If the current token is still valid, let this request proceed smoothly.
+            UpdateTokensToCookieStore(context, cachedSession.AccessToken, cachedSession.RefreshToken, cachedSession.ExpiresAt);
+            return;
+        }
+
+        // Check or acquire distributed lock to coordinate parallel requests
+        var lockAcquired = await lockService.TryAcquireLockAsync(lockKey, LockTimeout, context.HttpContext.RequestAborted);
+        if (!lockAcquired)
+        {
+            // Another thread/instance is refreshing; wait and check cache
+            var awaitedSession = await cacheService.WaitForValueAsync<CachedTokenSession>(cacheKey, cancellationToken: context.HttpContext.RequestAborted);
+            if (awaitedSession is not null)
+            {
+                UpdateTokensToCookieStore(context, awaitedSession.AccessToken, awaitedSession.RefreshToken, awaitedSession.ExpiresAt);
+                return;
+            }
+
+            // If wait timed out but access token is still within validity, allow to proceed
             if (expiresAt > DateTimeOffset.UtcNow)
             {
                 return;
             }
 
-            // If already expired, reject principal
-            logger.LogWarning("Concurrent token refresh lock could not be acquired and access token already expired.");
+            logger.LogWarning("Concurrent token refresh lock could not be acquired and access token expired.");
             context.RejectPrincipal();
             await context.HttpContext.SignOutAsync(AuthConstants.DefaultCookieScheme);
             return;
@@ -82,6 +102,11 @@ public class AuthTokenRefreshCookieEvents(
             }
 
             var newExpiresAt = DateTimeOffset.UtcNow.AddSeconds(refreshResult.ExpiresIn).ToString("o", CultureInfo.InvariantCulture);
+
+            // Store in cache so concurrent parallel requests use the new tokens
+            var newSession = new CachedTokenSession(refreshResult.AccessToken, refreshResult.RefreshToken, newExpiresAt);
+            await cacheService.SetAsync(cacheKey, newSession, TimeSpan.FromSeconds(refreshResult.ExpiresIn), context.HttpContext.RequestAborted);
+
             UpdateTokensToCookieStore(context, refreshResult.AccessToken, refreshResult.RefreshToken, newExpiresAt);
             logger.LogInformation("Silent token refresh succeeded. Ticket renewed until {ExpiresAt}", newExpiresAt);
         }
@@ -96,7 +121,10 @@ public class AuthTokenRefreshCookieEvents(
         }
         finally
         {
-            await lockService.ReleaseLockAsync(lockKey, CancellationToken.None);
+            if (lockAcquired)
+            {
+                await lockService.ReleaseLockAsync(lockKey, CancellationToken.None);
+            }
         }
     }
 

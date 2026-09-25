@@ -11,6 +11,9 @@
   --tx-type-exchange-color: #ef6c00;
   --tx-type-exchange-bg: #fff3e0;
   --tx-type-exchange-border: #ffe0b2;
+  --tx-maturity-color: #0284c7;
+  --tx-maturity-bg: rgba(2, 132, 199, 0.08);
+  --tx-maturity-border: rgba(2, 132, 199, 0.35);
 }
 
 .tx-type-icon {

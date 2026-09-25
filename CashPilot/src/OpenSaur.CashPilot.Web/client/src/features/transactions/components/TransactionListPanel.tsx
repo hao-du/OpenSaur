@@ -7,6 +7,7 @@ import {
 } from "@mui/material";
 import {
   Banknote,
+  CircleDollarSign,
   Landmark,
   Pencil,
   Repeat,
@@ -178,7 +179,7 @@ export function TransactionListPanel({
                           <Stack
                             direction="row"
                             spacing={0.75}
-                            sx={{ flexWrap: "wrap" }}
+                            sx={{ flexWrap: "wrap", rowGap: 0.75 }}
                           >
                             {item.bankName ? (
                               <Chip
@@ -242,7 +243,7 @@ export function TransactionListPanel({
                           <Stack
                             direction="row"
                             spacing={0.75}
-                            sx={{ flexWrap: "wrap" }}
+                            sx={{ flexWrap: "wrap", rowGap: 0.75 }}
                           >
                             {item.tags.map((tag) => (
                               <Chip
@@ -250,14 +251,24 @@ export function TransactionListPanel({
                                 label={tag}
                                 size="small"
                                 variant="outlined"
-                                sx={{
-                                  color: "secondary.main",
-                                  borderColor: "rgba(255,138,76,0.28)",
-                                  backgroundColor: "rgba(255,138,76,0.10)",
-                                  fontWeight: 600,
-                                }}
+                                sx={layoutStyles.tagChip}
                               />
                             ))}
+                          </Stack>
+                        ) : null}
+                        {item.type === "BankAccount" && item.maturityDate ? (
+                          <Stack
+                            direction="row"
+                            spacing={0.75}
+                            sx={{ flexWrap: "wrap", rowGap: 0.75 }}
+                          >
+                            <Chip
+                              size="small"
+                              icon={<CircleDollarSign size={13} />}
+                              label={formatDate(item.maturityDate)}
+                              variant="outlined"
+                              sx={layoutStyles.maturityChip}
+                            />
                           </Stack>
                         ) : null}
                       </Stack>

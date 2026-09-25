@@ -45,7 +45,8 @@ public sealed class TransactionService(CashPilotDbContext dbContext, TagService 
                     bat.Transaction.Amount,
                     (byte)bat.Transaction.Direction,
                     bat.Transaction.TransactionDate,
-                    bat.Transaction.IsActive))
+                    bat.Transaction.IsActive,
+                    bat.BankAccount.MaturityDate))
                 .ToListAsync(cancellationToken);
         }
 
@@ -104,7 +105,8 @@ public sealed class TransactionService(CashPilotDbContext dbContext, TagService 
                     t.Amount,
                     (byte)t.Direction,
                     t.TransactionDate,
-                    t.IsActive))
+                    t.IsActive,
+                    bat.BankAccount.MaturityDate))
                 .ToListAsync(cancellationToken);
 
             results.AddRange(bankAccountResults);
@@ -424,7 +426,8 @@ public sealed class TransactionService(CashPilotDbContext dbContext, TagService 
                 bat.Transaction.Amount,
                 (byte)bat.Transaction.Direction,
                 bat.Transaction.TransactionDate,
-                bat.BankAccount.IsActive))
+                bat.BankAccount.IsActive,
+                bat.BankAccount.MaturityDate))
             .ToListAsync(cancellationToken);
         rows.AddRange(bankAccountRows);
 

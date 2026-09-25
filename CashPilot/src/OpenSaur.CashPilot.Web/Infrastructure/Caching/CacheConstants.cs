@@ -70,4 +70,7 @@ public static class CacheConstants
         var t = !string.IsNullOrWhiteSpace(tag) ? tag.Trim().ToLowerInvariant() : "all";
         return $"{userId}:report:income-outcome:{year}:{curr}:{t}";
     }
+
+    // Token Session
+    public static string TokenSessionKey(string userId) => $"{userId}:token-session";
 }

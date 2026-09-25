@@ -25,7 +25,8 @@ public sealed record TransactionListItemResponse(
     decimal Amount,
     byte Direction,
     DateOnly TransactionDate,
-    bool IsActive);
+    bool IsActive,
+    DateOnly? MaturityDate = null);
 public sealed record BankAccountLookupResponse(
     Guid Id,
     string BankShortName,

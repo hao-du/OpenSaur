@@ -18,6 +18,7 @@ public class UserSessionCookieStore(
         var sessionId = GenerateSessionId();
         var cacheKey = GetCacheKey(sessionId);
 
+        ticket.Properties.ExpiresUtc = DateTimeOffset.UtcNow.Add(DefaultSlidingExpiration);
         await SaveTicketAsync(cacheKey, ticket);
         logger.LogDebug("Created user session {SessionId}", sessionId);
 
@@ -27,6 +28,7 @@ public class UserSessionCookieStore(
     public async Task RenewAsync(string key, AuthenticationTicket ticket)
     {
         var cacheKey = GetCacheKey(key);
+        ticket.Properties.ExpiresUtc = DateTimeOffset.UtcNow.Add(DefaultSlidingExpiration);
         await SaveTicketAsync(cacheKey, ticket);
         logger.LogDebug("Renewed user session {SessionId}", key);
     }
@@ -66,11 +68,6 @@ public class UserSessionCookieStore(
         {
             SlidingExpiration = DefaultSlidingExpiration
         };
-
-        if (ticket.Properties.ExpiresUtc.HasValue)
-        {
-            options.AbsoluteExpiration = ticket.Properties.ExpiresUtc.Value;
-        }
 
         await distributedCache.SetAsync(cacheKey, bytes, options);
     }

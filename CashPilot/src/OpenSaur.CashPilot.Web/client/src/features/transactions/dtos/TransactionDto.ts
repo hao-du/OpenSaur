@@ -17,6 +17,7 @@ export type TransactionListItemDto = {
   direction: number;
   transactionDate: string;
   isActive: boolean;
+  maturityDate?: string | null;
 };
 
 export type AutoTagRequestDto = {

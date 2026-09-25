@@ -25,3 +25,4 @@ Ensure strict data consistency, seamless authentication resilience, flexible tra
 3. `docs/release-002/tasks/feature-003-allow-zero-and-negative-transaction-items.md`: Allow 0 and negative amount values for Transaction Items in CashFlow, Transfer, BankAccount, and Exchange forms (both UI and backend).
 4. `docs/release-002/tasks/feature-004-sub-transaction-editing-validation.md`: Prevent Create/Save when sub-transactions are in Add/Edit mode in BankAccount and Transfer forms, with explicit validation messages.
 5. `docs/release-002/tasks/feature-005-bank-account-withdrawal-date-badge.md`: Display a distinctive withdrawal / maturity date chip on Bank Account transaction cards.
+6. `docs/release-002/tasks/feature-006-auth-session-resilience.md`: Fix UserSessionCookieStore Redis expiration and port Zentry's parallel token refresh coordination to eliminate 401s.

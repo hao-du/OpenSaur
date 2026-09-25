@@ -275,5 +275,15 @@ export const layoutStyles: Record<string, SxProps<Theme>> = {
     borderColor: tagChipBorder,
     backgroundColor: tagChipBg,
     fontWeight: 600
+  },
+  maturityChip: {
+    color: "var(--tx-maturity-color, info.main)",
+    borderColor: "var(--tx-maturity-border, rgba(2, 132, 199, 0.35))",
+    backgroundColor: "var(--tx-maturity-bg, rgba(2, 132, 199, 0.08))",
+    fontWeight: 600,
+    "& .MuiChip-icon": {
+      color: "inherit",
+      marginLeft: "4px",
+    },
   }
 };
