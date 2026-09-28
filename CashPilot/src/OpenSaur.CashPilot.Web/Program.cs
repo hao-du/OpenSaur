@@ -27,6 +27,8 @@ using OpenSaur.CashPilot.Web.Infrastructure.Caching;
 using OpenSaur.CashPilot.Web.Infrastructure.Lock;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Extensions.Caching.StackExchangeRedis;
+using OpenSaur.CashPilot.Web.Infrastructure.Configuration;
+using OpenSaur.CashPilot.Web.Infrastructure.Messaging;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -53,6 +55,8 @@ builder.Services.AddDbContext<CashPilotDbContext>(options =>
 builder.Services.AddHttpContextAccessor();
 builder.Services.Configure<OidcOptions>(builder.Configuration.GetSection("Oidc"));
 builder.Services.Configure<AutoTaggingOptions>(builder.Configuration.GetSection(AutoTaggingOptions.SectionName));
+builder.Services.Configure<KafkaOptions>(builder.Configuration.GetSection(KafkaOptions.SectionName));
+builder.Services.AddHostedService<KafkaUserSyncConsumerService>();
 builder.Services.AddHttpClient<TransactionAutoTagService>();
 builder.Services.AddHttpClient(CashPilotTokenService.HttpClientName, client =>
     {

@@ -22,7 +22,11 @@ type UserFormProps = {
   initialValues: UserFormValues;
   isEditMode: boolean;
   isSubmitting: boolean;
+  isSyncing?: boolean;
+  onSync?: () => Promise<void>;
   onSubmit: (values: UserFormValues) => Promise<void>;
+  syncErrorMessage?: string | null;
+  syncSuccessMessage?: string | null;
 };
 
 export function UserForm({
@@ -30,7 +34,11 @@ export function UserForm({
   initialValues,
   isEditMode,
   isSubmitting,
-  onSubmit
+  isSyncing = false,
+  onSync,
+  onSubmit,
+  syncErrorMessage,
+  syncSuccessMessage
 }: UserFormProps) {
   const { t } = useSettings();
   const { control, handleSubmit } = useForm<UserFormValues>({
@@ -47,6 +55,8 @@ export function UserForm({
       spacing={3}
     >
       {errorMessage ? <Alert severity="error">{errorMessage}</Alert> : null}
+      {syncErrorMessage ? <Alert severity="error">{syncErrorMessage}</Alert> : null}
+      {syncSuccessMessage ? <Alert severity="success">{syncSuccessMessage}</Alert> : null}
       <Text
         control={control}
         disabled={isSubmitting}
@@ -99,8 +109,23 @@ export function UserForm({
         />
       ) : null}
       <Stack direction="row" justifyContent="flex-end" spacing={1.5}>
+        {isEditMode && onSync ? (
+          <ActionButton
+            color="secondary"
+            disabled={isSubmitting || isSyncing}
+            onClick={async e => {
+              e.preventDefault();
+              await onSync();
+            }}
+            startIcon={isSyncing ? <CircularProgress color="inherit" size={18} /> : undefined}
+            type="button"
+            variant="outlined"
+          >
+            {isSyncing ? t("action.syncing") : t("action.sync")}
+          </ActionButton>
+        ) : null}
         <ActionButton
-          disabled={isSubmitting}
+          disabled={isSubmitting || isSyncing}
           startIcon={isSubmitting ? <CircularProgress color="inherit" size={18} /> : undefined}
           type="submit"
         >

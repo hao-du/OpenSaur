@@ -7,6 +7,7 @@ using OpenSaur.Zentry.Web.Domain.Identity;
 using OpenSaur.Zentry.Web.Infrastructure.Database;
 using OpenSaur.Zentry.Web.Infrastructure.Helpers;
 using OpenSaur.Zentry.Web.Infrastructure.Lock;
+using OpenSaur.Zentry.Web.Infrastructure.Messaging;
 using System.Security.Claims;
 using AppHttpResults = OpenSaur.Zentry.Web.Infrastructure.Http.HttpResults;
 
@@ -22,6 +23,7 @@ public static class CreateUserHandler
         ClaimsPrincipal user,
         ApplicationDbContext dbContext,
         ILockService lockService,
+        IUserSyncPublisher userSyncPublisher,
         CancellationToken cancellationToken)
     {
         var validationResult = await validator.ValidateAsync(request, cancellationToken);
@@ -96,6 +98,8 @@ public static class CreateUserHandler
 
             dbContext.Users.Add(targetUser);
             await dbContext.SaveChangesAsync(cancellationToken);
+
+            await userSyncPublisher.PublishUserAsync(targetUser.Id, "Created", cancellationToken);
 
             return TypedResults.Ok(new CreateUserResponse(targetUser.Id));
         }

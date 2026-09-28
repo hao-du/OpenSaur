@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using OpenSaur.Zentry.Web.Features.Settings.Dtos;
 using OpenSaur.Zentry.Web.Infrastructure.Database;
 using OpenSaur.Zentry.Web.Infrastructure.Helpers;
+using OpenSaur.Zentry.Web.Infrastructure.Messaging;
 using System.Security.Claims;
 using AppHttpResults = OpenSaur.Zentry.Web.Infrastructure.Http.HttpResults;
 
@@ -17,6 +18,7 @@ public static class UpdateSettingsHandler
         IValidator<UpdateSettingsRequest> validator,
         ClaimsPrincipal user,
         ApplicationDbContext dbContext,
+        IUserSyncPublisher syncPublisher,
         CancellationToken cancellationToken)
     {
         var validationResult = await validator.ValidateAsync(request, cancellationToken);
@@ -42,6 +44,7 @@ public static class UpdateSettingsHandler
         currentUser.UpdatedBy = currentUserId;
 
         await dbContext.SaveChangesAsync(cancellationToken);
+        await syncPublisher.PublishUserAsync(currentUser.Id, "Updated", cancellationToken);
 
         return TypedResults.Ok(new SettingsResponse(request.Locale, request.TimeZone));
     }

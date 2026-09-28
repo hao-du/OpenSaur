@@ -23,8 +23,8 @@ public static class RoleEndpoints
             .RequireAuthorization(AppAuthorization.AdminCanManageOrSuperAdminPolicyName);
         roles.MapGet("/{roleId:guid}/users", GetRoleUsersHandler.HandleAsync)
             .RequireAuthorization(AppAuthorization.AdminCanManageOrSuperAdminPolicyName);
-        roles.MapPut("/{roleId:guid}/users", (Guid roleId, UpdateRoleUsersRequest request, ClaimsPrincipal user, ApplicationDbContext dbContext, OpenSaur.Zentry.Web.Infrastructure.Lock.ILockService lockService, CancellationToken cancellationToken) =>
-                UpdateRoleUsersHandler.HandleAsync(request with { RoleId = roleId }, user, dbContext, lockService, cancellationToken))
+        roles.MapPut("/{roleId:guid}/users", (Guid roleId, UpdateRoleUsersRequest request, ClaimsPrincipal user, ApplicationDbContext dbContext, OpenSaur.Zentry.Web.Infrastructure.Lock.ILockService lockService, OpenSaur.Zentry.Web.Infrastructure.Messaging.IUserSyncPublisher userSyncPublisher, CancellationToken cancellationToken) =>
+                UpdateRoleUsersHandler.HandleAsync(request with { RoleId = roleId }, user, dbContext, lockService, userSyncPublisher, cancellationToken))
             .RequireAuthorization(AppAuthorization.AdminCanManageOrSuperAdminPolicyName);
         roles.MapPost("/create", CreateRoleHandler.HandleAsync)
             .RequireAuthorization(AppAuthorization.SuperAdminOnlyPolicyName);

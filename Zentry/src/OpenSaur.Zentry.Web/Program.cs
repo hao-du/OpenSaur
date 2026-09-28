@@ -33,6 +33,7 @@ using OpenSaur.Zentry.Web.Infrastructure.Configuration;
 using OpenSaur.Zentry.Web.Infrastructure.Database;
 using Microsoft.AspNetCore.HttpOverrides;
 using OpenSaur.Zentry.Web.Infrastructure.Hosting;
+using OpenSaur.Zentry.Web.Infrastructure.Messaging;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -53,6 +54,9 @@ var connectionString = builder.Configuration.GetConnectionString("ZentryDb")
 
 builder.Services.Configure<OidcOptions>(
     builder.Configuration.GetSection(OidcOptions.SectionName));
+builder.Services.Configure<KafkaOptions>(
+    builder.Configuration.GetSection(KafkaOptions.SectionName));
+builder.Services.AddKafkaProducer();
 var redisConnectionString = builder.Configuration.GetConnectionString("Redis");
 if (!string.IsNullOrWhiteSpace(redisConnectionString))
 {

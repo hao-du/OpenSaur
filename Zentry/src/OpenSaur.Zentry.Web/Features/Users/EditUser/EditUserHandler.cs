@@ -7,6 +7,7 @@ using OpenSaur.Zentry.Web.Infrastructure.Cache;
 using OpenSaur.Zentry.Web.Infrastructure.Database;
 using OpenSaur.Zentry.Web.Infrastructure.Helpers;
 using OpenSaur.Zentry.Web.Infrastructure.Lock;
+using OpenSaur.Zentry.Web.Infrastructure.Messaging;
 using System.Security.Claims;
 using AppHttpResults = OpenSaur.Zentry.Web.Infrastructure.Http.HttpResults;
 
@@ -23,6 +24,7 @@ public static class EditUserHandler
         ApplicationDbContext dbContext,
         ICacheService cacheService,
         ILockService lockService,
+        IUserSyncPublisher userSyncPublisher,
         CancellationToken cancellationToken)
     {
         var validationResult = await validator.ValidateAsync(request, cancellationToken);
@@ -75,7 +77,7 @@ public static class EditUserHandler
                     }
                 }
 
-                return await SaveUserChangesAsync(request, targetUser, user, dbContext, cacheService, cancellationToken);
+                return await SaveUserChangesAsync(request, targetUser, user, dbContext, cacheService, userSyncPublisher, cancellationToken);
             }
             finally
             {
@@ -83,7 +85,7 @@ public static class EditUserHandler
             }
         }
 
-        return await SaveUserChangesAsync(request, targetUser, user, dbContext, cacheService, cancellationToken);
+        return await SaveUserChangesAsync(request, targetUser, user, dbContext, cacheService, userSyncPublisher, cancellationToken);
     }
 
     private static async Task<Results<NoContent, ValidationProblem, NotFound<ProblemDetails>, Conflict<ProblemDetails>, BadRequest<ProblemDetails>>> SaveUserChangesAsync(
@@ -92,6 +94,7 @@ public static class EditUserHandler
         ClaimsPrincipal user,
         ApplicationDbContext dbContext,
         ICacheService cacheService,
+        IUserSyncPublisher userSyncPublisher,
         CancellationToken cancellationToken)
     {
         var normalizedUserName = CreateUserHandler.NormalizeIdentityValue(request.UserName);
@@ -115,6 +118,8 @@ public static class EditUserHandler
         targetUser.UpdatedBy = ClaimHelper.GetCurrentUserId(user);
 
         await dbContext.SaveChangesAsync(cancellationToken);
+
+        await userSyncPublisher.PublishUserAsync(targetUser.Id, "Updated", cancellationToken);
 
         // Invalidate cached user profile so user info updates are reflected
         await cacheService.RemoveAsync(CacheKeys.UserProfile(request.Id), cancellationToken);

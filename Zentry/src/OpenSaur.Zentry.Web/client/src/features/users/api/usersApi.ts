@@ -35,3 +35,7 @@ export async function getUserRoles(userId: string) {
 export async function assignUserRoles(userId: string, request: AssignUserRolesRequestDto) {
   await client.put<void, AssignUserRolesRequestDto>(`/api/user/${userId}/roles`, request);
 }
+
+export async function syncUser(userId: string) {
+  await client.post(`/api/user/${userId}/sync`);
+}

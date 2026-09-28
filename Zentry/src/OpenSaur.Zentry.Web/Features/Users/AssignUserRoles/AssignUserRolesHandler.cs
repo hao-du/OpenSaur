@@ -7,6 +7,7 @@ using OpenSaur.Zentry.Web.Infrastructure.Cache;
 using OpenSaur.Zentry.Web.Infrastructure.Database;
 using OpenSaur.Zentry.Web.Infrastructure.Helpers;
 using OpenSaur.Zentry.Web.Infrastructure.Lock;
+using OpenSaur.Zentry.Web.Infrastructure.Messaging;
 using System.Security.Claims;
 using AppHttpResults = OpenSaur.Zentry.Web.Infrastructure.Http.HttpResults;
 
@@ -22,6 +23,7 @@ public static class AssignUserRolesHandler
         ApplicationDbContext dbContext,
         ICacheService cacheService,
         ILockService lockService,
+        IUserSyncPublisher userSyncPublisher,
         CancellationToken cancellationToken)
     {
         var workspaceId = ClaimHelper.GetWorkspaceId(user);
@@ -99,6 +101,8 @@ public static class AssignUserRolesHandler
             }
 
             await dbContext.SaveChangesAsync(cancellationToken);
+
+            await userSyncPublisher.PublishUserAsync(request.Id, "Updated", cancellationToken);
 
             // Invalidate cached user profile so new roles take effect immediately
             await cacheService.RemoveAsync(CacheKeys.UserProfile(request.Id), cancellationToken);

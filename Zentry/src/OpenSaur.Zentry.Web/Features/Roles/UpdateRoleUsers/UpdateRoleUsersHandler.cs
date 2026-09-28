@@ -6,6 +6,7 @@ using OpenSaur.Zentry.Web.Infrastructure;
 using OpenSaur.Zentry.Web.Infrastructure.Database;
 using OpenSaur.Zentry.Web.Infrastructure.Helpers;
 using OpenSaur.Zentry.Web.Infrastructure.Lock;
+using OpenSaur.Zentry.Web.Infrastructure.Messaging;
 using System.Security.Claims;
 using AppHttpResults = OpenSaur.Zentry.Web.Infrastructure.Http.HttpResults;
 
@@ -20,6 +21,7 @@ public static class UpdateRoleUsersHandler
         ClaimsPrincipal user,
         ApplicationDbContext dbContext,
         ILockService lockService,
+        IUserSyncPublisher userSyncPublisher,
         CancellationToken cancellationToken)
     {
         var workspaceId = ClaimHelper.GetWorkspaceId(user);
@@ -99,6 +101,15 @@ public static class UpdateRoleUsersHandler
             }
 
             await dbContext.SaveChangesAsync(cancellationToken);
+
+            var affectedUserIds = selectedUserIds
+                .Concat(existingAssignments.Select(a => a.UserId))
+                .Distinct()
+                .ToList();
+            if (affectedUserIds.Count > 0)
+            {
+                await userSyncPublisher.PublishUsersAsync(affectedUserIds, "Updated", cancellationToken);
+            }
 
             return TypedResults.NoContent();
         }
