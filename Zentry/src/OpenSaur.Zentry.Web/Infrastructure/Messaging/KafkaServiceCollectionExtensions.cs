@@ -1,4 +1,4 @@
-using Confluent.Kafka;
+﻿using Confluent.Kafka;
 using Microsoft.Extensions.Options;
 using OpenSaur.Zentry.Web.Infrastructure.Configuration;
 
@@ -57,7 +57,7 @@ public sealed class KafkaProducerAccessor : IKafkaProducerAccessor, IDisposable
 
         if (!string.IsNullOrWhiteSpace(options.SslCaCertificate))
         {
-            config.SslCaPem = options.SslCaCertificate;
+            config.SslCaPem = NormalizePemCertificate(options.SslCaCertificate);
         }
         else if (!string.IsNullOrWhiteSpace(options.SslCaLocation))
         {
@@ -83,6 +83,41 @@ public sealed class KafkaProducerAccessor : IKafkaProducerAccessor, IDisposable
     {
         Producer?.Flush(TimeSpan.FromSeconds(5));
         Producer?.Dispose();
+    }
+
+    private static string NormalizePemCertificate(string rawCert)
+    {
+        if (string.IsNullOrWhiteSpace(rawCert))
+        {
+            return string.Empty;
+        }
+
+        var cert = rawCert.Replace("\\n", "\n").Trim();
+        const string beginHeader = "-----BEGIN CERTIFICATE-----";
+        const string endHeader = "-----END CERTIFICATE-----";
+
+        if (!cert.Contains(beginHeader) || !cert.Contains(endHeader))
+        {
+            return cert;
+        }
+
+        var startIndex = cert.IndexOf(beginHeader, StringComparison.Ordinal) + beginHeader.Length;
+        var endIndex = cert.IndexOf(endHeader, StringComparison.Ordinal);
+        var base64 = cert[startIndex..endIndex]
+            .Replace(" ", "")
+            .Replace("\r", "")
+            .Replace("\n", "");
+
+        var sb = new System.Text.StringBuilder();
+        sb.AppendLine(beginHeader);
+        for (var i = 0; i < base64.Length; i += 64)
+        {
+            var lineLength = Math.Min(64, base64.Length - i);
+            sb.AppendLine(base64.Substring(i, lineLength));
+        }
+        sb.AppendLine(endHeader);
+
+        return sb.ToString();
     }
 }
 
