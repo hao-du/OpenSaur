@@ -7,7 +7,7 @@ type ReportType = "marker-monthly-income-outcome" | "date-range-income-outcome";
 export function useReportsPageLogic() {
   const now = new Date();
   const currentYear = now.getUTCFullYear();
-  const [selectedReportType, setSelectedReportType] = useState<ReportType>("marker-monthly-income-outcome");
+  const [selectedReportType, setSelectedReportType] = useState<ReportType>("date-range-income-outcome");
   const [selectedYear, setSelectedYear] = useState(currentYear);
   const [selectedMarkerTag, setSelectedMarkerTag] = useState<string>("");
   const [fromDate, setFromDate] = useState<string>(`${currentYear}-01`);

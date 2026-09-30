@@ -33,8 +33,8 @@ export function ReportsPage() {
               setSelectedReportType(event.target.value as typeof selectedReportType);
             }}
           >
-            <MenuItem value="marker-monthly-income-outcome">{t("transactions.incomeOutcome")}</MenuItem>
             <MenuItem value="date-range-income-outcome">{t("reports.dateRangeIncomeOutcome")}</MenuItem>
+            <MenuItem value="marker-monthly-income-outcome">{t("transactions.incomeOutcome")}</MenuItem>
           </Select>
         </FormControl>
       }
