@@ -2,13 +2,16 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useCurrenciesQuery } from "../../currencies/hooks/useCurrenciesQuery";
 import { useMarkerTagsQuery } from "../../transactions/hooks/dashboard/useMarkerTagsQuery";
 
-type ReportType = "marker-monthly-income-outcome";
+type ReportType = "marker-monthly-income-outcome" | "date-range-income-outcome";
 
 export function useReportsPageLogic() {
   const now = new Date();
+  const currentYear = now.getUTCFullYear();
   const [selectedReportType, setSelectedReportType] = useState<ReportType>("marker-monthly-income-outcome");
-  const [selectedYear, setSelectedYear] = useState(now.getUTCFullYear());
+  const [selectedYear, setSelectedYear] = useState(currentYear);
   const [selectedMarkerTag, setSelectedMarkerTag] = useState<string>("");
+  const [fromDate, setFromDate] = useState<string>(`${currentYear}-01`);
+  const [toDate, setToDate] = useState<string>(`${currentYear}-12`);
   const markerTagsQuery = useMarkerTagsQuery();
   const currenciesQuery = useCurrenciesQuery({ isActive: true, name: "", shortName: "" });
 
@@ -34,12 +37,16 @@ export function useReportsPageLogic() {
 
   return {
     defaultCurrencyCode: defaultCurrency?.shortName ?? "",
+    fromDate,
     markerTagOptions,
     selectedMarkerTag,
     selectedReportType,
     selectedYear,
+    setFromDate,
     setSelectedMarkerTag,
     setSelectedReportType,
     setSelectedYear,
+    setToDate,
+    toDate,
   };
 }

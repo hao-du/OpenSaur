@@ -1,72 +1,79 @@
 import { BarChart } from "@mui/x-charts/BarChart";
-import { Box, CircularProgress, FormControl, IconButton, MenuItem, Paper, Select, Stack, useTheme } from "@mui/material";
-import { BarChart3, ChevronLeft, ChevronRight } from "lucide-react";
-import { useIncomeOutcomeChartLogic } from "./useIncomeOutcomeChartLogic";
+import { Box, CircularProgress, Paper, Stack, useTheme } from "@mui/material";
+import { BarChart3 } from "lucide-react";
+import { useDateRangeIncomeOutcomeChartLogic } from "./useDateRangeIncomeOutcomeChartLogic";
 import { LabelText } from "../../../../components/atoms/LabelText";
+import { DatePicker } from "../../../../components/atoms/DatePicker";
 import { useSettings } from "../../../settings/provider/SettingProvider";
-import type { SelectChangeEvent } from "@mui/material";
 
-interface IncomeOutcomeChartProps {
+interface DateRangeIncomeOutcomeChartProps {
   defaultCurrencyCode: string;
-  markerTag: string;
-  selectedYear: number;
-  markerTagOptions: string[];
-  onMarkerTagChange: (value: string) => void;
-  onYearChange: (value: number) => void;
+  fromDate: string;
+  toDate: string;
+  onFromDateChange: (value: string) => void;
+  onToDateChange: (value: string) => void;
 }
 
-export function IncomeOutcomeChart({
+export function DateRangeIncomeOutcomeChart({
   defaultCurrencyCode,
-  markerTag,
-  selectedYear,
-  markerTagOptions,
-  onMarkerTagChange,
-  onYearChange,
-}: IncomeOutcomeChartProps) {
+  fromDate,
+  toDate,
+  onFromDateChange,
+  onToDateChange,
+}: DateRangeIncomeOutcomeChartProps) {
   const { formatAmount, t } = useSettings();
   const theme = useTheme();
-  const { monthlyPoints, isLoading } = useIncomeOutcomeChartLogic(markerTag, selectedYear);
+
+  // From Date can be at month resolution "YYYY-MM" or full "YYYY-MM-DD", normalize to full month boundaries for backend query
+  const normalizedFromDate = fromDate.length === 7 ? `${fromDate}-01` : fromDate;
+  const normalizedToDate = toDate.length === 7
+    ? (() => {
+        const [yearStr, monthStr] = toDate.split("-");
+        const y = parseInt(yearStr, 10);
+        const m = parseInt(monthStr, 10);
+        const lastDay = new Date(y, m, 0).getDate();
+        return `${toDate}-${String(lastDay).padStart(2, "0")}`;
+      })()
+    : toDate;
+
+  const { monthlyPoints, isLoading } = useDateRangeIncomeOutcomeChartLogic(
+    normalizedFromDate,
+    normalizedToDate
+  );
 
   return (
     <Paper elevation={0} sx={{ border: "1px solid rgba(33,33,33,0.10)", p: 2 }}>
       <Stack spacing={2}>
-        <Stack direction={{ xs: "column", md: "row" }} spacing={1} sx={{ alignItems: { xs: "flex-start", md: "center" }, justifyContent: "space-between" }}>
+        <Stack
+          direction={{ xs: "column", sm: "row" }}
+          spacing={2}
+          sx={{ alignItems: { xs: "flex-start", sm: "center" }, justifyContent: "space-between" }}
+        >
           <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
             <BarChart3 size={18} />
             <LabelText sx={{ fontWeight: 700 }}>
-              {t("transactions.incomeOutcome")}{defaultCurrencyCode.length > 0 ? ` (${defaultCurrencyCode})` : ""}
+              {t("reports.dateRangeIncomeOutcome")}{defaultCurrencyCode.length > 0 ? ` (${defaultCurrencyCode})` : ""}
             </LabelText>
           </Stack>
 
-          <Stack direction="row" spacing={1} sx={{ alignItems: "center", flexWrap: "wrap" }}>
-            <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
-              <IconButton aria-label={t("reports.previousYear")} onClick={() => onYearChange(selectedYear - 1)} size="small">
-                <ChevronLeft size={18} />
-              </IconButton>
-              <LabelText sx={{ minWidth: 72, textAlign: "center", fontWeight: 700 }}>
-                {selectedYear}
-              </LabelText>
-              <IconButton aria-label={t("reports.nextYear")} onClick={() => onYearChange(selectedYear + 1)} size="small">
-                <ChevronRight size={18} />
-              </IconButton>
-            </Stack>
+          <Stack direction="row" spacing={1.5} sx={{ alignItems: "center", flexWrap: "wrap" }}>
+            <Box sx={{ width: 150 }}>
+              <DatePicker
+                label={t("reports.fromDate")}
+                mode="month"
+                value={fromDate}
+                onChange={(val) => onFromDateChange(val)}
+              />
+            </Box>
 
-            <FormControl size="small" sx={{ minWidth: 220 }}>
-              <Select
-                displayEmpty
-                value={markerTag}
-                onChange={(event: SelectChangeEvent) => {
-                  onMarkerTagChange(event.target.value);
-                }}
-              >
-                <MenuItem value="">{t("reports.monthly")}</MenuItem>
-                {markerTagOptions.map((tagName) => (
-                  <MenuItem key={tagName} value={tagName}>
-                    {tagName}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+            <Box sx={{ width: 150 }}>
+              <DatePicker
+                label={t("reports.toDate")}
+                mode="month"
+                value={toDate}
+                onChange={(val) => onToDateChange(val)}
+              />
+            </Box>
           </Stack>
         </Stack>
 

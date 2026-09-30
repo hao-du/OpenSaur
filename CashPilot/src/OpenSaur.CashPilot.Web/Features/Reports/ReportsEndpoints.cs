@@ -16,6 +16,7 @@ public static class ReportsEndpoints
             .RequireAuthorization(AppAuthorization.CanAccessPolicyName);
 
         reports.MapGet("/income-outcome", GetIncomeOutcomeHandler.HandleAsync);
+        reports.MapGet("/income-outcome-by-range", GetIncomeOutcomeByRangeHandler.HandleAsync);
 
         return app;
     }
