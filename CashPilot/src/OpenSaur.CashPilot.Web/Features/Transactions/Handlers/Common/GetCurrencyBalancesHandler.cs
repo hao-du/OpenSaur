@@ -43,6 +43,7 @@ public static class GetCurrencyBalancesHandler
             .AsNoTracking()
             .Where(x =>
                 x.IsActive &&
+                x.BankAccount.IsActive &&
                 x.Transaction.IsActive &&
                 x.Transaction.OwnerId == currentUserId &&
                 x.TransactionType != BankAccountMovementType.InitialDeposit &&

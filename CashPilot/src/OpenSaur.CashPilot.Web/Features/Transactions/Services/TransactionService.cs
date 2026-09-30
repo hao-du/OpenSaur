@@ -22,6 +22,8 @@ public sealed class TransactionService(CashPilotDbContext dbContext, TagService 
             return await dbContext.BankAccountTransactions
                 .AsNoTracking()
                 .Where(bat =>
+                    bat.IsActive &&
+                    bat.BankAccount.IsActive &&
                     bat.Transaction.IsActive &&
                     bat.Transaction.OwnerId == currentUserId &&
                     bat.TransactionType == BankAccountMovementType.InitialDeposit &&
@@ -71,7 +73,7 @@ public sealed class TransactionService(CashPilotDbContext dbContext, TagService 
         }
 
         var bankAccountTransactionsQuery = dbContext.BankAccountTransactions.AsNoTracking()
-            .Where(bat => bat.IsActive && bat.Transaction.IsActive && bat.Transaction.OwnerId == currentUserId);
+            .Where(bat => bat.IsActive && bat.BankAccount.IsActive && bat.Transaction.IsActive && bat.Transaction.OwnerId == currentUserId);
 
         var cashFlowsQuery = dbContext.CashFlows.AsNoTracking()
             .Where(cf => cf.IsActive && cf.Transaction.IsActive && cf.Transaction.OwnerId == currentUserId);
@@ -317,6 +319,7 @@ public sealed class TransactionService(CashPilotDbContext dbContext, TagService 
                     .AsNoTracking()
                     .Where(x =>
                         x.IsActive &&
+                        x.BankAccount.IsActive &&
                         x.Transaction.IsActive &&
                         x.Transaction.OwnerId == currentUserId &&
                         x.Transaction.CurrencyId == defaultCurrencyId &&
@@ -400,6 +403,7 @@ public sealed class TransactionService(CashPilotDbContext dbContext, TagService 
             .AsNoTracking()
             .Where(x =>
                 x.IsActive &&
+                x.BankAccount.IsActive &&
                 x.Transaction.IsActive &&
                 x.Transaction.OwnerId == currentUserId &&
                 (!currencyId.HasValue || x.Transaction.CurrencyId == currencyId.Value) &&

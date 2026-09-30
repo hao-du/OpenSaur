@@ -28,3 +28,4 @@ Ensure strict data consistency, seamless authentication resilience, flexible tra
 6. `docs/release-002/tasks/feature-006-auth-session-resilience.md`: Fix UserSessionCookieStore Redis expiration and port Zentry's parallel token refresh coordination to eliminate 401s.
 7. `docs/release-002/tasks/feature-007-kafka-user-sync-consumer.md`: Implement Kafka consumer background job to sync users, workspaces, roles, and permissions from Zentry into CashPilot.
 8. `docs/release-002/tasks/feature-009-date-range-income-outcome-report.md`: Add date range income vs outcome report filtered by From Date and To Date aggregated by month.
+9. `docs/release-002/tasks/feature-010-bank-account-active-records-filtering.md`: Fix active record filtering on BankAccount and child movements across balance and list queries.
