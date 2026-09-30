@@ -86,7 +86,6 @@ export function TransactionsFilterDrawer({
   // useWatch provides a subscription‑safe way to read form values.
   const rangePreset = useWatch({ control: form.control, name: "rangePreset" });
   const fromDate = useWatch({ control: form.control, name: "fromDate" });
-  const toDate = useWatch({ control: form.control, name: "toDate" });
   const showOnlyInitialDeposits = useWatch({ control: form.control, name: "showOnlyInitialDeposits", defaultValue: false });
 
   useEffect(() => {
@@ -96,42 +95,33 @@ export function TransactionsFilterDrawer({
     form.reset(initialValues);
   }, [form, initialValues, isOpen]);
 
-  useEffect(() => {
-    if (fromDate.length === 0 || toDate.length === 0) {
-      return;
-    }
-
-    if (toDate < fromDate) {
-      form.setValue("toDate", fromDate);
-    }
-  }, [form, fromDate, toDate]);
-
-  useEffect(() => {
-    if (rangePreset === "Custom") {
-      return;
-    }
-    if (rangePreset === "Month") {
+  const applyRangePreset = (preset: TransactionFilterValues["rangePreset"]) => {
+    if (preset === "Month") {
       const range = getCurrentMonthRange();
       form.setValue("fromDate", range.fromDate);
       form.setValue("toDate", range.toDate);
-      return;
-    }
-    if (rangePreset === "Year") {
+    } else if (preset === "Year") {
       const range = getCurrentYearRange();
       form.setValue("fromDate", range.fromDate);
       form.setValue("toDate", range.toDate);
-      return;
-    }
-    if (rangePreset === "Today") {
+    } else if (preset === "Today") {
       const range = getTodayRange();
       form.setValue("fromDate", range.fromDate);
       form.setValue("toDate", range.toDate);
-      return;
+    } else if (preset === "ThisWeek") {
+      const range = getThisWeekRange();
+      form.setValue("fromDate", range.fromDate);
+      form.setValue("toDate", range.toDate);
     }
-    const range = getThisWeekRange();
-    form.setValue("fromDate", range.fromDate);
-    form.setValue("toDate", range.toDate);
-  }, [form, rangePreset, getCurrentMonthRange, getCurrentYearRange, getTodayRange, getThisWeekRange]);
+  };
+
+  const handleCopyFromDateToToDate = () => {
+    const currentFromDate = form.getValues("fromDate");
+    if (currentFromDate) {
+      form.setValue("toDate", currentFromDate);
+      form.clearErrors(["fromDate", "toDate"]);
+    }
+  };
 
   return (
     <Drawer isOpen={isOpen} onClose={onClose} title={t("transactions.filterTitle")}>
@@ -152,6 +142,14 @@ export function TransactionsFilterDrawer({
           } else if (values.rangePreset === "Year") {
             fromDate = normalizeYearDate(values.fromDate, "-01-01");
             toDate = normalizeYearDate(values.toDate, "-12-31");
+          }
+
+          if (fromDate && toDate && fromDate > toDate) {
+            form.setError("fromDate", {
+              type: "manual",
+              message: t("transactions.filter.invalidDateRange"),
+            });
+            return;
           }
 
           onApply({
@@ -181,6 +179,12 @@ export function TransactionsFilterDrawer({
                   { label: t("transactions.filter.today"), value: "Today" },
                   { label: t("transactions.filter.custom"), value: "Custom" }
                 ]}
+                rules={{
+                  onChange: (e) => {
+                    const preset = e.target.value as TransactionFilterValues["rangePreset"];
+                    applyRangePreset(preset);
+                  }
+                }}
               />
               <DatePicker
                 control={form.control}
@@ -189,11 +193,20 @@ export function TransactionsFilterDrawer({
                 mode={rangePreset === "Month" ? "month" : rangePreset === "Year" ? "year" : "date"}
                 name="fromDate"
               />
+              <Stack direction="row" sx={{ justifyContent: "flex-end" }}>
+                <ActionButton
+                  disabled={!fromDate || rangePreset === "Today" || rangePreset === "ThisWeek"}
+                  onClick={handleCopyFromDateToToDate}
+                  size="small"
+                  variant="text"
+                >
+                  {t("transactions.filter.copyFromDateToToDate")}
+                </ActionButton>
+              </Stack>
               <DatePicker
                 control={form.control}
                 disabled={rangePreset === "Today" || rangePreset === "ThisWeek"}
                 label={t("transactions.filter.toDate")}
-                minDate={fromDate}
                 mode={rangePreset === "Month" ? "month" : rangePreset === "Year" ? "year" : "date"}
                 name="toDate"
               />

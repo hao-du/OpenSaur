@@ -31,7 +31,7 @@ export function TotalAmountByCurrencyCard({ title, defaultCurrencyCode }: Props)
           items.map(item => (
             <Stack key={item.currencyCode} direction="row" spacing={2} sx={{ justifyContent: "space-between" }}>
               <BodyText sx={{ color: "secondary.main", fontWeight: item.currencyCode === defaultCurrencyCode ? 700 : 400 }}>{item.currencyCode}</BodyText>
-              <BodyText sx={{ color: "success.main", fontVariantNumeric: "tabular-nums", textAlign: "right" }}>{formatAmount(item.total)}</BodyText>
+              <BodyText className="numeric-text" sx={{ color: "success.main", textAlign: "right" }}>{formatAmount(item.total)}</BodyText>
             </Stack>
           ))
         )}

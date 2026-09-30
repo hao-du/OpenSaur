@@ -284,32 +284,57 @@ export function useDailyInOutCalendarCardLogic({ defaultCurrencyCode, defaultMak
     return buildCalendarWeeks(selectedRange.start, selectedRange.end, transactions);
   }, [selectedRange, transactions]);
 
-  const yearOptions = useMemo(
-    () => Array.from(new Set([calendarYear - 1, calendarYear, calendarYear + 1])).sort((a, b) => b - a),
-    [calendarYear],
-  );
+  const currentYear = today.getUTCFullYear();
+  const yearOptions = useMemo(() => {
+    const minYear = Math.min(currentYear - 5, calendarYear - 2);
+    const maxYear = Math.max(currentYear + 5, calendarYear + 2);
+    const years: number[] = [];
+    for (let y = maxYear; y >= minYear; y--) {
+      years.push(y);
+    }
+    return years;
+  }, [calendarYear, currentYear]);
+
 
   const periodLabel = isMarkerMode
     ? buildPeriodLabel(selectedPeriod, monthLabel, pastPeriodLabel, t("dashboard.loadingPeriods"))
     : `${monthLabel} ${monthNames[calendarMonth - 1]} / ${calendarYear}`;
   const selectedModeLabel = selectedMode === MONTHLY_MODE_VALUE ? monthlyLabel : availableMarkerOptions.find(option => option.id === selectedMode)?.name ?? selectedMode;
 
-  function handlePreviousPeriod() {
-    if (markerPeriods.length === 0) {
-      return;
-    }
+  function handlePrevious() {
+    if (isMarkerMode) {
+      if (markerPeriods.length === 0) {
+        return;
+      }
 
-    const currentIndex = selectedPeriodIndex ?? markerPeriods.length - 1;
-    setSelectedPeriodIndex(Math.max(currentIndex - 1, 0));
+      const currentIndex = selectedPeriodIndex ?? markerPeriods.length - 1;
+      setSelectedPeriodIndex(Math.max(currentIndex - 1, 0));
+    } else {
+      if (calendarMonth === 1) {
+        setCalendarMonth(12);
+        setCalendarYear(prev => prev - 1);
+      } else {
+        setCalendarMonth(prev => prev - 1);
+      }
+    }
   }
 
-  function handleNextPeriod() {
-    if (markerPeriods.length === 0) {
-      return;
-    }
+  function handleNext() {
+    if (isMarkerMode) {
+      if (markerPeriods.length === 0) {
+        return;
+      }
 
-    const currentIndex = selectedPeriodIndex ?? markerPeriods.length - 1;
-    setSelectedPeriodIndex(Math.min(currentIndex + 1, markerPeriods.length - 1));
+      const currentIndex = selectedPeriodIndex ?? markerPeriods.length - 1;
+      setSelectedPeriodIndex(Math.min(currentIndex + 1, markerPeriods.length - 1));
+    } else {
+      if (calendarMonth === 12) {
+        setCalendarMonth(1);
+        setCalendarYear(prev => prev + 1);
+      } else {
+        setCalendarMonth(prev => prev + 1);
+      }
+    }
   }
 
   function handleDayClick(dateIso: string) {
@@ -321,8 +346,8 @@ export function useDailyInOutCalendarCardLogic({ defaultCurrencyCode, defaultMak
     calendarMonth,
     calendarWeeks,
     calendarYear,
-    handleNextPeriod,
-    handlePreviousPeriod,
+    handleNext,
+    handlePrevious,
     handleDayClick,
     isMarkerMode,
     isLoading: markerPeriodsQuery.isLoading || markerPeriodsQuery.isFetching || transactionsQuery.isLoading || transactionsQuery.isFetching,

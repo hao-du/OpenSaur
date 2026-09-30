@@ -38,7 +38,7 @@ export function Number<TFieldValues extends FieldValues>({
           label={required ? `${label} *` : label}
           onChange={e => {
             const val = e.target.value;
-            // Allow numbers, optional leading minus (if allowNegative), one dot, and commas (which we remove)
+            // Standard EN format: grouping is ',', decimal is '.'
             const rawValue = val.replace(/,/g, "");
             const pattern = allowNegative ? /^-?\d*\.?\d*$/ : /^\d*\.?\d*$/;
             if (pattern.test(rawValue)) {
@@ -47,6 +47,7 @@ export function Number<TFieldValues extends FieldValues>({
           }}
           slotProps={{
             formHelperText: { sx: { ml: 0 } },
+            htmlInput: { sx: { textAlign: "right" } },
             inputLabel: { sx: { "& .MuiFormLabel-asterisk": { color: "error.main" } } }
           }}
           value={formatInputNumberValue(field.value)}
@@ -56,4 +57,6 @@ export function Number<TFieldValues extends FieldValues>({
     />
   );
 }
+
+
 

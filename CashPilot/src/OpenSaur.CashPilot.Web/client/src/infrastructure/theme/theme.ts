@@ -285,5 +285,11 @@ export const layoutStyles: Record<string, SxProps<Theme>> = {
       color: "inherit",
       marginLeft: "4px",
     },
+  },
+  numericText: {
+    fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
+    fontFeatureSettings: '"tnum"',
+    fontVariantNumeric: "tabular-nums",
+    fontWeight: 700,
   }
 };

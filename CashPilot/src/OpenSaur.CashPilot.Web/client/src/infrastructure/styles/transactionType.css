@@ -59,3 +59,10 @@
   align-items: center;
   gap: 6px;
 }
+
+.numeric-text {
+  font-family: var(--font-numeric, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace) !important;
+  font-variant-numeric: tabular-nums !important;
+  font-feature-settings: "tnum" !important;
+  font-weight: 700 !important;
+}

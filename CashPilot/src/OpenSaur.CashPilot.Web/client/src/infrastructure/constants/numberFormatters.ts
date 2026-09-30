@@ -1,13 +1,20 @@
-export function formatAmount(value: number, locale: "en" | "vi") {
-  return new Intl.NumberFormat(locale === "vi" ? "vi-VN" : "en-US", {
+export function formatAmount(value: number, _locale?: "en" | "vi") {
+  return new Intl.NumberFormat("en-US", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(value);
 }
 
+export function formatIntegerAmount(value: number, _locale?: "en" | "vi") {
+  return new Intl.NumberFormat("en-US", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(value);
+}
+
 const inputNumberFormatter = new Intl.NumberFormat("en-US", {
   minimumFractionDigits: 0,
-  maximumFractionDigits: 2,
+  maximumFractionDigits: 0,
 });
 
 export function formatInputNumberValue(value: string | number) {
@@ -25,8 +32,10 @@ export function formatInputNumberValue(value: string | number) {
   const unsignedRawValue = isNegative ? rawValue.slice(1) : rawValue;
 
   const parts = unsignedRawValue.split(".");
-  const formattedInt = inputNumberFormatter.format(parseInt(parts[0] || "0", 10));
+  const integerPart = parseInt(parts[0] || "0", 10);
+  const formattedInt = inputNumberFormatter.format(integerPart);
 
   const result = parts.length > 1 ? `${formattedInt}.${parts[1]}` : formattedInt;
   return isNegative ? `-${result}` : result;
 }
+

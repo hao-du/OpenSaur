@@ -34,7 +34,7 @@ export function TotalActiveBankAccountCard({ title }: Props) {
               <BodyText sx={{ color: "secondary.main" }}>{item.bankName}</BodyText>
               <Stack direction="row" spacing={2} sx={{ justifyContent: "space-between" }}>
                 <BodyText sx={{ color: "success.main", textAlign: "right" }}>{item.currencyCode}</BodyText>
-                <BodyText sx={{ color: "success.main", fontVariantNumeric: "tabular-nums", textAlign: "right" }}>{formatAmount(item.totalDeposited)}</BodyText>
+                <BodyText className="numeric-text" sx={{ color: "success.main", textAlign: "right" }}>{formatAmount(item.totalDeposited)}</BodyText>
               </Stack>
             </Stack>
           ))

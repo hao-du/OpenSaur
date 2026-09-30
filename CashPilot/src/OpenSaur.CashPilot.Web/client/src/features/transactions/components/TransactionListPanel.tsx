@@ -277,6 +277,7 @@ export function TransactionListPanel({
 
                   <Stack spacing={0.5} sx={{ alignItems: "flex-end" }}>
                     <BodyText
+                      className="numeric-text"
                       sx={{
                         color:
                           item.type === "BankAccount" &&

@@ -3,7 +3,7 @@ import { useAuth } from "../../auth/hooks/useAuth";
 import type { SettingsDto } from "../dtos/SettingsDto";
 import { detectBrowserTimeZone, getSupportedTimeZones } from "../services/timeZones";
 import { getTodayIsoDateByTimeZone } from "../services/dateTime";
-import { formatAmount } from "../../../infrastructure/constants/numberFormatters";
+import { formatAmount, formatIntegerAmount } from "../../../infrastructure/constants/numberFormatters";
 import { translations, type AppLocale, type TranslationKey } from "./translations";
 import { useSettingsQuery } from "../hooks/useSettingsQuery";
 
@@ -17,6 +17,7 @@ type SettingContextValue = {
   formatDate: (value: Date | string | number | null | undefined) => string;
   formatDateTime: (value: Date | string | number | null | undefined) => string;
   formatAmount: (value: number) => string;
+  formatIntegerAmount: (value: number) => string;
   locale: AppLocale;
   setSettings: (settings: AppSettings) => void;
   settings: AppSettings;
@@ -155,9 +156,14 @@ export function SettingProvider({ children }: PropsWithChildren) {
     return formatAmount(value, settings.locale);
   }, [settings.locale]);
 
+  const formatIntegerAmountValue = useCallback((value: number) => {
+    return formatIntegerAmount(value, settings.locale);
+  }, [settings.locale]);
+
   const value = useMemo<SettingContextValue>(() => ({
     applyServerSettings,
     formatAmount: formatAmountValue,
+    formatIntegerAmount: formatIntegerAmountValue,
     formatDate,
     formatDateTime,
     locale: settings.locale,
@@ -167,7 +173,7 @@ export function SettingProvider({ children }: PropsWithChildren) {
     t,
     timeZone: settings.timeZone,
     todayIsoDate: getTodayIsoDateByTimeZone(settings.timeZone)
-  }), [applyServerSettings, formatAmountValue, formatDate, formatDateTime, settings, setSettings, supportedTimeZones, t]);
+  }), [applyServerSettings, formatAmountValue, formatIntegerAmountValue, formatDate, formatDateTime, settings, setSettings, supportedTimeZones, t]);
 
   return (
     <SettingContext.Provider value={value}>

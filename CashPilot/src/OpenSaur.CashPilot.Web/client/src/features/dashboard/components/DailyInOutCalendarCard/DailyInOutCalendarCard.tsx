@@ -6,7 +6,7 @@ import { AppIcon } from "../../../../components/icons/AppIcon";
 import { useSettings } from "../../../settings/provider/SettingProvider";
 import type { TagDefinitionResponse } from "../../../tags/dtos/TagDto";
 import { calendarCellSx, calendarPaperSx, monthNames } from "./DailyInOutCalendarCard.styles";
-import { formatCurrencyAmount, useDailyInOutCalendarCardLogic } from "./hooks/useDailyInOutCalendarCardLogic";
+import { useDailyInOutCalendarCardLogic } from "./hooks/useDailyInOutCalendarCardLogic";
 
 type Props = {
   title: string;
@@ -22,8 +22,8 @@ export function DailyInOutCalendarCard({ title, defaultCurrencyCode, defaultMake
     calendarWeeks,
     calendarYear,
     handleDayClick,
-    handleNextPeriod,
-    handlePreviousPeriod,
+    handleNext,
+    handlePrevious,
     isLoading,
     isMarkerMode,
     monthLabel,
@@ -37,7 +37,7 @@ export function DailyInOutCalendarCard({ title, defaultCurrencyCode, defaultMake
     yearLabel,
     yearOptions,
   } = useDailyInOutCalendarCardLogic({ defaultCurrencyCode, defaultMakerTagName, markerOptions });
-  const { t } = useSettings();
+  const { formatAmount, formatIntegerAmount, t } = useSettings();
 
   const skeletonRows = 6;
 
@@ -82,7 +82,7 @@ export function DailyInOutCalendarCard({ title, defaultCurrencyCode, defaultMake
 
           <Tooltip title={isMarkerMode ? t("dashboard.previousPeriod") : t("dashboard.previousMonth")}>
             <span>
-              <IconButton aria-label={isMarkerMode ? t("dashboard.previousPeriod") : t("dashboard.previousMonth")} onClick={isMarkerMode ? handlePreviousPeriod : undefined} size="small">
+              <IconButton aria-label={isMarkerMode ? t("dashboard.previousPeriod") : t("dashboard.previousMonth")} onClick={handlePrevious} size="small">
                 <AppIcon icon={ChevronLeft} />
               </IconButton>
             </span>
@@ -90,7 +90,7 @@ export function DailyInOutCalendarCard({ title, defaultCurrencyCode, defaultMake
 
           <Tooltip title={isMarkerMode ? t("dashboard.nextPeriod") : t("dashboard.nextMonth")}>
             <span>
-              <IconButton aria-label={isMarkerMode ? t("dashboard.nextPeriod") : t("dashboard.nextMonth")} onClick={isMarkerMode ? handleNextPeriod : undefined} size="small">
+              <IconButton aria-label={isMarkerMode ? t("dashboard.nextPeriod") : t("dashboard.nextMonth")} onClick={handleNext} size="small">
                 <AppIcon icon={ChevronRight} />
               </IconButton>
             </span>
@@ -173,10 +173,10 @@ export function DailyInOutCalendarCard({ title, defaultCurrencyCode, defaultMake
                       {cell.dayLabel != null ? `${t("dashboard.day")} ${cell.dayLabel}` : t("dashboard.day")}
                     </BodyText>
                     <BodyText sx={{ color: "common.white", fontSize: 12 }}>
-                      {`${t("dashboard.income")}: ${formatCurrencyAmount(cell.income)}`}
+                      {`${t("dashboard.income")}: ${formatAmount(cell.income)}`}
                     </BodyText>
                     <BodyText sx={{ color: "common.white", fontSize: 12 }}>
-                      {`${t("dashboard.outcome")}: ${formatCurrencyAmount(cell.outcome)}`}
+                      {`${t("dashboard.outcome")}: ${formatAmount(cell.outcome)}`}
                     </BodyText>
                   </Stack>
                 ) : null;
@@ -206,16 +206,16 @@ export function DailyInOutCalendarCard({ title, defaultCurrencyCode, defaultMake
                           "&:focus-visible": isClickable ? { boxShadow: `0 0 0 2px ${theme.palette.primary.main}33` } : undefined,
                         })}
                       >
-                        <BodyText sx={{ fontWeight: 700, color: cell.isInRange ? "text.primary" : "text.disabled" }}>
+                        <BodyText className="numeric-text" sx={{ fontWeight: 700, color: cell.isInRange ? "text.primary" : "text.disabled", textAlign: "right" }}>
                           {cell.dayLabel ?? ""}
                         </BodyText>
                         {cell.isInRange ? (
-                          <Stack spacing={0}>
-                            <BodyText sx={{ color: "success.main", fontSize: 12, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: "100%" }}>
-                              {formatCurrencyAmount(cell.income)}
+                          <Stack spacing={0} sx={{ alignItems: "flex-end" }}>
+                            <BodyText className="numeric-text" sx={{ color: "success.main", fontSize: 12, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: "100%", textAlign: "right" }}>
+                              {formatIntegerAmount(cell.income)}
                             </BodyText>
-                            <BodyText sx={{ color: "error.main", fontSize: 12, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: "100%" }}>
-                              {formatCurrencyAmount(cell.outcome)}
+                            <BodyText className="numeric-text" sx={{ color: "error.main", fontSize: 12, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: "100%", textAlign: "right" }}>
+                              {formatIntegerAmount(cell.outcome)}
                             </BodyText>
                           </Stack>
                         ) : null}

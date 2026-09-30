@@ -3,6 +3,7 @@ import type { CounterpartyDto } from "../../counterparties/dtos/CounterpartyDto"
 import type { CurrencyDto } from "../../currencies/dtos/CurrencyDto";
 import type { BankDto } from "../../banks/dtos/BankDto";
 import { TemplatePopulateActionCard } from "../../dashboard/components/TemplatePopulateActionCard";
+import { FinancialSummaryCard } from "../../dashboard/components/FinancialSummaryCard";
 import { TotalAmountByCurrencyCard } from "../../dashboard/components/TotalAmountByCurrencyCard";
 import { TotalActiveBankAccountCard } from "../../dashboard/components/TotalActiveBankAccountCard";
 import { MarkerPeriodsIncomeOutcomeCard } from "../../dashboard/components/MarkerPeriodsIncomeOutcomeCard/MarkerPeriodsIncomeOutcomeCard";
@@ -33,6 +34,7 @@ export function TransactionDashboardPanel({
           currencies={currencies}
           counterparties={counterparties}
         />
+        <FinancialSummaryCard defaultCurrencyCode={defaultCurrencyCode} />
         <TotalAmountByCurrencyCard
           defaultCurrencyCode={defaultCurrencyCode}
           title={t("transactions.totalByCurrency")}

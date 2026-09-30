@@ -7,6 +7,7 @@ import { useCurrenciesQuery } from "../../currencies/hooks/useCurrenciesQuery";
 import { useBanksQuery } from "../../banks/hooks/useBanksQuery";
 import { useCounterpartiesQuery } from "../../counterparties/hooks/useCounterpartiesQuery";
 import { TemplatePopulateActionCard } from "../components/TemplatePopulateActionCard";
+import { FinancialSummaryCard } from "../components/FinancialSummaryCard";
 import { TotalAmountByCurrencyCard } from "../components/TotalAmountByCurrencyCard";
 import { TotalActiveBankAccountCard } from "../components/TotalActiveBankAccountCard";
 import { DailyInOutCalendarCard } from "../components/DailyInOutCalendarCard/DailyInOutCalendarCard";
@@ -26,12 +27,15 @@ export function DashboardPage() {
       <Stack spacing={3}>
         <Paper elevation={0} sx={(theme) => ({ border: `1px solid ${alpha(theme.palette.primary.main, 0.12)}`, p: 3 })}>
           <Grid container spacing={2} sx={{ alignItems: "stretch" }}>
-            <Grid size={{ lg: 12, xs: 12 }}>
+            <Grid size={{ lg: 6, xs: 12 }}>
               <TemplatePopulateActionCard
                 banks={banks}
                 counterparties={counterparties}
                 currencies={currencies}
               />
+            </Grid>
+            <Grid size={{ lg: 6, xs: 12 }}>
+              <FinancialSummaryCard defaultCurrencyCode={defaultCurrencyCode} />
             </Grid>
             <Grid size={{ lg: 4, sm: 6, xs: 12 }}>
               <TotalAmountByCurrencyCard

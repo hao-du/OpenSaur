@@ -38,8 +38,8 @@ function SummaryRow({
     <Stack direction="row" spacing={2} sx={markerPeriodsIncomeOutcomeRowSx}>
       <BodyText sx={{ minWidth: 110, pt: 0.25 }}>{label}</BodyText>
       <Stack spacing={0.25} sx={markerPeriodsIncomeOutcomeAmountSx}>
-        <BodyText sx={{ color: "success.main", textAlign: "right" }}>{`+${formatAmount(income)}`}</BodyText>
-        <BodyText sx={{ color: "error.main", textAlign: "right" }}>{`-${formatAmount(outcome)}`}</BodyText>
+        <BodyText className="numeric-text" sx={{ color: "success.main", textAlign: "right" }}>{`+${formatAmount(income)}`}</BodyText>
+        <BodyText className="numeric-text" sx={{ color: "error.main", textAlign: "right" }}>{`-${formatAmount(outcome)}`}</BodyText>
       </Stack>
     </Stack>
   );
