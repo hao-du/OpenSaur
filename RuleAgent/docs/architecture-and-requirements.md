@@ -28,11 +28,12 @@
   - **Token Validation**: RuleAgent uses OpenIddict validation middleware to validate all incoming bearer tokens directly against Zentry's authority.
   - **RuleAgent Authorization**: RuleAgent inspects the authenticated `UserId` from the token and enforces `CanView` vs `CanEdit` permissions via its local `ProjectUserPermission` table.
 - **Workspaces & Users (Zentry Sync via Kafka on Aiven)**:
-  - Workspaces and Users are synchronized from Zentry via Kafka (hosted on Aiven).
+  - Workspaces and Users are synchronized from Zentry via Kafka (hosted on Aiven) asynchronously.
   - Uses direct `WorkspaceId` and `UserId` as primary keys (matching Zentry and CashPilot conventions, no `ExternalId` columns).
   - A workspace contains multiple users, and a user can belong to multiple projects.
   - Both `Workspace` and `User` include `IsActive` flags for soft-deactivation and access control.
   - `User` entity includes `UserSettings` (JSON for timezone, UI language), and `Roles` & `Permissions` (string arrays synced from Zentry for future authorization reuse).
+  - Clean event-driven architecture ensures RuleAgent remains loosely coupled from Zentry.
 - **Base Entity Standardization (Matching CashPilot)**:
   - All domain tables inherit standard audit and status fields (`Id`, `Description`, `IsActive`, `CreatedBy`, `CreatedOn`, `UpdatedBy`, `UpdatedOn`).
 - **Project Permissions & Access Control**:
@@ -48,7 +49,7 @@
 
 | Layer | Technology | Version / Details |
 |---|---|---|
-| **Architecture Pattern** | **Feature Slice Architecture + Domain-Driven Design (DDD)** | Vertical slices (`Features/<SliceName>`) with rich domain aggregate roots (`IAggregateRoot`), encapsulated state methods, and pure handlers without direct `HttpContext`. |
+| **Architecture Pattern** | **Feature Slice Architecture + Domain-Driven Design (DDD)** | Vertical slices (`Features/<SliceName>`) with rich domain aggregate roots (`IAggregateRoot`), encapsulated state methods. Endpoint layer (`*Endpoints.cs`) extracts `CurrentUserContext` via `IClaimService`, keeping Handlers (`*Handler.cs`) completely decoupled from `HttpContext` and `ClaimsPrincipal`. |
 | **Backend API** | ASP.NET Core Minimal API | **.NET 10** (Minimal API, endpoint/handler separation, strongly-typed DTOs) |
 | **Authentication & OIDC** | **OpenIddict & Cookie/OIDC (Zentry Authority)** | Zentry OIDC authority as single source of truth, OpenIddict token validation, Cookie auth for Web UI |
 | **Database** | PostgreSQL | Relational database with Closure Table schema |
@@ -203,9 +204,9 @@ sequenceDiagram
     participant Consumer as RuleAgent Kafka User Sync Consumer
     participant DB as PostgreSQL
 
-    Zentry->>Kafka: Publish UserSyncEvent (Id, WorkspaceId, Email, UserSettings, Roles, Permissions)
-    Kafka->>Consumer: Consume event message
-    Consumer->>DB: Upsert User & Workspace (including UserSettings, Roles, Permissions)
+    Zentry->>Kafka: Publish UserSyncEvent on User/Role changes
+    Kafka->>Consumer: Consume UserSyncEvent
+    Consumer->>DB: Upsert User & Workspace records
     DB-->>Consumer: Saved
 ```
 
@@ -241,13 +242,14 @@ sequenceDiagram
 
 ## 6. Features Reference Breakdown
 
-### Feature 001 — Foundation, Auth (OIDC/OpenIddict) & Zentry Kafka Sync
+### Feature 001 — Foundation, Auth (OIDC/OpenIddict), Entities & Zentry Kafka Sync
 - Create ASP.NET Core 10 Web API project using Feature Slice Architecture (`Domain/`, `Features/`, `Infrastructure/`)
 - Set up EF Core 10 with PostgreSQL
 - Create `EntityBase` class (`Id`, `Description`, `IsActive`, `CreatedBy`, `CreatedOn`, `UpdatedBy`, `UpdatedOn`) and `IAggregateRoot`
 - Implement domain entities with DDD patterns and enums: `Workspace`, `User`, `Project`, `ProjectUserPermission`, `Node`, `NodeClosure`, `NodeSnapshot`
-- Implement Auth slice (`Features/Auth/`): OpenIddict validation against Zentry authority, Zentry OIDC with cookie session for Web UI, current session/profile endpoint, token refresh
+- Implement Auth & Profile slices: OpenIddict validation against Zentry authority, Zentry OIDC with cookie session for Web UI, token refresh, `GET /api/profile/current`
 - Implement Kafka consumer service (`Infrastructure/Messaging/`) for syncing `UserSyncEvent` from Aiven
+- Implement Settings slice (`Features/Settings/`) with `GET /api/settings` for user locale & timezone preferences
 - Implement Project CRUD slice (`Features/Projects/`) with Creator top-admin role assignment
 - Implement Project permission management slice (`Features/ProjectPermissions/`)
 
@@ -294,7 +296,7 @@ sequenceDiagram
 - Implement Responsive Side Menu navigation component (permanent on desktop, slide-out overlay drawer on mobile/tablet)
 - Implement reusable responsive List Page & Data Table layout (adaptive horizontal scroll/card layout on mobile, clean action header)
 - Implement reusable Create/Edit Form Drawer layout (slide-over on desktop/tablet, full-width 100% on phone)
-- Implement User Settings page (timezone selection, UI language switcher, matching CashPilot card layout)
+- Implement User Settings page (matching CashPilot User Profile card layout with Timezone/Locale preferences)
 - Implement Project list & creation/edit drawer (Project Name, Instruction Template selection)
 - Implement Project member permission management dialog for Project Creators to assign `CanView` vs `CanEdit`
 - Implement Instruction Templates management view (restricted to `SuperAdministrator` role)

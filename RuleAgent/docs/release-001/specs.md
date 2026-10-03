@@ -8,7 +8,7 @@ Build the foundation of **RuleAgent** — a centralized workspace and project do
 ## 2. Architecture & Pattern
 - **Pattern**: **Feature Slice Architecture (Vertical Slices) + Domain-Driven Design (DDD)** following CashPilot conventions (`Domain/`, `Features/<SliceName>/`, `Infrastructure/`).
 - **Domain Aggregates**: Rich domain entities implementing `IAggregateRoot` with encapsulated state-changing methods and strongly typed enums (`NodeType`, `ProjectPermissionType`, `SnapshotStatus`).
-- **Endpoint/Handler Separation**: Minimal API endpoints (`*Endpoints.cs`) map and validate HTTP inputs into strongly-typed DTOs, invoking pure handlers that operate without direct `HttpContext`.
+- **Endpoint/Handler Separation**: Minimal API endpoints (`*Endpoints.cs`) map HTTP inputs, validate DTOs, and extract identity claims into strongly-typed `CurrentUserContext` via `IClaimService`. Pure handlers (`*Handler.cs`) execute business logic without any direct dependency on `HttpContext` or `ClaimsPrincipal`.
 
 ---
 
