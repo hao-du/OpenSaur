@@ -9,22 +9,24 @@
 - **Live Content Storage on Node**:
   - `Node` stores the active, live markdown content directly (`Content` field).
 - **Permanent NodeSnapshot History & Diff Workflow**:
-  - When starting work on a feature, a **`NodeSnapshot`** is created, freezing a baseline copy of the node's content (`Status = "Working"`).
+  - When starting work on a feature, a **`NodeSnapshot`** is created, freezing a baseline copy of the node's content (`Status = SnapshotStatus.Working`).
   - During development, the Coding Agent or developer can update `Node.Content` multiple times without altering the baseline snapshot.
   - Diff comparisons compare the live `Node.Content` against the active `NodeSnapshot.SnapshotContent` (or any historical snapshot).
-  - When the developer explicitly approves the changes, the `NodeSnapshot` is marked as **`"Approved"`**.
+  - When the developer explicitly approves the changes, the `NodeSnapshot` is marked as **`SnapshotStatus.Approved`**.
   - All historical snapshots are **retained permanently** in `NodeSnapshot` so developers can inspect the complete timeline of changes.
 - **Unified Instruction Templates via Nodes & RBAC**:
-  - Instruction templates are stored directly as `Node` entities with `Type = "template"` (`ProjectId = null`).
+  - Instruction templates are stored directly as `Node` entities with `Type = NodeType.Template` (`ProjectId = null`).
   - **SuperAdministrator Only**: Only users with the `SuperAdministrator` role can create, update, or delete instruction templates.
   - When creating a project, developers select an instruction template node (`InstructionTemplateNodeId`).
 - **Workspace-Level Global Rules & Skills**:
   - Global files, folders, and templates belong directly to the `Workspace` (`ProjectId = null`).
   - Coding Agents can directly read workspace-wide global rules, instructions, and skills alongside project-specific documentation.
-- **Authentication & OpenIddict (Zentry OIDC + M2M)**:
+- **Authentication & OpenIddict (Zentry as Single Source of Truth)**:
+  - **Zentry Authorization Server**: Zentry is the single authority for user identity, client credentials, and token issuance.
   - **Web UI Login**: OpenID Connect (OIDC) Authorization Code Flow with cookie session via Zentry, matching CashPilot setup.
-  - **API Token Validation**: OpenIddict validation middleware validates incoming bearer tokens.
-  - **Machine-to-Machine (M2M) Agent Tokens**: Users can generate project-scoped Agent Access Tokens from the Web UI to configure Coding Agent MCP clients.
+  - **M2M Coding Agent Authentication**: Coding Agents authenticate using OAuth2 bearer tokens issued by Zentry, supplying the target `X-Project-Id` on requests.
+  - **Token Validation**: RuleAgent uses OpenIddict validation middleware to validate all incoming bearer tokens directly against Zentry's authority.
+  - **RuleAgent Authorization**: RuleAgent inspects the authenticated `UserId` from the token and enforces `CanView` vs `CanEdit` permissions via its local `ProjectUserPermission` table.
 - **Workspaces & Users (Zentry Sync via Kafka on Aiven)**:
   - Workspaces and Users are synchronized from Zentry via Kafka (hosted on Aiven).
   - Uses direct `WorkspaceId` and `UserId` as primary keys (matching Zentry and CashPilot conventions, no `ExternalId` columns).
@@ -38,7 +40,7 @@
   - Project members are assigned either **`CanView`** (view only) or **`CanEdit`** (view and edit).
   - Users with `CanView` cannot make edits via the Web UI or via Coding Agent MCP operations (read-only enforced across both channels).
 - **Web UI Management (Angular 19+)**: Modern responsive web interface for Phone, Tablet, and Desktop using Angular Material, Monaco Editor (with side-by-side diff on desktop/tablet, inline diff on phone), and Native Angular 19 Signals + `HttpClient`. Visual design (Header, Profile menu, Settings page, Side menu, List pages, and Edit drawers) follows the clean aesthetic of CashPilot using native CSS custom properties.
-- **MCP Server for Coding Agents**: Coding agents authenticate via project-scoped Agent Access Tokens and manage folders/files directly via MCP tools instead of local file I/O, respecting user access levels.
+- **MCP Server for Coding Agents**: Coding agents authenticate via Zentry bearer tokens and manage folders/files directly via MCP tools instead of local file I/O, respecting user access levels.
 
 ---
 
@@ -46,13 +48,13 @@
 
 | Layer | Technology | Version / Details |
 |---|---|---|
-| **Architecture Pattern** | **Feature Slice Architecture (Vertical Slices)** | Grouped by feature (`Features/<SliceName>`) with `*Endpoints.cs`, `Dtos/`, `Handlers/`, `Validations/`. Pure handlers without direct `HttpContext`. |
+| **Architecture Pattern** | **Feature Slice Architecture + Domain-Driven Design (DDD)** | Vertical slices (`Features/<SliceName>`) with rich domain aggregate roots (`IAggregateRoot`), encapsulated state methods, and pure handlers without direct `HttpContext`. |
 | **Backend API** | ASP.NET Core Minimal API | **.NET 10** (Minimal API, endpoint/handler separation, strongly-typed DTOs) |
-| **Authentication & OIDC** | **OpenIddict & Cookie/OIDC** | Zentry OIDC authority, OpenIddict validation, Cookie auth for UI, and Project Agent Access Tokens for MCP |
+| **Authentication & OIDC** | **OpenIddict & Cookie/OIDC (Zentry Authority)** | Zentry OIDC authority as single source of truth, OpenIddict token validation, Cookie auth for Web UI |
 | **Database** | PostgreSQL | Relational database with Closure Table schema |
 | **ORM** | Entity Framework Core | **EF Core 10** (Npgsql) |
 | **Message Broker (Sync)** | Apache Kafka (Aiven) | **Confluent.Kafka** (idiomatic background consumer syncing Users & Workspaces from Zentry) |
-| **MCP Server** | C# MCP SDK / SSE/HTTP Transport | Exposes tools for Coding Agents over SSE/HTTP authenticated via project Agent Tokens |
+| **MCP Server** | C# MCP SDK / SSE/HTTP Transport | Exposes tools for Coding Agents over SSE/HTTP authenticated via Zentry bearer tokens |
 | **Frontend Framework** | Angular | **Angular 19+** (Standalone Components) |
 | **Responsive Support** | **Phone, Tablet & Desktop** | Powered by Angular CDK `BreakpointObserver`, CSS Flex/Grid media queries, collapsible drawers, adaptive Monaco diff view |
 | **UI Component Library** | **Angular Material** | **`@angular/material`** (Material Design, CDK Tree for File Explorer, Dialogs, Menus, Sidenav Drawers) |
@@ -63,17 +65,17 @@
 
 ---
 
-## 3. Data Model
+## 3. Data Model (Domain-Driven Design)
 
-### Common Base Entity (`EntityBase`)
-All domain entities inherit standard fields from `EntityBase` (following CashPilot conventions):
-- `Guid Id` (PK)
-- `string? Description`
-- `bool IsActive` (default `true`)
-- `Guid CreatedBy`
-- `DateTime CreatedOn`
-- `Guid? UpdatedBy`
-- `DateTime? UpdatedOn`
+### Domain Interfaces
+- **`IEntityBase`**: Common entity audit contract (`Id`, `CreatedBy`, `CreatedOn`, `UpdatedBy`, `UpdatedOn`).
+- **`EntityBase`**: Abstract base class (`IEntityBase`, `Description`, `IsActive = true`).
+- **`IAggregateRoot`**: Marker interface for DDD aggregate root boundaries (`Workspace`, `User`, `Project`, `Node`).
+
+### Domain Enums
+- **`NodeType`**: `Folder = 1`, `File = 2`, `Template = 3`
+- **`ProjectPermissionType`**: `CanView = 1`, `CanEdit = 2`
+- **`SnapshotStatus`**: `Working = 1`, `Approved = 2`
 
 ### Entity Relationship Diagram
 
@@ -84,10 +86,8 @@ erDiagram
     Workspace ||--o{ Node : "owns global nodes & templates"
     User ||--o{ ProjectUserPermission : "assigned"
     User ||--o{ Project : "creates"
-    User ||--o{ AgentToken : "generates"
 
     Project ||--o{ ProjectUserPermission : "has members"
-    Project ||--o{ AgentToken : "scoped to"
     Project }o--|| Node : "uses template (InstructionTemplateNodeId)"
     Project ||--o{ Node : "contains project nodes"
 
@@ -96,7 +96,7 @@ erDiagram
     Node ||--o{ NodeSnapshot : "has permanent snapshot history"
 
     Workspace {
-        uuid Id PK "Direct WorkspaceId from Zentry"
+        uuid Id PK "Direct WorkspaceId from Zentry (Aggregate Root)"
         string Name
         string Description
         boolean IsActive
@@ -107,7 +107,7 @@ erDiagram
     }
 
     User {
-        uuid Id PK "Direct UserId from Zentry"
+        uuid Id PK "Direct UserId from Zentry (Aggregate Root)"
         uuid WorkspaceId FK
         string Email
         string UserName
@@ -125,11 +125,11 @@ erDiagram
     }
 
     Project {
-        uuid Id PK
+        uuid Id PK "Aggregate Root"
         uuid WorkspaceId FK
         string Name
         uuid CreatorId FK "Top Admin (Creator User)"
-        uuid InstructionTemplateNodeId FK "points to Node with Type = template"
+        uuid InstructionTemplateNodeId FK "points to Node with Type = Template"
         string Description
         boolean IsActive
         uuid CreatedBy
@@ -142,24 +142,7 @@ erDiagram
         uuid Id PK
         uuid ProjectId FK
         uuid UserId FK
-        string Permission "CanView | CanEdit"
-        string Description
-        boolean IsActive
-        uuid CreatedBy
-        datetime CreatedOn
-        uuid UpdatedBy
-        datetime UpdatedOn
-    }
-
-    AgentToken {
-        uuid Id PK
-        uuid ProjectId FK "Token is scoped to a Project"
-        uuid UserId FK "User who generated the token"
-        string Name "e.g. Cursor / Claude Desktop / Antigravity"
-        string TokenPrefix "for easy identification e.g. ra_live_..."
-        string TokenHash "secure hashed value"
-        datetime ExpiresAt
-        datetime LastUsedAt
+        enum_ProjectPermissionType Permission "CanView | CanEdit"
         string Description
         boolean IsActive
         uuid CreatedBy
@@ -169,11 +152,11 @@ erDiagram
     }
 
     Node {
-        uuid Id PK
+        uuid Id PK "Aggregate Root"
         uuid WorkspaceId FK
         uuid ProjectId FK "null for Workspace/Global Nodes & Templates"
         string Name
-        string Type "folder | file | template"
+        enum_NodeType Type "Folder | File | Template"
         text Content "live working markdown content"
         string Description
         boolean IsActive
@@ -193,7 +176,7 @@ erDiagram
         uuid Id PK
         uuid NodeId FK
         text SnapshotContent "frozen baseline content for historical tracking"
-        string Status "Working | Approved"
+        enum_SnapshotStatus Status "Working | Approved"
         string Description
         boolean IsActive
         uuid CreatedBy
@@ -207,7 +190,7 @@ erDiagram
 1. **Creator (Top Admin)**: User who created the project (`CreatorId`). Has full permissions and is the only person permitted to assign, modify, or revoke permissions for other users on that project.
 2. **`CanEdit`**: Can create, update, move, delete folders/files, and take or approve snapshots.
 3. **`CanView`**: Read-only access. Blocked from write actions across both Web UI and MCP API tools.
-4. **`SuperAdministrator`**: Only users having the `SuperAdministrator` role in `User.Roles` can create, edit, or delete instruction templates (`Type = "template"`).
+4. **`SuperAdministrator`**: Only users having the `SuperAdministrator` role in `User.Roles` can create, edit, or delete instruction templates (`Type = NodeType.Template`).
 
 ---
 
@@ -232,26 +215,24 @@ sequenceDiagram
 
 ```mermaid
 sequenceDiagram
-    participant User as Developer (Web UI)
-    participant API as RuleAgent API
+    participant Zentry as Zentry Auth Server
     participant CA as Coding Agent (MCP Client)
     participant MCP as RuleAgent MCP Server
     participant DB as PostgreSQL
 
-    Note over User,API: 1. Generate Project-Scoped Agent Token
-    User->>API: Generate Agent Token (ProjectId, Name = "Claude Code")
-    API->>DB: Save hashed token in AgentToken table
-    API-->>User: Plaintext Token (shown once: ra_live_xyz...)
+    Note over CA,Zentry: 1. Acquire Token from Zentry
+    CA->>Zentry: Request Token (Client Credentials / User Token)
+    Zentry-->>CA: Access Token (JWT Bearer)
 
-    Note over CA,MCP: 2. MCP Request with Bearer Token
-    CA->>MCP: Call tool (Authorization: Bearer ra_live_xyz...)
-    MCP->>DB: Validate TokenHash, check IsActive & ExpiresAt
-    MCP->>DB: Resolve UserId, ProjectId & Permission (CanView vs CanEdit)
-    alt Valid & Has Permission
+    Note over CA,MCP: 2. MCP Request with Bearer Token & Project Scope
+    CA->>MCP: Call tool (Authorization: Bearer <Zentry-Token>, X-Project-Id: <guid>)
+    MCP->>Zentry: OpenIddict validates signature & claims against Zentry
+    MCP->>DB: Check ProjectUserPermission for UserId on ProjectId (CanView vs CanEdit)
+    alt Valid Token & Has Permission
         MCP->>DB: Execute requested tool operation
         DB-->>MCP: Success
         MCP-->>CA: Tool Output
-    else Invalid or Forbidden
+    else Invalid Token or Forbidden
         MCP-->>CA: Error: Unauthorized or Forbidden
     end
 ```
@@ -260,16 +241,15 @@ sequenceDiagram
 
 ## 6. Features Reference Breakdown
 
-### Feature 001 — Foundation, Auth (OIDC/OpenIddict/M2M) & Zentry Kafka Sync
+### Feature 001 — Foundation, Auth (OIDC/OpenIddict) & Zentry Kafka Sync
 - Create ASP.NET Core 10 Web API project using Feature Slice Architecture (`Domain/`, `Features/`, `Infrastructure/`)
 - Set up EF Core 10 with PostgreSQL
-- Create `EntityBase` class (`Id`, `Description`, `IsActive`, `CreatedBy`, `CreatedOn`, `UpdatedBy`, `UpdatedOn`)
-- Implement data entities: `Workspace`, `User`, `Project`, `ProjectUserPermission`, `AgentToken`, `Node`, `NodeClosure`, `NodeSnapshot`
-- Implement Auth slice (`Features/Auth/`): OpenIddict validation, Zentry OIDC with cookie session, current session/profile endpoint, token refresh
+- Create `EntityBase` class (`Id`, `Description`, `IsActive`, `CreatedBy`, `CreatedOn`, `UpdatedBy`, `UpdatedOn`) and `IAggregateRoot`
+- Implement domain entities with DDD patterns and enums: `Workspace`, `User`, `Project`, `ProjectUserPermission`, `Node`, `NodeClosure`, `NodeSnapshot`
+- Implement Auth slice (`Features/Auth/`): OpenIddict validation against Zentry authority, Zentry OIDC with cookie session for Web UI, current session/profile endpoint, token refresh
 - Implement Kafka consumer service (`Infrastructure/Messaging/`) for syncing `UserSyncEvent` from Aiven
 - Implement Project CRUD slice (`Features/Projects/`) with Creator top-admin role assignment
 - Implement Project permission management slice (`Features/ProjectPermissions/`)
-- Implement Agent Tokens slice (`Features/AgentTokens/`) for generating and revoking project-scoped M2M tokens
 
 ### Feature 002 — Folder & File Management (Closure Table)
 - Implement Closure Table slice (`Features/Nodes/`)
@@ -284,14 +264,14 @@ sequenceDiagram
 ### Feature 003 — Node Content & NodeSnapshot History
 - Implement snapshot slice (`Features/Snapshots/`)
 - Update live `Node.Content` directly (requires `CanEdit` or Creator)
-- Create `NodeSnapshot` baseline when beginning a feature (`Status = "Working"`)
+- Create `NodeSnapshot` baseline when beginning a feature (`Status = SnapshotStatus.Working`)
 - Retrieve live content and full snapshot history (`ORDER BY CreatedOn DESC`)
 - Compare live content vs active snapshot (or any historical snapshot) for side-by-side diff
-- Explicit user approval: mark `NodeSnapshot` as `"Approved"` (retaining all history permanently)
+- Explicit user approval: mark `NodeSnapshot` as `SnapshotStatus.Approved` (retaining all history permanently)
 
 ### Feature 004 — Instruction Templates (Unified via Node with SuperAdministrator Check)
 - Implement templates slice (`Features/Templates/`)
-- CRUD for instruction templates (`Node` with `Type = "template"` and `ProjectId = null`)
+- CRUD for instruction templates (`Node` with `Type = NodeType.Template` and `ProjectId = null`)
 - Enforce `SuperAdministrator` role requirement on template creation, update, and deletion
 - Assign template node when creating a project (`Project.InstructionTemplateNodeId`)
 - Snapshot and diffing support for template updates via `NodeSnapshot`
@@ -303,9 +283,9 @@ sequenceDiagram
 - Query workspace global tree separately or alongside project tree
 - Manage global agent rules, skills, and coding standards
 
-### Feature 006 — MCP Server (M2M Token Authentication)
+### Feature 006 — MCP Server (Zentry Bearer Token Authentication)
 - Implement MCP slice (`Features/Mcp/`) with SSE/HTTP transport
-- Authenticate MCP requests using project-scoped `AgentToken` bearer header (resolving User, Project, and Permission)
+- Authenticate MCP requests using Zentry OAuth2 bearer token header + `X-Project-Id`, validated via OpenIddict
 - MCP tools: `list_workspace_global_tree`, `list_project_tree`, `read_file`, `create_node_snapshot`, `get_node_diff`, `get_snapshot_history`, `update_file`, `approve_node_snapshot`, `create_folder`, `create_file`, `delete_node`, `move_node`, `get_template_rules`
 
 ### Feature 007 — Web UI (Angular 19+ & Angular Material)
@@ -317,7 +297,6 @@ sequenceDiagram
 - Implement User Settings page (timezone selection, UI language switcher, matching CashPilot card layout)
 - Implement Project list & creation/edit drawer (Project Name, Instruction Template selection)
 - Implement Project member permission management dialog for Project Creators to assign `CanView` vs `CanEdit`
-- Implement Agent Tokens Page: Generate, view/copy token, and revoke project-scoped M2M tokens for Coding Agents
 - Implement Instruction Templates management view (restricted to `SuperAdministrator` role)
 - Implement responsive File Explorer tree view component using Angular Material (`mat-tree` / CDK Tree) with collapsible sidebar toggle for mobile
 - Workspace global rules management view

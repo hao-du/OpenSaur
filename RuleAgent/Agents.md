@@ -15,6 +15,7 @@ This file is the entrypoint for AI agent guidance in this project.
 - Review all other rules in "agents\rules".
 - All explaination from you will be short, easy to understand and simple sample if needed.
 - You must always STOP and wait for the user's explicit manual review and approval after implementing each item. NEVER mark an item completed `[x]` or proceed to the next item automatically.
+- When you receive any request, analyze, provide your suggestion, wait for confirm and update related documents before implementing code.
 
 ## Skills
 
