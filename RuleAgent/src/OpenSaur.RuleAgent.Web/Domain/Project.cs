@@ -1,4 +1,4 @@
-﻿using OpenSaur.RuleAgent.Web.Domain.Common;
+using OpenSaur.RuleAgent.Web.Domain.Common;
 
 namespace OpenSaur.RuleAgent.Web.Domain;
 
@@ -21,6 +21,8 @@ public class Project : EntityBase, IAggregateRoot
     public ICollection<ProjectUserPermission> Permissions { get; set; } = [];
 
     public ICollection<Node> Nodes { get; set; } = [];
+
+    public ICollection<ProjectSharedFile> SharedFiles { get; set; } = [];
 
     public void Rename(string newName, Guid updatedBy)
     {

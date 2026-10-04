@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using OpenSaur.RuleAgent.Web.Domain;
 using OpenSaur.RuleAgent.Web.Domain.Common;
 
@@ -18,6 +18,7 @@ public sealed class RuleAgentDbContext : DbContext
     public DbSet<Node> Nodes => Set<Node>();
     public DbSet<NodeClosure> NodeClosures => Set<NodeClosure>();
     public DbSet<NodeSnapshot> NodeSnapshots => Set<NodeSnapshot>();
+    public DbSet<ProjectSharedFile> ProjectSharedFiles => Set<ProjectSharedFile>();
 
     public override int SaveChanges(bool acceptAllChangesOnSuccess)
     {

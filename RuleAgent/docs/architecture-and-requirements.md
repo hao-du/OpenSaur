@@ -1,4 +1,4 @@
-﻿# RuleAgent Architecture and Requirements
+# RuleAgent Architecture and Requirements
 
 ## 1. Overview & Requirements
 **RuleAgent** is a centralized application that connects to Coding Agents via the Model Context Protocol (MCP). Instead of Coding Agents creating physical markdown files directly on local machines (which prevents other developers from utilizing shared rules, prompts, skills, specs, and memories), RuleAgent acts as a central repository for all agentic documentation and guidelines.
@@ -91,10 +91,12 @@ erDiagram
     Project ||--o{ ProjectUserPermission : "has members"
     Project }o--|| Node : "uses template (InstructionTemplateNodeId)"
     Project ||--o{ Node : "contains project nodes"
+    Project ||--o{ ProjectSharedFile : "mounts shared files"
 
     Node ||--o{ NodeClosure : "ancestor"
     Node ||--o{ NodeClosure : "descendant"
     Node ||--o{ NodeSnapshot : "has permanent snapshot history"
+    Node ||--o{ ProjectSharedFile : "shared into projects"
 
     Workspace {
         uuid Id PK "Direct WorkspaceId from Zentry (Aggregate Root)"
@@ -155,7 +157,7 @@ erDiagram
     Node {
         uuid Id PK "Aggregate Root"
         uuid WorkspaceId FK
-        uuid ProjectId FK "null for Workspace/Global Nodes & Templates"
+        uuid ProjectId FK "null only for Templates"
         string Name
         enum_NodeType Type "Folder | File | Template"
         text Content "live working markdown content"
@@ -165,6 +167,13 @@ erDiagram
         datetime CreatedOn
         uuid UpdatedBy
         datetime UpdatedOn
+    }
+
+    ProjectSharedFile {
+        uuid ProjectId PK,FK "Consuming Project"
+        uuid FileNodeId PK,FK "Shared File Node"
+        uuid CreatedBy
+        datetime CreatedOn
     }
 
     NodeClosure {
@@ -192,6 +201,7 @@ erDiagram
 2. **`CanEdit`**: Can create, update, move, delete folders/files, and take or approve snapshots.
 3. **`CanView`**: Read-only access. Blocked from write actions across both Web UI and MCP API tools.
 4. **`SuperAdministrator`**: Only users having the `SuperAdministrator` role in `User.Roles` can create, edit, or delete instruction templates (`Type = NodeType.Template`).
+5. **Cross-Project File Sharing**: Consuming projects have **read-only** access to files mounted via `ProjectSharedFiles`. Only original project members with `CanEdit` (or Creator) can modify or delete the source file.
 
 ---
 
@@ -279,11 +289,13 @@ sequenceDiagram
 - Snapshot and diffing support for template updates via `NodeSnapshot`
 - Retrieve active instruction template rules for a project
 
-### Feature 005 — Workspace Global Rules & Skills
-- Implement global rules slice (`Features/GlobalRules/`)
-- CRUD for workspace-level global files and folders (`ProjectId = null`)
-- Query workspace global tree separately or alongside project tree
-- Manage global agent rules, skills, and coding standards
+### Feature 005 — Cross-Project File Sharing via ProjectSharedFiles
+- Implement file sharing slice (`Features/SharedFiles/`)
+- Share files from an owning project to other consuming projects within the same workspace via `ProjectSharedFiles` join table
+- Enforce that only `NodeType.File` can be shared (folders cannot be shared, preserving the strict tree closure table)
+- Consuming projects have **read-only** access to shared files
+- Query project files returns local project files + mounted shared files
+- Manage sharing (link, unlink, list shared files) for project Creators and members with `CanEdit`
 
 ### Feature 006 — MCP Server (Zentry Bearer Token Authentication)
 - Implement MCP slice (`Features/Mcp/`) with SSE/HTTP transport

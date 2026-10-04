@@ -1,4 +1,4 @@
-﻿using OpenSaur.RuleAgent.Web.Domain.Common;
+using OpenSaur.RuleAgent.Web.Domain.Common;
 
 namespace OpenSaur.RuleAgent.Web.Domain;
 
@@ -23,6 +23,8 @@ public class Node : EntityBase, IAggregateRoot
     public ICollection<NodeClosure> AncestorPaths { get; set; } = [];
 
     public ICollection<NodeClosure> DescendantPaths { get; set; } = [];
+
+    public ICollection<ProjectSharedFile> SharedInProjects { get; set; } = [];
 
     public void UpdateContent(string newContent, Guid updatedBy)
     {

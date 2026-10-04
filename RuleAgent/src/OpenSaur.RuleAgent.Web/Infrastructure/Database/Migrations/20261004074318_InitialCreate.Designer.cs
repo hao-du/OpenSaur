@@ -12,7 +12,7 @@ using OpenSaur.RuleAgent.Web.Infrastructure.Database;
 namespace OpenSaur.RuleAgent.Web.Infrastructure.Database.Migrations
 {
     [DbContext(typeof(RuleAgentDbContext))]
-    [Migration("20261003202341_InitialCreate")]
+    [Migration("20261004074318_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -195,6 +195,27 @@ namespace OpenSaur.RuleAgent.Web.Infrastructure.Database.Migrations
                     b.HasIndex("WorkspaceId");
 
                     b.ToTable("Projects", (string)null);
+                });
+
+            modelBuilder.Entity("OpenSaur.RuleAgent.Web.Domain.ProjectSharedFile", b =>
+                {
+                    b.Property<Guid>("ProjectId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("FileNodeId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedOn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("ProjectId", "FileNodeId");
+
+                    b.HasIndex("FileNodeId");
+
+                    b.ToTable("ProjectSharedFiles", (string)null);
                 });
 
             modelBuilder.Entity("OpenSaur.RuleAgent.Web.Domain.ProjectUserPermission", b =>
@@ -421,6 +442,25 @@ namespace OpenSaur.RuleAgent.Web.Infrastructure.Database.Migrations
                     b.Navigation("Workspace");
                 });
 
+            modelBuilder.Entity("OpenSaur.RuleAgent.Web.Domain.ProjectSharedFile", b =>
+                {
+                    b.HasOne("OpenSaur.RuleAgent.Web.Domain.Node", "FileNode")
+                        .WithMany("SharedInProjects")
+                        .HasForeignKey("FileNodeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("OpenSaur.RuleAgent.Web.Domain.Project", "Project")
+                        .WithMany("SharedFiles")
+                        .HasForeignKey("ProjectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("FileNode");
+
+                    b.Navigation("Project");
+                });
+
             modelBuilder.Entity("OpenSaur.RuleAgent.Web.Domain.ProjectUserPermission", b =>
                 {
                     b.HasOne("OpenSaur.RuleAgent.Web.Domain.Project", "Project")
@@ -457,6 +497,8 @@ namespace OpenSaur.RuleAgent.Web.Infrastructure.Database.Migrations
 
                     b.Navigation("DescendantPaths");
 
+                    b.Navigation("SharedInProjects");
+
                     b.Navigation("Snapshots");
                 });
 
@@ -465,6 +507,8 @@ namespace OpenSaur.RuleAgent.Web.Infrastructure.Database.Migrations
                     b.Navigation("Nodes");
 
                     b.Navigation("Permissions");
+
+                    b.Navigation("SharedFiles");
                 });
 
             modelBuilder.Entity("OpenSaur.RuleAgent.Web.Domain.User", b =>

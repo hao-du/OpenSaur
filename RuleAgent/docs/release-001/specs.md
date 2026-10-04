@@ -1,4 +1,4 @@
-﻿# Release 001 — Specifications
+# Release 001 — Specifications
 
 ## 1. Release Objective
 Build the foundation of **RuleAgent** — a centralized workspace and project document store accessible via MCP (Model Context Protocol) and a modern Angular Web UI. It replaces fragmented local markdown files with a versioned, shared, and permission-controlled knowledge base.
@@ -32,7 +32,7 @@ Build the foundation of **RuleAgent** — a centralized workspace and project do
 - **Feature 002**: Folder & File Management using Closure Table (`Features/Nodes/`).
 - **Feature 003**: Live Node Content & Permanent NodeSnapshot History/Diffing (`Features/Snapshots/`).
 - **Feature 004**: Instruction Templates unified via Node with `SuperAdministrator` role gating (`Features/Templates/`).
-- **Feature 005**: Workspace-Level Global Rules & Skills (`Features/GlobalRules/`).
+- **Feature 005**: Cross-Project File Sharing via `ProjectSharedFiles` (`Features/SharedFiles/`).
 - **Feature 006**: MCP Server with SSE/HTTP transport authenticated via Zentry bearer tokens (`Features/Mcp/`).
 - **Feature 007**: Angular Web UI (Workspace/Project explorer, Markdown editor, Diff viewer, Approvals).
 
@@ -47,6 +47,7 @@ All domain entities inherit from `EntityBase` (`Id`, `Description`, `IsActive`, 
 5. **`Node`**: Aggregate Root (`IAggregateRoot`). Folders, files, and templates (`WorkspaceId`, `ProjectId` nullable, `Type`: `NodeType` enum (`Folder = 1`, `File = 2`, `Template = 3`), `Content`: text). Encapsulates domain methods `UpdateContent`, `Rename`, `CreateSnapshot`.
 6. **`NodeClosure`**: Pure hierarchy join table (`AncestorId`, `DescendantId`, `Depth`).
 7. **`NodeSnapshot`**: Permanent baseline snapshots (`NodeId`, `SnapshotContent`, `Status`: `SnapshotStatus` enum (`Working = 1`, `Approved = 2`)). Encapsulates `Approve` method.
+8. **`ProjectSharedFile`**: Cross-project file sharing join table (`ProjectId`, `FileNodeId`, `CreatedBy`, `CreatedOn`). Consuming projects have read-only access to shared files.
 
 ---
 

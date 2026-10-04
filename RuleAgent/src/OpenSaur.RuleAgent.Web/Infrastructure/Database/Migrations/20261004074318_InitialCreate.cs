@@ -167,6 +167,32 @@ namespace OpenSaur.RuleAgent.Web.Infrastructure.Database.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "ProjectSharedFiles",
+                columns: table => new
+                {
+                    ProjectId = table.Column<Guid>(type: "uuid", nullable: false),
+                    FileNodeId = table.Column<Guid>(type: "uuid", nullable: false),
+                    CreatedBy = table.Column<Guid>(type: "uuid", nullable: false),
+                    CreatedOn = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ProjectSharedFiles", x => new { x.ProjectId, x.FileNodeId });
+                    table.ForeignKey(
+                        name: "FK_ProjectSharedFiles_Nodes_FileNodeId",
+                        column: x => x.FileNodeId,
+                        principalTable: "Nodes",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_ProjectSharedFiles_Projects_ProjectId",
+                        column: x => x.ProjectId,
+                        principalTable: "Projects",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "ProjectUserPermissions",
                 columns: table => new
                 {
@@ -249,6 +275,11 @@ namespace OpenSaur.RuleAgent.Web.Infrastructure.Database.Migrations
                 column: "WorkspaceId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_ProjectSharedFiles_FileNodeId",
+                table: "ProjectSharedFiles",
+                column: "FileNodeId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_ProjectUserPermissions_ProjectId_UserId",
                 table: "ProjectUserPermissions",
                 columns: new[] { "ProjectId", "UserId" },
@@ -307,6 +338,9 @@ namespace OpenSaur.RuleAgent.Web.Infrastructure.Database.Migrations
 
             migrationBuilder.DropTable(
                 name: "NodeSnapshots");
+
+            migrationBuilder.DropTable(
+                name: "ProjectSharedFiles");
 
             migrationBuilder.DropTable(
                 name: "ProjectUserPermissions");

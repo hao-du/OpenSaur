@@ -1,4 +1,4 @@
-﻿using FluentValidation;
+using FluentValidation;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
@@ -12,7 +12,22 @@ using OpenSaur.RuleAgent.Web.Features.ProjectPermissions.Validations;
 using OpenSaur.RuleAgent.Web.Features.Projects;
 using OpenSaur.RuleAgent.Web.Features.Projects.Dtos;
 using OpenSaur.RuleAgent.Web.Features.Projects.Validations;
+using OpenSaur.RuleAgent.Web.Features.Nodes;
+using OpenSaur.RuleAgent.Web.Features.Nodes.Dtos;
+using OpenSaur.RuleAgent.Web.Features.Nodes.Services;
+using OpenSaur.RuleAgent.Web.Features.Nodes.Validations;
 using OpenSaur.RuleAgent.Web.Features.Settings;
+using OpenSaur.RuleAgent.Web.Features.Snapshots;
+using OpenSaur.RuleAgent.Web.Features.Snapshots.Dtos;
+using OpenSaur.RuleAgent.Web.Features.Snapshots.Services;
+using OpenSaur.RuleAgent.Web.Features.Snapshots.Validations;
+using OpenSaur.RuleAgent.Web.Features.SharedFiles;
+using OpenSaur.RuleAgent.Web.Features.SharedFiles.Dtos;
+using OpenSaur.RuleAgent.Web.Features.SharedFiles.Services;
+using OpenSaur.RuleAgent.Web.Features.SharedFiles.Validations;
+using OpenSaur.RuleAgent.Web.Features.Templates;
+using OpenSaur.RuleAgent.Web.Features.Templates.Dtos;
+using OpenSaur.RuleAgent.Web.Features.Templates.Validations;
 using OpenSaur.RuleAgent.Web.Infrastructure.Auth;
 using OpenSaur.RuleAgent.Web.Infrastructure.ConfigurationOptions;
 using OpenSaur.RuleAgent.Web.Infrastructure.Database;
@@ -31,6 +46,22 @@ builder.Services.AddScoped<IValidator<CreateProjectRequest>, CreateProjectReques
 builder.Services.AddScoped<IValidator<UpdateProjectRequest>, UpdateProjectRequestValidator>();
 builder.Services.AddScoped<IValidator<AssignProjectPermissionRequest>, AssignProjectPermissionRequestValidator>();
 builder.Services.AddScoped<IValidator<UpdateProjectPermissionRequest>, UpdateProjectPermissionRequestValidator>();
+builder.Services.AddScoped<IValidator<CreateNodeRequest>, CreateNodeRequestValidator>();
+builder.Services.AddScoped<IValidator<UpdateNodeRequest>, UpdateNodeRequestValidator>();
+builder.Services.AddScoped<IValidator<UpdateNodeContentRequest>, UpdateNodeContentRequestValidator>();
+builder.Services.AddScoped<IValidator<CreateSnapshotRequest>, CreateSnapshotRequestValidator>();
+builder.Services.AddScoped<IValidator<CreateTemplateRequest>, CreateTemplateRequestValidator>();
+builder.Services.AddScoped<IValidator<UpdateTemplateRequest>, UpdateTemplateRequestValidator>();
+builder.Services.AddScoped<IValidator<ShareFileRequest>, ShareFileRequestValidator>();
+
+// Node Tree Service
+builder.Services.AddScoped<INodeTreeService, NodeTreeService>();
+
+// Snapshot Service
+builder.Services.AddScoped<ISnapshotService, SnapshotService>();
+
+// Shared File Service
+builder.Services.AddScoped<ISharedFileService, SharedFileService>();
 
 // Database
 builder.Services.AddDbContext<RuleAgentDbContext>(options =>
@@ -178,5 +209,9 @@ app.MapProfileEndpoints();
 app.MapSettingsEndpoints();
 app.MapProjectEndpoints();
 app.MapProjectPermissionEndpoints();
+app.MapNodeEndpoints();
+app.MapSnapshotEndpoints();
+app.MapTemplateEndpoints();
+app.MapSharedFilesEndpoints();
 
 app.Run();
