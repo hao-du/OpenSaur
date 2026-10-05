@@ -1,0 +1,20 @@
+<div class="flex items-center justify-center">
+  <button mat-icon-button [matMenuTriggerFor]="userMenu" aria-label="User profile" class="!flex !items-center !justify-center">
+    <app-avatar [name]="userName()" [size]="34"></app-avatar>
+  </button>
+
+  <mat-menu #userMenu="matMenu">
+    <div class="px-4 py-2 border-b">
+      <p class="text-sm font-semibold text-slate-800 m-0">{{ userName() }}</p>
+      <p class="text-xs text-slate-500 m-0 mt-0.5">{{ userEmail() }}</p>
+    </div>
+    <button mat-menu-item routerLink="/settings">
+      <app-icon name="settings" [size]="18" class="mr-2"></app-icon>
+      <span>Settings</span>
+    </button>
+    <button mat-menu-item (click)="logout.emit()">
+      <app-icon name="log-out" [size]="18" class="mr-2"></app-icon>
+      <span>Sign out</span>
+    </button>
+  </mat-menu>
+</div>

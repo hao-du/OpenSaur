@@ -1,0 +1,13 @@
+<nav class="flex flex-col gap-1 p-3">
+  @for (item of navItems; track item.route) {
+    <a
+      [routerLink]="item.route"
+      routerLinkActive="!bg-cyan-50 !text-[#00ccff] font-semibold"
+      class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors text-sm select-none">
+      <app-icon [name]="item.icon" [size]="20"></app-icon>
+      @if (!collapsed()) {
+        <span>{{ item.label }}</span>
+      }
+    </a>
+  }
+</nav>

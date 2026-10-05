@@ -1,0 +1,29 @@
+<header class="h-16 bg-white/90 backdrop-blur-md border-b flex items-center justify-between sticky top-0 z-40">
+  <div class="flex items-center h-full">
+    <!-- Mobile hamburger button -->
+    <div class="md:hidden ml-4 mr-2">
+      <app-button variant="icon" icon="menu" (clicked)="toggleMenu.emit()"></app-button>
+    </div>
+
+    <!-- Brainbubby Logo brand box matching sidebar width (w-64) with same border-r -->
+    <div class="hidden md:flex items-center gap-2 cursor-pointer select-none w-64 h-full px-4 border-r">
+      <img src="logo.svg" alt="Brainbubby Logo" class="w-7 h-7 object-contain" />
+      <span class="font-bold text-base tracking-tight text-slate-800">Brainbubby</span>
+    </div>
+
+    <!-- Mobile Brainbubby Logo -->
+    <div class="flex md:hidden items-center gap-2 cursor-pointer select-none mr-3">
+      <img src="logo.svg" alt="Brainbubby Logo" class="w-7 h-7 object-contain" />
+      <span class="font-bold text-base tracking-tight text-slate-800">Brainbubby</span>
+    </div>
+  </div>
+
+  <!-- User Profile Menu Molecule -->
+  <div class="px-4 flex items-center h-full">
+    <app-user-profile-menu
+      [userName]="userName()"
+      [userEmail]="userEmail()"
+      (logout)="logout.emit()">
+    </app-user-profile-menu>
+  </div>
+</header>
