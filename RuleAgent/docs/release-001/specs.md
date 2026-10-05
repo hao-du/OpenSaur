@@ -17,7 +17,7 @@ Build the foundation of **RuleAgent** — a centralized workspace and project do
 - **Authentication**: Zentry as single Authorization Server; OpenID Connect for Web UI; OpenIddict token validation for API and MCP; Project permissions checked via `ProjectUserPermission`
 - **ORM & DB**: Entity Framework Core 10, PostgreSQL (`Npgsql`)
 - **Message Broker**: Apache Kafka (Aiven) via `Confluent.Kafka`
-- **MCP Server**: C# MCP SDK over SSE/HTTP authenticated via Zentry bearer tokens
+- **MCP Server**: Official C# MCP SDK (`ModelContextProtocol.AspNetCore`) over Streamable HTTP (`/mcp`, SSE compatible) exposing coding agent tools authenticated via Zentry bearer tokens with `Project-Id` scoping
 - **Web UI Framework**: Angular 19+ (Standalone Components)
 - **UI Components**: **[Angular Material (`@angular/material`)](https://material.angular.dev/)** with Angular CDK (Tree, Dialogs, Menus, Sidenav Drawers)
 - **UI Design System**: CashPilot-aligned clean styling (Brand `#00ccff`, background `#edf3f8`, `"Be Vietnam Pro"` font, clean cards, List pages, and Edit drawers)
@@ -33,7 +33,7 @@ Build the foundation of **RuleAgent** — a centralized workspace and project do
 - **Feature 003**: Live Node Content & Permanent NodeSnapshot History/Diffing (`Features/Snapshots/`).
 - **Feature 004**: Instruction Templates unified via Node with `SuperAdministrator` role gating (`Features/Templates/`).
 - **Feature 005**: Cross-Project File Sharing via `ProjectSharedFiles` (`Features/SharedFiles/`).
-- **Feature 006**: MCP Server with SSE/HTTP transport authenticated via Zentry bearer tokens (`Features/Mcp/`).
+- **Feature 006**: MCP Server (`Features/Mcp/`) exposing coding agent tools over Streamable HTTP (`/mcp`) authenticated via Zentry bearer tokens with `Project-Id` scoping.
 - **Feature 007**: Angular Web UI (Workspace/Project explorer, Markdown editor, Diff viewer, Approvals).
 
 ---
@@ -56,4 +56,4 @@ All domain entities inherit from `EntityBase` (`Id`, `Description`, `IsActive`, 
 - **`CanEdit`**: Can create, update, move, delete folders/files, and take or approve snapshots.
 - **`CanView`**: Read-only across both the Angular Web UI and Coding Agent MCP tools.
 - **`SuperAdministrator`**: Only users with the `SuperAdministrator` role can create, update, or delete instruction templates.
-- **MCP Server Authentication**: Authenticates via Zentry bearer token and checks `ProjectUserPermission` for the specified `X-Project-Id`.
+- **MCP Server Authentication**: Authenticates via Zentry bearer token and checks `ProjectUserPermission` for the specified `Project-Id` (or tool call parameter).

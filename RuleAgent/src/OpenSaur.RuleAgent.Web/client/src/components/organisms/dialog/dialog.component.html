@@ -1,0 +1,25 @@
+@if (isOpen()) {
+  <div class="fixed inset-0 bg-black/40 z-[1050] flex items-center justify-center p-4" (click)="cancel.emit()">
+    <div
+      class="bg-white rounded-xl shadow-2xl w-full max-w-[500px] overflow-hidden"
+      (click)="$event.stopPropagation()">
+      <div mat-dialog-title class="!m-0 flex items-center justify-between px-6 py-4 border-b">
+        <h3 class="m-0 text-lg font-semibold">{{ title() }}</h3>
+        <app-button variant="icon" icon="close" (clicked)="cancel.emit()"></app-button>
+      </div>
+
+      <div mat-dialog-content class="!p-6 text-sm">
+        <ng-content></ng-content>
+      </div>
+
+      <div mat-dialog-actions align="end" class="!px-6 !py-3 border-t gap-2">
+        <app-button variant="secondary" (clicked)="cancel.emit()">
+          {{ cancelText() }}
+        </app-button>
+        <app-button [variant]="confirmVariant()" [loading]="loading()" (clicked)="confirm.emit()">
+          {{ confirmText() }}
+        </app-button>
+      </div>
+    </div>
+  </div>
+}

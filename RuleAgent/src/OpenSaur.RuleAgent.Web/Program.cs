@@ -63,6 +63,15 @@ builder.Services.AddScoped<ISnapshotService, SnapshotService>();
 // Shared File Service
 builder.Services.AddScoped<ISharedFileService, SharedFileService>();
 
+// MCP Services and Tools
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<OpenSaur.RuleAgent.Web.Features.Mcp.Services.IMcpContextService, OpenSaur.RuleAgent.Web.Features.Mcp.Services.McpContextService>();
+builder.Services.AddMcpServer()
+    .WithHttpTransport()
+    .WithTools<OpenSaur.RuleAgent.Web.Features.Mcp.Tools.McpReadTools>()
+    .WithTools<OpenSaur.RuleAgent.Web.Features.Mcp.Tools.McpNodeMutationTools>()
+    .WithTools<OpenSaur.RuleAgent.Web.Features.Mcp.Tools.McpSnapshotMutationTools>();
+
 // Database
 builder.Services.AddDbContext<RuleAgentDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -197,6 +206,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseDefaultFiles();
+app.UseStaticFiles();
 
 app.UseAuthentication();
 app.UseAuthorization();
@@ -213,5 +224,9 @@ app.MapNodeEndpoints();
 app.MapSnapshotEndpoints();
 app.MapTemplateEndpoints();
 app.MapSharedFilesEndpoints();
+app.MapMcp("/mcp").RequireAuthorization(AuthConstants.Policies.RequireAuthenticatedUser);
+
+// Map SPA fallback routes
+OpenSaur.RuleAgent.Web.Features.Frontend.FrontendEndpoints.MapFrontEndRoutes(app);
 
 app.Run();

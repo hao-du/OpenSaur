@@ -1,0 +1,16 @@
+<button
+  matRipple
+  [matRippleDisabled]="disabled() || loading()"
+  [class]="matButtonClasses()"
+  [disabled]="disabled() || loading()"
+  [type]="type()"
+  (click)="clicked.emit($event)">
+  @if (loading()) {
+    <mat-spinner diameter="16"></mat-spinner>
+  } @else if (icon()) {
+    <app-icon [name]="icon()!" [size]="18"></app-icon>
+  }
+  @if (variant() !== 'icon') {
+    <ng-content></ng-content>
+  }
+</button>

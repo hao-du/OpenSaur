@@ -24,7 +24,7 @@
 - **Authentication & OpenIddict (Zentry as Single Source of Truth)**:
   - **Zentry Authorization Server**: Zentry is the single authority for user identity, client credentials, and token issuance.
   - **Web UI Login**: OpenID Connect (OIDC) Authorization Code Flow with cookie session via Zentry, matching CashPilot setup.
-  - **M2M Coding Agent Authentication**: Coding Agents authenticate using OAuth2 bearer tokens issued by Zentry, supplying the target `X-Project-Id` on requests.
+  - **M2M Coding Agent Authentication**: Coding Agents authenticate using OAuth2 bearer tokens issued by Zentry, supplying the target `Project-Id` on requests or per-call parameters.
   - **Token Validation**: RuleAgent uses OpenIddict validation middleware to validate all incoming bearer tokens directly against Zentry's authority.
   - **RuleAgent Authorization**: RuleAgent inspects the authenticated `UserId` from the token and enforces `CanView` vs `CanEdit` permissions via its local `ProjectUserPermission` table.
 - **Workspaces & Users (Zentry Sync via Kafka on Aiven)**:
@@ -41,7 +41,7 @@
   - Project members are assigned either **`CanView`** (view only) or **`CanEdit`** (view and edit).
   - Users with `CanView` cannot make edits via the Web UI or via Coding Agent MCP operations (read-only enforced across both channels).
 - **Web UI Management (Angular 19+)**: Modern responsive web interface for Phone, Tablet, and Desktop using Angular Material, Monaco Editor (with side-by-side diff on desktop/tablet, inline diff on phone), and Native Angular 19 Signals + `HttpClient`. Visual design (Header, Profile menu, Settings page, Side menu, List pages, and Edit drawers) follows the clean aesthetic of CashPilot using native CSS custom properties.
-- **MCP Server for Coding Agents**: Coding agents authenticate via Zentry bearer tokens and manage folders/files directly via MCP tools instead of local file I/O, respecting user access levels.
+- **MCP Server for Coding Agents**: Official MCP C# SDK (`ModelContextProtocol.AspNetCore`) running over Streamable HTTP (`/mcp`, with SSE compatibility) exposing Tools, Resources (URI attachments), and Prompts (workflow templates), authenticated via Zentry bearer tokens and scoped by `Project-Id`.
 
 ---
 
@@ -55,10 +55,11 @@
 | **Database** | PostgreSQL | Relational database with Closure Table schema |
 | **ORM** | Entity Framework Core | **EF Core 10** (Npgsql) |
 | **Message Broker (Sync)** | Apache Kafka (Aiven) | **Confluent.Kafka** (idiomatic background consumer syncing Users & Workspaces from Zentry) |
-| **MCP Server** | C# MCP SDK / SSE/HTTP Transport | Exposes tools for Coding Agents over SSE/HTTP authenticated via Zentry bearer tokens |
-| **Frontend Framework** | Angular | **Angular 19+** (Standalone Components) |
+| **MCP Server** | **ModelContextProtocol.AspNetCore** (Official C# SDK) | Streamable HTTP (`/mcp`, SSE compatible) exposing tools for Coding Agents authenticated via Zentry bearer tokens |
+| **Frontend Architecture** | **Frontend Vertical Slice Architecture + Atomic Component Wrappers** | Vertical slices (`features/<slice>/`) for all domain features. Component wrapper layer (`components/atoms/`, `components/molecules/`, `components/organisms/`) wraps all UI library components (Angular Material/CDK) so feature code has zero direct dependency on underlying UI libraries. |
+| **Frontend Framework** | Angular | **Angular 19+** (Standalone Components, Signals, `HttpClient`) |
 | **Responsive Support** | **Phone, Tablet & Desktop** | Powered by Angular CDK `BreakpointObserver`, CSS Flex/Grid media queries, collapsible drawers, adaptive Monaco diff view |
-| **UI Component Library** | **Angular Material** | **`@angular/material`** (Material Design, CDK Tree for File Explorer, Dialogs, Menus, Sidenav Drawers) |
+| **UI Component Library** | **Angular Material (Wrapped)** | All components wrapped inside `components/atoms/` and `components/organisms/` (`app-button`, `app-input`, `app-card`, `app-badge`, `app-drawer`, `app-dialog`) |
 | **UI Design System** | **CashPilot-aligned Style** | Brand `#00ccff`, soft background `#edf3f8`, `"Be Vietnam Pro"` font, clean cards, header, profile, side menu, List pages, and Edit drawers implemented natively via CSS tokens |
 | **State & Data Fetching** | **Native Signals + `HttpClient`** | 100% stable, official Angular Signals (`signal`, `computed`, `effect`) and `HttpClient` service pattern |
 | **Editor & Diff Engine** | **Monaco Editor** | `ngx-monaco-editor-v2` / `monaco-editor` (VS Code engine, Markdown editor, Side-by-Side Diff on Desktop/Tablet, Inline Diff on Mobile) |
@@ -236,13 +237,13 @@ sequenceDiagram
     Zentry-->>CA: Access Token (JWT Bearer)
 
     Note over CA,MCP: 2. MCP Request with Bearer Token & Project Scope
-    CA->>MCP: Call tool (Authorization: Bearer <Zentry-Token>, X-Project-Id: <guid>)
+    CA->>MCP: MCP Request (Bearer <token>, Project-Id: <guid> or parameter)
     MCP->>Zentry: OpenIddict validates signature & claims against Zentry
     MCP->>DB: Check ProjectUserPermission for UserId on ProjectId (CanView vs CanEdit)
     alt Valid Token & Has Permission
-        MCP->>DB: Execute requested tool operation
+        MCP->>DB: Execute requested Tool, Resource, or Prompt
         DB-->>MCP: Success
-        MCP-->>CA: Tool Output
+        MCP-->>CA: Response (Tool Result, Resource Content, or Prompt Messages)
     else Invalid Token or Forbidden
         MCP-->>CA: Error: Unauthorized or Forbidden
     end
@@ -297,10 +298,10 @@ sequenceDiagram
 - Query project files returns local project files + mounted shared files
 - Manage sharing (link, unlink, list shared files) for project Creators and members with `CanEdit`
 
-### Feature 006 — MCP Server (Zentry Bearer Token Authentication)
-- Implement MCP slice (`Features/Mcp/`) with SSE/HTTP transport
-- Authenticate MCP requests using Zentry OAuth2 bearer token header + `X-Project-Id`, validated via OpenIddict
-- MCP tools: `list_workspace_global_tree`, `list_project_tree`, `read_file`, `create_node_snapshot`, `get_node_diff`, `get_snapshot_history`, `update_file`, `approve_node_snapshot`, `create_folder`, `create_file`, `delete_node`, `move_node`, `get_template_rules`
+### Feature 006 — MCP Server (Coding Agent Tools)
+- Implement MCP slice (`Features/Mcp/`) using official `ModelContextProtocol.AspNetCore` SDK over Streamable HTTP (`/mcp`, SSE compatible)
+- Authenticate MCP requests using Zentry OAuth2 bearer token header + `Project-Id` (or per-call `projectId` parameter), validated via OpenIddict
+- **MCP Tools**: `list_project_tree`, `read_file`, `get_template_rules`, `list_shared_files`, `get_snapshot_history`, `get_node_diff`, `create_folder`, `create_file`, `update_file`, `move_node`, `delete_node`, `create_node_snapshot`, `approve_node_snapshot`
 
 ### Feature 007 — Web UI (Angular 19+ & Angular Material)
 - Establish CashPilot-aligned design system in Angular (Material 3 theme, CSS custom properties, `"Be Vietnam Pro"` font, clean card surfaces, responsive layout tokens)

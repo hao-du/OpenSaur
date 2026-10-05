@@ -1,0 +1,22 @@
+@switch (variant()) {
+  @case ('header') {
+    <h1 class="mat-headline-medium" [class.font-bold]="bold()">
+      <ng-content></ng-content>
+    </h1>
+  }
+  @case ('title') {
+    <h3 class="mat-title-medium" [class.font-bold]="bold()">
+      <ng-content></ng-content>
+    </h3>
+  }
+  @case ('caption') {
+    <span class="mat-body-small text-slate-500" [class.font-bold]="bold()">
+      <ng-content></ng-content>
+    </span>
+  }
+  @default {
+    <span class="mat-body-medium" [class.font-bold]="bold()">
+      <ng-content></ng-content>
+    </span>
+  }
+}

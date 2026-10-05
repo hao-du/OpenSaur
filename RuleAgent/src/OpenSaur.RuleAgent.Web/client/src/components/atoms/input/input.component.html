@@ -1,0 +1,31 @@
+<mat-form-field appearance="outline" class="w-full">
+  @if (label()) {
+    <mat-label>
+      {{ label() }}
+      @if (required()) {
+        <span class="text-red-500 ml-0.5">*</span>
+      }
+    </mat-label>
+  }
+  @if (prefixIcon()) {
+    <span matPrefix class="mr-2 flex items-center">
+      <app-icon [name]="prefixIcon()!" [size]="18"></app-icon>
+    </span>
+  }
+  <input
+    matInput
+    [type]="type()"
+    [placeholder]="placeholder()"
+    [disabled]="disabled"
+    [value]="value"
+    (input)="onInputChange($event)"
+    (blur)="onBlur()" />
+  @if (suffixIcon()) {
+    <span matSuffix class="ml-2 flex items-center">
+      <app-icon [name]="suffixIcon()!" [size]="18"></app-icon>
+    </span>
+  }
+  @if (errorMessage()) {
+    <mat-error>{{ errorMessage() }}</mat-error>
+  }
+</mat-form-field>
