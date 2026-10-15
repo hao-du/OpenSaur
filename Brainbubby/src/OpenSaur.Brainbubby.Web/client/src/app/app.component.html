@@ -1,6 +1,15 @@
-<div class="min-h-screen flex flex-col bg-slate-50 text-slate-800">
-  <!-- Top App Header -->
-  <app-header (toggleMenu)="toggleMobileMenu()"></app-header>
+<!-- Session Loading Screen (CashPilot style: keep visible while loading OR unauthenticated) -->
+@if (isLoading() || !isAuthenticated()) {
+  <app-prepare-session></app-prepare-session>
+} @else {
+  <div class="min-h-screen flex flex-col bg-[var(--background-default,#edf3f8)] text-slate-800">
+    <!-- Top App Header -->
+    <app-header
+      [userName]="userName()"
+      [userEmail]="userEmail()"
+      (toggleMenu)="toggleMobileMenu()"
+      (logout)="onLogout()">
+    </app-header>
 
   <div class="flex-1 flex overflow-hidden">
     <!-- Desktop Collapsible Sidebar -->
@@ -12,7 +21,7 @@
     </aside>
 
     <!-- Main Content Area with Router Outlet -->
-    <main class="flex-1 overflow-y-auto p-4 md:p-6 bg-[#edf3f8]">
+    <main class="flex-1 overflow-y-auto p-4 md:p-6 bg-[var(--background-default,#edf3f8)]">
       <router-outlet></router-outlet>
     </main>
   </div>
@@ -25,3 +34,4 @@
     <app-side-menu (click)="mobileMenuOpen.set(false)"></app-side-menu>
   </app-drawer>
 </div>
+}

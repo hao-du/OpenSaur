@@ -2,11 +2,12 @@ import { Component, forwardRef, input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, FormsModule } from '@angular/forms';
 import { IconComponent } from '../icon/icon.component';
+import { LabelComponent } from '../label/label.component';
 
 @Component({
   selector: 'app-input',
   standalone: true,
-  imports: [CommonModule, FormsModule, IconComponent],
+  imports: [CommonModule, FormsModule, IconComponent, LabelComponent],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,

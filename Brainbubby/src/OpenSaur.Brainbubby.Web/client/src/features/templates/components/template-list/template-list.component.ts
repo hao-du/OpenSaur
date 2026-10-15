@@ -1,11 +1,15 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
-import { CardComponent } from '../../../../components/atoms/card/card.component';
 import { ButtonComponent } from '../../../../components/atoms/button/button.component';
 import { InputComponent } from '../../../../components/atoms/input/input.component';
 import { IconComponent } from '../../../../components/atoms/icon/icon.component';
+import { Heading1Component } from '../../../../components/atoms/heading-1/heading-1.component';
+import { TextMutedBlockComponent } from '../../../../components/atoms/text-muted-block/text-muted-block.component';
+import { TextMutedInlineComponent } from '../../../../components/atoms/text-muted-inline/text-muted-inline.component';
+import { TextCaptionComponent } from '../../../../components/atoms/text-caption/text-caption.component';
 import { DialogComponent } from '../../../../components/organisms/dialog/dialog.component';
 import { EmptyStateComponent } from '../../../../components/molecules/empty-state/empty-state.component';
+import { DataTableComponent } from '../../../../components/organisms/data-table/data-table.component';
 import { TemplateDrawerComponent } from '../template-drawer/template-drawer.component';
 import { TemplateFilterDrawerComponent } from '../template-filter-drawer/template-filter-drawer.component';
 import { TemplateService } from '../../services/template.service';
@@ -18,11 +22,14 @@ import { InstructionTemplate } from '../../models/template.model';
   imports: [
     CommonModule,
     DatePipe,
-    CardComponent,
     ButtonComponent,
     IconComponent,
+    Heading1Component,
+    TextMutedBlockComponent,
+    TextCaptionComponent,
     DialogComponent,
     EmptyStateComponent,
+    DataTableComponent,
     TemplateDrawerComponent,
     TemplateFilterDrawerComponent
   ],

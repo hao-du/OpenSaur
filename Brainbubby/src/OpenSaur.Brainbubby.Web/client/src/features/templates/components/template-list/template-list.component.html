@@ -2,10 +2,10 @@
   <!-- Page Header Row -->
   <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
     <div>
-      <h1 class="text-2xl font-bold text-stone-900 tracking-tight m-0">Instruction Templates</h1>
-      <p class="text-sm text-stone-500 m-0 mt-1">
+      <app-heading-1>Instruction Templates</app-heading-1>
+      <app-text-muted-block class="mt-1">
         Define workspace-level boilerplate guidelines, coding standards, and agent prompt templates
-      </p>
+      </app-text-muted-block>
     </div>
 
     <div class="flex items-center gap-3">
@@ -24,85 +24,85 @@
     </div>
   </div>
 
-  <!-- Loading State -->
-  @if (loading()) {
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-      @for (item of [1, 2, 3]; track item) {
-        <div class="h-44 bg-white/60 animate-pulse rounded-xl border border-stone-200"></div>
-      }
-    </div>
-  } @else if (filteredTemplates().length === 0) {
+  <!-- Templates Data Table (CashPilot style) -->
+  <app-data-table
+    [loading]="loading()"
+    [empty]="filteredTemplates().length === 0"
+    [colspan]="4">
+    <!-- Table Headers -->
+    <th table-header class="py-3.5 px-6">Template</th>
+    <th table-header class="py-3.5 px-6">Description</th>
+    <th table-header class="py-3.5 px-6">Length</th>
+    <th table-header class="py-3.5 px-6 text-right">Actions</th>
+
     <!-- Empty State -->
-    <app-empty-state
-      icon="file-text"
-      title="No templates found"
-      [description]="searchQuery() ? 'No templates match your search query.' : 'Create your first instruction template to standardize guidelines across projects.'">
-    </app-empty-state>
-  } @else {
-    <!-- Templates Grid -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-      @for (tpl of filteredTemplates(); track tpl.id) {
-        <app-card appearance="outlined" class="template-card hover:shadow-md transition-shadow group flex flex-col h-full bg-white">
-          <div class="p-5 flex flex-col justify-between h-full gap-4">
-            <!-- Header: Name & Actions -->
-            <div>
-              <div class="flex items-start justify-between gap-3 mb-2">
-                <div class="flex items-center gap-2.5">
-                  <div class="w-9 h-9 rounded-lg bg-[#fff2ec] text-[#ec6530] flex items-center justify-center font-bold text-sm shrink-0">
-                    <app-icon name="file-text" [size]="18"></app-icon>
-                  </div>
-                  <div class="min-w-0">
-                    <h3 class="font-bold text-base text-stone-900 group-hover:text-[#ec6530] transition-colors m-0 truncate">
-                      {{ tpl.name }}
-                    </h3>
-                    <span class="text-xs text-stone-400">
-                      Updated {{ tpl.updatedOn || tpl.createdOn | date:'mediumDate' }}
-                    </span>
-                  </div>
-                </div>
+    <div table-empty>
+      <app-empty-state
+        icon="file-text"
+        title="No templates found"
+        [description]="searchQuery() ? 'No templates match your search query.' : 'Create your first instruction template to standardize guidelines across projects.'">
+      </app-empty-state>
+    </div>
 
-                <div class="flex items-center gap-1 opacity-80 group-hover:opacity-100 transition-opacity">
-                  <button
-                    type="button"
-                    (click)="openEditDrawer(tpl)"
-                    class="p-1.5 text-stone-500 hover:text-[#ec6530] hover:bg-[#fff2ec] rounded-lg transition-colors border-0 bg-transparent cursor-pointer"
-                    title="Edit template">
-                    <app-icon name="edit-2" [size]="15"></app-icon>
-                  </button>
-                  <button
-                    type="button"
-                    (click)="confirmDelete(tpl)"
-                    class="p-1.5 text-stone-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors border-0 bg-transparent cursor-pointer"
-                    title="Delete template">
-                    <app-icon name="trash-2" [size]="15"></app-icon>
-                  </button>
-                </div>
-              </div>
-
-              <!-- Description -->
-              <p class="text-sm text-stone-600 m-0 line-clamp-2 mt-2 leading-relaxed">
-                {{ tpl.description || 'No description provided.' }}
-              </p>
+    <!-- Table Body Rows -->
+    @for (tpl of filteredTemplates(); track tpl.id) {
+      <tr table-body class="hover:bg-[var(--surface-subtle,#fafafa)] transition-colors">
+        <!-- Template Column -->
+        <td class="py-4 px-6">
+          <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded bg-[#fff2ec] text-[#ec6530] flex items-center justify-center font-bold text-xs shrink-0">
+              <app-icon name="file-text" [size]="16"></app-icon>
             </div>
-
-            <!-- Footer: Preview / Character Count -->
-            <div class="pt-3 border-t border-stone-100 flex items-center justify-between text-xs text-stone-400">
-              <span class="flex items-center gap-1">
-                <app-icon name="file-code" [size]="13"></app-icon>
-                <span>{{ tpl.content ? tpl.content.length : 0 }} chars</span>
+            <div class="min-w-0">
+              <span
+                class="font-semibold text-stone-900 hover:text-[#ec6530] cursor-pointer transition-colors block truncate"
+                (click)="openEditDrawer(tpl)">
+                {{ tpl.name }}
               </span>
-              <button
-                type="button"
-                (click)="openEditDrawer(tpl)"
-                class="text-xs font-medium text-[#ec6530] hover:underline bg-transparent border-0 p-0 cursor-pointer">
-                {{ isSuperAdmin() ? 'Edit Template' : 'View Content' }} &rarr;
-              </button>
+              <app-text-caption class="block mt-0.5">
+                Updated {{ tpl.updatedOn || tpl.createdOn | date:'mediumDate' }}
+              </app-text-caption>
             </div>
           </div>
-        </app-card>
-      }
-    </div>
-  }
+        </td>
+
+        <!-- Description Column -->
+        <td class="py-4 px-6 max-w-md">
+          <app-text-muted-block class="line-clamp-2 leading-relaxed">
+            {{ tpl.description || 'No description provided.' }}
+          </app-text-muted-block>
+        </td>
+
+        <!-- Content Size Column -->
+        <td class="py-4 px-6 whitespace-nowrap">
+          <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-stone-100 text-stone-600 text-xs font-medium">
+            <app-icon name="file-code" [size]="12"></app-icon>
+            <span>{{ tpl.content ? tpl.content.length : 0 }} chars</span>
+          </span>
+        </td>
+
+        <!-- Actions Column -->
+        <td class="py-4 px-6 text-right whitespace-nowrap">
+          <div class="flex items-center justify-end gap-1">
+            <button
+              type="button"
+              (click)="openEditDrawer(tpl)"
+              class="px-2.5 py-1.5 text-xs font-semibold text-[#ec6530] hover:bg-[#fff2ec] rounded transition-colors border-0 bg-transparent cursor-pointer">
+              {{ isSuperAdmin() ? 'Edit' : 'View' }}
+            </button>
+            @if (isSuperAdmin()) {
+              <button
+                type="button"
+                (click)="confirmDelete(tpl)"
+                class="px-2.5 py-1.5 text-xs font-semibold text-rose-600 hover:bg-rose-50 rounded transition-colors border-0 bg-transparent cursor-pointer">
+                Delete
+              </button>
+            }
+          </div>
+        </td>
+      </tr>
+    }
+  </app-data-table>
 
   <!-- Delete Confirmation Dialog -->
   <app-dialog

@@ -10,8 +10,24 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons|Material+Icons+Outlined" rel="stylesheet">
+  <script src="assets/monaco/loader.js"></script>
 </head>
 <body>
-  <app-root></app-root>
+  <app-root>
+    <div style="min-height: 100vh; display: flex; align-items: center; justify-content: center; background: #faf4f0; font-family: 'Be Vietnam Pro', sans-serif;">
+      <div style="text-align: center;">
+        <img src="logo.svg" alt="Brainbubby" style="width: 48px; height: 48px; margin: 0 auto 16px auto;" />
+        <div style="width: 140px; height: 3px; background: rgba(236, 101, 48, 0.2); border-radius: 9999px; overflow: hidden; margin: 0 auto;">
+          <div style="width: 40%; height: 100%; background: #ec6530; border-radius: 9999px; animation: splashPulse 1.2s infinite ease-in-out;"></div>
+        </div>
+      </div>
+    </div>
+    <style>
+      @keyframes splashPulse {
+        0% { transform: translateX(-100%); }
+        100% { transform: translateX(250%); }
+      }
+    </style>
+  </app-root>
 </body>
 </html>

@@ -4,13 +4,14 @@ import { FormsModule } from '@angular/forms';
 import { DrawerComponent } from '../../../../components/organisms/drawer/drawer.component';
 import { ButtonComponent } from '../../../../components/atoms/button/button.component';
 import { InputComponent } from '../../../../components/atoms/input/input.component';
+import { LabelComponent } from '../../../../components/atoms/label/label.component';
 import { ProjectService } from '../../services/project.service';
 import { ProjectDetail, TemplateItem } from '../../models/project.model';
 
 @Component({
   selector: 'app-project-drawer',
   standalone: true,
-  imports: [CommonModule, FormsModule, DrawerComponent, ButtonComponent, InputComponent],
+  imports: [CommonModule, FormsModule, DrawerComponent, ButtonComponent, InputComponent, LabelComponent],
   templateUrl: './project-drawer.component.html',
   styleUrl: './project-drawer.component.scss'
 })

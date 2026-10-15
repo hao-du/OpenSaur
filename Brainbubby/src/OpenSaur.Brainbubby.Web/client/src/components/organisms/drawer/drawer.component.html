@@ -1,12 +1,15 @@
 @if (isOpen()) {
   <div
-    class="fixed top-0 right-0 w-full max-w-[480px] h-full shadow-2xl flex flex-col border-l border-stone-200 bg-white z-50">
+    class="fixed top-0 right-0 w-full h-full shadow-2xl flex flex-col border-l border-stone-200 bg-white z-50 transition-all"
+    [class.max-w-[480px]]="size() === 'narrow'"
+    [class.max-w-[760px]]="size() === 'wide'"
+    [class.max-w-full]="size() === 'full'">
       <!-- Drawer Header matching CashPilot DrawerHeader -->
       <div class="h-16 px-6 border-b border-stone-200 flex items-center justify-between shrink-0 bg-white">
         <div class="flex flex-col justify-center min-w-0 pr-3">
-          <h2 class="text-lg font-bold text-stone-900 m-0 truncate tracking-tight">{{ title() }}</h2>
+          <app-heading-2 class="truncate">{{ title() }}</app-heading-2>
           @if (subtitle()) {
-            <p class="text-xs text-stone-500 m-0 truncate mt-0.5">{{ subtitle() }}</p>
+            <app-text-caption class="truncate mt-0.5 block">{{ subtitle() }}</app-text-caption>
           }
         </div>
         <app-button variant="icon" icon="x" (clicked)="close.emit()"></app-button>

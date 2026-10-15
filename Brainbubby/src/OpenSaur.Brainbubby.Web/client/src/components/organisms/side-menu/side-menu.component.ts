@@ -2,6 +2,7 @@ import { Component, input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { IconComponent } from '../../atoms/icon/icon.component';
+import { TextComponent } from '../../atoms/text/text.component';
 
 export interface NavItem {
   label: string;
@@ -12,7 +13,7 @@ export interface NavItem {
 @Component({
   selector: 'app-side-menu',
   standalone: true,
-  imports: [CommonModule, RouterModule, IconComponent],
+  imports: [CommonModule, RouterModule, IconComponent, TextComponent],
   templateUrl: './side-menu.component.html',
   styleUrl: './side-menu.component.scss'
 })

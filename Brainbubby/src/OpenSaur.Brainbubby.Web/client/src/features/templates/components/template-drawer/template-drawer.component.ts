@@ -4,13 +4,23 @@ import { FormsModule } from '@angular/forms';
 import { DrawerComponent } from '../../../../components/organisms/drawer/drawer.component';
 import { ButtonComponent } from '../../../../components/atoms/button/button.component';
 import { InputComponent } from '../../../../components/atoms/input/input.component';
+import { LabelComponent } from '../../../../components/atoms/label/label.component';
+import { MarkdownEditorComponent } from '../../../../components/organisms/markdown-editor/markdown-editor.component';
 import { TemplateService } from '../../services/template.service';
 import { InstructionTemplate } from '../../models/template.model';
 
 @Component({
   selector: 'app-template-drawer',
   standalone: true,
-  imports: [CommonModule, FormsModule, DrawerComponent, ButtonComponent, InputComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    DrawerComponent,
+    ButtonComponent,
+    InputComponent,
+    LabelComponent,
+    MarkdownEditorComponent
+  ],
   templateUrl: './template-drawer.component.html',
   styleUrl: './template-drawer.component.scss'
 })
@@ -56,11 +66,6 @@ export class TemplateDrawerComponent {
   onDescriptionInput(event: Event): void {
     const val = (event.target as HTMLTextAreaElement).value;
     this.description.set(val);
-  }
-
-  onContentInput(event: Event): void {
-    const val = (event.target as HTMLTextAreaElement).value;
-    this.content.set(val);
   }
 
   save(): void {

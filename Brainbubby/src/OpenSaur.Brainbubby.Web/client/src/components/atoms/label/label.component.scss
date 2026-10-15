@@ -1,3 +1,69 @@
 :host {
-  display: inline-block;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.app-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: inherit;
+  user-select: none;
+
+  &__content {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  &__required {
+    color: var(--color-danger, #ef4444);
+    font-weight: 700;
+  }
+
+  &__hint {
+    color: var(--text-caption, #a8a29e);
+    font-size: var(--font-size-caption, 0.75rem);
+    font-weight: 400;
+  }
+
+  &--bold {
+    font-weight: 600 !important;
+  }
+
+  // Variants
+  &--form {
+    font-size: var(--font-size-body, 0.875rem);
+    font-weight: 500;
+    color: var(--text-secondary, #44403c);
+    line-height: var(--line-height-body, 1.25rem);
+  }
+
+  &--caption {
+    font-size: var(--font-size-caption, 0.75rem);
+    font-weight: 400;
+    color: var(--text-muted, #78716c);
+    line-height: var(--line-height-caption, 1rem);
+  }
+
+  &--title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary, #1c1917);
+    line-height: 1.5rem;
+  }
+
+  &--header {
+    font-size: var(--font-size-h2, 1.125rem);
+    font-weight: 700;
+    color: var(--text-primary, #1c1917);
+    line-height: var(--line-height-h2, 1.625rem);
+  }
+
+  &--body {
+    font-size: var(--font-size-body, 0.875rem);
+    font-weight: 400;
+    color: var(--text-primary, #1c1917);
+    line-height: var(--line-height-body, 1.25rem);
+  }
 }

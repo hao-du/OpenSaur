@@ -1,0 +1,54 @@
+<div
+  class="flex flex-col gap-2 w-full transition-all"
+  [class.fixed]="isFullscreen()"
+  [class.inset-0]="isFullscreen()"
+  [class.z-50]="isFullscreen()"
+  [class.bg-white]="isFullscreen()"
+  [class.p-6]="isFullscreen()"
+  [class.h-screen]="isFullscreen()">
+  <!-- Tab Toolbar -->
+  <div class="flex items-center justify-between border-b border-stone-200 pb-2">
+    <app-tabs
+      [tabs]="editorTabs"
+      [(activeTab)]="activeTab"
+      (activeTabChange)="setTab($event)">
+    </app-tabs>
+
+    <!-- Actions / Fullscreen Button -->
+    <div class="flex items-center gap-2">
+      <app-button
+        variant="ghost"
+        [icon]="isFullscreen() ? 'minimize-2' : 'maximize-2'"
+        (clicked)="toggleFullscreen()">
+        {{ isFullscreen() ? 'Exit Fullscreen' : 'Maximize' }}
+      </app-button>
+    </div>
+  </div>
+
+  <!-- Monaco Editor View -->
+  <div
+    [class.hidden]="activeTab() !== 'edit'"
+    [style.height]="isFullscreen() ? 'calc(100vh - 100px)' : height()"
+    class="w-full border border-stone-200 rounded-lg overflow-hidden bg-white">
+    <ngx-monaco-editor
+      class="w-full h-full block"
+      [options]="editorOptions"
+      [(ngModel)]="rawContent"
+      (ngModelChange)="onContentChange($event)"
+      (init)="onEditorInit($event)">
+    </ngx-monaco-editor>
+  </div>
+
+  <!-- Rendered Markdown Preview -->
+  <div
+    [class.hidden]="activeTab() !== 'preview'"
+    [style.height]="isFullscreen() ? 'calc(100vh - 100px)' : height()"
+    class="w-full border border-stone-200 rounded-lg p-5 overflow-y-auto bg-white markdown-preview-body">
+    @if (!value() || value().trim().length === 0) {
+      <p class="text-stone-400 italic text-xs">{{ placeholder() }}</p>
+    } @else {
+      <markdown [data]="value()"></markdown>
+    }
+  </div>
+</div>
+

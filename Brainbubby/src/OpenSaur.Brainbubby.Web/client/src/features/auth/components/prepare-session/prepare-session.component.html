@@ -1,0 +1,27 @@
+<div class="min-h-screen flex items-center justify-center bg-gradient-to-b from-[rgba(236,101,48,0.06)] to-[rgba(245,158,11,0.04)] bg-[#faf4f0] p-4">
+  <div class="w-full max-w-md bg-white rounded-lg shadow-sm border border-[rgba(236,101,48,0.15)] p-6 md:p-8">
+    <!-- Header with Logo and Brand Name -->
+    <div class="flex items-center gap-3 mb-4">
+      <img src="logo.svg" alt="Brainbubby Logo" class="w-9 h-9 object-contain" />
+      <app-text variant="body" [bold]="true" class="tracking-wider uppercase text-[#ec6530]">Brainbubby</app-text>
+    </div>
+
+    <!-- Title and Description -->
+    <div class="mb-2">
+      <app-heading level="2">Preparing Session</app-heading>
+    </div>
+    <app-text variant="muted" tag="p" class="mb-6 leading-relaxed block">
+      Authenticating and loading your workspace settings, profile, and permissions...
+    </app-text>
+
+    <!-- Divider -->
+    <div class="h-px bg-slate-100 mb-6"></div>
+
+    <!-- Progress Indicator & Status Component -->
+    <app-progress-bar
+      status="Initializing..."
+      subStatus="Please wait">
+    </app-progress-bar>
+  </div>
+</div>
+

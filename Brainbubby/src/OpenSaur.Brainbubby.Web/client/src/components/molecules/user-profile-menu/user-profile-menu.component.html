@@ -9,18 +9,18 @@
 
   <mat-menu #userMenu="matMenu" class="user-profile-menu-panel" xPosition="before">
     <div class="user-menu-header">
-      <div class="font-semibold text-stone-900 leading-snug truncate">{{ userName() }}</div>
-      <div class="text-xs text-stone-500 truncate mt-0.5">{{ userEmail() }}</div>
+      <app-text variant="body" [bold]="true" class="truncate block">{{ userName() }}</app-text>
+      <app-text variant="caption" class="truncate block mt-0.5">{{ userEmail() }}</app-text>
     </div>
     <div class="user-menu-divider"></div>
     <div class="user-menu-items">
       <button mat-menu-item routerLink="/settings" class="user-menu-item">
         <app-icon name="settings" [size]="18" class="item-icon"></app-icon>
-        <span class="item-text">Settings</span>
+        <app-text variant="body" class="item-text">Settings</app-text>
       </button>
       <button mat-menu-item (click)="logout.emit()" class="user-menu-item">
         <app-icon name="log-out" [size]="18" class="item-icon"></app-icon>
-        <span class="item-text">Sign out</span>
+        <app-text variant="body" class="item-text">Sign out</app-text>
       </button>
     </div>
   </mat-menu>

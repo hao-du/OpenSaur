@@ -1,0 +1,30 @@
+<div class="w-full bg-white rounded-lg border border-[var(--border-default,#e7e5e4)] overflow-hidden shadow-xs">
+  <div class="overflow-x-auto">
+    <table class="w-full text-left border-collapse">
+      <thead>
+        <tr class="border-b border-[var(--border-default,#e7e5e4)] bg-[var(--surface-subtle,#fafafa)] text-[13px] font-semibold text-[var(--text-secondary,#57534e)]">
+          <ng-content select="[table-header]"></ng-content>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-[var(--border-light,#f5f5f4)] text-sm text-[var(--text-primary,#1c1917)]">
+        @if (loading()) {
+          @for (item of [1, 2, 3, 4]; track item) {
+            <tr class="animate-pulse">
+              <td [attr.colspan]="colspan()" class="py-4 px-6">
+                <div class="h-4 bg-slate-100 rounded w-3/4"></div>
+              </td>
+            </tr>
+          }
+        } @else if (empty()) {
+          <tr>
+            <td [attr.colspan]="colspan()" class="py-12 px-6 text-center text-slate-400">
+              <ng-content select="[table-empty]"></ng-content>
+            </td>
+          </tr>
+        } @else {
+          <ng-content select="[table-body]"></ng-content>
+        }
+      </tbody>
+    </table>
+  </div>
+</div>

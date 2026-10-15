@@ -1,22 +1,17 @@
-@switch (variant()) {
-  @case ('header') {
-    <h1 class="mat-headline-medium" [class.font-bold]="bold()">
-      <ng-content></ng-content>
-    </h1>
+<label
+  [attr.for]="forId()"
+  [class]="'app-label app-label--' + variant()"
+  [class.app-label--bold]="bold()">
+  <span class="app-label__content">
+    @if (text()) {
+      {{ text() }}
+    }
+    <ng-content></ng-content>
+  </span>
+  @if (required()) {
+    <span class="app-label__required" aria-hidden="true">*</span>
   }
-  @case ('title') {
-    <h3 class="mat-title-medium" [class.font-bold]="bold()">
-      <ng-content></ng-content>
-    </h3>
+  @if (hint()) {
+    <span class="app-label__hint">{{ hint() }}</span>
   }
-  @case ('caption') {
-    <span class="mat-body-small text-slate-500" [class.font-bold]="bold()">
-      <ng-content></ng-content>
-    </span>
-  }
-  @default {
-    <span class="mat-body-medium" [class.font-bold]="bold()">
-      <ng-content></ng-content>
-    </span>
-  }
-}
+</label>

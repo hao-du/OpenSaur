@@ -8,13 +8,13 @@
     <!-- Brainbubby Logo brand box matching sidebar width (w-64) with same border-r and white background -->
     <div class="hidden md:flex items-center gap-2.5 cursor-pointer select-none w-64 h-full px-4 bg-white border-r border-stone-200/80">
       <img src="logo.svg" alt="Brainbubby Logo" class="w-8 h-8 object-contain" />
-      <span class="font-bold text-base uppercase tracking-widest text-stone-900">BRAINBUBBY</span>
+      <app-text variant="body" [bold]="true" class="uppercase tracking-widest text-stone-900">BRAINBUBBY</app-text>
     </div>
 
     <!-- Mobile Brainbubby Logo -->
     <div class="flex md:hidden items-center gap-2 cursor-pointer select-none mr-3">
       <img src="logo.svg" alt="Brainbubby Logo" class="w-7 h-7 object-contain" />
-      <span class="font-bold text-sm uppercase tracking-widest text-stone-900">BRAINBUBBY</span>
+      <app-text variant="body" [bold]="true" class="uppercase tracking-widest text-stone-900 text-sm">BRAINBUBBY</app-text>
     </div>
   </div>
 

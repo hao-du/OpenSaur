@@ -1,11 +1,6 @@
 <div class="flex flex-col gap-1.5 w-full">
   @if (label()) {
-    <label class="text-sm font-medium text-stone-700 flex items-center gap-1">
-      <span>{{ label() }}</span>
-      @if (required()) {
-        <span class="text-red-500 font-bold">*</span>
-      }
-    </label>
+    <app-label variant="form" [required]="required()" [text]="label()"></app-label>
   }
 
   <div
@@ -24,15 +19,9 @@
       [type]="type()"
       [placeholder]="placeholder()"
       [disabled]="disabled() || isDisabled"
-      [value]="value() || internalValue"
+      [value]="value()"
       (input)="onInputChange($event)"
       (blur)="onBlur()" />
-
-    @if (suffixIcon()) {
-      <span class="ml-2 text-stone-400 flex items-center shrink-0">
-        <app-icon [name]="suffixIcon()!" [size]="18"></app-icon>
-      </span>
-    }
   </div>
 
   @if (errorMessage()) {

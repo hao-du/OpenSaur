@@ -1,0 +1,79 @@
+:host {
+  display: inline-block;
+  vertical-align: middle;
+
+  &:has(p),
+  &:has(div) {
+    display: block;
+  }
+}
+
+.app-text {
+  font-family: inherit;
+  margin: 0;
+
+  &--bold {
+    font-weight: 600 !important;
+  }
+
+  // Body standard
+  &--body {
+    font-size: 0.875rem; // 14px
+    line-height: 1.25rem;
+    color: #292524; // stone-800
+  }
+
+  // Muted secondary body
+  &--muted {
+    font-size: 0.875rem; // 14px
+    line-height: 1.25rem;
+    color: #78716c; // stone-500
+  }
+
+  // Caption / small notes
+  &--caption {
+    font-size: 0.75rem; // 12px
+    line-height: 1rem;
+    color: #a8a29e; // stone-400
+  }
+
+  // Error validation
+  &--error {
+    font-size: 0.75rem; // 12px
+    line-height: 1rem;
+    color: #dc2626; // red-600
+    font-weight: 500;
+  }
+
+  // Success
+  &--success {
+    font-size: 0.75rem;
+    line-height: 1rem;
+    color: #16a34a; // green-600
+    font-weight: 500;
+  }
+
+  // Form label
+  &--form {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.875rem; // 14px
+    font-weight: 500;
+    color: #44403c; // stone-700
+    line-height: 1.25rem;
+    user-select: none;
+
+    .label-required {
+      color: #ef4444; // red-500
+      font-weight: 700;
+    }
+
+    .label-hint {
+      color: #a8a29e; // stone-400
+      font-size: 0.75rem; // 12px
+      font-weight: 400;
+    }
+  }
+}
+

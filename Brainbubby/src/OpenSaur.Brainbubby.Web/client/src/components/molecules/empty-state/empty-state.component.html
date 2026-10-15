@@ -3,10 +3,10 @@
     <app-icon [name]="icon" [size]="iconSize"></app-icon>
   </div>
   @if (title) {
-    <h3 class="text-lg font-semibold text-stone-800 m-0">{{ title }}</h3>
+    <app-heading-3>{{ title }}</app-heading-3>
   }
   @if (description) {
-    <p class="text-sm text-stone-500 max-w-sm mt-1 mb-0">{{ description }}</p>
+    <app-text-muted-block class="max-w-sm mt-1 mb-0">{{ description }}</app-text-muted-block>
   }
   <ng-content select="[empty-actions]"></ng-content>
 </div>

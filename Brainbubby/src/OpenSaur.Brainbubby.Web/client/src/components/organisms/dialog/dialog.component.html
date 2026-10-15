@@ -4,7 +4,7 @@
       class="bg-white rounded-xl shadow-2xl w-full max-w-[500px] overflow-hidden"
       (click)="$event.stopPropagation()">
       <div mat-dialog-title class="!m-0 flex items-center justify-between px-6 py-4 border-b">
-        <h3 class="m-0 text-lg font-semibold">{{ title() }}</h3>
+        <app-heading-3>{{ title() }}</app-heading-3>
         <app-button variant="icon" icon="x" (clicked)="cancel.emit()"></app-button>
       </div>
 

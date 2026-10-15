@@ -14,10 +14,7 @@
     </app-input>
 
     <div class="flex flex-col gap-1.5">
-      <label class="text-sm font-medium text-stone-700 flex items-center gap-1">
-        <span>Description</span>
-        <span class="text-stone-400 font-normal text-xs">(optional)</span>
-      </label>
+      <app-label variant="form" hint="(optional)">Description</app-label>
       <textarea
         [value]="description()"
         (input)="onDescriptionInput($event)"
@@ -28,10 +25,7 @@
     </div>
 
     <div class="flex flex-col gap-1.5">
-      <label class="text-sm font-medium text-stone-700 flex items-center gap-1">
-        <span>Default Instruction Template</span>
-        <span class="text-stone-400 font-normal text-xs">(optional)</span>
-      </label>
+      <app-label variant="form" hint="(optional)">Default Instruction Template</app-label>
       <select
         [value]="selectedTemplateId()"
         (change)="onTemplateSelect($event)"

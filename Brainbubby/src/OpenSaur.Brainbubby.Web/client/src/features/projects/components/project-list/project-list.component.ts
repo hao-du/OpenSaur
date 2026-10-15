@@ -1,12 +1,15 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { CardComponent } from '../../../../components/atoms/card/card.component';
 import { ButtonComponent } from '../../../../components/atoms/button/button.component';
 import { BadgeComponent, BadgeVariant } from '../../../../components/atoms/badge/badge.component';
 import { IconComponent } from '../../../../components/atoms/icon/icon.component';
+import { Heading1Component } from '../../../../components/atoms/heading-1/heading-1.component';
+import { TextMutedBlockComponent } from '../../../../components/atoms/text-muted-block/text-muted-block.component';
+import { TextCaptionComponent } from '../../../../components/atoms/text-caption/text-caption.component';
 import { DialogComponent } from '../../../../components/organisms/dialog/dialog.component';
 import { EmptyStateComponent } from '../../../../components/molecules/empty-state/empty-state.component';
+import { DataTableComponent } from '../../../../components/organisms/data-table/data-table.component';
 import { ProjectDrawerComponent } from '../project-drawer/project-drawer.component';
 import { ProjectFilterDrawerComponent } from '../project-filter-drawer/project-filter-drawer.component';
 import { MemberDialogComponent } from '../../../project-permissions/components/member-dialog/member-dialog.component';
@@ -18,12 +21,15 @@ import { ProjectListItem, ProjectDetail } from '../../models/project.model';
   standalone: true,
   imports: [
     CommonModule,
-    CardComponent,
     ButtonComponent,
     BadgeComponent,
     IconComponent,
+    Heading1Component,
+    TextMutedBlockComponent,
+    TextCaptionComponent,
     DialogComponent,
     EmptyStateComponent,
+    DataTableComponent,
     ProjectDrawerComponent,
     ProjectFilterDrawerComponent,
     MemberDialogComponent

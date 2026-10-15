@@ -1,0 +1,20 @@
+<div class="space-y-2.5 w-full">
+  <div class="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+    @if (indeterminate()) {
+      <div class="bg-[var(--brand-primary,#ec6530)] h-1.5 rounded-full animate-indeterminate"></div>
+    } @else {
+      <div
+        class="bg-[var(--brand-primary,#ec6530)] h-1.5 rounded-full transition-all duration-300"
+        [style.width.%]="value()">
+      </div>
+    }
+  </div>
+
+  @if (status() || subStatus()) {
+    <div class="flex items-center justify-between">
+      <app-text variant="caption">{{ status() }}</app-text>
+      <app-text variant="caption">{{ subStatus() }}</app-text>
+    </div>
+  }
+</div>
+

@@ -1,7 +1,7 @@
 import { Component, input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
-export type LabelVariant = 'header' | 'title' | 'body' | 'caption';
+export type LabelVariant = 'form' | 'caption' | 'title' | 'header' | 'body';
 
 @Component({
   selector: 'app-label',
@@ -11,6 +11,10 @@ export type LabelVariant = 'header' | 'title' | 'body' | 'caption';
   styleUrl: './label.component.scss'
 })
 export class LabelComponent {
-  variant = input<LabelVariant>('body');
+  text = input<string | null>(null);
+  variant = input<LabelVariant>('form');
+  required = input<boolean>(false);
+  hint = input<string | null>(null);
+  forId = input<string | null>(null);
   bold = input<boolean>(false);
 }

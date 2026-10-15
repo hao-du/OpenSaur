@@ -1,0 +1,38 @@
+@if (variant() === 'form') {
+  <label
+    [attr.for]="forId()"
+    class="app-text app-text--form"
+    [class.app-text--bold]="bold()">
+    <span class="label-text"><ng-content></ng-content></span>
+    @if (required()) {
+      <span class="label-required" aria-hidden="true">*</span>
+    }
+    @if (hint()) {
+      <span class="label-hint">{{ hint() }}</span>
+    }
+  </label>
+} @else {
+  @switch (tag()) {
+    @case ('p') {
+      <p
+        [class]="'app-text app-text--' + variant()"
+        [class.app-text--bold]="bold()">
+        <ng-content></ng-content>
+      </p>
+    }
+    @case ('div') {
+      <div
+        [class]="'app-text app-text--' + variant()"
+        [class.app-text--bold]="bold()">
+        <ng-content></ng-content>
+      </div>
+    }
+    @default {
+      <span
+        [class]="'app-text app-text--' + variant()"
+        [class.app-text--bold]="bold()">
+        <ng-content></ng-content>
+      </span>
+    }
+  }
+}

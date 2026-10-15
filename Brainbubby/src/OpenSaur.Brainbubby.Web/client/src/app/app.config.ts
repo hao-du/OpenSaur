@@ -4,7 +4,7 @@ import { provideHttpClient, withFetch, withInterceptors } from '@angular/common/
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { routes } from './app.routes';
 import { MonacoEditorModule } from 'ngx-monaco-editor-v2';
-import { MarkdownModule } from 'ngx-markdown';
+import { provideMarkdown } from 'ngx-markdown';
 import { LucideAngularModule, icons } from 'lucide-angular';
 import { authInterceptor } from '../features/auth/auth.interceptor';
 
@@ -14,11 +14,11 @@ export const appConfig: ApplicationConfig = {
     provideRouter(routes, withComponentInputBinding()),
     provideHttpClient(withFetch(), withInterceptors([authInterceptor])),
     provideAnimationsAsync(),
+    provideMarkdown(),
     importProvidersFrom(
       MonacoEditorModule.forRoot({
         baseUrl: 'assets/monaco'
       }),
-      MarkdownModule.forRoot(),
       LucideAngularModule.pick(icons)
     )
   ]

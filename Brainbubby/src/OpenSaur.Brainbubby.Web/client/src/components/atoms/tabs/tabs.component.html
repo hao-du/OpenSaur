@@ -1,0 +1,15 @@
+<div class="tabs-container">
+  @for (tab of tabs(); track tab.id) {
+    <button
+      type="button"
+      class="tab-btn"
+      [class.tab-btn--active]="activeTab() === tab.id"
+      (click)="selectTab(tab.id)">
+      @if (tab.icon) {
+        <app-icon [name]="tab.icon" [size]="13" class="tab-icon"></app-icon>
+      }
+      <span class="tab-label">{{ tab.label }}</span>
+    </button>
+  }
+</div>
+
