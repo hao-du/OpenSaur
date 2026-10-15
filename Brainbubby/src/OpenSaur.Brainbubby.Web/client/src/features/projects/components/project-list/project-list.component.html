@@ -1,0 +1,168 @@
+<div class="flex flex-col gap-6 max-w-7xl mx-auto">
+  <!-- Page Header Row -->
+  <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-bold text-stone-900 tracking-tight m-0">Projects</h1>
+      <p class="text-sm text-stone-500 m-0 mt-1">
+        Manage isolated workspaces, rule instructions, and team permissions
+      </p>
+    </div>
+
+    <div class="flex items-center gap-3">
+      <app-button
+        variant="secondary"
+        icon="sliders-horizontal"
+        (clicked)="filterDrawerOpen.set(true)">
+        Filter
+      </app-button>
+      <app-button
+        variant="primary"
+        icon="plus"
+        (clicked)="openCreateDrawer()">New Project</app-button>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  @if (loading()) {
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+      @for (item of [1, 2, 3]; track item) {
+        <div class="h-48 bg-white/60 animate-pulse rounded-xl border border-stone-200"></div>
+      }
+    </div>
+  } @else if (filteredProjects().length === 0) {
+    <!-- Empty State -->
+    <app-empty-state
+      icon="layout-dashboard"
+      title="No projects found"
+      description="Create your first project to start organizing rule files and AI instructions.">
+    </app-empty-state>
+  } @else {
+    <!-- Projects Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+      @for (project of filteredProjects(); track project.id) {
+        <app-card appearance="outlined" class="hover:shadow-md transition-shadow group flex flex-col h-full bg-white">
+          <div class="p-5 flex flex-col justify-between h-full gap-4">
+            <!-- Top Card Header: Name, Role Badge, Menu -->
+            <div>
+              <div class="flex items-start justify-between gap-3 mb-2">
+                <div class="flex items-center gap-2.5">
+                  <div class="w-9 h-9 rounded-lg bg-[#fff2ec] text-[#ec6530] flex items-center justify-center font-bold text-sm">
+                    {{ project.name.substring(0, 2).toUpperCase() }}
+                  </div>
+                  <div>
+                    <h3 class="font-bold text-base text-stone-900 group-hover:text-[#ec6530] transition-colors m-0 cursor-pointer"
+                        (click)="enterProject(project)">
+                      {{ project.name }}
+                    </h3>
+                    <span class="text-xs text-stone-400">Created by {{ project.creatorName }}</span>
+                  </div>
+                </div>
+
+                <!-- Role Badge -->
+                <app-badge [variant]="getRoleBadgeVariant(project.currentUserRole)">
+                  {{ project.currentUserRole }}
+                </app-badge>
+              </div>
+
+              <!-- Description -->
+              <p class="text-xs text-stone-600 line-clamp-2 min-h-[32px] mt-2 mb-0">
+                {{ project.description || 'No description provided.' }}
+              </p>
+            </div>
+
+            <!-- Card Bottom Meta: Template & Action Buttons -->
+            <div class="pt-3 border-t border-stone-100 flex items-center justify-between mt-auto">
+              <!-- Template Tag -->
+              <div class="flex items-center gap-1.5 text-xs text-stone-500">
+                <app-icon name="file-text" [size]="14" class="text-stone-400"></app-icon>
+                <span class="truncate max-w-[130px]" [title]="project.instructionTemplateName || 'No Template'">
+                  {{ project.instructionTemplateName || 'Blank' }}
+                </span>
+              </div>
+
+              <!-- Action Buttons -->
+              <div class="flex items-center gap-1">
+                <app-button
+                  variant="ghost"
+                  icon="users"
+                  title="Project Users"
+                  (clicked)="openMemberDialog(project)">
+                </app-button>
+
+                @if (project.currentUserRole === 'Creator' || project.currentUserRole === 'CanEdit') {
+                  <app-button
+                    variant="ghost"
+                    icon="edit"
+                    title="Edit Project"
+                    (clicked)="openEditDrawer(project)">
+                  </app-button>
+                }
+
+                @if (project.currentUserRole === 'Creator') {
+                  <app-button
+                    variant="ghost"
+                    icon="trash-2"
+                    title="Delete Project"
+                    class="text-stone-400 hover:text-red-500"
+                    (clicked)="confirmDelete(project)">
+                  </app-button>
+                }
+
+                <app-button
+                  variant="primary"
+                  icon="arrow-right"
+                  title="Enter Project"
+                  (clicked)="enterProject(project)">
+                </app-button>
+              </div>
+            </div>
+          </div>
+        </app-card>
+      }
+    </div>
+  }
+</div>
+
+<!-- Project Create/Edit Drawer -->
+<app-project-drawer
+  [isOpen]="drawerOpen()"
+  [project]="selectedProjectDetail()"
+  (close)="drawerOpen.set(false)"
+  (saved)="onProjectSaved()">
+</app-project-drawer>
+
+<!-- Filter Projects Drawer -->
+<app-project-filter-drawer
+  [isOpen]="filterDrawerOpen()"
+  [searchQuery]="searchQuery()"
+  [filteredCount]="filteredProjects().length"
+  [totalCount]="projects().length"
+  (searchQueryChange)="searchQuery.set($event)"
+  (clear)="searchQuery.set('')"
+  (close)="filterDrawerOpen.set(false)">
+</app-project-filter-drawer>
+
+<!-- Project Members Permission Dialog -->
+<app-member-dialog
+  [isOpen]="memberDialogOpen()"
+  [projectId]="activeProjectId()"
+  [projectName]="activeProjectName()"
+  [isCreator]="activeProjectIsCreator()"
+  (close)="memberDialogOpen.set(false)">
+</app-member-dialog>
+
+<!-- Delete Project Confirmation Dialog -->
+<app-dialog
+  [isOpen]="deleteDialogOpen()"
+  title="Delete Project"
+  confirmText="Delete"
+  cancelText="Cancel"
+  confirmVariant="danger"
+  [loading]="deleting()"
+  (confirm)="deleteProject()"
+  (cancel)="deleteDialogOpen.set(false)">
+  <p class="m-0 text-stone-700">
+    Are you sure you want to delete project <strong class="text-stone-900">{{ projectToDelete()?.name }}</strong>?
+    All file rules, nodes, and configurations will be permanently deactivated.
+  </p>
+</app-dialog>

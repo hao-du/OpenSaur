@@ -11,3 +11,9 @@
 
 - **Avoid Legacy Habits & Defensive Boilerplate**: Never apply legacy habits, defensive boilerplate, or redundant nested loops/wrappers unless strictly required by the underlying technology.
 - **No Over-Engineering**: Avoid overcomplicated code; leverage modern framework and library capabilities directly (e.g., modern EF Core, Confluent.Kafka, ASP.NET Core built-ins). Write code that is cleaner, stable, and idiomatic.
+
+## Database Migrations
+
+- **Never Modify Existing Migrations**: Never edit, modify, or delete existing migration files once created.
+- **Always Add New Migrations**: For any subsequent schema changes (tables, columns, indexes, constraints, data transformations), always create a brand new migration file (`dotnet ef migrations add <DescriptiveName>`).
+- **Migration Scripts**: Generate incremental or idempotent migration scripts from the new migration files to keep deployment and environment syncing reliable.

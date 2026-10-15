@@ -1,31 +1,41 @@
-<mat-form-field appearance="outline" class="w-full">
+<div class="flex flex-col gap-1.5 w-full">
   @if (label()) {
-    <mat-label>
-      {{ label() }}
+    <label class="text-sm font-medium text-stone-700 flex items-center gap-1">
+      <span>{{ label() }}</span>
       @if (required()) {
-        <span class="text-red-500 ml-0.5">*</span>
+        <span class="text-red-500 font-bold">*</span>
       }
-    </mat-label>
+    </label>
   }
-  @if (prefixIcon()) {
-    <span matPrefix class="mr-2 flex items-center">
-      <app-icon [name]="prefixIcon()!" [size]="18"></app-icon>
-    </span>
-  }
-  <input
-    matInput
-    [type]="type()"
-    [placeholder]="placeholder()"
-    [disabled]="disabled"
-    [value]="value"
-    (input)="onInputChange($event)"
-    (blur)="onBlur()" />
-  @if (suffixIcon()) {
-    <span matSuffix class="ml-2 flex items-center">
-      <app-icon [name]="suffixIcon()!" [size]="18"></app-icon>
-    </span>
-  }
+
+  <div
+    class="flex items-center w-full bg-white border border-stone-200 rounded-lg px-3 py-2 text-stone-800 transition-colors focus-within:border-[#ec6530] focus-within:ring-1 focus-within:ring-[#ec6530]"
+    [class.opacity-60]="disabled() || isDisabled"
+    [class.cursor-not-allowed]="disabled() || isDisabled"
+    [class.!border-red-500]="errorMessage()">
+    @if (prefixIcon()) {
+      <span class="mr-2 text-stone-400 flex items-center shrink-0">
+        <app-icon [name]="prefixIcon()!" [size]="18"></app-icon>
+      </span>
+    }
+
+    <input
+      class="w-full bg-transparent border-0 p-0 text-sm focus:outline-none placeholder:text-stone-400 text-stone-800 disabled:cursor-not-allowed"
+      [type]="type()"
+      [placeholder]="placeholder()"
+      [disabled]="disabled() || isDisabled"
+      [value]="value() || internalValue"
+      (input)="onInputChange($event)"
+      (blur)="onBlur()" />
+
+    @if (suffixIcon()) {
+      <span class="ml-2 text-stone-400 flex items-center shrink-0">
+        <app-icon [name]="suffixIcon()!" [size]="18"></app-icon>
+      </span>
+    }
+  </div>
+
   @if (errorMessage()) {
-    <mat-error>{{ errorMessage() }}</mat-error>
+    <span class="text-xs text-red-500 font-medium">{{ errorMessage() }}</span>
   }
-</mat-form-field>
+</div>

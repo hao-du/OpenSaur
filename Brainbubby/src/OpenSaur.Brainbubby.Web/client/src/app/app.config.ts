@@ -6,12 +6,13 @@ import { routes } from './app.routes';
 import { MonacoEditorModule } from 'ngx-monaco-editor-v2';
 import { MarkdownModule } from 'ngx-markdown';
 import { LucideAngularModule, icons } from 'lucide-angular';
+import { authInterceptor } from '../features/auth/auth.interceptor';
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideRouter(routes, withComponentInputBinding()),
-    provideHttpClient(withFetch()),
+    provideHttpClient(withFetch(), withInterceptors([authInterceptor])),
     provideAnimationsAsync(),
     importProvidersFrom(
       MonacoEditorModule.forRoot({

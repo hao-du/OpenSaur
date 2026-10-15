@@ -7,25 +7,39 @@ module.exports = {
     extend: {
       colors: {
         brand: {
-          DEFAULT: '#00ccff',
-          hover: '#00b4e6',
-          active: '#009cc8',
-          subtle: '#e6faff'
+          DEFAULT: '#ec6530',
+          hover: '#d9531e',
+          active: '#bf4314',
+          subtle: '#fff2ec',
+          border: '#fcd8c9'
         },
         slate: {
-          canvas: '#edf3f8',
+          canvas: '#f8f9fa',
           surface: '#ffffff',
-          subtle: '#f8fafc',
-          muted: '#f1f5f9'
+          subtle: '#fbfbfb',
+          muted: '#f5f5f4'
+        },
+        stone: {
+          50: '#fafaf9',
+          100: '#f5f5f4',
+          200: '#e7e5e4',
+          300: '#d6d3d1',
+          400: '#a8a29e',
+          500: '#78716c',
+          600: '#57534e',
+          700: '#44403c',
+          800: '#292524',
+          900: '#1c1917',
         },
         text: {
-          primary: '#1e293b',
-          secondary: '#64748b',
-          muted: '#94a3b8'
+          primary: '#1c1917',
+          secondary: '#57534e',
+          muted: '#a8a29e'
         },
         border: {
-          default: '#cbd5e1',
-          subtle: '#e2e8f0'
+          default: '#e7e5e4',
+          subtle: '#f5f5f4',
+          strong: '#d6d3d1'
         }
       },
       fontFamily: {

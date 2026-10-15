@@ -13,6 +13,12 @@ public static class AuthConstants
 
     public static class Roles
     {
-        public const string SuperAdministrator = "SuperAdministrator";
+        public const string SuperAdministrator = "Super Administrator";
+    }
+
+    public static class Permissions
+    {
+        public const string CanEdit = "Brainbubby.CanEdit";
+        public const string CanView = "Brainbubby.CanView";
     }
 }

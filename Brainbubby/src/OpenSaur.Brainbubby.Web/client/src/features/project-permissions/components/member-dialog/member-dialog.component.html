@@ -1,0 +1,105 @@
+<app-dialog
+  [isOpen]="isOpen()"
+  [title]="'Project Users - ' + (projectName() || 'Project')"
+  confirmText="Close"
+  cancelText=""
+  (confirm)="close.emit()"
+  (cancel)="close.emit()">
+  
+  <div class="flex flex-col gap-5 min-w-[360px] md:min-w-[440px]">
+    <!-- Add User Section (Creator only) -->
+    @if (isCreator()) {
+      <div class="p-4 bg-stone-50 rounded-xl border border-stone-200 flex flex-col gap-3">
+        <span class="text-xs font-bold uppercase tracking-wider text-stone-500">Add Project User</span>
+        
+        <div class="flex flex-col sm:flex-row gap-2.5 items-stretch sm:items-center">
+          <select
+            [value]="selectedCandidateUserId()"
+            (change)="onCandidateSelect($event)"
+            class="flex-1 px-3 py-2 text-sm bg-white border border-stone-200 rounded-lg focus:outline-none focus:border-[#ec6530] text-stone-800">
+            <option value="">Select a user...</option>
+            @for (candidate of availableCandidates(); track candidate.userId) {
+              <option [value]="candidate.userId">
+                {{ candidate.firstName }} {{ candidate.lastName }} ({{ candidate.email }})
+              </option>
+            }
+          </select>
+
+          <select
+            [value]="selectedRole()"
+            (change)="onRoleSelect($event)"
+            class="w-full sm:w-28 px-3 py-2 text-sm bg-white border border-stone-200 rounded-lg focus:outline-none focus:border-[#ec6530] text-stone-800">
+            <option value="CanEdit">CanEdit</option>
+            <option value="CanView">CanView</option>
+          </select>
+
+          <app-button
+            variant="primary"
+            [disabled]="!selectedCandidateUserId() || addingMember()"
+            [loading]="addingMember()"
+            (clicked)="addMember()">
+            Add
+          </app-button>
+        </div>
+      </div>
+    }
+
+    <!-- Users List -->
+    <div class="flex flex-col gap-2">
+      <div class="flex items-center justify-between pb-1 border-b border-stone-100">
+        <span class="text-xs font-bold uppercase tracking-wider text-stone-500">Project Users</span>
+        <span class="text-xs text-stone-400">{{ members().length }} users</span>
+      </div>
+
+      @if (loadingMembers()) {
+        <div class="py-8 text-center text-stone-400 text-sm">Loading users...</div>
+      } @else if (members().length === 0) {
+        <div class="py-8 text-center text-stone-400 text-sm">No users found.</div>
+      } @else {
+        <div class="flex flex-col divide-y divide-stone-100 max-h-72 overflow-y-auto">
+          @for (member of members(); track member.id) {
+            <div class="py-3 flex items-center justify-between gap-3">
+              <div class="flex items-center gap-3">
+                <app-avatar [name]="member.firstName + ' ' + member.lastName" [size]="32"></app-avatar>
+                <div>
+                  <div class="flex items-center gap-2">
+                    <span class="text-sm font-semibold text-stone-900">{{ member.firstName }} {{ member.lastName }}</span>
+                    @if (member.isCreator) {
+                      <app-badge variant="primary">Creator</app-badge>
+                    }
+                  </div>
+                  <span class="text-xs text-stone-500">{{ member.email }}</span>
+                </div>
+              </div>
+
+              <div class="flex items-center gap-2">
+                @if (member.isCreator) {
+                  <span class="text-xs text-stone-400 font-medium px-2 py-1">Owner</span>
+                } @else if (isCreator()) {
+                  <select
+                    [value]="member.permission"
+                    (change)="updatePermission(member, $event)"
+                    class="px-2 py-1 text-xs bg-stone-50 border border-stone-200 rounded focus:outline-none focus:border-[#ec6530] text-stone-700">
+                    <option value="CanEdit">CanEdit</option>
+                    <option value="CanView">CanView</option>
+                  </select>
+
+                  <app-button
+                    variant="icon"
+                    icon="x"
+                    (clicked)="revokeMember(member)"
+                    class="text-stone-400 hover:text-red-500">
+                  </app-button>
+                } @else {
+                  <app-badge [variant]="member.permission === 'CanEdit' ? 'accent' : 'default'">
+                    {{ member.permission }}
+                  </app-badge>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  </div>
+</app-dialog>

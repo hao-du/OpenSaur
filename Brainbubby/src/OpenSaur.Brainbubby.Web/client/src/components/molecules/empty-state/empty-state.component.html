@@ -1,0 +1,12 @@
+<div class="empty-state-card flex flex-col items-center justify-center text-center bg-white rounded-2xl border border-dashed border-stone-300 py-16 px-8">
+  <div class="empty-state-icon-box w-14 h-14 rounded-full bg-[#fff2ec] flex items-center justify-center text-[#ec6530] mb-4">
+    <app-icon [name]="icon" [size]="iconSize"></app-icon>
+  </div>
+  @if (title) {
+    <h3 class="text-lg font-semibold text-stone-800 m-0">{{ title }}</h3>
+  }
+  @if (description) {
+    <p class="text-sm text-stone-500 max-w-sm mt-1 mb-0">{{ description }}</p>
+  }
+  <ng-content select="[empty-actions]"></ng-content>
+</div>

@@ -1,3 +1,20 @@
 :host {
-  display: block;
+  display: flex;
+  align-items: center;
+}
+
+.profile-trigger-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 9999px;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+
+  &:hover {
+    opacity: 0.85;
+    transform: scale(1.04);
+  }
+
+  &:active {
+    transform: scale(0.96);
+  }
 }

@@ -1,0 +1,70 @@
+<app-drawer
+  [isOpen]="isOpen()"
+  [title]="isEditing() ? (isSuperAdmin() ? 'Edit Instruction Template' : 'Template Details') : 'New Instruction Template'"
+  [subtitle]="isEditing() ? 'Update guideline details and boilerplate content' : 'Create workspace boilerplate rules and instructions'"
+  (close)="close.emit()">
+
+  <div class="flex flex-col gap-5">
+    <app-input
+      label="Template Name"
+      placeholder="e.g. AGENTS.md / Core Coding Rules"
+      [required]="true"
+      [value]="name()"
+      (valueChange)="name.set($event)">
+    </app-input>
+
+    <div class="flex flex-col gap-1.5">
+      <label class="text-sm font-medium text-stone-700 flex items-center gap-1">
+        <span>Description</span>
+        <span class="text-stone-400 font-normal text-xs">(optional)</span>
+      </label>
+      <textarea
+        [value]="description()"
+        (input)="onDescriptionInput($event)"
+        rows="2"
+        placeholder="Brief summary of when and how to use this template"
+        class="w-full px-3 py-2 text-sm bg-white border border-stone-200 rounded-lg focus:outline-none focus:border-[#ec6530] focus:ring-1 focus:ring-[#ec6530] text-stone-800 placeholder:text-stone-400 resize-none transition-colors">
+      </textarea>
+    </div>
+
+    <div class="flex flex-col gap-1.5">
+      <div class="flex items-center justify-between">
+        <label class="text-sm font-medium text-stone-700 flex items-center gap-1">
+          <span>Instruction Content</span>
+          <span class="text-stone-400 font-normal text-xs">(Markdown guidelines)</span>
+        </label>
+        <span class="text-xs text-stone-400">{{ content().length }} characters</span>
+      </div>
+      <textarea
+        [value]="content()"
+        (input)="onContentInput($event)"
+        rows="12"
+        placeholder="# Project Guidelines&#10;&#10;## Rules&#10;- Always follow DDD and Vertical Slice Architecture&#10;- Keep files focused and modular"
+        class="w-full font-mono text-xs px-3 py-2.5 bg-stone-50/50 border border-stone-200 rounded-lg focus:outline-none focus:border-[#ec6530] focus:ring-1 focus:ring-[#ec6530] text-stone-800 placeholder:text-stone-400 resize-y transition-colors leading-relaxed">
+      </textarea>
+      <p class="text-xs text-stone-400 m-0">This boilerplate will pre-populate rule files when projects adopt this template.</p>
+    </div>
+
+    @if (errorMessage()) {
+      <div class="p-3 bg-red-50 border border-red-200 rounded-lg text-xs text-red-600 font-medium">
+        {{ errorMessage() }}
+      </div>
+    }
+  </div>
+
+  <div drawer-actions class="flex items-center gap-2">
+    <app-button
+      variant="secondary"
+      (clicked)="close.emit()">
+      Cancel
+    </app-button>
+    <app-button
+      variant="primary"
+      [disabled]="!name().trim() || saving()"
+      [loading]="saving()"
+      (clicked)="save()">
+      {{ isEditing() ? 'Update Template' : 'Create Template' }}
+    </app-button>
+  </div>
+</app-drawer>
+

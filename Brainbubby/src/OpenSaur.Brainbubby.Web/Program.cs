@@ -74,7 +74,7 @@ builder.Services.AddMcpServer()
 
 // Database
 builder.Services.AddDbContext<BrainbubbyDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseNpgsql(builder.Configuration.GetConnectionString("BrainbubbyDb")));
 
 // Configuration
 var oidcOptions = builder.Configuration.GetSection(OidcOptions.SectionName).Get<OidcOptions>() ?? new OidcOptions();

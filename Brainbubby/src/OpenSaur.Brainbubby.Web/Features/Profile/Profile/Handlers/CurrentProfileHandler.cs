@@ -27,7 +27,18 @@ public static class CurrentProfileHandler
 
         if (user is null)
         {
-            return Results.NotFound(new { message = "User record not synchronized yet." });
+            var fallbackResponse = new CurrentProfileResponse(
+                userContext.UserId ?? Guid.Empty,
+                userContext.WorkspaceId ?? Guid.Empty,
+                userContext.Email ?? string.Empty,
+                userContext.Email ?? string.Empty,
+                string.Empty,
+                string.Empty,
+                userContext.IsSuperAdministrator,
+                userContext.Roles.ToArray(),
+                userContext.Permissions.ToArray());
+
+            return Results.Ok(fallbackResponse);
         }
 
         var response = new CurrentProfileResponse(

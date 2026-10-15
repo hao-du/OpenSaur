@@ -14,6 +14,7 @@ export class DrawerComponent {
   isOpen = input<boolean>(false);
   title = input<string>('');
   subtitle = input<string | null>(null);
+  closeOnBackdropClick = input<boolean>(false);
 
   close = output<void>();
 }

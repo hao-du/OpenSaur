@@ -1,14 +1,12 @@
-import { Component, forwardRef, input } from '@angular/core';
+import { Component, forwardRef, input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, FormsModule } from '@angular/forms';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
 import { IconComponent } from '../icon/icon.component';
 
 @Component({
   selector: 'app-input',
   standalone: true,
-  imports: [CommonModule, FormsModule, MatFormFieldModule, MatInputModule, IconComponent],
+  imports: [CommonModule, FormsModule, IconComponent],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
@@ -28,14 +26,18 @@ export class InputComponent implements ControlValueAccessor {
   prefixIcon = input<string | null>(null);
   suffixIcon = input<string | null>(null);
 
-  value = '';
-  disabled = false;
+  value = input<string>('');
+  valueChange = output<string>();
+  disabled = input<boolean>(false);
+
+  internalValue = '';
+  isDisabled = false;
 
   private onChange = (val: string) => {};
   private onTouched = () => {};
 
   writeValue(val: any): void {
-    this.value = val ?? '';
+    this.internalValue = val ?? '';
   }
 
   registerOnChange(fn: any): void {
@@ -47,13 +49,14 @@ export class InputComponent implements ControlValueAccessor {
   }
 
   setDisabledState(isDisabled: boolean): void {
-    this.disabled = isDisabled;
+    this.isDisabled = isDisabled;
   }
 
   onInputChange(event: Event): void {
     const target = event.target as HTMLInputElement;
-    this.value = target.value;
-    this.onChange(this.value);
+    this.internalValue = target.value;
+    this.onChange(this.internalValue);
+    this.valueChange.emit(this.internalValue);
   }
 
   onBlur(): void {

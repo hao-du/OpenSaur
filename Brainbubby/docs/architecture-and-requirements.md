@@ -22,6 +22,7 @@
   - Global files, folders, and templates belong directly to the `Workspace` (`ProjectId = null`).
   - Coding Agents can directly read workspace-wide global rules, instructions, and skills alongside project-specific documentation.
 - **Authentication & OpenIddict (Zentry as Single Source of Truth)**:
+  - **Comprehensive Auth Workflow**: For the complete sequence diagrams, cookie session handling, BFF pattern, and frontend-to-backend flows, refer to [`auth-workflow.md`](auth-workflow.md).
   - **Zentry Authorization Server**: Zentry is the single authority for user identity, client credentials, and token issuance.
   - **Web UI Login**: OpenID Connect (OIDC) Authorization Code Flow with cookie session via Zentry, matching CashPilot setup.
   - **M2M Coding Agent Authentication**: Coding Agents authenticate using OAuth2 bearer tokens issued by Zentry, supplying the target `Project-Id` on requests or per-call parameters.
@@ -57,7 +58,7 @@
 | **Message Broker (Sync)** | Apache Kafka (Aiven) | **Confluent.Kafka** (idiomatic background consumer syncing Users & Workspaces from Zentry) |
 | **MCP Server** | **ModelContextProtocol.AspNetCore** (Official C# SDK) | Streamable HTTP (`/mcp`, SSE compatible) exposing tools for Coding Agents authenticated via Zentry bearer tokens |
 | **Frontend Architecture** | **Frontend Vertical Slice Architecture + Atomic Component Wrappers** | Vertical slices (`features/<slice>/`) for all domain features. Component wrapper layer (`components/atoms/`, `components/molecules/`, `components/organisms/`) wraps all UI library components (Angular Material/CDK) so feature code has zero direct dependency on underlying UI libraries. |
-| **Frontend Framework** | Angular | **Angular 19+** (Standalone Components, Signals, `HttpClient`) |
+| **Frontend Framework** | Angular | **Angular 19+** (Standalone Components, Signals, `HttpClient`, functional guards with `CanActivateFn`, functional interceptors with `HttpInterceptorFn`) |
 | **Responsive Support** | **Phone, Tablet & Desktop** | Powered by Angular CDK `BreakpointObserver`, CSS Flex/Grid media queries, collapsible drawers, adaptive Monaco diff view |
 | **UI Component Library** | **Angular Material (Wrapped)** | All components wrapped inside `components/atoms/` and `components/organisms/` (`app-button`, `app-input`, `app-card`, `app-badge`, `app-drawer`, `app-dialog`) |
 | **UI Design System** | **CashPilot-aligned Style** | Brand `#00ccff`, soft background `#edf3f8`, `"Be Vietnam Pro"` font, clean cards, header, profile, side menu, List pages, and Edit drawers implemented natively via CSS tokens |
@@ -224,6 +225,8 @@ sequenceDiagram
 ---
 
 ## 5. Machine-to-Machine MCP Authentication & Integration Flow
+
+> For a complete, step-by-step breakdown of frontend-to-backend authentication, cookie sessions, silent refresh, and M2M client credentials flows, see [`auth-workflow.md`](auth-workflow.md).
 
 ```mermaid
 sequenceDiagram
